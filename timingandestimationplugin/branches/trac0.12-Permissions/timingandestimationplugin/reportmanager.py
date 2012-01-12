@@ -32,8 +32,8 @@ class CustomReportManager:
                       "version %s of the file reportmanager.py (currently using version %s)."
                       % (__name__, str(self.version), str(version)))
 
-      # Do the staged updates
-    if version < 1 and not dbhelper.db_table_exists(self.env, 'custom_report'):
+      # Do the staged updates, I removed this: version < 1 and
+    if not dbhelper.db_table_exists(self.env, 'custom_report'):
       dbhelper.execute_non_query(
         self.env,
         "CREATE TABLE custom_report ("
