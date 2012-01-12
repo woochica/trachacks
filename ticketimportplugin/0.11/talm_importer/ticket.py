@@ -7,9 +7,9 @@
 
 def PatchedTicket(*args, **argv):
 
-    # Some plugins (such as Agilo) overwrite the original Ticket class.
-    # So import at the latest moment...
-    from trac.ticket import Ticket
+    # Workaround a bug in Agilo, which
+    # So import at the latest moment...    
+    from trac.ticket.web_ui import Ticket
     class PatchedTicketClass(Ticket):
         ''' patched version of the Ticket class, that doesn't make the difference between a field defaulting to an empty string, and a field not defaulted
         '''
