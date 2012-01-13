@@ -29,6 +29,10 @@ Thanks to daveappendix """
     def _session(self, req, name, default):
         return req.session.get(get_session_key(name), default)
 
+    def _setSessionKey(self, req, name, value):
+        sessionKey = get_session_key(name)
+        req.session[sessionKey] = value
+        
     def _getFilter(self, req, name):
         sessionKey = get_session_key(name)
         result = ''
@@ -43,19 +47,19 @@ Thanks to daveappendix """
 
     def _getCheckbox(self, req, name, default):
         sessionKey = get_session_key(name)
-        result = False
+        result = '0'
 
         if req.args.has_key('user_modification'):
             # User has hit the update button on the form,
             # so update the session data.
             if req.args.has_key(name):
-                result = True
-            if result:
-                req.session[sessionKey] = 'true'
+                result = '1'
+            if result == '1':
+                req.session[sessionKey] = '1'
             else:
-                req.session[sessionKey] = 'false'
-        elif req.session.get(sessionKey, default) == 'true':
-            result = True
+                req.session[sessionKey] = '0'
+        elif req.session.get(sessionKey, default) == '1':
+            result = '1'
 
         return result
 
@@ -88,8 +92,26 @@ Thanks to daveappendix """
         if template == 'roadmap.html':
             inc_milestones = self._getFilter(req, 'inc_milestones')
             exc_milestones = self._getFilter(req, 'exc_milestones')
-            show_descriptions = self._getCheckbox(req, 'show_descriptions', 'true')
+            show_descriptions = self._getCheckbox(req, 'show_descriptions', '1') == '1'
             
+            keys = [u'noduedate',u'completed']
+            showkeys = {'noduedate':'hidenoduedate','completed':'showcompleted'}
+            if req.args.has_key('user_modification'):
+                if req.args.has_key('show'):
+                    for key in keys:
+                        if key in req.args['show']:
+                            self._setSessionKey(req, showkeys[key], '1')
+                        else:
+                            self._setSessionKey(req, showkeys[key], '0')
+                else:
+                    for key in keys:
+                        self._setSessionKey(req, showkeys[key], '0')              
+            else:
+                for key in keys:
+                    erg =self._session(req, showkeys[key], '0')
+                    if erg == '1':
+                        data['show'].append(key)
+                
             if inc_milestones != '':
                 inc_milestones = [m.strip() for m in inc_milestones.split('|')]
                 filteredMilestones = []
@@ -138,7 +160,7 @@ Thanks to daveappendix """
                                    title=_('available prefixes: contains: ~, starts with: ^, ends with: $')))
 
     def _toggleBox(self, req, label, name, default):
-        if self._session(req, name, default) == 'true':
+        if self._session(req, name, default) == '1':
             checkbox = tag.input(type='checkbox',
                                 name=name,
                                 value='true',
