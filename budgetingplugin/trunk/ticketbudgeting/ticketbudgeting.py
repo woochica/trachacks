@@ -22,7 +22,7 @@ from trac.db.api import DatabaseManager
 from trac.config import Option
 from trac.ticket.model import Ticket
 import __init__
-from trac.perm import PermissionSystem
+from trac.perm import IPermissionRequestor,PermissionSystem
 from compiler.ast import Printnl
 
 _, tag_, N_, add_domain = domain_functions('ticketbudgeting', '_', 'tag_', 'N_', 'add_domain')
@@ -41,6 +41,8 @@ BUDGETING_TABLE = Table('budgeting', key=('ticket', 'position'))[
 ]
 
 BUDGET_REPORT_ALL_ID = 90
+
+authorizedToModify = ['TICKET_MODIFY','TRAC_ADMIN','TICKET_BUDGETING_MODIFY']
 
 class Budget:
     """ Container class for budgeting info"""
@@ -294,7 +296,12 @@ class TicketBudgetingView(Component):
                 self._budgets = {}
             
             input_html, preview_html = self._get_ticket_html()
-            if 'TICKET_MODIFY' in req.perm(tkt.resource):
+            
+            modifyAllowed = False
+            for authorizedPerm in authorizedToModify:
+                modifyAllowed = modifyAllowed or authorizedPerm in req.perm(tkt.resource)
+                
+            if modifyAllowed:
                 visibility = ' style="visibility:hidden"'
                 if self._budgets:
                     visibility = ''
@@ -810,5 +817,17 @@ class TicketBudgetingView(Component):
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
         return sqlResult
-    
+
+
+#===========================================================================
+# Class to publish an additional Permission Type
+#===========================================================================    
+class TicketBudgetingPermission(Component):
+    implements(IPermissionRequestor)
+    """ publicise permission TICKET_BUDGETING_MODIFY """
+
+    definedPermissions = ("TICKET_BUDGETING_MODIFY")
+    #IPermissionRequestor
+    def get_permission_actions(self):
+        yield self.definedPermissions
     
