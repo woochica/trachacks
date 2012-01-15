@@ -556,7 +556,21 @@ class TracPM(Component):
     # at least the fields returned by queryFields() and the whole list
     # was processed by postQuery().  
     def computeSchedule(self, options, tickets):
-        self.scheduler.scheduleTasks(options, tickets)
+        # Convert list to dictionary, making copies so schedule can
+        # mess with the tickets.
+        ticketsByID = {}
+        for t in tickets:
+            ticketsByID[t['id']] = {}
+            for field in t:
+                ticketsByID[t['id']][field] = copy.copy(t[field])
+
+        # Schedule the tickets
+        self.scheduler.scheduleTasks(options, ticketsByID)
+
+        # Copy back the schedule results
+        for t in tickets:
+            for field in [ 'calc_start', 'calc_finish']:
+                t[field] = ticketsByID[t['id']][field]
 
 
 # ========================================================================
@@ -613,13 +627,7 @@ class CalendarScheduler(Component):
 
     # ITaskScheduler method
     # Uses options hoursPerDay and schedule (alap or asap).
-    def scheduleTasks(self, options, tickets):
-        # Faster lookups
-        self.ticketsByID = {}
-        for t in tickets:
-            self.ticketsByID[t['id']] = t
-
-        # Return a time delta hours (positive or negative) from
+    def scheduleTasks(self, options, ticketsByID):
         # fromDate, accounting for working hours and weekends.
         def _calendarOffset(ticket, hours, fromDate):
             if hours < 0:
@@ -747,12 +755,12 @@ class CalendarScheduler(Component):
                     pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
                     if pid != 0:
-                        if pid in self.ticketsByID:
-                            parent = self.ticketsByID[pid]
+                        if pid in ticketsByID:
+                            parent = ticketsByID[pid]
                             _schedule_task_alap(parent)
-                            if _betterDate(self.ticketsByID[pid]['calc_finish'],
+                            if _betterDate(ticketsByID[pid]['calc_finish'],
                                            finish):
-                                finish = self.ticketsByID[pid]['calc_finish']
+                                finish = ticketsByID[pid]['calc_finish']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart. ' +
@@ -765,8 +773,8 @@ class CalendarScheduler(Component):
             # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
                 for id in self.pm.successors(t):
-                    if id in self.ticketsByID:
-                        s = _schedule_task_alap(self.ticketsByID[id])
+                    if id in ticketsByID:
+                        s = _schedule_task_alap(ticketsByID[id])
                         if _betterDate(s, start) and \
                                 start == None or \
                                 (s and start and s[0] < start[0]):
@@ -856,12 +864,12 @@ class CalendarScheduler(Component):
                     pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
                     if pid != 0:
-                        if pid in self.ticketsByID:
-                            parent = self.ticketsByID[pid]
+                        if pid in ticketsByID:
+                            parent = ticketsByID[pid]
                             _schedule_task_asap(parent)
-                            if _betterDate(self.ticketsByID[pid]['calc_start'], 
+                            if _betterDate(ticketsByID[pid]['calc_start'], 
                                            start):
-                                start = self.ticketsByID[pid]['calc_start']
+                                start = ticketsByID[pid]['calc_start']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart. ' +
@@ -874,8 +882,8 @@ class CalendarScheduler(Component):
             # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
                 for id in self.pm.predecessors(t):
-                    if id in self.ticketsByID:
-                        f = _schedule_task_asap(self.ticketsByID[id])
+                    if id in ticketsByID:
+                        f = _schedule_task_asap(ticketsByID[id])
                         if _betterDate(f, finish) and \
                                 finish == None or \
                                 (f and finish and f[0] > finish[0]):
@@ -953,9 +961,9 @@ class CalendarScheduler(Component):
             return t['calc_finish']
 
 
-        for id in self.ticketsByID:
+        for id in ticketsByID:
             if options['schedule'] == 'alap':
-                _schedule_task_alap(self.ticketsByID[id])
+                _schedule_task_alap(ticketsByID[id])
             else:
-                _schedule_task_asap(self.ticketsByID[id])
+                _schedule_task_asap(ticketsByID[id])
 
