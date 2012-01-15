@@ -652,9 +652,24 @@ class CalendarScheduler(Component):
 
                 # If we can finish the task this day
                 if available >= math.fabs(hours):
-                    # Add the remaining time to the delta (sign is
-                    # implicit in hours)
-                    delta += timedelta(hours=hours)
+                    # See how many hours are available for other tasks this day
+                    available += -1 * sign * hours
+
+                    # If there are no more hours this day, make sure
+                    # that the delta ends up at the end (start or
+                    # finish) of the day
+                    if available == 0:
+                        if sign == -1:
+                            delta += timedelta(hours=-h)
+                        else:
+                            delta += timedelta(hours=options['hoursPerDay']-h)
+                    # If there is time left after this, just update
+                    # the delta within this day
+                    else:
+                        # Add the remaining time to the delta (sign is
+                        # implicit in hours)
+                        delta += timedelta(hours=hours)
+
                     # No hours left when we're done.
                     hours = 0
                 # If we can't finish the task this day
@@ -666,14 +681,14 @@ class CalendarScheduler(Component):
                     if sign == -1:
                         # Account for the time worked this date
                         # (That is, get to start of the day)
-                        delta += timedelta(hours = -available)
+                        delta += timedelta(hours = -h)
                         # Back up to end of previous day
                         delta += timedelta(hours = 
                                            -(24 - options['hoursPerDay']))
                     else:
                         # Account for the time work this date
                         # (That is move to the end of today)
-                        delta += timedelta(hours = available)
+                        delta += timedelta(hours = options['hoursPerDay'] - h)
                         # Move ahead to the start of the next day
                         delta += timedelta(hours = 24 - options['hoursPerDay'])
 
