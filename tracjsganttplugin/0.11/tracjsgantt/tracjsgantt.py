@@ -19,6 +19,7 @@ from pkg_resources import resource_filename
 from trac.wiki.api import parse_args
 
 from tracpm import TracPM
+
 # ========================================================================
 class TracJSGanttSupport(Component):
     implements(IRequestFilter, ITemplateProvider)

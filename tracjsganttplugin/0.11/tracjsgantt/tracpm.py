@@ -23,15 +23,14 @@ class ITaskScheduler(Interface):
     # Schedule each the ticket in tickets with consideration for
     # dependencies, estimated work, hours per day, etc.
     # 
-    # Assumes tickets is a list, each element contains at least the
-    # fields returned by queryFields() and the whole list was
-    # processed by postQuery().
+    # ticketsByID is a dictionary, indexed by numeric ticket ID, each
+    # ticket contains at least the fields returned by queryFields()
+    # and the whole list was processed by postQuery().
     #
     # On exit, each ticket has t['calc_start'] and t['calc_finish']
-    # set and can be accessed with TracPM.start() and finish().  No
-    # other changes are made.  (FIXME - we should probably be able to
-    # configure those field names.)
-    def scheduleTasks(self, options, tickets):
+    # set (FIXME - we should probably be able to configure those field
+    # names.) and can be accessed with TracPM.start() and finish().
+    def scheduleTasks(self, options, ticketsByID):
         """Called to schedule tasks"""
 
 # TracPM masks implementation details of how various plugins implement
@@ -162,7 +161,10 @@ class TracPM(Component):
             return True
         else:
             return False
-           
+
+    # FIXME - Many of these should be marked as more private.  Perhaps
+    # an leading underscore?
+
     # Parse the start field and return a datetime
     # Return None if the field is not configured or empty.
     def parseStart(self, ticket):
@@ -240,9 +242,10 @@ class TracPM(Component):
         return ticket['calc_finish'][0]
 
 
-    # Return a list of fields that PM needs to work.  The caller can
-    # add this to the list of fields in a query so that when the
-    # tickets are passed back to PM the necessary data is there.
+    # Return a list of custom fields that PM needs to work.  The
+    # caller can add this to the list of fields in a query so that
+    # when the tickets are passed back to PM the necessary data is
+    # there.
     def queryFields(self):
         fields = []
         for field in self.fields:
@@ -324,9 +327,9 @@ class TracPM(Component):
         return percent
 
 
-    # Returns pipe-delimited string of ticket IDs meeting PM
-    # constraints.  Suitable for use as id field in ticket query
-    # engine.
+    # Returns pipe-delimited, possibily empty string of ticket IDs
+    # meeting PM constraints.  Suitable for use as id field in ticket
+    # query engine.  
     # FIXME - dumb name
     def preQuery(self, options, this_ticket = None):
         # Expand the list of tickets in origins to include those
@@ -389,6 +392,8 @@ class TracPM(Component):
 
         return id
 
+    # Create a pseudoticket for a Trac milestone with all the fields
+    # needed for PM work.
     def _pseudoTicket(self, id, summary, description, milestone):
         ticket = {}
         ticket['id'] = id
@@ -492,12 +497,14 @@ class TracPM(Component):
     # Process the tickets to normalize formats, etc. to simplify
     # access functions.
     #
+    # Also queries PM values that come from external relations.
+    #
     # A 'children' field is added to each ticket.  If a 'parent' field
     # is configured for PM, then 'children' is the (possibly empty)
     # list of children.  if there is no 'parent' field, then
     # 'children' is set to None.
     #
-    # Milestones for the tickets are added pseudo-tickets.
+    # Milestones for the tickets are added as pseudo-tickets.
     def postQuery(self, options, tickets):
         for t in tickets:
             # Clean up custom fields which might be null ('--') vs. blank ('')
@@ -545,6 +552,9 @@ class TracPM(Component):
 
         self._add_milestones(options, tickets)
 
+    # tickets is an unordered list of tickets.  Each ticket contains
+    # at least the fields returned by queryFields() and the whole list
+    # was processed by postQuery().  
     def computeSchedule(self, options, tickets):
         self.scheduler.scheduleTasks(options, tickets)
 
@@ -620,7 +630,7 @@ class CalendarScheduler(Component):
             delta = timedelta(hours=0)
 
             while hours != 0:
-                f = fromDate+delta
+                f = fromDate + delta
 
                 # Get total hours available for resource on that date
                 available = self.cal.hoursAvailable(f, ticket['owner'])
