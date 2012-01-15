@@ -102,20 +102,70 @@ class TracPM(Component):
     def __init__(self):
         self.env.log.info('Initializing TracPM')
 
-        # Configurable fields
+        # PM-specific data can be retrieved from custom fields or
+        # external relations.  self.sources lists all configured data
+        # sources and provides a key to self.fields or self.relations
+        # to drive the actual db query.
+        self.sources = {}
+
+        # All the data sources that may come from custom fields.
         fields = ('percent', 'estimate', 'worked', 'start', 'finish',
                   'pred', 'succ', 'parent')
 
+        # All the data sources that may come from external relations.
+        #
+        # Each item lists the fields (above) that are affected by this
+        # relation.  From configuration we get another three elements:
+        # table, src, dst.
+        relations = {}
+        relations['pred-succ'] = [ 'pred', 'succ' ]
+
+        # Process field configuration
         self.fields = {}
         for field in fields:
-            self.fields[field] = self.config.get(self.cfgSection,
-                                                 'fields.%s' % field)
+            value = self.config.get(self.cfgSection, 'fields.%s' % field)
+
             # As of 0.11.6, there appears to be a bug in Option() so
-            # that a defauilt of None isn't used and we get an empty
-            # string instead.  We test for '' and make it None here.
-            if self.fields[field] == '' or self.fields[field] == None:
-                del(self.fields[field])
-    
+            # that a default of None isn't used and we get an empty
+            # string instead.
+            #
+            # Remember the source for this data
+            if value != '' and value != None:
+                # FUTURE: If we really wanted to, we could validate value
+                # against the list of Trac's custom fields.
+
+                self.sources[field] = field
+                self.fields[field] = value
+
+        # Process relation configuration
+        #
+        # Find out how to query ticket relationships
+        # Each item is "table,src,dst" so that we can do
+        #    SELECT dst FROM table where src = id
+        # or
+        #    SELECT dst FROM table WHERE src IN origins
+        # to find the related tickets.
+        self.relations = {}
+        for r in relations:
+            value = self.config.getlist(self.cfgSection, 'relation.%s' % r)
+            # See note above about defaults.
+            # Remember the source for this data
+            if value != [] and value != None:
+                # Validate field and relation configuation
+                if len(value) != 3:
+                    self.env.log.error('Relation %s is misconfigured. '
+                                       'Should have three fields: '
+                                       'table,src,dst; found "%s".' % 
+                                       (r, value))
+                else:
+                    for f in relations[r]:
+                        if f in self.fields:
+                            self.env.log.error('Cannot configure %s as a field '
+                                               'and from relation %s' % (f, r))
+
+                        self.sources[f] = r
+                    self.relations[r] = relations[r] + value
+                    
         # Tickets of this type will be displayed as milestones.
         self.milestoneType = self.config.get(self.cfgSection, 'milestone_type')
 
@@ -141,17 +191,23 @@ class TracPM(Component):
         self.dbDateFormat = str(self.config.get(self.cfgSection, 'date_format'))
 
 
-    # Return True if all of the listed fields are configured, False
-    # otherwise
-    def isCfg(self, fields):
-        if type(fields) == type([]):
-            for f in fields:
-                if f not in self.fields:
+    # Return True if all of the listed PM data items ('pred',
+    # 'parent', etc.) have sources configured, False otherwise
+    def isCfg(self, sources):
+        if type(sources) == type([]):
+            for s in sources:
+                if s not in self.sources:
                     return False
         else:
-            return fields in self.fields
+            return sources in self.sources
 
         return True
+
+    def isField(self, field):
+        return self.isCfg(field) and self.sources[field] in self.fields
+
+    def isRelation(self, field):
+        return self.isCfg(field) and self.sources[field] in self.relations
 
     # Return True if ticket has a non-empty value for field, False
     # otherwise.
@@ -203,14 +259,25 @@ class TracPM(Component):
         return  delta.seconds < 5
         
 
+    # Get the value for a PM field from a ticket
+    def _fieldValue(self, ticket, field):
+        # If the field isn't configured, return None
+        if not self.isCfg(field):
+            return None
+        # If the value comes from a custom field, resolve the field
+        # name through sources and use it to index the ticket.
+        elif self.isField(field):
+            return ticket[self.fields[self.sources[field]]]
+        # If the value comes from a relation, we use the internal
+        # name directly.
+        else:
+            return ticket[field]
+
     # Return the integer ID of the parent ticket
     # 0 if no parent
     # None if parent is not configured
     def parent(self, ticket):
-        if self.isCfg('parent'):
-            return int(ticket[self.fields['parent']])
-        else:
-            return None
+        return self._fieldValue(ticket, 'parent')
 
     # Return list of integer IDs of children.
     # None if parent is not configured.
@@ -220,18 +287,20 @@ class TracPM(Component):
     # Return a list of integer ticket IDs for immediate precedessors
     # for ticket or an empty list if there are none.
     def predecessors(self, ticket):
-        if self.isCfg('pred'):
-            return ticket[self.fields['pred']]
-        else:
+        value = self._fieldValue(ticket, 'pred') 
+        if value == None:
             return []
+        else:
+            return value
 
     # Return a list of integer ticket IDs for immediate successors for
     # ticket or an empty list if there are none.
     def successors(self, ticket):
-        if self.isCfg('succ'):
-            return ticket[self.fields['succ']]
-        else:
+        value = self._fieldValue(ticket, 'succ')
+        if value == None:
             return []
+        else:
+            return value
 
     # Return computed start for ticket
     def start(self, ticket):
@@ -342,14 +411,41 @@ class TracPM(Component):
             node_list = [format % tid for tid in origins]
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            # FIXME - is this portable across DBMSs?
-            cursor.execute("SELECT t.id "
-                           "FROM ticket AS t "
-                           "LEFT OUTER JOIN ticket_custom AS p ON "
-                           "    (t.id=p.ticket AND p.name='%s') "
-                           "WHERE p.value IN (%s)" % 
-                           (field,
-                            "'" + "','".join(node_list) + "'"))
+            # Query from external table
+            if self.isRelation(field):
+                relation = self.relations[self.sources[field]]
+                # Forward query
+                if field == relation[0]:
+                    (f1, f2, tbl, src, dst) = relation
+                # Reverse query
+                elif field == relation[1]:
+                    (f1, f2, tbl, dst, src) = relation
+                else:
+                    raise TracError('Relation configuration error for %s' % 
+                                    field)
+
+                # FIXME - is this portable across DBMSs?
+                cursor.execute("SELECT %s FROM %s WHERE %s IN (%s)" %
+                               (dst, tbl, src,
+                                "'" + "','".join(node_list) + "'"))
+            # Query from custom field
+            elif self.isField(field):
+                fieldName = self.fields[self.sources[field]]
+                # FIXME - is this portable across DBMSs?
+                cursor.execute("SELECT t.id "
+                               "FROM ticket AS t "
+                               "LEFT OUTER JOIN ticket_custom AS p ON "
+                               "    (t.id=p.ticket AND p.name='%s') "
+                               "WHERE p.value IN (%s)" % 
+                               (fieldName,
+                                "'" + "','".join(node_list) + "'"))
+            # We really can't get here because the callers test for
+            # isCfg() but it's nice form to have an else.
+            else:
+                raise TracError('Cannot expand %s; '
+                                'Not configured as a field or relation.' %
+                                field)
+                
             nodes = ['%s' % row[0] for row in cursor] 
 
             return origins + _expand(nodes, field, format)
@@ -370,8 +466,8 @@ class TracPM(Component):
                     nodes = options['root'].split('|')
 
                 id += '|'.join(_expand(nodes, 
-                                        self.fields['parent'], 
-                                        self.parent_format))
+                                       'parent',
+                                       self.parent_format))
 
         if options['goal']:
             if not self.isCfg('succ'):
@@ -386,9 +482,7 @@ class TracPM(Component):
                 else:
                     nodes = options['goal'].split('|')
 
-                id += '|'.join(_expand(nodes, 
-                                        self.fields['succ'], 
-                                        '%s'))
+                id += '|'.join(_expand(nodes, 'succ', '%s'))
 
         return id
 
@@ -418,7 +512,7 @@ class TracPM(Component):
 
         # A milestone has no children or parent
         if self.isCfg('parent'):
-            ticket[self.fields['parent']] = '0'
+            ticket[self.fields['parent']] = 0
             ticket['children'] = []
         else:
             ticket['children'] = None
@@ -485,14 +579,24 @@ class TracPM(Component):
                     for t in tickets:
                         if not t['children'] and \
                                 t['milestone'] == row[0] and \
-                                t[self.fields['succ']] == []:
-                            t[self.fields['succ']] = [ str(id) ]
+                                self.successors(t) == []:
+                            if self.isField('succ'):
+                                t[self.fields[self.sources['succ']]] = \
+                                    [ str(id) ]
+                            else:
+                                t['succ'] = [ str(id) ]
                             pred.append(str(t['id']))
-                    milestoneTicket[self.fields['pred']] = pred
+                    if self.isField('pred'):
+                        milestoneTicket[self.fields[self.sources['pred']]] = \
+                            pred
+                    else:
+                        milestoneTicket['pred'] = pred
 
                 # A Trac milestone has no successors
-                if self.isCfg('succ'):
-                    milestoneTicket[self.fields['succ']] = []
+                if self.isField('succ'):
+                    milestoneTicket[self.fields[self.sources['succ']]] = []
+                elif self.isRelation('succ'):
+                    milestoneTicket['succ'] = []
                 
                 tickets.append(milestoneTicket)
 
@@ -508,49 +612,107 @@ class TracPM(Component):
     #
     # Milestones for the tickets are added as pseudo-tickets.
     def postQuery(self, options, tickets):
+        # Handle custom fields.
+
+        # Clean up custom fields which might be null ('--') vs. blank ('')
         for t in tickets:
-            # Clean up custom fields which might be null ('--') vs. blank ('')
             nullable = [ 'pred', 'succ', 
                          'start', 'finish', 
                          'parent', 
                          'worked', 'estimate', 'percent' ]
             for field in nullable:
-                if self.isCfg(field):
-                    if self.fields[field] not in t:
+                if self.isField(field):
+                    fieldName = self.fields[self.sources[field]]
+                    if fieldName not in t:
                         raise TracError('%s is not a custom ticket field' %
-                                        self.fields[field])
+                                        fieldName)
                 
-                    if t[self.fields[field]] == '--':
-                        t[self.fields[field]] = ''
+                    if t[fieldName] == '--':
+                        t[fieldName] = ''
 
-            # Clean up parent field, build list of children
-            if self.isCfg('parent'):
+        # Normalize parent field values.  All parent values must be
+        # done before building child lists, below.
+        if self.isCfg('parent'):
+            for t in tickets:
                 # ChildTicketsPlugin puts '#' at the start of the
                 # parent field.  Strip it for simplicity.
-                parent = t[self.fields['parent']]
+                fieldName = self.fields[self.sources['parent']]
+                parent = t[fieldName]
                 if len(parent) > 0 and parent[0] == '#':
-                    t[self.fields['parent']] = parent[1:]
+                    t[fieldname] = parent[1:]
 
-                # An empty parent default so 0 (no such ticket)
-                if t[self.fields['parent']] == '':
-                    t[self.fields['parent']] = '0'
-                
-                t['children'] = [c['id'] for c in tickets \
-                                     if c[self.fields['parent']] == \
-                                     str(t['id'])]
-            else:
+                # An empty parent default to 0 (no such ticket)
+                if t[fieldName] == '':
+                    t[fieldName] = 0
+                # Otherwise, convert the string to an integer
+                else:
+                    t[fieldName] = int(t[fieldName])
+                        
+        # Build child lists
+        for t in tickets:
+            if not self.isCfg('parent'):
                 t['children'] = None
+            elif self.isField('parent'):
+                t['children'] = [c['id'] for c in tickets \
+                                     if c[fieldName] == t['id']]
 
+        # Clean up successor, predecessor lists
         for t in tickets:
             lists = [ 'pred', 'succ' ]
             for field in lists:
-                if self.isCfg(field):
-                    if t[self.fields[field]] == '':
-                        t[self.fields[field]] = []
+                if self.isField(field):
+                    fieldName = self.fields[self.sources[field]]
+                    if t[fieldName] == '':
+                        t[fieldName] = []
                     else:
-                        t[self.fields[field]] = \
+                        t[fieldName] = \
                             [int(s.strip()) \
-                                 for s in t[self.fields[field]].split(',')]
+                                 for s in t[fieldName].split(',')]
+
+        # Fill in relations
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        # Get all the IDs we care about relations from.
+        ids = ['%s' % t['id'] for t in tickets]
+
+        # For each configured relation ...
+        for r in self.relations:
+            # Get the elements of the relationship ...
+            (f1, f2, tbl, src, dst) = self.relations[r]
+            # FIXME - is this portable across DBMSs?
+            idList = "'" + "','".join(ids) + "'"
+            # ... query all relations with the desired IDs on either end ...
+            cursor.execute("SELECT %s, %s FROM %s "
+                           "WHERE %s IN (%s)" 
+                           " OR %s IN (%s)" %
+                           (src, dst, tbl, src, idList, dst, idList))
+
+            # ... quickly build a local cache of the forward and
+            # reverse links ...
+            fwd = {}
+            rev = {}
+            for row in cursor:
+                (src, dst) = row
+                if dst in fwd:
+                    fwd[dst].append(src)
+                else:
+                    fwd[dst] = [ src ]
+                    
+                if src in rev:
+                    rev[src].append(dst)
+                else:
+                    rev[src] = [ dst ]
+
+            # ... and put the links in the tickets.
+            for t in tickets:
+                if t['id'] in fwd:
+                    t[f1] = fwd[t['id']]
+                else:
+                    t[f1] = []
+                if t['id'] in rev:
+                    t[f2] = rev[t['id']]
+                else:
+                    t[f2] = []
 
         self._add_milestones(options, tickets)
 
