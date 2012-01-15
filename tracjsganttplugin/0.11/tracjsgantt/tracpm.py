@@ -417,9 +417,11 @@ class TracPM(Component):
             ticket[self.fields['percent']] = 0
 
         # A milestone has no children or parent
-        ticket['children'] = None
         if self.isCfg('parent'):
             ticket[self.fields['parent']] = '0'
+            ticket['children'] = []
+        else:
+            ticket['children'] = None
 
         # Place holder.
         ticket['link'] = ''
@@ -960,6 +962,81 @@ class CalendarScheduler(Component):
 
             return t['calc_finish']
 
+        # Augment tickets in a scheduler-specific way to make
+        # scheduling easier 
+        #
+        # If a parent task has a dependency, copy it to its children.
+        def _augmentTickets(ticketsByID):
+            # Indexed by ticket ID, lists ticket's descendants
+            desc = {}
+            # Build descendant look up recursively.
+            def buildDesc(tid):
+                # A ticket is in its own "family" tree.
+                desc[tid] = [ tid ]
+                # For each child, add its subtree.
+                for cid in self.pm.children(ticketsByID[tid]):
+                    desc[tid] += buildDesc(cid)
+                return desc[tid]
+            
+            # Find the roots of the trees
+            roots = []
+            for tid in ticketsByID:
+                if self.pm.parent(ticketsByID[tid]) == 0:
+                    roots.append(tid)
+
+            # Build the descendant tree for each root (and its descendants)
+            for tid in roots:
+                buildDesc(tid)
+                
+            # Propagate dependencies from parent to descendants (first
+            # children, then recurse) 
+            def propagateDependencies(pid):
+                parent = ticketsByID[pid]
+                # Process predecessors and successors
+                for fieldFunc in [ self.pm.predecessors, 
+                                   self.pm.successors ]:
+                    # Set functions to add dependency and its reverse
+                    # between two tickets.
+                    fwd = fieldFunc
+                    if fwd == self.pm.predecessors:
+                        rev = self.pm.successors
+                    else:
+                        rev = self.pm.predecessors
+
+                    # For each related ticket, if any
+                    for tid in fieldFunc(parent):
+                        # If the other ticket is in the list we're
+                        # working on and not another descendant of the
+                        # same parent.
+                        if tid in ticketsByID and \
+                                tid not in desc[pid]:
+                            # For each child, if any
+                            for cid in self.pm.children(parent):
+                                # If the child is in the list we're
+                                # working on
+                                if cid in ticketsByID:
+                                    # Add parent's dependency to this
+                                    # child
+                                    fwd(ticketsByID[cid]).append(tid)
+                                    rev(ticketsByID[tid]).append(cid)
+
+                                    # Recurse to lower-level descendants
+                                    propagateDependencies(cid)
+
+
+            # For each ticket to schedule
+            for tid in ticketsByID:
+                # If it has no parent
+                if self.pm.parent(ticketsByID[tid]) == 0:
+                    # Propagate depedencies down to its children
+                    # (which recurses to update other descendants)
+                    propagateDependencies(tid)
+
+        # Main schedule processing
+
+        # If there is a parent/child relationship configured
+        if self.pm.isCfg('parent'):
+            _augmentTickets(ticketsByID)
 
         for id in ticketsByID:
             if options['schedule'] == 'alap':
