@@ -2,7 +2,7 @@
 """
 License: BSD
 
-(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2009-2012 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import unittest
@@ -72,6 +72,7 @@ class RpcTicketTestCase(TracRpcTestCase):
         # Clean up
         os.unlink(delete_plugin)
         rpc_testenv.restart()
+        self.assertEquals(0, self.admin.ticket.delete(tid))
 
     def test_FineGrainedSecurity(self):
         self.assertEquals(1, self.admin.ticket.create('abc', '123', {}))
@@ -128,6 +129,31 @@ class RpcTicketTestCase(TracRpcTestCase):
         finally:
             self.admin.ticket.delete(tid1)
             self.admin.ticket.delete(tid2)
+
+    def test_query_group_order_col(self):
+        t1 = self.admin.ticket.create("1", "",
+                        {'type': 'enhancement', 'owner': 'A'})
+        t2 = self.admin.ticket.create("2", "", {'type': 'task', 'owner': 'B'})
+        t3 = self.admin.ticket.create("3", "", {'type': 'defect', 'owner': 'A'})
+        # order
+        self.assertEquals([3,1,2], self.admin.ticket.query("order=type"))
+        self.assertEquals([1,3,2], self.admin.ticket.query("order=owner"))
+        self.assertEquals([2,1,3],
+                        self.admin.ticket.query("order=owner&desc=1"))
+        # group
+        self.assertEquals([1,3,2], self.admin.ticket.query("group=owner"))
+        self.assertEquals([2,1,3],
+                        self.admin.ticket.query("group=owner&groupdesc=1"))
+        # group + order
+        self.assertEquals([2,3,1],
+                self.admin.ticket.query("group=owner&groupdesc=1&order=type"))
+        # col should just be ignored
+        self.assertEquals([3,1,2],
+                self.admin.ticket.query("order=type&col=status&col=reporter"))
+        # clean
+        self.assertEquals(0, self.admin.ticket.delete(t1))
+        self.assertEquals(0, self.admin.ticket.delete(t2))
+        self.assertEquals(0, self.admin.ticket.delete(t3))
 
     def test_query_special_character_escape(self):
         # Note: This test only passes when using Trac 0.12+
