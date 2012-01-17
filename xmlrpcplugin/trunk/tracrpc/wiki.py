@@ -13,7 +13,7 @@ from trac.attachment import Attachment
 from trac.core import *
 from trac.mimeview import Context
 from trac.resource import Resource, ResourceNotFound
-from trac.wiki.api import WikiSystem
+from trac.wiki.api import WikiSystem, IWikiPageManipulator
 from trac.wiki.model import WikiPage
 from trac.wiki.formatter import wiki_to_html, format_to_html
 
@@ -27,6 +27,8 @@ class WikiRPC(Component):
     [http://www.jspwiki.org/Wiki.jsp?page=WikiRPCInterface2 WikiRPC API]. """
 
     implements(IXMLRPCHandler)
+
+    manipulators = ExtensionPoint(IWikiPageManipulator)
 
     def __init__(self):
         self.wiki = WikiSystem(self.env)
@@ -55,6 +57,18 @@ class WikiRPC(Component):
         yield (None, ((bool, str),), self.deleteAttachment)
         yield ('WIKI_VIEW', ((list, str),), self.listLinks)
         yield ('WIKI_VIEW', ((str, str),), self.wikiToHtml)
+
+    def _fetch_page(self, req, pagename, version=None):
+        # Helper for getting the WikiPage that performs basic checks
+        page = WikiPage(self.env, pagename, version)
+        req.perm(page.resource).require('WIKI_VIEW')
+        if page.exists:
+            return page
+        else:
+            msg = 'Wiki page "%s" does not exist' % pagename
+            if version is not None:
+                msg += ' at version %s' % version
+            raise ResourceNotFound(msg)
 
     def _page_info(self, name, when, author, version, comment):
         return dict(name=name, lastModified=when,
@@ -87,22 +101,17 @@ class WikiRPC(Component):
 
     def getPage(self, req, pagename, version=None):
         """ Get the raw Wiki text of page, latest version. """
-        page = WikiPage(self.env, pagename, version)
-        req.perm(page.resource).require('WIKI_VIEW')
-        if page.exists:
-            return page.text
-        else:
-            msg = 'Wiki page "%s" does not exist' % pagename
-            if version is not None:
-                msg += ' at version %s' % version
-            raise ResourceNotFound(msg)
+        page = self._fetch_page(req, pagename, version)
+        return page.text
 
     def getPageHTML(self, req, pagename, version=None):
         """ Return page in rendered HTML, latest version. """
-        text = self.getPage(req, pagename, version)
-        resource = Resource('wiki', pagename, version)
-        context = Context.from_request(req, resource, absurls=True)
-        html = format_to_html(self.env, context, text)
+        page = self._fetch_page(req, pagename, version)
+        fields = {'text': page.text}
+        for manipulator in self.manipulators:
+            manipulator.prepare_wiki_page(req, page, fields)
+        context = Context.from_request(req, page.resource, absurls=True)
+        html = format_to_html(self.env, context, fields['text'])
         return '<html><body>%s</body></html>' % html
 
     def getAllPages(self, req):

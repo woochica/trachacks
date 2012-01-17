@@ -84,6 +84,26 @@ class RpcWikiTestCase(TracRpcTestCase):
         markup_2 = self.admin.wiki.getPageHTML('ImageTest')
         self.assertEquals(markup_2, markup_1)
 
+    def test_getPageHTMLWithManipulator(self):
+        self.admin.wiki.putPage('FooBar', 'foo bar', {})
+        # Enable wiki manipulator
+        plugin = os.path.join(rpc_testenv.tracdir, 'plugins', 'Manipulator.py')
+        open(plugin, 'w').write(
+        "from trac.core import *\n"
+        "from trac.wiki.api import IWikiPageManipulator\n"
+        "class WikiManipulator(Component):\n"
+        "    implements(IWikiPageManipulator)\n"
+        "    def prepare_wiki_page(self, req, page, fields):\n"
+        "        fields['text'] = 'foo bar baz'\n"
+        "    def validate_wiki_page(req, page):\n"
+        "        return []\n")
+        rpc_testenv.restart()
+        # Perform tests
+        self.assertEquals('<html><body><p>\nfoo bar baz\n</p>\n</body></html>',
+                          self.admin.wiki.getPageHTML('FooBar'))
+        # Remove plugin and restart
+        os.unlink(plugin)
+        rpc_testenv.restart()
 
 def test_suite():
     return unittest.makeSuite(RpcWikiTestCase)
