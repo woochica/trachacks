@@ -51,23 +51,26 @@ class CustomFieldAdminPage(Component):
         
         # Detail view?
         if customfield:
-            exists = [True for cf in cfapi.get_custom_fields() if cf['name'] == customfield]
-            if not exists:
+            cf = None
+            for a_cf in cfapi.get_custom_fields():
+                if a_cf['name'] == customfield:
+                    cf = a_cf
+                    break
+            if not cf:
                 raise TracError("Custom field %s does not exist." % customfield)
             if req.method == 'POST':
                 if req.args.get('save'):
-                    cfdict = _customfield_from_req(self, req) 
-                    cfapi.update_custom_field(cfdict)
+                    cf.update(_customfield_from_req(self, req)) 
+                    cfapi.update_custom_field(cf)
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(cat, page))
-            currentcf = cfapi.get_custom_fields({'name': customfield})
-            if currentcf.has_key('options'):
+            if cf.has_key('options'):
                 optional_line = ''
-                if currentcf.get('optional', False):
+                if cf.get('optional', False):
                     optional_line = "\n\n"
-                currentcf['options'] = optional_line + "\n".join(currentcf['options'])
-            cfadmin['customfield'] = currentcf
+                cf['options'] = optional_line + "\n".join(cf['options'])
+            cfadmin['customfield'] = cf
             cfadmin['display'] = 'detail'
         else:
             if req.method == 'POST':
