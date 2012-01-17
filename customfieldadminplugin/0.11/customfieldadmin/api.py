@@ -35,6 +35,9 @@ class CustomFields(Component):
     
     implements()
     
+    config_options = ['label', 'value', 'options', 'cols', 'rows',
+                         'order', 'format']
+    
     def get_custom_fields(self, customfield=None):
         """ Returns the custom fields from TicketSystem component.
         Use a cfdict with 'name' key set to find a specific custom field only.
@@ -129,8 +132,13 @@ class CustomFields(Component):
             for field in cfs:
                 if field['order'] > order_to_delete:
                     self.config.set('ticket-custom', field['name']+'.order', field['order'] -1 )
-        # Remove any data for the custom field (covering all bases)
+        supported_options = [customfield['name']] + \
+            [customfield['name']+'.'+opt for opt in self.config_options]
         for option, _value in self.config.options('ticket-custom'):
+            if modify and not option in supported_options:
+                # Only delete supported options when modifying
+                # http://trac-hacks.org/ticket/8188
+                continue
             if option == customfield['name'] \
                     or option.startswith(customfield['name'] + '.'):
                 self.config.remove('ticket-custom', option)

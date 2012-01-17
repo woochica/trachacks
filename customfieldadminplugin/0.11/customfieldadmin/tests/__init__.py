@@ -9,8 +9,9 @@ from unittest import TestSuite, makeSuite
 
 def test_suite():
     suite = TestSuite()
-    import customfieldadmin.tests.web_ui
-    suite.addTest(makeSuite(
-                customfieldadmin.tests.web_ui.CustomFieldAdminPageTestCase))
+    from customfieldadmin.tests import api
+    suite.addTest(makeSuite(api.CustomFieldApiTestCase))
+    from customfieldadmin.tests import web_ui
+    suite.addTest(makeSuite(web_ui.CustomFieldAdminPageTestCase))
     return suite
 
