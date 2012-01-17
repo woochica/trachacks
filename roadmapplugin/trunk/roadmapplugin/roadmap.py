@@ -1,3 +1,16 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010 daveappendix
+# Copyright (C) 2010-2012 Franz Mayer <franz.mayer@gefasoft.de>
+#
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <franz.mayer@gefasoft.de> wrote this file.  As long as you retain this 
+# notice you can do whatever you want with this stuff. If we meet some day, 
+# and you think this stuff is worth it, you can buy me a beer in return. 
+# Franz Mayer
+#
+# Author: Franz Mayer <franz.mayer@gefasoft.de>
+
 from trac.core import *
 from genshi.filters import Transformer
 from genshi.builder import tag
@@ -8,22 +21,31 @@ from trac.util.translation import domain_functions
 import pkg_resources
 import re
 
-#from trac.ticket.model import *
 
 _, tag_, N_, add_domain = domain_functions('roadmapplugin', '_', 'tag_', 'N_', 'add_domain')
 
 
-# copied from RoadmapFilterPlugin.py, see https://trac-hacks.org/wiki/RoadmapFilterPlugin
 def get_session_key(name):
         return "roadmap.filter.%s" % name
-# copied from RoadmapFilterPlugin.py, see https://trac-hacks.org/wiki/RoadmapFilterPlugin
+
 class FilterRoadmap(Component):
     """Filters roadmap milestones.
+
+Existing Trac convention says that the following prefixes on the filter 
+do different things:
+ - `~` contains
+ - `^` starts with
+ - `$` ends with
+
+This plugin uses same convention.
+
+For more information about this plugin, see 
+[http://trac-hacks.org/wiki/RoadmapPlugin trac-hacks page].
 
 Mainly copied from [https://trac-hacks.org/wiki/RoadmapFilterPlugin RoadmapFilterPlugin]
 and modified a bit.
 
-Thanks to daveappendix """
+Thanks to [http://trac-hacks.org/wiki/daveappendix daveappendix]."""
     implements(IRequestFilter, ITemplateStreamFilter)
 
     def _session(self, req, name, default):
@@ -162,11 +184,13 @@ Thanks to daveappendix """
     def _toggleBox(self, req, label, name, default):
         if self._session(req, name, default) == '1':
             checkbox = tag.input(type='checkbox',
+                                id=name,
                                 name=name,
                                 value='true',
                                 checked='checked')
         else:
             checkbox = tag.input(type='checkbox',
+                                id=name,
                                 name=name,
                                 value='true')
         return checkbox + ' ' + tag.label(label, for_=name)
@@ -179,16 +203,15 @@ Thanks to daveappendix """
                          value='true')
 
     def _user_field_input(self, req):
-        return tag.div(self._hackedHiddenField()
+        add_fields = tag.div(self._hackedHiddenField()
                        + self._toggleBox(req,
                                          _('Show milestone descriptions'),
                                          'show_descriptions',
                                          'true')
-                       + tag.br()
-                       + self._filterBox(req, _('Filter:  '), "inc_milestones")
-#                       + tag.br()
-#                       + self._filterBox(req, "Exclude: ", "exc_milestones")
-                       )   
+                       )
+        add_fields += tag.br()
+        add_fields += self._filterBox(req, _('Filter:  '), "inc_milestones")
+        return add_fields
 
 class SortRoadMap(Component):
     """Shows another checkbox in roadmap view, 
