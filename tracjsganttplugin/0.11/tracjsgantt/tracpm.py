@@ -557,13 +557,14 @@ class TracPM(Component):
                                                      'Milestone %s' % row[0],
                                                      row[0])
 
-                # If there's no due date, default to today at close of business
+                # If there's no due date, let the scheduler set it.
                 if self.isCfg('finish'):
-                    ts = row[1] or \
-                        (datetime.now(utc) + 
-                         timedelta(hours=options['hoursPerDay']))
-                    milestoneTicket[self.fields['finish']] = \
-                        format_date(ts, self.dbDateFormat)
+                    ts = row[1]
+                    if ts:
+                        milestoneTicket[self.fields['finish']] = \
+                            format_date(ts, self.dbDateFormat)
+                    else:
+                        milestoneTicket[self.fields['finish']] = ''
 
                     # jsGantt ignores start for a milestone but we use it
                     # for scheduling.
@@ -1167,6 +1168,14 @@ class CalendarScheduler(Component):
 
                     # For each related ticket, if any
                     for tid in fieldFunc(parent):
+                        # FIXME - I think this logic is backwards.
+                        # What we want to do is get the list of
+                        # dependencies for the child that are
+                        # descendants of the common parent and if that
+                        # list isn't empty, skip copying the parent's
+                        # down because a later (earlier) child will
+                        # get that successor (predecessor).
+
                         # If the other ticket is in the list we're
                         # working on and not another descendant of the
                         # same parent.
