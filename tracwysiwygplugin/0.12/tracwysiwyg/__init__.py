@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from fnmatch import fnmatch
 import re
 
 from trac.core import Component, implements
@@ -19,6 +20,11 @@ class WysiwygModule(Component):
     wysiwyg_stylesheets = ListOption('tracwysiwyg', 'wysiwyg_stylesheets',
             doc="""Add stylesheets to the WYSIWYG editor""")
 
+    templates = ListOption('tracwysiwyg', 'templates', doc="""\
+            List of template names that the plugin will show a WYSIWYG editor
+            on each TracWiki textarea. The plugin shows on all pages by
+            default.""")
+
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
@@ -34,14 +40,15 @@ class WysiwygModule(Component):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        if not _is_wysiwyg_enabled(template, self.templates):
+            return template, data, content_type
+
         options = {}
-        options['escapeNewlines'] = False
         if template == 'ticket.html':
             options['escapeNewlines'] = TicketModule(self.env).must_preserve_newlines
 
         if options:
             add_script_data(req, { '_tracwysiwyg': options })
-
         add_link(req, 'tracwysiwyg.base', req.href() or '/')
         stylesheets = ['chrome/common/css/trac.css', 'chrome/tracwysiwyg/editor.css']
         stylesheets += self.wysiwyg_stylesheets
@@ -51,7 +58,7 @@ class WysiwygModule(Component):
         add_script(req, 'tracwysiwyg/wysiwyg.js')
         add_script(req, 'tracwysiwyg/wysiwyg-load.js')
 
-        return (template, data, content_type)
+        return template, data, content_type
 
 
 def _expand_filename(req, filename):
@@ -64,3 +71,13 @@ def _expand_filename(req, filename):
     return req.href(filename)
 
 
+def _is_wysiwyg_enabled(template, patterns):
+    if not patterns:
+        return True
+    for pattern in patterns:
+        positive = not pattern.startswith('!')
+        if not positive:
+            pattern = pattern[1:]
+        if fnmatch(template, pattern):
+            return positive
+    return False

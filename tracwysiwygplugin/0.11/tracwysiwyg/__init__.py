@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from fnmatch import fnmatch
 import re
 
 from genshi.builder import tag
@@ -22,6 +23,11 @@ class WysiwygModule(Component):
     wysiwyg_stylesheets = ListOption('tracwysiwyg', 'wysiwyg_stylesheets',
             doc="""Add stylesheets to the WYSIWYG editor""")
 
+    templates = ListOption('tracwysiwyg', 'templates', doc="""\
+            List of template names that the plugin will show a WYSIWYG editor
+            on each TracWiki textarea. The plugin shows on all pages by
+            default.""")
+
     # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
@@ -37,6 +43,9 @@ class WysiwygModule(Component):
 
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
+        if not _is_wysiwyg_enabled(template, self.templates):
+            return template, data, content_type
+
         add_link(req, 'tracwysiwyg.base', req.href() or '/')
         stylesheets = ['chrome/common/css/trac.css', 'chrome/tracwysiwyg/editor.css']
         stylesheets += self.wysiwyg_stylesheets
@@ -46,10 +55,13 @@ class WysiwygModule(Component):
         add_script(req, 'tracwysiwyg/wysiwyg.js')
         add_script(req, 'tracwysiwyg/wysiwyg-load.js')
 
-        return (template, data, content_type)
+        return template, data, content_type
 
     # ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
+        if not _is_wysiwyg_enabled(filename, self.templates):
+            return stream
+
         options = {}
         if filename == 'ticket.html':
             options['escapeNewlines'] = _preserve_newlines(self.env)
@@ -122,3 +134,13 @@ def _to_json(value):
     raise TypeError, 'Unsupported type "%s"' % type(value)
 
 
+def _is_wysiwyg_enabled(template, patterns):
+    if not patterns:
+        return True
+    for pattern in patterns:
+        positive = not pattern.startswith('!')
+        if not positive:
+            pattern = pattern[1:]
+        if fnmatch(template, pattern):
+            return positive
+    return False
