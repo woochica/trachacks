@@ -26,20 +26,21 @@ class ShowWhen(Component):
         yield 'ShowWhen'
 
     def get_macro_description(self, name):
-        return """Shows content in spacified time range. (In Japanese/KANJI) 指定した時間帯にコンテンツを表示します。[[BR]]
-コンテンツはWikiフォーマットされます。
-time from, time to, and content can specify in wiki-table style as follows:
+        return """Shows content in spacified time range. 
+time from, time to, and content will be specified like [wiki:WikiFormatting#SimpleTables wiki-table style] as follows:
 {{{
     {{{
     #!ShowWhen
-    || 2012-01-04T00:00:00 || 2012-01-04T23:59:59 || [[Image(wiki:SandBox:yutori01.gif)]] Wednesday is Refresh-day. go home early!
-    || 2012-01-11T00:00:00 || 2012-01-11T23:59:59 || [[Image(wiki:SandBox:yutori01.gif)]] 水曜日はリフレッシュデーです。早く帰ろう!
-    || 2012-01-18T00:00:00 || 2012-01-18T23:59:59 || [[Image(wiki:SandBox:yutori01.gif)]] 水曜日はリフレッシュデーです。メリハリをつけよう!
-    || 2012-01-20T00:00:00 || 2012-01-20T23:59:59 || [[Image(wiki:SandBox:yutori01.gif)]] 給料日はリフレッシュデーです。帰って家族の顔を見よう!
-    }}}
+    || 2012-01-04                || 2012-01-04T23:59:59       || [[Image(wiki:SandBox:yutori01.gif)]] Wednesday is Refresh-day. go home early!
+    || 2012-07-13T00:00:00+09:00 || 2012-07-13T23:59:59+09:00 || [[Image(wiki:SandBox:birthday.gif)]] Happy Birthday, matobaa!
+    || 2012-11-13T22:10:54Z      || 2012-11-13T22:14:56Z      || Look at the Moon! Total Eclipse!
+     }}}
 }}}
 Scan from top, a first matched line will be shown.[[BR]]
-上から走査し、条件を満たす最初の行が表示されます。
+datetime string should be specified as RFC:3339 5.6 Internet date/time format. If no timezone is specified, use server-default.[[BR]]
+[[BR]] (In Japanese/KANJI) [wiki:WikiFormatting#SimpleTables 表形式]で指定した時間帯にコンテンツを表示します。コンテンツはWikiフォーマットされます。
+表は上から走査され、条件を満たす最初の行が表示されます。[[BR]]
+日付書式は RFC:3339 の 5.6 Internet date/time Format で指定します。タイムゾーンを指定しない場合、サーバのデフォルトタイムゾーンを用います。
 """
 
     def expand_macro(self, formatter, name, content, args=None):
