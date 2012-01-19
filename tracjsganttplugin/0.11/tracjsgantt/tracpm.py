@@ -1152,7 +1152,15 @@ class CalendarScheduler(Component):
                 buildDesc(tid)
                 
             # Propagate dependencies from parent to descendants (first
-            # children, then recurse) 
+            # children, then recurse).
+            # 
+            # We don't copy every dependency to every child because
+            # several children may form a sequence and thus be
+            # affected by the dependency indirectly.  The first child
+            # in the sequence gets the parent's predecessors and the
+            # last child gets the parent's successors.  Then because
+            # of the children's dependence on each other, the parent
+            # dependencies affect all the children in the sequence.
             def propagateDependencies(pid):
                 parent = ticketsByID[pid]
                 # Process predecessors and successors
@@ -1168,28 +1176,27 @@ class CalendarScheduler(Component):
 
                     # For each related ticket, if any
                     for tid in fieldFunc(parent):
-                        # FIXME - I think this logic is backwards.
-                        # What we want to do is get the list of
-                        # dependencies for the child that are
-                        # descendants of the common parent and if that
-                        # list isn't empty, skip copying the parent's
-                        # down because a later (earlier) child will
-                        # get that successor (predecessor).
-
                         # If the other ticket is in the list we're
-                        # working on and not another descendant of the
-                        # same parent.
-                        if tid in ticketsByID and \
-                                tid not in desc[pid]:
+                        # working on
+                        if tid in ticketsByID:
                             # For each child, if any
                             for cid in self.pm.children(parent):
                                 # If the child is in the list we're
                                 # working on
                                 if cid in ticketsByID:
-                                    # Add parent's dependency to this
-                                    # child
-                                    fwd(ticketsByID[cid]).append(tid)
-                                    rev(ticketsByID[tid]).append(cid)
+                                    # Does child depend on any "cousins"
+                                    # (other descendants)?
+                                    child = ticketsByID[cid]
+                                    cousins = [did for did in fieldFunc(child) \
+                                                   if did in desc[pid]]
+                                    # If not, this is the end of the
+                                    # line and we have to copy the
+                                    # parent's dependencies down.
+                                    if cousins == []:
+                                        # Add parent's dependency to this
+                                        # child
+                                        fwd(ticketsByID[cid]).append(tid)
+                                        rev(ticketsByID[tid]).append(cid)
 
                                     # Recurse to lower-level descendants
                                     propagateDependencies(cid)
