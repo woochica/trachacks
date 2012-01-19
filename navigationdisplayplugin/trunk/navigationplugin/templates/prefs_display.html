@@ -1,0 +1,30 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+	  i18n:domain="navigationplugin">
+  <xi:include href="prefs.html" />
+  <head>
+    <title>Date &amp; Time</title>
+  </head>
+  <body>
+  <table>
+  	<tr>
+  		<td>Display:</td>
+  		<td>
+	  		<select name="display_navigation">
+	  		<py:for each="row in choices">
+	  			<option value="${row}" selected="${selected == row and 'selected' or None}">${row}</option>
+	  		</py:for>
+	  		</select>
+  		</td>
+	</tr>
+	<tr>
+  		<td colspan="2"><i><b>Note:</b> System default is <b>${system_default}</b></i></td>
+  	</tr>
+  </table>
+  </body>
+</html>

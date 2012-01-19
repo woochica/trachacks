@@ -1,0 +1,47 @@
+#banner {
+	background-color: #ffffff;
+    position: fixed;
+    top: 0;
+	left: 0;
+	z-index: 100;
+	margin: 0px;
+	padding: 0px;
+	padding-bottom: 5px;
+	clear: both;
+	width: 100%;
+}
+
+#mainnav {
+    background-color: #ffffff;
+    position:fixed;
+	left: 0;
+	z-index:100;
+	margin: 0px;
+	padding: 0px;
+	width: 100%;
+	text-align: right;
+	clear: both;
+}
+
+#ctxtnav {
+    background-color: #ffffff;
+    position: fixed;
+	left: 0;
+	z-index:100;
+	margin: 0px;
+	padding: 0px;
+	padding-top: 5px;
+	margin-right: 0.5em;
+	width: 100%;
+	text-align: right;
+	clear: both;
+}
+
+/*
+#content {
+	top: 105px;
+}
+*/
+#footer {
+	display: None;
+}
