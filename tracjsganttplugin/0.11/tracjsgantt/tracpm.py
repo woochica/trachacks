@@ -583,10 +583,10 @@ class TracPM(Component):
                                 self.successors(t) == []:
                             if self.isField('succ'):
                                 t[self.fields[self.sources['succ']]] = \
-                                    [ str(id) ]
+                                    [ id ]
                             else:
-                                t['succ'] = [ str(id) ]
-                            pred.append(str(t['id']))
+                                t['succ'] = [ id ]
+                            pred.append(t['id'])
                     if self.isField('pred'):
                         milestoneTicket[self.fields[self.sources['pred']]] = \
                             pred
