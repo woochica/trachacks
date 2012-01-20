@@ -324,12 +324,13 @@ class NoticeManagerAdminPage(Component):
             	continue
             cursor.execute("UPDATE session_attribute SET value=%s "
                        "WHERE name=%s AND sid=%s AND authenticated=1",
-                       (value, key, username))
+                       (value.decode('utf-8'), key.decode('utf-8'), username.decode('utf-8')))
             if not cursor.rowcount:
                 cursor.execute("INSERT INTO session_attribute "
                            "(sid,authenticated,name,value) "
                            "VALUES (%s,1,%s,%s)",
-                           (username, key, value))
+                           (username.decode('utf8'), key.decode('utf-8'), 
+				value.decode('utf-8')))
 	db.commit()
 
     def _rm_user(self, req, userinfos, groupinfos):
