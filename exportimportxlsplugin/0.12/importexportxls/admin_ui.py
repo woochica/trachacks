@@ -137,7 +137,6 @@ class ImportExportAdminPanel(Component):
             settings['components'] = [m.name for m in model.Component.select(self.env)]
             settings['status'] = [m.name for m in model.Status.select(self.env)]
             settings['resolutions'] = [m.name for m in model.Resolution.select(self.env)]
-        settings['endofline'] = self.config.get('import-export-xls', 'endofline', 'LF')
         settings['defaultfields'] = defaultfields
         settings['customfields'] = customfields
         settings['formats'] = self.formats
@@ -289,23 +288,41 @@ class ImportExportAdminPanel(Component):
             c += 1
         
         constraints = {}
-        if req.args.get('filter.type') and req.args.get('filter.type') != '' :
-            constraints['type'] = [ req.args['filter.type'] ]
+        if req.args.get('filter.type') and len(req.args['filter.type']) > 0 :
+            if type( req.args['filter.type'] ) == list :
+                constraints['type'] = req.args['filter.type']
+            else:
+                constraints['type'] = [ req.args['filter.type'] ]
         
-        if req.args.get('filter.version') and req.args.get('filter.version') != '' :
-            constraints['version'] = [ req.args['filter.version'] ]
+        if req.args.get('filter.version') and len(req.args['filter.version']) > 0 :
+            if type( req.args['filter.version'] ) == list :
+                constraints['version'] = req.args['filter.version']
+            else:
+                constraints['version'] = [ req.args['filter.version'] ]
         
-        if req.args.get('filter.milestone') and req.args.get('filter.milestone') != '' :
-            constraints['milestone'] = [ req.args['filter.milestone'] ]
+        if req.args.get('filter.milestone') and len(req.args['filter.milestone']) > 0 :
+            if type( req.args['filter.milestone'] ) == list :
+                constraints['milestone'] = req.args['filter.milestone']
+            else:
+                constraints['milestone'] = [ req.args['filter.milestone'] ]
         
-        if req.args.get('filter.component') and req.args.get('filter.component') != '' :
-            constraints['component'] = [ req.args['filter.component'] ]
+        if req.args.get('filter.component') and len(req.args['filter.component']) > 0 :
+            if type( req.args['filter.component'] ) == list :
+                constraints['component'] = req.args['filter.component']
+            else:
+                constraints['component'] = [ req.args['filter.component'] ]
         
-        if req.args.get('filter.status') and req.args.get('filter.status') != '' :
-            constraints['status'] = [ req.args['filter.status'] ]
+        if req.args.get('filter.status') and len(req.args['filter.status']) > 0 :
+            if type( req.args['filter.status'] ) == list :
+                constraints['status'] = req.args['filter.status']
+            else:
+                constraints['status'] = [ req.args['filter.status'] ]
         
-        if req.args.get('filter.resolution') and req.args.get('filter.resolution') != '' :
-            constraints['resolution'] = [ req.args['filter.resolution'] ]
+        if req.args.get('filter.resolution') and len(req.args['filter.resolution']) > 0 :
+            if type( req.args['filter.resolution'] ) == list :
+                constraints['resolution'] = req.args['filter.resolution']
+            else:
+                constraints['resolution'] = [ req.args['filter.resolution'] ]
         
         query = Query(self.env, cols=fieldnames, order='id', max=sys.maxint, constraints=constraints)
         results = query.execute(req)

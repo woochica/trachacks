@@ -65,7 +65,7 @@
                   <tr class='added'>
                     <td><input type="checkbox" checked="checked" name="ticket.${tickets.index(t)}" id="ticket.${tickets.index(t)}" value="True" />
                         <script type="text/javascript">added_tickets['ticket.${tickets.index(t)}']='ticket.${tickets.index(t)}';</script></td>
-                    <td><a href="${req.href('ticket', t.id)}" target="_blank">#${t.id}</a></td>
+                    <td>#</td>
                     <td>${t['summary']}</td>
                     ${print_ticket(t)}
                   </tr>

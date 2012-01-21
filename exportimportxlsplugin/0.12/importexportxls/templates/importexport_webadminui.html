@@ -87,42 +87,60 @@
         <fieldset>
             <legend>Export</legend>
             <div>
-                <select name="filter.type">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'type'][0]}" value="" />
-                    <py:for each="type in types">
-                        <option label="${type}" value="${type}" />
-                    </py:for>
-                </select>
-                <select name="filter.version">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'version'][0]}" value="" />
-                    <py:for each="version in versions">
-                        <option label="${version}" value="${version}" />
-                    </py:for>
-                </select>
-                <select name="filter.milestone">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'milestone'][0]}" value="" />
-                    <py:for each="mtn in milestones">
-                        <option label="${mtn}" value="${mtn}" />
-                    </py:for>
-                </select>
-                <select name="filter.component">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'component'][0]}" value="" />
-                    <py:for each="comp in components">
-                        <option label="${comp}" value="${comp}" />
-                    </py:for>
-                </select>
-                <select name="filter.status">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'status'][0]}" value="" />
-                    <py:for each="stat in status">
-                        <option label="${stat}" value="${stat}" />
-                    </py:for>
-                </select>
-                <select name="filter.resolution">
-                    <option selected='selected' label="${[fd.label for fd in defaultfields if fd.name == 'resolution'][0]}" value="" />
-                    <py:for each="res in resolutions">
-                        <option label="${res}" value="${res}" />
-                    </py:for>
-                </select>
+                <table style="border:0px;">
+                    <thead>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'type'][0]}</th>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'version'][0]}</th>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'milestone'][0]}</th>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'component'][0]}</th>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'status'][0]}</th>
+                        <th>${[fd.label for fd in defaultfields if fd.name == 'resolution'][0]}</th>
+                    </thead>
+                    <tbody>
+                        <td style="border-top:0px;border-left:0px;border-bottom:0px;border-right:1px dotted black;">
+                            <select name="filter.type" multiple="multiple" size="5">
+                                <py:for each="type in types">
+                                    <option label="${type}" value="${type}" />
+                                </py:for>
+                            </select>
+                        </td>
+                        <td style="border-top:0px;border-left:0px;border-bottom:0px;border-right:1px dotted black;">
+                            <select name="filter.version" multiple="multiple" size="5">
+                                <py:for each="version in versions">
+                                    <option label="${version}" value="${version}" />
+                                </py:for>
+                            </select>
+                        </td>
+                        <td style="border-top:0px;border-left:0px;border-bottom:0px;border-right:1px dotted black;">
+                            <select name="filter.milestone" multiple="multiple" size="5">
+                                <py:for each="mtn in milestones">
+                                    <option label="${mtn}" value="${mtn}" />
+                                </py:for>
+                            </select>
+                        </td>
+                        <td style="border-top:0px;border-left:0px;border-bottom:0px;border-right:1px dotted black;">
+                            <select name="filter.component" multiple="multiple" size="5">
+                                <py:for each="comp in components">
+                                    <option label="${comp}" value="${comp}" />
+                                </py:for>
+                            </select>
+                        </td>
+                        <td style="border-top:0px;border-left:0px;border-bottom:0px;border-right:1px dotted black;">
+                            <select name="filter.status" multiple="multiple" size="5">
+                                <py:for each="stat in status">
+                                    <option label="${stat}" value="${stat}" />
+                                </py:for>
+                            </select>
+                        </td>
+                        <td style="border:0px;">
+                            <select name="filter.resolution" multiple="multiple" size="5">
+                                <py:for each="res in resolutions">
+                                    <option label="${res}" value="${res}" />
+                                </py:for>
+                            </select>
+                        </td>
+                    </tbody>
+                </table>
             </div>
             <div class="buttons">
                 <input type="submit" name="export" value="Export Tickets" />
