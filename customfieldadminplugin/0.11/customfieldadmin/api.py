@@ -5,13 +5,26 @@ Supports creating, getting, updating and deleting custom fields.
 
 License: BSD
 
-(c) 2005-2011 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2012 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import re
 
+from pkg_resources import resource_filename
+
 from trac.core import *
 from trac.ticket.api import TicketSystem
+
+try:
+    from  trac.util.translation import domain_functions
+    add_domain, _, tag_ = \
+        domain_functions('customfieldadmin', ('add_domain', '_', 'tag_'))
+except:
+    # fall back to 0.11 behavior, i18n functions are no-ops then
+    from genshi.builder import tag as tag_
+    from trac.util.translation import gettext as _
+    def add_domain(*args, **kwargs):
+        pass
 
 __all__ = ['CustomFields']
 
@@ -38,6 +51,11 @@ class CustomFields(Component):
     config_options = ['label', 'value', 'options', 'cols', 'rows',
                          'order', 'format']
     
+    def __init__(self):
+        # bind the 'customfieldadmin' catalog to the specified locale directory
+        locale_dir = resource_filename(__name__, 'locale')
+        add_domain(self.env.path, locale_dir)
+        
     def get_custom_fields(self, customfield=None):
         """ Returns the custom fields from TicketSystem component.
         Use a cfdict with 'name' key set to find a specific custom field only.
@@ -57,22 +75,26 @@ class CustomFields(Component):
         # Name, Type and Label is required
         if not (customfield.get('name') and customfield.get('type') \
                 and customfield.get('label')):
-            raise TracError("Custom field needs at least a name, type and label.")
+            raise TracError(
+                    _("Custom field needs at least a name, type and label."))
         # Use lowercase custom fieldnames only
         customfield['name'] = customfield['name'].lower()
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
         if re.search('^[a-z][a-z0-9_]+$', customfield['name']) == None:
-           raise TracError("Only alphanumeric characters allowed for custom field name "
-                "('a-z' or '0-9' or '_'), with 'a-z' as first character.")
+           raise TracError(_("Only alphanumeric characters allowed for " \
+                             "custom field name ('a-z' or '0-9' or '_'), " \
+                             "with 'a-z' as first character."))
         # Name must begin with a character - anything else not supported by Trac
         if not customfield['name'][0].isalpha():
-            raise TracError("Custom field name must begin with a character (a-z).")
+            raise TracError(
+                    _("Custom field name must begin with a character (a-z)."))
         # Check that it is a valid field type
         if not customfield['type'] in ['text', 'checkbox', 'select', 'radio', 'textarea']:
-            raise TracError("%s is not a valid field type" % customfield['type'])
+            raise TracError(_("%(field_type)s is not a valid field type"),
+                                        field_type=customfield['type'])
         # Check that field does not already exist (if modify it should already be deleted)
         if create and self.config.get('ticket-custom', customfield['name']):
-            raise TracError("Can not create as field already exists.")
+            raise TracError(_("Can not create as field already exists."))
     
     def create_custom_field(self, customfield):
         """ Create the new custom fields (that may just have been deleted as part

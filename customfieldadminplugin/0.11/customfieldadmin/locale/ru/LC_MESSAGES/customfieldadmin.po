@@ -1,0 +1,195 @@
+# Russian translations for TracCustomFieldAdmin.
+# Copyright (C) 2010 ORGANIZATION
+# This file is distributed under the same license as the
+# TracCustomFieldAdmin project.
+# Dmitri Bogomolov <4glitch@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracCustomFieldAdmin 0.2.5\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2012-01-21 01:32+0100\n"
+"PO-Revision-Date: 2010-10-04 01:07+0300\n"
+"Last-Translator: Dmitri Bogomolov <4glitch@gmail.com>\n"
+"Language-Team: ru <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: customfieldadmin/api.py:79
+msgid "Custom field needs at least a name, type and label."
+msgstr "Для создания дополнительного поля требуются имя, тип и описание."
+
+#: customfieldadmin/api.py:84
+#, fuzzy
+msgid ""
+"Only alphanumeric characters allowed for custom field name ('a-z' or "
+"'0-9' or '_'), with 'a-z' as first character."
+msgstr ""
+"В имени дополнительного поля допустимы только алфавитно-цифровые символы "
+"(a-z, 0-9 и -_)."
+
+#: customfieldadmin/api.py:90
+msgid "Custom field name must begin with a character (a-z)."
+msgstr "Имя дополнительного поля должно начинаться с буквы (a-z."
+
+#: customfieldadmin/api.py:93
+#, python-format
+msgid "%(field_type)s is not a valid field type"
+msgstr "%(field_type)s недопустимый тип поля"
+
+#: customfieldadmin/api.py:97
+msgid "Can not create as field already exists."
+msgstr "Не удалось создать, поскольку поле уже существует."
+
+#: customfieldadmin/customfieldadmin.py:32
+msgid "Ticket System"
+msgstr "Билеты"
+
+#: customfieldadmin/customfieldadmin.py:33
+msgid "Custom Fields"
+msgstr "Дополнительные поля"
+
+#: customfieldadmin/customfieldadmin.py:63
+#, python-format
+msgid "Custom field %(name)s does not exist."
+msgstr "Дополнительное поле %(name)s не существует."
+
+#: customfieldadmin/customfieldadmin.py:92
+msgid "No custom field selected"
+msgstr "Не выбрано ни одного поля"
+
+#: customfieldadmin/templates/customfieldadmin.html:11
+msgid "Custom Fields Admin"
+msgstr "Дополнительные поля"
+
+#: customfieldadmin/templates/customfieldadmin.html:16
+msgid "Manage Custom Fields"
+msgstr "Управление дополнительными полями"
+
+#: customfieldadmin/templates/customfieldadmin.html:21
+msgid "Modify Custom Field:"
+msgstr "Изменить дополнительное поле:"
+
+#: customfieldadmin/templates/customfieldadmin.html:23
+msgid "Name (cannot modify):"
+msgstr "Имя (неизменяемое):"
+
+#: customfieldadmin/templates/customfieldadmin.html:28
+#: customfieldadmin/templates/customfieldadmin.html:86
+msgid "Type:"
+msgstr "Тип:"
+
+#: customfieldadmin/templates/customfieldadmin.html:37
+#: customfieldadmin/templates/customfieldadmin.html:94
+msgid "Label:"
+msgstr "Описание:"
+
+#: customfieldadmin/templates/customfieldadmin.html:42
+msgid "Default value (regular text for Text, Textarea, Radio or Select):"
+msgstr "По умолчанию (обычный текст для Text, Textarea, Radio или Select):"
+
+#: customfieldadmin/templates/customfieldadmin.html:47
+msgid "Format (Text or Textarea):"
+msgstr "Формат (Text или Textarea):"
+
+#: customfieldadmin/templates/customfieldadmin.html:57
+msgid ""
+"Options for Radio or Select (for Select, empty first line makes field "
+"optional):"
+msgstr ""
+"Варианты для Radio или Select (для Select пустой первый вариант делает "
+"поле необязательным):"
+
+#: customfieldadmin/templates/customfieldadmin.html:66
+msgid "Size of Textarea for entry (Textarea only):"
+msgstr "Размер поля ввода (только для Textarea):"
+
+#: customfieldadmin/templates/customfieldadmin.html:66
+msgid "Columns:"
+msgstr "Столбцы:"
+
+#: customfieldadmin/templates/customfieldadmin.html:67
+#: customfieldadmin/templates/customfieldadmin.html:121
+msgid "Rows:"
+msgstr "Строки:"
+
+#: customfieldadmin/templates/customfieldadmin.html:71
+msgid "Cancel"
+msgstr "Отмена"
+
+#: customfieldadmin/templates/customfieldadmin.html:72
+msgid "Save"
+msgstr "Сохранить"
+
+#: customfieldadmin/templates/customfieldadmin.html:79
+msgid "Add Custom Field:"
+msgstr "Добавить дополнительное поле:"
+
+#: customfieldadmin/templates/customfieldadmin.html:81
+msgid "Name:"
+msgstr "Имя:"
+
+#: customfieldadmin/templates/customfieldadmin.html:99
+msgid "Default value:"
+msgstr "Значение по умолчанию:"
+
+#: customfieldadmin/templates/customfieldadmin.html:104
+msgid "Format:"
+msgstr "Формат:"
+
+#: customfieldadmin/templates/customfieldadmin.html:113
+msgid "Options:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:120
+msgid "Size of Textarea:"
+msgstr "Размер текстового поля:"
+
+#: customfieldadmin/templates/customfieldadmin.html:120
+msgid "Cols:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:126
+msgid "Add"
+msgstr "Добавить"
+
+#: customfieldadmin/templates/customfieldadmin.html:132
+msgid "No Custom Fields defined for this project."
+msgstr "В этом проекте не объявлено ни одного дополнительного поля."
+
+#: customfieldadmin/templates/customfieldadmin.html:140
+msgid "Name"
+msgstr "Имя"
+
+#: customfieldadmin/templates/customfieldadmin.html:141
+msgid "Type"
+msgstr "Тип"
+
+#: customfieldadmin/templates/customfieldadmin.html:142
+msgid "Label"
+msgstr "Описание"
+
+#: customfieldadmin/templates/customfieldadmin.html:143
+msgid "Order"
+msgstr "Порядок"
+
+#: customfieldadmin/templates/customfieldadmin.html:150
+msgid "Field cannot be deleted (declared in source code)"
+msgstr "Поле не может быть удалено (объявлено в исходнике)"
+
+#: customfieldadmin/templates/customfieldadmin.html:164
+msgid "Currently outside regular range"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:173
+msgid "Remove selected items"
+msgstr "Удалить выбранные"
+
+#: customfieldadmin/templates/customfieldadmin.html:174
+msgid "Apply changes"
+msgstr "Применить изменения"
+

@@ -4,7 +4,7 @@ Trac WebAdmin plugin for administration of custom fields.
 
 License: BSD
 
-(c) 2005-2011 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2005-2012 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 (c) 2007-2009 ::: www.Optaros.com (.....)
 """
 
@@ -12,7 +12,7 @@ from trac.config import Option
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.admin.api import IAdminPanelProvider
-from api import CustomFields
+from api import CustomFields, _
 
 
 class CustomFieldAdminPage(Component):
@@ -22,12 +22,15 @@ class CustomFieldAdminPage(Component):
     def __init__(self):
         self.env.systeminfo.append(('CustomFieldAdmin',
                 __import__('customfieldadmin', ['__version__']).__version__))
+        # Be sure to init CustomFields so translations work from first request
+        CustomFields(self.env)
 
     # IAdminPanelProvider methods
     
     def get_admin_panels(self, req):
         if 'TICKET_ADMIN' in req.perm:
-            yield ('ticket', 'Ticket System', 'customfields', 'Custom Fields') 
+            yield ('ticket', _("Ticket System"),
+                   'customfields', _("Custom Fields")) 
 
     def render_admin_panel(self, req, cat, page, customfield):
         req.perm.require('TICKET_ADMIN')
@@ -57,7 +60,8 @@ class CustomFieldAdminPage(Component):
                     cf = a_cf
                     break
             if not cf:
-                raise TracError("Custom field %s does not exist." % customfield)
+                raise TracError(_("Custom field %(name)s does not exist.",
+                                            name=customfield))
             if req.method == 'POST':
                 if req.args.get('save'):
                     cf.update(_customfield_from_req(self, req)) 
@@ -85,7 +89,7 @@ class CustomFieldAdminPage(Component):
                     sel = req.args.get('sel')
                     sel = isinstance(sel, list) and sel or [sel]
                     if not sel:
-                        raise TracError, 'No custom field selected'
+                        raise TracError(_("No custom field selected"))
                     for name in sel:
                         cfdict =  {'name': name}
                         cfapi.delete_custom_field(cfdict)

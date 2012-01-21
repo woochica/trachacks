@@ -25,7 +25,8 @@ class CustomFieldAdminPageTestCase(unittest.TestCase):
         self.plugin = CustomFieldAdminPage(self.env)
 
     def tearDown(self):
-        self.env.destroy_db()
+        if hasattr(self.env, 'destroy_db'):
+            self.env.destroy_db()
         del self.env
 
     def test_systeminfo(self):

@@ -11,6 +11,7 @@ def test_suite():
     suite = TestSuite()
     from customfieldadmin.tests import api
     suite.addTest(makeSuite(api.CustomFieldApiTestCase))
+    suite.addTest(makeSuite(api.CustomFieldL10NTestCase))
     from customfieldadmin.tests import web_ui
     suite.addTest(makeSuite(web_ui.CustomFieldAdminPageTestCase))
     return suite

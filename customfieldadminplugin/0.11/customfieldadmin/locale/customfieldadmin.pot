@@ -1,0 +1,189 @@
+# Translations template for TracCustomFieldAdmin.
+# Copyright (C) 2012 CodeResort.com (BV Network AS)
+# This file is distributed under the same license as the
+# TracCustomFieldAdmin project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracCustomFieldAdmin 0.2.8\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2012-01-21 01:32+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: customfieldadmin/api.py:79
+msgid "Custom field needs at least a name, type and label."
+msgstr ""
+
+#: customfieldadmin/api.py:84
+msgid ""
+"Only alphanumeric characters allowed for custom field name ('a-z' or "
+"'0-9' or '_'), with 'a-z' as first character."
+msgstr ""
+
+#: customfieldadmin/api.py:90
+msgid "Custom field name must begin with a character (a-z)."
+msgstr ""
+
+#: customfieldadmin/api.py:93
+#, python-format
+msgid "%(field_type)s is not a valid field type"
+msgstr ""
+
+#: customfieldadmin/api.py:97
+msgid "Can not create as field already exists."
+msgstr ""
+
+#: customfieldadmin/customfieldadmin.py:32
+msgid "Ticket System"
+msgstr ""
+
+#: customfieldadmin/customfieldadmin.py:33
+msgid "Custom Fields"
+msgstr ""
+
+#: customfieldadmin/customfieldadmin.py:63
+#, python-format
+msgid "Custom field %(name)s does not exist."
+msgstr ""
+
+#: customfieldadmin/customfieldadmin.py:92
+msgid "No custom field selected"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:11
+msgid "Custom Fields Admin"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:16
+msgid "Manage Custom Fields"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:21
+msgid "Modify Custom Field:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:23
+msgid "Name (cannot modify):"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:28
+#: customfieldadmin/templates/customfieldadmin.html:86
+msgid "Type:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:37
+#: customfieldadmin/templates/customfieldadmin.html:94
+msgid "Label:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:42
+msgid "Default value (regular text for Text, Textarea, Radio or Select):"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:47
+msgid "Format (Text or Textarea):"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:57
+msgid ""
+"Options for Radio or Select (for Select, empty first line makes field"
+" optional):"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:66
+msgid "Size of Textarea for entry (Textarea only):"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:66
+msgid "Columns:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:67
+#: customfieldadmin/templates/customfieldadmin.html:121
+msgid "Rows:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:71
+msgid "Cancel"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:72
+msgid "Save"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:79
+msgid "Add Custom Field:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:81
+msgid "Name:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:99
+msgid "Default value:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:104
+msgid "Format:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:113
+msgid "Options:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:120
+msgid "Size of Textarea:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:120
+msgid "Cols:"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:126
+msgid "Add"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:132
+msgid "No Custom Fields defined for this project."
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:140
+msgid "Name"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:141
+msgid "Type"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:142
+msgid "Label"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:143
+msgid "Order"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:150
+msgid "Field cannot be deleted (declared in source code)"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:164
+msgid "Currently outside regular range"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:173
+msgid "Remove selected items"
+msgstr ""
+
+#: customfieldadmin/templates/customfieldadmin.html:174
+msgid "Apply changes"
+msgstr ""
+

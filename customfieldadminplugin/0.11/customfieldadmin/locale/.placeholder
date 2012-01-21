@@ -1,0 +1,4 @@
+# DO NOT REMOVE THIS FILE
+#
+# This file ensures that 'locale' directory is included in distibutions even
+# when Babel is not installed. It prevents lookup and reference errors in Trac.

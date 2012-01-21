@@ -18,6 +18,8 @@ class CustomFieldApiTestCase(unittest.TestCase):
         self.CFs = CustomFields(self.env)
 
     def tearDown(self):
+        if hasattr(self.env, 'destroy_db'):
+            self.env.destroy_db()
         del self.env
 
     def test_delete_unknown_options(self):
@@ -51,3 +53,26 @@ class CustomFieldApiTestCase(unittest.TestCase):
                     self.env.config.get('ticket-custom', 'foo.label'))
         self.assertEquals('42',
                     self.env.config.get('ticket-custom', 'foo.answer'))
+
+class CustomFieldL10NTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.env = EnvironmentStub()
+        self.CFs = CustomFields(self.env)
+
+    def tearDown(self):
+        if hasattr(self.env, 'destroy_db'):
+            self.env.destroy_db()
+        del self.env
+
+    def test_translation_function(self):
+        from customfieldadmin.api import _
+        self.assertEquals('foo bar', _("foo bar"))
+        self.assertEquals('foo bar', _("foo %(bar)s", bar='bar'))
+
+    def test_translation_function_tag(self):
+        from customfieldadmin.api import tag_
+        from genshi.builder import tag
+        self.assertEquals('<p>foo bar</p>', str(tag_(tag.p('foo bar'))))
+        self.assertEquals('<p>foo bar</p>',
+                    str(tag_(tag.p('foo %(bar)s' % {'bar': 'bar'}))))
