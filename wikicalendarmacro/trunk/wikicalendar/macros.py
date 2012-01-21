@@ -263,6 +263,25 @@ class WikiCalendarMacros(Component):
                 if row is not None:
                     return 1
 
+    def _resolve_relative_name(self, pagename, referrer):
+        """Resolver for Trac wiki page paths.
+
+        This method handles absolute as well as relative wiki paths.
+        """
+        # Code taken from trac.wiki.api.WikiSystem at r10905.
+        if not pagename.startswith(('./', '../')):
+            return pagename.lstrip('/')
+        base = referrer.split('/')
+        components = pagename.split('/')
+        for i, comp in enumerate(components):
+            if comp == '..':
+                if base:
+                    base.pop()
+            elif comp and comp != '.':
+                base.extend(components[i:])
+                break
+        return '/'.join(base)
+
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
 
@@ -314,6 +333,9 @@ class WikiCalendarMacros(Component):
                 wiki_page_format = str(kwargs['wiki'])
             except KeyError:
                 wiki_page_format = str(args[3])
+        # Support relative paths in macro arguments for wiki page links.
+        wiki_page_format = self._resolve_relative_name(wiki_page_format,
+                                                       formatter.resource.id)
 
         list_condense = 0
         show_t_open_dates = True
@@ -512,7 +534,7 @@ class WikiCalendarMacros(Component):
                         pages = tag(day, Markup('<br />'))
                         for page in wiki_subpages:
                             label = tag(' ', page[0])
-                            page = wiki + '/' + page
+                            page = '/'.join([wiki, page])
                             url = self.env.href.wiki(page)
                             pages(self._gen_wiki_links(page, label, 'subpage',
                                                      url, wiki_page_template,

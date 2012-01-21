@@ -19,5 +19,6 @@ wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
  * #9719: Regression: WikiTicketCalendar doesn't show >1 milestones per day.
 
  new features
+ * #9718: Resolve relative wiki paths in pattern for wiki pages too
  * macro collection based on WikiTicketCalendar `trunk` branch pulled into
    wikicalendar domain, extended to replicate WikiCalendar functionality too
