@@ -496,16 +496,16 @@ class WikiCalendarMacros(Component):
                           FROM milestone
                          WHERE due >= %s and due <= %s
                     """, (day_ts, day_ts_eod))
-                    milestone = None
+                    milestones = tag()
                     for row in cursor:
                         if not a_class.endswith('milestone'):
                             a_class += ' milestone'
                         milestone = to_unicode(row[0])
                         url = self.env.href.milestone(milestone)
                         milestone = '* ' + milestone
-                        milestone = tag.div(tag.a(milestone, href=url))
-                        milestone(class_='milestone')
-
+                        milestones = tag(milestones,
+                                         tag.div(tag.a(milestone, href=url),
+                                                 class_='milestone'))
                     day = tag.span(day)
                     day(class_='day')
                     if len(wiki_subpages) > 0:
@@ -527,8 +527,8 @@ class WikiCalendarMacros(Component):
                     if name == 'WikiCalendar':
                         line(cell)
                     else:
-                        if milestone:
-                            cell(milestone)
+                        if milestones:
+                            cell(milestones)
                         else:
                             cell(tag.br())
 

@@ -16,6 +16,7 @@ wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
  * #6636: Failure on use: "day of month out of range" (in Python 2.4)
  * #7564: Integrate re-worked WikiCalendarMacro in new trunk
  * #9568: Can Babel be made an optional component for 0.12?
+ * #9719: Regression: WikiTicketCalendar doesn't show >1 milestones per day.
 
  new features
  * macro collection based on WikiTicketCalendar `trunk` branch pulled into
