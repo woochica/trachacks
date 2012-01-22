@@ -12,7 +12,8 @@ from trac.config import Option
 from trac.core import *
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
 from trac.admin.api import IAdminPanelProvider
-from api import CustomFields, _
+
+from customfieldadmin.api import CustomFields, _
 
 
 class CustomFieldAdminPage(Component):
@@ -20,9 +21,8 @@ class CustomFieldAdminPage(Component):
     implements(ITemplateProvider, IAdminPanelProvider)
 
     def __init__(self):
-        self.env.systeminfo.append(('CustomFieldAdmin',
-                __import__('customfieldadmin', ['__version__']).__version__))
-        # Be sure to init CustomFields so translations work from first request
+        # Init CustomFields so translations work from first request
+        # FIXME: It actually only works from SECOND request - Trac bug?!
         CustomFields(self.env)
 
     # IAdminPanelProvider methods
@@ -38,50 +38,51 @@ class CustomFieldAdminPage(Component):
         add_script(req, 'customfieldadmin/js/customfieldadmin.js')
 
         def _customfield_from_req(self, req):
-            cfdict = {'name': req.args.get('name','').encode('utf-8'),
+            cfield = {'name': req.args.get('name','').encode('utf-8'),
                       'label': req.args.get('label','').encode('utf-8'),
                       'type': req.args.get('type','').encode('utf-8'),
                       'value': req.args.get('value','').encode('utf-8'),
-                      'options': [x.strip().encode('utf-8') for x in req.args.get('options','').split("\n")],
+                      'options': [x.strip().encode('utf-8') for x in \
+                                    req.args.get('options','').split("\n")],
                       'cols': req.args.get('cols','').encode('utf-8'),
                       'rows': req.args.get('rows','').encode('utf-8'),
                       'order': req.args.get('order', '').encode('utf-8'),
                       'format': req.args.get('format', '').encode('utf-8')}
-            return cfdict
+            return cfield
         
-        cfapi = CustomFields(self.env)
-        cfadmin = {} # Return values for template rendering
+        cf_api = CustomFields(self.env)
+        cf_admin = {} # Return values for template rendering
         
         # Detail view?
         if customfield:
-            cf = None
-            for a_cf in cfapi.get_custom_fields():
-                if a_cf['name'] == customfield:
-                    cf = a_cf
+            cfield = None
+            for a_cfield in cf_api.get_custom_fields():
+                if a_cfield['name'] == customfield:
+                    cfield = a_cfield
                     break
-            if not cf:
+            if not cfield:
                 raise TracError(_("Custom field %(name)s does not exist.",
                                             name=customfield))
             if req.method == 'POST':
                 if req.args.get('save'):
-                    cf.update(_customfield_from_req(self, req)) 
-                    cfapi.update_custom_field(cf)
+                    cfield.update(_customfield_from_req(self, req)) 
+                    cf_api.update_custom_field(cfield)
                     req.redirect(req.href.admin(cat, page))
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(cat, page))
-            if cf.has_key('options'):
+            if cfield.has_key('options'):
                 optional_line = ''
-                if cf.get('optional', False):
+                if cfield.get('optional', False):
                     optional_line = "\n\n"
-                cf['options'] = optional_line + "\n".join(cf['options'])
-            cfadmin['customfield'] = cf
-            cfadmin['display'] = 'detail'
+                cfield['options'] = optional_line + "\n".join(cfield['options'])
+            cf_admin['cfield'] = cfield
+            cf_admin['cf_display'] = 'detail'
         else:
             if req.method == 'POST':
                 # Add Custom Field
                 if req.args.get('add') and req.args.get('name'):
-                    cfdict = _customfield_from_req(self, req)
-                    cfapi.update_custom_field(cfdict, create=True)
+                    cfield = _customfield_from_req(self, req)
+                    cf_api.update_custom_field(cfield, create=True)
                     req.redirect(req.href.admin(cat, page))
                          
                 # Remove Custom Field
@@ -91,8 +92,8 @@ class CustomFieldAdminPage(Component):
                     if not sel:
                         raise TracError(_("No custom field selected"))
                     for name in sel:
-                        cfdict =  {'name': name}
-                        cfapi.delete_custom_field(cfdict)
+                        cfield =  {'name': name}
+                        cf_api.delete_custom_field(cfield)
                     req.redirect(req.href.admin(cat, page))
 
                 elif req.args.get('apply'):
@@ -101,22 +102,22 @@ class CustomFieldAdminPage(Component):
                                   in req.args.keys()
                                   if key.startswith('order_')])
                     values = dict([(val, True) for val in order.values()])
-                    cf = cfapi.get_custom_fields()
-                    for cur_cf in cf:
-                        cur_cf['order'] = order[cur_cf['name']]
-                        cfapi.update_custom_field(cur_cf)
+                    cfields = cf_api.get_custom_fields()
+                    for current_cfield in cfields:
+                        current_cfield['order'] = order[current_cfield['name']]
+                        cf_api.update_custom_field(current_cfield)
                     req.redirect(req.href.admin(cat, page))
 
-            cf_list = []
-            for item in cfapi.get_custom_fields():
+            cfields = []
+            for item in cf_api.get_custom_fields():
                 item['href'] = req.href.admin(cat, page, item['name'])
                 item['registry'] = ('ticket-custom', 
                                             item['name']) in Option.registry
-                cf_list.append(item)
-            cfadmin['customfields'] = cf_list
-            cfadmin['display'] = 'list'
+                cfields.append(item)
+            cf_admin['cfields'] = cfields
+            cf_admin['cf_display'] = 'list'
 
-        return ('customfieldadmin.html', {'cfadmin': cfadmin})
+        return ('customfieldadmin.html', cf_admin)
         
 
     # ITemplateProvider methods

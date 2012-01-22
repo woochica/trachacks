@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracCustomFieldAdmin 0.2.8\n"
 "Report-Msgid-Bugs-To: simon-code@bvnetwork.no\n"
-"POT-Creation-Date: 2012-01-21 01:32+0100\n"
+"POT-Creation-Date: 2012-01-23 00:31+0100\n"
 "PO-Revision-Date: 2012-01-19 11:51+0100\n"
 "Last-Translator: Odd Simon Simonsen <simon-code@bvnetwork.no>\n"
 "Language-Team: nb <LL@li.org>\n"
@@ -18,11 +18,28 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: customfieldadmin/api.py:79
+#: customfieldadmin/admin.py:32
+msgid "Ticket System"
+msgstr "Sakssystem"
+
+#: customfieldadmin/admin.py:33
+msgid "Custom Fields"
+msgstr "Egendefinerte felt"
+
+#: customfieldadmin/admin.py:64
+#, python-format
+msgid "Custom field %(name)s does not exist."
+msgstr "Egendefinert felt %(name)s eksisterer ikke."
+
+#: customfieldadmin/admin.py:93
+msgid "No custom field selected"
+msgstr "Egendefinert felt er ikke valgt"
+
+#: customfieldadmin/api.py:88
 msgid "Custom field needs at least a name, type and label."
 msgstr "Egendefinerte felt behøver minimun navn, type og etikett."
 
-#: customfieldadmin/api.py:84
+#: customfieldadmin/api.py:93
 msgid ""
 "Only alphanumeric characters allowed for custom field name ('a-z' or "
 "'0-9' or '_'), with 'a-z' as first character."
@@ -30,35 +47,18 @@ msgstr ""
 "Kun ASCII alfa-numeriske tegner er tillat for Egendefinerte \"\n"
 "\"felt ('a-z' og '0-9' og '_'), og med 'a-z' som første tegn."
 
-#: customfieldadmin/api.py:90
+#: customfieldadmin/api.py:99
 msgid "Custom field name must begin with a character (a-z)."
 msgstr "Egendefinert navn må begynne med et ASCII tegn ('a-z')."
 
-#: customfieldadmin/api.py:93
+#: customfieldadmin/api.py:103
 #, python-format
 msgid "%(field_type)s is not a valid field type"
 msgstr "%(field_type)s er ikke en gyldig felt type"
 
-#: customfieldadmin/api.py:97
+#: customfieldadmin/api.py:108
 msgid "Can not create as field already exists."
 msgstr "Feltet eksisterer. Kan ikke opprette."
-
-#: customfieldadmin/customfieldadmin.py:32
-msgid "Ticket System"
-msgstr "Sakssystem"
-
-#: customfieldadmin/customfieldadmin.py:33
-msgid "Custom Fields"
-msgstr "Egendefinerte felt"
-
-#: customfieldadmin/customfieldadmin.py:63
-#, python-format
-msgid "Custom field %(name)s does not exist."
-msgstr "Egendefinert felt %(name)s eksisterer ikke."
-
-#: customfieldadmin/customfieldadmin.py:92
-msgid "No custom field selected"
-msgstr "Egendefinert felt er ikke valgt"
 
 #: customfieldadmin/templates/customfieldadmin.html:11
 msgid "Custom Fields Admin"
@@ -77,117 +77,121 @@ msgid "Name (cannot modify):"
 msgstr "Navn (kan ikke endres):"
 
 #: customfieldadmin/templates/customfieldadmin.html:28
-#: customfieldadmin/templates/customfieldadmin.html:86
+#: customfieldadmin/templates/customfieldadmin.html:89
 msgid "Type:"
 msgstr "Type:"
 
-#: customfieldadmin/templates/customfieldadmin.html:37
-#: customfieldadmin/templates/customfieldadmin.html:94
+#: customfieldadmin/templates/customfieldadmin.html:38
+#: customfieldadmin/templates/customfieldadmin.html:97
 msgid "Label:"
 msgstr "Etikett:"
 
-#: customfieldadmin/templates/customfieldadmin.html:42
-msgid "Default value (regular text for Text, Textarea, Radio or Select):"
+#: customfieldadmin/templates/customfieldadmin.html:43
+#, fuzzy
+msgid ""
+"Default value\n"
+"                  (regular text for Text, Textarea, Radio or Select):"
 msgstr "Standardverdi (vanlig tekst for Text, Textarea, Radio og Select):"
 
-#: customfieldadmin/templates/customfieldadmin.html:47
+#: customfieldadmin/templates/customfieldadmin.html:49
 msgid "Format (Text or Textarea):"
 msgstr "Format (Text og Textarea):"
 
-#: customfieldadmin/templates/customfieldadmin.html:57
+#: customfieldadmin/templates/customfieldadmin.html:59
+#, fuzzy
 msgid ""
-"Options for Radio or Select (for Select, empty first line makes field "
-"optional):"
+"Options for Radio or Select\n"
+"                  (for Select, empty first line makes field optional):"
 msgstr ""
 "Alternativer for Radio og Select (for Select betyr tom \"\n"
 "\"førsterad at feltet er valgfritt):"
 
-#: customfieldadmin/templates/customfieldadmin.html:66
+#: customfieldadmin/templates/customfieldadmin.html:69
 msgid "Size of Textarea for entry (Textarea only):"
 msgstr "Størrelse for Textarea felt:"
 
-#: customfieldadmin/templates/customfieldadmin.html:66
+#: customfieldadmin/templates/customfieldadmin.html:69
 msgid "Columns:"
 msgstr "Kolonner:"
 
-#: customfieldadmin/templates/customfieldadmin.html:67
-#: customfieldadmin/templates/customfieldadmin.html:121
+#: customfieldadmin/templates/customfieldadmin.html:70
+#: customfieldadmin/templates/customfieldadmin.html:125
 msgid "Rows:"
 msgstr "Rader:"
 
-#: customfieldadmin/templates/customfieldadmin.html:71
+#: customfieldadmin/templates/customfieldadmin.html:74
 msgid "Cancel"
 msgstr "Avbryt"
 
-#: customfieldadmin/templates/customfieldadmin.html:72
+#: customfieldadmin/templates/customfieldadmin.html:75
 msgid "Save"
 msgstr "Lagre"
 
-#: customfieldadmin/templates/customfieldadmin.html:79
+#: customfieldadmin/templates/customfieldadmin.html:82
 msgid "Add Custom Field:"
 msgstr "Legg til Egendefinert felt"
 
-#: customfieldadmin/templates/customfieldadmin.html:81
+#: customfieldadmin/templates/customfieldadmin.html:84
 msgid "Name:"
 msgstr "Navn:"
 
-#: customfieldadmin/templates/customfieldadmin.html:99
+#: customfieldadmin/templates/customfieldadmin.html:102
 msgid "Default value:"
 msgstr "Standardverdi:"
 
-#: customfieldadmin/templates/customfieldadmin.html:104
+#: customfieldadmin/templates/customfieldadmin.html:107
 msgid "Format:"
 msgstr "Format:"
 
-#: customfieldadmin/templates/customfieldadmin.html:113
+#: customfieldadmin/templates/customfieldadmin.html:116
 msgid "Options:"
 msgstr "Alternativer:"
 
-#: customfieldadmin/templates/customfieldadmin.html:120
+#: customfieldadmin/templates/customfieldadmin.html:124
 msgid "Size of Textarea:"
 msgstr "Størrelse for Textarea felt:"
 
-#: customfieldadmin/templates/customfieldadmin.html:120
+#: customfieldadmin/templates/customfieldadmin.html:124
 msgid "Cols:"
 msgstr "Kolonner:"
 
-#: customfieldadmin/templates/customfieldadmin.html:126
+#: customfieldadmin/templates/customfieldadmin.html:130
 msgid "Add"
 msgstr "Legg til"
 
-#: customfieldadmin/templates/customfieldadmin.html:132
+#: customfieldadmin/templates/customfieldadmin.html:136
 msgid "No Custom Fields defined for this project."
 msgstr "Ingen Egendefinerte felt definert for dette prosjektet."
 
-#: customfieldadmin/templates/customfieldadmin.html:140
+#: customfieldadmin/templates/customfieldadmin.html:144
 msgid "Name"
 msgstr "Navn"
 
-#: customfieldadmin/templates/customfieldadmin.html:141
+#: customfieldadmin/templates/customfieldadmin.html:145
 msgid "Type"
 msgstr "Type"
 
-#: customfieldadmin/templates/customfieldadmin.html:142
+#: customfieldadmin/templates/customfieldadmin.html:146
 msgid "Label"
 msgstr "Etikett"
 
-#: customfieldadmin/templates/customfieldadmin.html:143
+#: customfieldadmin/templates/customfieldadmin.html:147
 msgid "Order"
 msgstr "Sortering"
 
-#: customfieldadmin/templates/customfieldadmin.html:150
+#: customfieldadmin/templates/customfieldadmin.html:154
 msgid "Field cannot be deleted (declared in source code)"
 msgstr "Felt kan ikke slettes (definert i kode)"
 
-#: customfieldadmin/templates/customfieldadmin.html:164
+#: customfieldadmin/templates/customfieldadmin.html:168
 msgid "Currently outside regular range"
 msgstr "Utenfor gjeldende verdier"
 
-#: customfieldadmin/templates/customfieldadmin.html:173
+#: customfieldadmin/templates/customfieldadmin.html:177
 msgid "Remove selected items"
 msgstr "Fjern Egendefinert felt"
 
-#: customfieldadmin/templates/customfieldadmin.html:174
+#: customfieldadmin/templates/customfieldadmin.html:179
 msgid "Apply changes"
 msgstr "Lagre endringer"
 
