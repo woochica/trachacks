@@ -53,7 +53,8 @@ class WikiSectionEditModule(Component):
 
     def post_process_request(self, req, template, data, content_type):
         if self.serve_ui_files \
-                and not 'action' in req.args:
+                and not 'action' in req.args \
+                and 'WIKI_MODIFY' in req.perm:
             add_script(req, 'tracsectionedit/js/tracsectionedit.js')
         return template, data, content_type
 
