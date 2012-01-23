@@ -35,9 +35,9 @@ class SimpleTicketModule(Component):
             if do_filter:
                 self.log.debug('SimpleTicket: Filtering new ticket form for %s', req.authname)
                 if self.show_only:
-                    data['fields'] = [f for f in data['fields'] if f['name'] in self.fields]
+                    data['fields'] = [f for f in data['fields'] if f['name'] in self.fields and f is not None]
                 else: 
-                    data['fields'] = [f for f in data['fields'] if f['name'] not in self.fields]
+                    data['fields'] = [f for f in data['fields'] if f['name'] not in self.fields and f is not None]
 
         return template, data, content_type
 
