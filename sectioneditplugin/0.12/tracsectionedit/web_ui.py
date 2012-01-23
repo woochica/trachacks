@@ -99,7 +99,7 @@ class WikiSectionEditModule(Component):
                 is_code_block = True
             elif is_code_block == True and re.match(r'^\s*}}}\s*$', line):
                 is_code_block = False
-            if is_code_block == False and re.match(r'^\s*([=#]{1,5}) .+ \1(?:\s*#.+)?\s*$', line):
+            if is_code_block == False and re.match(r'^\s*([=#]{1,5})\s.*?', line):
                 count = count + 1
             if count < int(section):
                 pre.append(line)
