@@ -14,9 +14,6 @@ class SimpleTicketModule(Component):
     
     show_only = BoolOption('simpleticket', 'show_only', default=False,
                            doc='If True, show only the specified fields rather than hiding the specified fields')
-    
-    allow_override = BoolOption('simpleticket', 'allow_override', default=False,
-                                doc='Allow the user to use the normal entry form even if they have TICKET_CREATE_SIMPLE')
 
     implements(IRequestFilter, IPermissionRequestor)
 
@@ -26,18 +23,13 @@ class SimpleTicketModule(Component):
             
     def post_process_request(self, req, template, data, content_type):
         if req.path_info == '/newticket':
-            do_filter = 'TICKET_CREATE_SIMPLE' in req.perm and not 'TRAC_ADMIN' in req.perm
+            do_filter = 'TICKET_CREATE_SIMPLE' in req.perm and not 'TRAC_ADMIN' in req.perm            
             
-            # Should we allow a session override?
-            if self.allow_override:
-                do_filter = req.session.get('simpleticket.do_filter', do_filter)
-            
-            if do_filter:
-                self.log.debug('SimpleTicket: Filtering new ticket form for %s', req.authname)
-                if self.show_only:
-                    data['fields'] = [f for f in data['fields'] if f['name'] in self.fields and f is not None]
-                else: 
-                    data['fields'] = [f for f in data['fields'] if f['name'] not in self.fields and f is not None]
+            self.log.debug('SimpleTicket: Filtering new ticket form for %s', req.authname)
+            if self.show_only:
+                data['fields'] = [f for f in data['fields'] if f['name'] in self.fields and f is not None]
+            else: 
+                data['fields'] = [f for f in data['fields'] if f['name'] not in self.fields and f is not None]
 
         return template, data, content_type
 
