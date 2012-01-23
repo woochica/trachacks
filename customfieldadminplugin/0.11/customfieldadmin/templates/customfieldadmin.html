@@ -27,7 +27,8 @@
         <div class="field">
           <label>Type:<br />
             <select name="type" id="type">
-              <option py:for="value in ['text', 'select', 'checkbox', 'radio', 'textarea']"
+              <option py:for="value in
+                       ['text', 'select', 'checkbox', 'radio', 'textarea']"
                   value="${value}"
                   selected="${cfield.type==value and 'selected' or None}">
                 ${value.capitalize()}</option>
@@ -61,7 +62,8 @@
                   (for Select, empty first line makes field optional):
             </label>
             <p>
-              <textarea id="options" name="options" rows="5" cols="30">${cfield.options}</textarea>
+              <textarea id="options" name="options"
+                        rows="5" cols="30">${cfield.options}</textarea>
             </p>
           </fieldset>
         </div>
@@ -88,7 +90,8 @@
         <div class="field">
           <label>Type:<br />
             <select name="type" id="type">
-              <option py:for="value in ['text', 'select', 'checkbox', 'radio', 'textarea']"
+              <option py:for="value in
+                       ['text', 'select', 'checkbox', 'radio', 'textarea']"
                   value="${value}">${value.capitalize()}</option>
             </select>
           </label>
