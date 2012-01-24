@@ -73,14 +73,81 @@ class TeamCalendar(Component):
             
         return timetable
         
+    # tuples is a list of arrays.
+    # each array is (datetime, user, true/false).  For example:
+    #  [(datetime.date(2011, 11, 28), u'admin', False), 
+    #   (datetime.date(2011, 11, 28), u'chrisn', True),
+    #   (datetime.date(2011, 11, 29), u'admin', False),
+    #   (datetime.date(2011, 11, 29), u'chrisn', True)]
+    # Note that the date and user are keys to the DB.
+    #
+    # It appears -- though I don't know that it is guaranteed -- that
+    # the items are in date order and there are no gaps in the dates.
     def update_timetable(self, tuples):
         db = self.env.get_db_cnx()
-        insert_cursor = db.cursor()
-        # XXX: This is MySQL specific
-        insert_cursor.execute("INSERT INTO %s (ondate, username, availability) VALUES %s "
-                              "ON DUPLICATE KEY UPDATE availability = VALUES(availability)" %
-                                (self.table_name,
-                                 ", ".join(["('%s', '%s', %d)" % (t[0], t[1], t[2] and 1 or 0,) for t in tuples])))
+
+        # See what's already in the database for the same date range.
+        fromDate = tuples[1][0]
+        toDate = tuples[-1][0]
+        users = []
+        for (date, user, avail) in tuples:
+            if user not in users:
+                users.append(user)
+        cursor = db.cursor()
+        cursor.execute("SELECT ondate, username, availability FROM %s " % \
+                           self.table_name +
+                       "WHERE ondate >= '%s' " % fromDate.isoformat() +
+                       " AND ondate <= '%s' " % toDate.isoformat() +
+                       "   AND username IN ('%s')" % "', '".join(users))
+
+        updates = []
+        inserts = []
+        keys = [(t[0], t[1]) for t in tuples]
+        for row in cursor:
+            key = (row[0], row[1])
+            # If the whole db row is in tuples (date, person, and
+            # availability match) take it out of tuples, we don't need
+            # to do anything to the db
+            if row in tuples:
+                tuples.remove(row)
+                keys.remove(key)
+            # If the db key in this row has a value in tuples, we need
+            # to update availability
+            elif key in keys:
+                index = keys.index(key)
+                updates.append(tuples.pop(index))
+                keys.pop(index)
+            # The query results should cover the same date range as
+            # tuples.  We might get here if tuples has more users than
+            # the db.  We fall through and add any tuples that don't
+            # match the DB so this is OK
+            else:
+                self.env.log.info('UI and db inconsistent.')
+
+        # Duplicates and updates have been removed from tuples so
+        # what's left is things to insert.
+        inserts = tuples
+
+        if len(inserts):
+            insert_cursor = db.cursor()
+            insert_cursor.execute("INSERT INTO %s " % self.table_name + \
+                                      "(ondate, username, availability) " \
+                                      "VALUES %s " % \
+                                      ", ".join(["('%s', '%s', %d)" % 
+                                                 (t[0], t[1], t[2] and 1 or 0,) 
+                                                 for t in inserts]))
+
+        if len(updates):
+            update_cursor = db.cursor()
+            for t in updates:
+                update_cursor.execute("UPDATE %s " % self.table_name + \
+                                          "SET availability = %d " % \
+                                          (t[2] and 1 or 0) + \
+                                          "WHERE ondate = '%s' " % t[0] + \
+                                          "AND username = '%s';" % t[1])
+
+        if len(inserts) or len(updates):
+            db.commit()
     
     def string_to_date(self, date_str, fallback=None):
         try:
