@@ -11,13 +11,13 @@
 	width: 100%;
 }
 
+/* 	margin: 0px;
+	padding: 0px; */
 #mainnav {
     background-color: #ffffff;
     position:fixed;
 	left: 0;
 	z-index:100;
-	margin: 0px;
-	padding: 0px;
 	width: 100%;
 	text-align: right;
 	clear: both;
@@ -37,11 +37,14 @@
 	clear: both;
 }
 
-/*
 #content {
-	top: 105px;
+	position: relative;
 }
-*/
+
+#altlinks {
+	position: relative;
+}
+
 #footer {
-	display: None;
+	position: relative;
 }

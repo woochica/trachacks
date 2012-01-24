@@ -1,0 +1,28 @@
+#
+# Copyright (C) 2012 Franz Mayer <franz.mayer@gefasoft.de>
+# "THE BEER-WARE LICENSE" (Revision 42):
+# <franz.mayer@gefasoft.de> wrote this file.  As long as you retain this
+# notice you can do whatever you want with this stuff. If we meet some day,
+# and you think this stuff is worth it, you can buy me a beer in return.
+# Franz Mayer
+# Author: Franz Mayer <franz.mayer@gefasoft.de>
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: NavigationPlugin 0.0.x\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2011-03-10 01:38+0200\n"
+"PO-Revision-Date: 2012-01-24 16:23+0100\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: de_DE <trac-dev@googlegroups.com>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.5\n"
+
+msgid "Navigation"
+msgstr "Navigation"
+
+msgid "System default is"
+msgstr "Systemstandard ist"

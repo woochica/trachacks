@@ -10,19 +10,14 @@
 #
 # Author: Franz Mayer <franz.mayer@gefasoft.de>
 
-from trac.core import *
-from genshi.filters import Transformer
-from genshi.builder import tag
-from genshi import HTML
+from trac.core import Component, implements
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
-from operator import attrgetter
 from trac.util.translation import domain_functions
-import re
 from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
 from trac.config import ChoiceOption
-from pkg_resources import resource_filename
-from trac.wiki.formatter import _markup_to_unicode
-from StringIO import StringIO
+from genshi.filters import Transformer
+from genshi import HTML
+from pkg_resources import resource_filename #@UnresolvedImport
 
 
 _, tag_, N_, add_domain = \
@@ -54,7 +49,6 @@ Type of displaying menu. Possible types are:
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-#        self.log.info("processing NavigationPlugin with option: %s" % self.display_navigation)
         display = self.get_display(req)
         if not display == 'normal':
             # only do something if specified
@@ -108,12 +102,19 @@ Type of displaying menu. Possible types are:
             if not height:
                 # TODO: get logo-src and finding how big it is 
                 return stream
-            height += 15
-            stream |= Transformer('.//div[@id="mainnav"]').attr('style', 'top: %ipx' % height)
-            height += 14
-            stream |= Transformer('.//div[@id="ctxtnav"]').attr('style', 'top: %ipx' % height)
-            height += 24
-            stream |= Transformer('.//div[@id="content"]').attr('style', 'top: %ipx' % height)
+            height += 8
+            stream |= Transformer('.//div[@id="mainnav"]') \
+                .attr('style', 'top: %ipx' % height)
+            height += 25
+            stream |= Transformer('.//div[@id="ctxtnav"]') \
+                .attr('style', 'top: %ipx' % height)
+            height += 4
+            stream |= Transformer('.//div[@id="content"]') \
+                .attr('style', 'top: %ipx' % height)
+            stream |= Transformer('.//div[@id="altlinks"]') \
+                .attr('style', 'top: %ipx' % height)
+            stream |= Transformer('.//div[@id="footer"]') \
+                .attr('style', 'top: %ipx' % height)
             return stream
         # TODO: what if there has not been any image specified?
     

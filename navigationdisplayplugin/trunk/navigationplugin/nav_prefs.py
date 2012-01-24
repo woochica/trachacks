@@ -10,17 +10,12 @@
 #
 # Author: Franz Mayer <franz.mayer@gefasoft.de>
 
-from trac.core import *
-from genshi.filters import Transformer
-from genshi.builder import tag
-from genshi import HTML
+from trac.core import Component, implements
 from trac.util.translation import domain_functions
-import re
-from trac.web.chrome import add_stylesheet, Chrome, ITemplateProvider
-from trac.config import ChoiceOption
-from pkg_resources import resource_filename
+from trac.web.chrome import ITemplateProvider
 from trac.prefs.api import IPreferencePanelProvider
-from navigationplugin.navigation import Navigation
+from pkg_resources import resource_filename #@UnresolvedImport
+from navigation import Navigation
 
 _, tag_, N_, add_domain = \
     domain_functions('navigationplugin', '_', 'tag_', 'N_', 'add_domain')
@@ -30,12 +25,17 @@ class NavigationPreferences(Component):
     """This Component enables user to set her / his prefered navigation 
 display."""
     implements(IPreferencePanelProvider, ITemplateProvider)
-    
+
+    def __init__(self):
+        # bind the 'tracnav' catalog to the locale directory 
+        locale_dir = resource_filename(__name__, 'locale') 
+        add_domain(self.env.path, locale_dir)    
+        
     ## IPreferencePanelProvider methods
 
     def get_preference_panels(self, req):
 #        if req.authname and req.authname != 'anonymous':
-            yield 'display', _("Display")
+            yield 'navigation', _("Navigation")
 
     def render_preference_panel(self, req, panel):
         nav = Navigation(self.env)

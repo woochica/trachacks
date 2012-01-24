@@ -8,12 +8,12 @@
 	  i18n:domain="navigationplugin">
   <xi:include href="prefs.html" />
   <head>
-    <title>Date &amp; Time</title>
+    <title>Navigation</title>
   </head>
   <body>
   <table>
   	<tr>
-  		<td>Display:</td>
+  		<td><label>Navigation</label>:</td>
   		<td>
 	  		<select name="display_navigation">
 	  		<py:for each="row in choices">
@@ -23,7 +23,7 @@
   		</td>
 	</tr>
 	<tr>
-  		<td colspan="2"><i><b>Note:</b> System default is <b>${system_default}</b></i></td>
+  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_default}</b></i></td>
   	</tr>
   </table>
   </body>

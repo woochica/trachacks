@@ -30,9 +30,8 @@ setup(
     """,
     package_data={'navigationplugin': ['templates/*.*',
                                        'htdocs/*.css',
-                                       'htdocs/*.js']}
-    # ,
-#                                    'locale/*.*',
-#                                    'locale/*/LC_MESSAGES/*.*'
+                                       'htdocs/*.js', 
+                                       'locale/*.*',
+                                       'locale/*/LC_MESSAGES/*.*']}
 )
 
