@@ -10,7 +10,8 @@ License: BSD
 
 from trac.config import Option
 from trac.core import *
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
+                            add_warning
 from trac.admin.api import IAdminPanelProvider
 
 from customfieldadmin.api import CustomFields, _
@@ -109,13 +110,18 @@ class CustomFieldAdminPage(Component):
                     req.redirect(req.href.admin(cat, page))
 
             cfields = []
+            orders_in_use = []
             for item in cf_api.get_custom_fields():
                 item['href'] = req.href.admin(cat, page, item['name'])
                 item['registry'] = ('ticket-custom', 
                                             item['name']) in Option.registry
                 cfields.append(item)
+                orders_in_use.append(int(item.get('order')))
             cf_admin['cfields'] = cfields
             cf_admin['cf_display'] = 'list'
+            if sorted(orders_in_use) != range(1, len(cfields)+1):
+                add_warning(req, _("Custom Fields are not correctly sorted. " \
+                         "This may affect appearance when viewing tickets."))
 
         return ('customfieldadmin.html', cf_admin)
         

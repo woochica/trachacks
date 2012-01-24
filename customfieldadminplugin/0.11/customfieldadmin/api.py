@@ -37,7 +37,7 @@ class CustomFields(Component):
      and add option to only get one named field back.)
     
     Input to methods is a 'cfield' dict supporting these keys:
-        name = name of field (alphanumeric only)
+        name = name of field (ascii alphanumeric only)
         type = text|checkbox|select|radio|textarea
         label = label description
         value = default value for field content
@@ -81,11 +81,10 @@ class CustomFields(Component):
     def verify_custom_field(self, cfield, create=True):
         """ Basic validation of the input for modifying or creating
         custom fields. """
-        # Name, Type and Label is required
-        if not (cfield.get('name') and cfield.get('type') \
-                    and cfield.get('label')):
+        # Requires 'name' and 'type'
+        if not (cfield.get('name') and cfield.get('type')):
             raise TracError(
-                    _("Custom field needs at least a name, type and label."))
+                    _("Custom field requires attributes 'name' and 'type'."))
         # Use lowercase custom fieldnames only
         cfield['name'] = cfield['name'].lower()
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
@@ -109,12 +108,15 @@ class CustomFields(Component):
     
     def create_custom_field(self, cfield):
         """ Create the new custom fields (that may just have been deleted as
-        part of 'modify'). Note: Caller is responsible for verifying input
-        before create."""
+        part of 'modify'). In `cfield`, 'name' and 'type' keys are required.
+        Note: Caller is responsible for verifying input before create."""
+        # Need count pre-create for correct order
+        count_current_fields = len(self.get_custom_fields())
         # Set the mandatory items
         self.config.set('ticket-custom', cfield['name'], cfield['type'])
+        # Label = capitalize fieldname if not present
         self.config.set('ticket-custom', cfield['name'] + '.label',
-                                                        cfield['label'])
+                        cfield.get('label') or cfield['name'].capitalize())
         # Optional items
         if 'value' in cfield:
             self.config.set('ticket-custom', cfield['name'] + '.value',
@@ -138,20 +140,21 @@ class CustomFields(Component):
             self.config.set('ticket-custom', cfield['name'] + '.cols', cols)
             self.config.set('ticket-custom', cfield['name'] + '.rows', rows)
         # Order
-        order = cfield.get('order', "")
-        if order == "":
-            order = len(self.get_custom_fields())
+        order = cfield.get('order') or count_current_fields + 1
         self.config.set('ticket-custom', cfield['name'] + '.order', order)
-        self._save()
+        self._save(cfield)
 
     def update_custom_field(self, cfield, create=False):
-        """ Updates a custom. Option to 'create' is kept in order to keep
+        """ Updates a custom field. Option to 'create' is kept in order to keep
         the API backwards compatible. """
         if create:
             self.verify_custom_field(cfield)
             self.create_custom_field(cfield)
             return
         # Check input, then delete and save new
+        if not self.get_custom_fields(cfield=cfield):
+            raise TracError(_("Custom Field '%(name)s' does not exist. " \
+                    "Cannot update.", name=cfield.get('name') or '(none)'))
         self.verify_custom_field(cfield, create=False)
         self.delete_custom_field(cfield, modify=True)
         self.create_custom_field(cfield)
@@ -183,9 +186,9 @@ class CustomFields(Component):
                 self.config.remove('ticket-custom', option)
         # Persist permanent deletes
         if not modify:
-            self._save()
+            self._save(cfield)
 
-    def _save(self):
+    def _save(self, cfield=None):
         # Saves a value, clear caches if needed / supported
         self.config.save()
         try:
@@ -194,3 +197,8 @@ class CustomFields(Component):
         except AttributeError:
             # 0.11 cached values internally
             TicketSystem(self.env)._custom_fields = None
+        # Re-populate contents of cfield with new values and defaults
+        if cfield:
+            stored = self.get_custom_fields(cfield=cfield)
+            if stored: # created or updated (None for deleted so just ignore)
+                cfield.update(stored)

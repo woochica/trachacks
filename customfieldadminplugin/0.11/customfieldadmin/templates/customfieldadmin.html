@@ -161,12 +161,12 @@
               <td>${cf.label}</td>
               <td class="default">
                 <select name="order_${cf.name}" py:with="count = len(cfields)">
-                  <option py:for="num in range(count)"
+                  <option py:for="num in range(1, count+1)"
                       selected="${num==cf.order and 'selected' or None}">
                       ${num}
                   </option>
                   <!--! Extra option in case value is outside regular range -->
-                  <py:if test="cf.order not in range(count)">
+                  <py:if test="cf.order not in range(1, count+1)">
                     <option disabled="disabled">&mdash;</option>
                     <option title="Currently outside regular range"
                             selected="selected">${cf.order}</option>
