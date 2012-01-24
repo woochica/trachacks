@@ -32,6 +32,18 @@ class CustomFieldApiTestCase(unittest.TestCase):
                 __import__('customfieldadmin', ['__version__']).__version__) \
                     in self.env.systeminfo)
 
+    def test_create(self):
+        for f in ['one', 'two', 'three']:
+            cfield = {'name': f, 'type': 'text', 'label': f.capitalize()}
+            self.cf_api.create_custom_field(cfield)
+        self.assertEquals(self.cf_api.get_custom_fields(),
+                    [{'name': u'one', 'format': 'plain', 'value': '',
+                      'label': u'One', 'type': u'text', 'order': 1},
+                     {'name': u'two', 'format': 'plain', 'value': '',
+                      'label': u'Two', 'type': u'text', 'order': 2},
+                     {'name': u'three', 'format': 'plain', 'value': '',
+                      'label': u'Three', 'type': u'text', 'order': 3}])
+
     def test_delete_unknown_options(self):
         cf = customfield = {'name': 'foo', 'type': 'text', 'label': 'Foo'}
         self.cf_api.create_custom_field(cf)

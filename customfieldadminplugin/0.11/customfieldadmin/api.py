@@ -142,7 +142,7 @@ class CustomFields(Component):
         if order == "":
             order = len(self.get_custom_fields())
         self.config.set('ticket-custom', cfield['name'] + '.order', order)
-        self.config.save()
+        self._save()
 
     def update_custom_field(self, cfield, create=False):
         """ Updates a custom. Option to 'create' is kept in order to keep
@@ -183,4 +183,14 @@ class CustomFields(Component):
                 self.config.remove('ticket-custom', option)
         # Persist permanent deletes
         if not modify:
-            self.config.save()
+            self._save()
+
+    def _save(self):
+        # Saves a value, clear caches if needed / supported
+        self.config.save()
+        try:
+            # cache support for Trac >= 0.12
+            del TicketSystem(self.env).custom_fields
+        except AttributeError:
+            # 0.11 cached values internally
+            TicketSystem(self.env)._custom_fields = None
