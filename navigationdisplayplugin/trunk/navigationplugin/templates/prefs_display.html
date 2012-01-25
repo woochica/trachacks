@@ -12,18 +12,40 @@
   </head>
   <body>
   <table>
+	<tr>
+		<td colspan="2">
+			<h2>Display navigation bar</h2>
+		</td>
+	</tr>
   	<tr>
   		<td><label>Navigation</label>:</td>
   		<td>
-	  		<select name="display_navigation">
-	  		<py:for each="row in choices">
-	  			<option value="${row}" selected="${selected == row and 'selected' or None}">${row}</option>
+	  		<select name="display_nav">
+	  		<py:for each="row in nav_choices">
+	  			<option value="${row}" selected="${selected['display_nav'] == row and 'selected' or None}">${row}</option>
 	  		</py:for>
 	  		</select>
   		</td>
 	</tr>
 	<tr>
-  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_default}</b></i></td>
+  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_defaults['display_nav']}</b></i></td>
+  	</tr>
+</table>
+
+<table>
+	<tr>
+		<td colspan="2">
+			<h2>Main navigation links</h2>
+		</td>
+	</tr>
+  	<tr>
+  		<td><label>Page for Wiki menu</label>:</td>
+  		<td>
+	  		<input type="text" name="wiki.href" value="${selected['wiki.href'] or ''}" />
+  		</td>
+	</tr>
+	<tr>
+  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_defaults['wiki.href'] or '---'}</b></i></td>
   	</tr>
   </table>
   </body>

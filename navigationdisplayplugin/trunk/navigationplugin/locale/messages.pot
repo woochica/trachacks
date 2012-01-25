@@ -25,8 +25,20 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
+msgid "Display navigation bar"
+msgstr ""
+
 msgid "Navigation"
 msgstr ""
 
 msgid "System default is"
+msgstr ""
+
+msgid "Main navigation links"
+msgstr ""
+
+msgid "Page for Wiki menu"
+msgstr ""
+
+msgid "%(page)s is not a valid Wiki page"
 msgstr ""

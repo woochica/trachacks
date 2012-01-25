@@ -39,13 +39,19 @@ display."""
 
     def render_preference_panel(self, req, panel):
         nav = Navigation(self.env)
-        selected = nav.get_display(req)
-        choices = nav.get_display_choices()
-        system_default = nav.get_system_default_display()
+        if panel == 'navigation':
+            nav.save(req)
+        selected = {'display_nav': nav.get_display(req),
+                    'wiki.href': nav.get_wiki_href(req)}
+        nav_choices = nav.get_display_choices()
+#        session_keys = nav.get_session_keys()
+        system_defaults = {'display_nav': nav.get_system_default_display(), 
+                           'wiki.href': nav.get_system_default_wiki_href()}
         
         data = {'selected': selected,
-                'choices': choices,
-                'system_default': system_default}
+                'nav_choices': nav_choices,
+#                'session_keys': session_keys,
+                'system_defaults': system_defaults}
         return 'prefs_display.html', data
         
 

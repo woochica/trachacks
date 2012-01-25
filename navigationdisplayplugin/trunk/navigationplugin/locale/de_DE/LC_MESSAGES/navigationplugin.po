@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: NavigationPlugin 0.0.x\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2011-03-10 01:38+0200\n"
-"PO-Revision-Date: 2012-01-24 16:23+0100\n"
+"PO-Revision-Date: 2012-01-25 14:17+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -21,8 +21,22 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
+msgid "Display navigation bar"
+msgstr "Anzeige der Menüleiste"
+
 msgid "Navigation"
 msgstr "Navigation"
 
 msgid "System default is"
 msgstr "Systemstandard ist"
+
+msgid "Main navigation links"
+msgstr "Links für Menüleiste"
+
+msgid "Page for Wiki menu"
+msgstr "Name für Wiki-Menü"
+
+#, python-format
+msgid "%(page)s is not a valid Wiki page"
+msgstr "Wiki-Seite %(page)s existiert nicht"
+

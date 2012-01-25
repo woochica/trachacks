@@ -37,14 +37,6 @@
 	clear: both;
 }
 
-#content {
-	position: relative;
-}
-
-#altlinks {
-	position: relative;
-}
-
-#footer {
+#pagepath, #warning, #content, #altlinks, #footer {
 	position: relative;
 }
