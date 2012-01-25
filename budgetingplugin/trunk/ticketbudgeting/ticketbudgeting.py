@@ -1,29 +1,21 @@
 import re
-import os
 import time
 import locale
-import pkg_resources
 
-from pkg_resources import resource_filename
+from pkg_resources import resource_filename #@UnresolvedImport
 from trac.util.translation import domain_functions
-from os import path
-from trac.core import *
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from genshi.filters import Transformer
-from genshi.builder import tag
-from genshi import HTML, XML
-from trac.web.chrome import ITemplateProvider, add_script, add_script_data
+from genshi import HTML
+from trac.web.chrome import ITemplateProvider, add_script
 from trac.ticket.api import ITicketManipulator
-from string import upper
-from genshi.filters.transform import StreamBuffer
 
-from trac.db.schema import Table, Column, Index
+from trac.db.schema import Table, Column
 from trac.db.api import DatabaseManager
 from trac.config import Option
 from trac.ticket.model import Ticket
-import __init__
-from trac.perm import IPermissionRequestor,PermissionSystem
-from compiler.ast import Printnl
+from trac.perm import IPermissionRequestor
+from trac.core import Component, implements
 
 _, tag_, N_, add_domain = domain_functions('ticketbudgeting', '_', 'tag_', 'N_', 'add_domain')
 
@@ -77,7 +69,7 @@ class Budget:
                     else:
                         try:
                             self._budget_dict[fld] = locale.atof(value)
-                        except Exception, ex:
+                        except:
 #                            print "exception (locale.atof): %s" % ex
                             self._budget_dict[fld] = float(value)
                 except Exception, e:
@@ -279,7 +271,7 @@ class TicketBudgetingView(Component):
 #    group by t.id, t.type, t.priority, t.summary, t.owner, t.reporter, t.component, t.milestone""")    
     
     def __init__(self):
-        locale_dir = pkg_resources.resource_filename(__name__, 'locale') 
+        locale_dir = resource_filename(__name__, 'locale') 
         add_domain(self.env.path, locale_dir)
         
     def filter_stream(self, req, method, filename, stream, data):
@@ -669,7 +661,7 @@ class TicketBudgetingView(Component):
                 for i, col in enumerate(row):
 #                    print "%s. col: %s" % (i, col)
                     if i > 0:
-                        budget.set(i, row[i])
+                        budget.set(i, col)
                 pos = int (row[0])
                 self._budgets[pos] = budget
                 self.log.debug("[_load_budget] loaded budget: %s" % budget.get_values())
@@ -701,11 +693,11 @@ class TicketBudgetingView(Component):
                     old_value = ''
                     new_value = ''
                     if action == 'insert':
-                       new_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
+                        new_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
                     elif action == 'delete':
-                       old_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
+                        old_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
                     elif action == 'update':
-                       continue
+                        continue
                     
                     sql = "INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)" \
                                    " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')" % (tkt.id, cur_time, change_user, pos, old_value, new_value)
