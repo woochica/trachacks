@@ -8,10 +8,11 @@ License: BSD
 (c) 2007-2009 ::: www.Optaros.com (.....)
 """
 
+from pkg_resources import resource_filename
+
 from trac.config import Option
 from trac.core import *
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
-                            add_warning
+from trac.web.chrome import ITemplateProvider, add_script, add_warning
 from trac.admin.api import IAdminPanelProvider
 
 from customfieldadmin.api import CustomFields, _
@@ -102,7 +103,6 @@ class CustomFieldAdminPage(Component):
                     order = dict([(key[6:], req.args.get(key)) for key
                                   in req.args.keys()
                                   if key.startswith('order_')])
-                    values = dict([(val, True) for val in order.values()])
                     cfields = cf_api.get_custom_fields()
                     for current_cfield in cfields:
                         current_cfield['order'] = order[current_cfield['name']]
@@ -128,9 +128,7 @@ class CustomFieldAdminPage(Component):
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('customfieldadmin', resource_filename(__name__, 'htdocs'))]

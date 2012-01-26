@@ -91,7 +91,7 @@ class CustomFieldApiTestCase(unittest.TestCase):
                 self.cf_api.get_custom_fields(cfield={'name': 'two'}))
 
     def test_delete_unknown_options(self):
-        cf = customfield = {'name': 'foo', 'type': 'text', 'label': 'Foo'}
+        cf = {'name': 'foo', 'type': 'text', 'label': 'Foo'}
         self.cf_api.create_custom_field(cf)
         self.assertEquals('text',
                     self.env.config.get('ticket-custom', 'foo'))
@@ -107,7 +107,7 @@ class CustomFieldApiTestCase(unittest.TestCase):
                     self.env.config.get('ticket-custom', 'foo.answer'))
 
     def test_not_delete_unknown_options_for_modify(self):
-        cf = customfield = {'name': 'foo', 'type': 'text', 'label': 'Foo'}
+        cf = {'name': 'foo', 'type': 'text', 'label': 'Foo'}
         self.cf_api.create_custom_field(cf)
         self.assertEquals('text',
                     self.env.config.get('ticket-custom', 'foo'))

@@ -72,8 +72,7 @@ class CustomFields(Component):
         if not cfield:    # return full list
             return TicketSystem(self.env).get_custom_fields()
         else:                  # only return specific item with cfname
-            all = TicketSystem(self.env).get_custom_fields()
-            for item in all:
+            for item in TicketSystem(self.env).get_custom_fields():
                 if item['name'] == cfield['name']:
                     return item
             return None        # item not found
@@ -89,7 +88,7 @@ class CustomFields(Component):
         cfield['name'] = cfield['name'].lower()
         # Only alphanumeric characters (and [-_]) allowed for custom fieldname
         if re.search('^[a-z][a-z0-9_]+$', cfield['name']) == None:
-           raise TracError(_("Only alphanumeric characters allowed for " \
+            raise TracError(_("Only alphanumeric characters allowed for " \
                              "custom field name ('a-z' or '0-9' or '_'), " \
                              "with 'a-z' as first character."))
         # Name must begin with a character - anything else not supported by Trac
@@ -189,7 +188,7 @@ class CustomFields(Component):
             self._save(cfield)
 
     def _save(self, cfield=None):
-        # Saves a value, clear caches if needed / supported
+        """ Saves a value, clear caches if needed / supported. """
         self.config.save()
         try:
             # cache support for Trac >= 0.12

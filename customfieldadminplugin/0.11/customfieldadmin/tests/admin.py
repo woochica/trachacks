@@ -9,7 +9,6 @@ import unittest
 
 from trac.perm import PermissionSystem, PermissionCache
 from trac.test import EnvironmentStub, Mock
-from trac.ticket.api import TicketSystem
 from trac.web.api import RequestDone
 from trac.web.href import Href
 
@@ -89,7 +88,8 @@ class CustomFieldAdminPageTestCase(unittest.TestCase):
     def test_apply_optional_select(self):
         # Reuse the added custom field that test verified to work
         self.test_add_optional_select()
-        self.assertEquals('select', self.env.config.get('ticket-custom', 'test'))
+        self.assertEquals('select',
+                            self.env.config.get('ticket-custom', 'test'))
         # Now check that details are maintained across order change
         # that reads fields, deletes them, and creates them again
         # http://trac-hacks.org/ticket/1834#comment:5
