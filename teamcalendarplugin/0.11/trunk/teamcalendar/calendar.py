@@ -57,8 +57,11 @@ class TeamCalendar(Component):
         timetable_cursor = db.cursor()
         timetable_cursor.execute('SELECT ondate, username, availability '
                                  'FROM %s '
-                                 'WHERE ondate >= "%s" AND ondate <= "%s" '
-                                 'GROUP BY ondate, username' % (self.table_name, from_date.isoformat(), to_date.isoformat(),))
+                                 'WHERE ondate >= %%s AND ondate <= %%s '
+                                 'GROUP BY ondate, username, availability' % \
+                                     self.table_name, 
+                                      (from_date.isoformat(), 
+                                      to_date.isoformat(),))
         
         empty_day = dict([(p, 0.0) for p in people])
         
