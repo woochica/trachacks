@@ -126,12 +126,13 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * "
                     " [/browser/%(path)s/trunk trunk]"
-                    " @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " ("
                     "[/log/%(path)s/trunk changes]"
                     " [/changeset?new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
+                    'reponame' : reponame,
                     'path': path,
                     'rev': cur['rev'],
                 })
@@ -140,12 +141,13 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * "
                     " [/browser/%(path)s/trunk trunk]"
-                    " @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " ("
                     "[/log/%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
+                    'reponame' : reponame,
                     'path': path,
                     'rev' : cur['rev'],
                     'old_tag' : next['version'],
@@ -156,13 +158,14 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * '''%(date)s'''"
                     " [/log/%(path)s/tags/%(new_tag)s %(new_tag)s]"
-                    " @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                     " ("
                     "[/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s diffs]"
                     ")"
                 % {
+                    'reponame' : reponame,
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
                     'rev' : cur['rev'],
@@ -186,9 +189,10 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 items.append(
                     " * '''%(date)s'''"
                     " [/log/%(path)s/tags/%(new_tag)s?rev=%(rev)s&mode=follow_copy %(new_tag)s]"
-                    " @[changeset:%(rev)s %(rev)s]"
+                    " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                 % {
+                    'reponame' : reponame,
                     'path': path,
                     'date': cur['time'].strftime('%Y-%m-%d'),
                     'rev' : cur['rev'],
