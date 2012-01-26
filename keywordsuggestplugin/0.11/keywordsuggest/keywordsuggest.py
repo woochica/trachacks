@@ -1,4 +1,8 @@
-# copyright (c) 2008 Dmitry Dianov. All rights reserved.
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2008 Dmitry Dianov
+# Copyright (C) 2011 Steffen Hoffmann
+# All rights reserved.
 
 from genshi.builder import tag
 from genshi.core import Markup
@@ -6,10 +10,27 @@ from genshi.filters.transform import Transformer
 from pkg_resources import resource_filename
 from trac.config import Option, BoolOption, ListOption
 from trac.core import Component, implements
-from trac.util.text import javascript_quote
 from trac.web import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
+
+try:
+    from trac.util.text import javascript_quote
+except ImportError:
+    # Fallback for Trac<0.11.3 - verbatim copy from Trac 0.13dev.
+    _js_quote = {'\\': '\\\\', '"': '\\"', '\b': '\\b', '\f': '\\f',
+                 '\n': '\\n', '\r': '\\r', '\t': '\\t', "'": "\\'"}
+    for i in range(0x20) + [ord(c) for c in '&<>']:
+        _js_quote.setdefault(chr(i), '\\u%04x' % i)
+    _js_quote_re = re.compile(r'[\x00-\x1f\\"\b\f\n\r\t\'&<>]')
+
+    def javascript_quote(text):
+        """Quote strings for inclusion in javascript"""
+        if not text:
+            return ''
+        def replace(match):
+            return _js_quote[match.group(0)]
+        return _js_quote_re.sub(replace, text)
 
 try:
     from tractags.api import TagSystem
@@ -17,6 +38,7 @@ try:
 except ImportError:
     # TagsPlugin not available
     tagsplugin_is_installed = False
+
 
 class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
@@ -50,7 +72,7 @@ class KeywordSuggestModule(Component):
             return stream
 
         keywords = self.keywords
-         
+
         if tagsplugin_is_installed:
             # '-invalid_keyword' is a workaround for a TagsPlugin regression, see th:#7856 and th:#7857
             query_result = TagSystem(self.env).query(req, '-invalid_keyword')
@@ -58,8 +80,7 @@ class KeywordSuggestModule(Component):
                 for _tag in tags:
                     if (_tag not in keywords):
                         keywords.append(_tag)
-        
-        
+
         keywords = sorted(keywords)
         if keywords:
             keywords = ','.join(("'%s'" % javascript_quote(_keyword)
