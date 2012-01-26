@@ -4,12 +4,16 @@
 # Copyright (C) 2011 Steffen Hoffmann
 # All rights reserved.
 
+import re
+
 from genshi.builder import tag
 from genshi.core import Markup
 from genshi.filters.transform import Transformer
 from pkg_resources import resource_filename
 from trac.config import Option, BoolOption, ListOption
 from trac.core import Component, implements
+from trac.resource import Resource, ResourceSystem
+from trac.util.text import unicode_quote_plus
 from trac.web import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script
@@ -153,13 +157,16 @@ class KeywordSuggestModule(Component):
                                'keywords': keywords,
                                'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append\
-                              (tag.script(Markup(js_ticket), type='text/javascript'))
+                              (tag.script(Markup(js_ticket),
+                               type='text/javascript'))
 
-            # turn keywords field label into link to a wiki page
+            # Turn keywords field label into link to an arbitrary resource.
             if self.helppage:
-                link = tag.a(href=req.href(self.helppage), target='blank')
-                if not self.helppagenewwindow:
-                    link.attrib -= 'target'
+                link = self._get_helppage_link(req)
+                if self.helppagenewwindow:
+                    link = tag.a(href=link, target='blank')
+                else:
+                    link = tag.a(href=link)
                 stream = stream | Transformer\
                      ('//label[@for="field-keywords"]/text()').wrap(link)
                              
@@ -170,9 +177,47 @@ class KeywordSuggestModule(Component):
                              'keywords': keywords,
                              'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
-                              (tag.script(Markup(js_wiki), type='text/javascript'))
-                              
+                              (tag.script(Markup(js_wiki),
+                               type='text/javascript'))
         return stream
+
+    def _get_helppage_link(self, req):
+        link = realm = resource_id = None
+        if self.helppage.startswith('/'):
+            # Assume valid URL to arbitrary resource inside
+            #   of the current Trac environment.
+            link = req.href(self.helppage)
+        if not link and ':' in self.helppage:
+            realm, resource_id = self.helppage.split(':', 1)
+            # Validate realm-like prefix against resource realm list,
+            #   but exclude 'wiki' to allow deferred page creation.
+            rsys = ResourceSystem(self.env)
+            if realm in set(rsys.get_known_realms()) - set('wiki'):
+                mgr = rsys.get_resource_manager(realm)
+                # Handle optional IResourceManager method gracefully.
+                try:
+                    if mgr.resource_exists(Resource(realm, resource_id)):
+                        link = mgr.get_resource_url(resource_id, req.href)
+                except AttributeError:
+                    # Assume generic resource URL build rule.
+                    link = req.href(realm, resource_id)
+        if not link:
+            if not resource_id:
+                # Assume wiki page name for backwards-compatibility.
+                resource_id = self.helppage
+            # Preserve anchor without 'path_safe' arg (since Trac 0.12.2dev).
+            if '#' in resource_id:
+                path, anchor = resource_id.split('#', 1)
+            else:
+                anchor = None
+                path = resource_id
+            if hasattr(unicode_quote_plus, "safe"):
+                # Use method for query string quoting (since Trac 0.13dev).
+                anchor = unicode_quote_plus(anchor, safe="?!~*'()")
+            else:
+                anchor = unicode_quote_plus(anchor)
+            link = '#'.join([req.href.wiki(path), anchor])
+        return link
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
