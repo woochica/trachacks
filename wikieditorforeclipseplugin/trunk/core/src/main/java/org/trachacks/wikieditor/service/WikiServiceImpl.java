@@ -119,7 +119,7 @@ public class WikiServiceImpl implements WikiService{
 		if(pageVersion == null) {
 			try {
 				// try wiki
-				pageVersion = wikiClient.getPageVersion(pageName);
+				pageVersion = getLatestVersion(pageName);
 			} catch (PageNotFoundException e) {
 				// create new page
 				pageVersion = new PageVersion();
@@ -128,7 +128,7 @@ public class WikiServiceImpl implements WikiService{
 				pageVersion.setServerId(server.getId());
 				pageVersion.setAuthor(server.getUsername());
 			}
-			pageVersion.setServerId(server.getId());
+			//pageVersion.setServerId(server.getId());
 		}
 		return pageVersion;
 	}
@@ -163,7 +163,7 @@ public class WikiServiceImpl implements WikiService{
 	public PageVersion commit(PageVersion pageVersion, boolean isMinorEdit) throws ConcurrentEditException, PageNotModifiedException{
 		wikiClient.savePageVersion(pageVersion.getName(), pageVersion.getContent(), pageVersion.getComment(), pageVersion.getVersion(), isMinorEdit);
 		diskCache.remove(pageVersion.getServerId(), pageVersion.getName());
-		return wikiClient.getPageVersion(pageVersion.getName());
+		return getLatestVersion(pageVersion.getName());
 	}
 	
 	/**
@@ -173,7 +173,7 @@ public class WikiServiceImpl implements WikiService{
 	 */
 	public PageVersion unedit(PageVersion pageVersion){
 		diskCache.remove(pageVersion.getServerId(),pageVersion.getName());
-		return wikiClient.getPageVersion(pageVersion.getName());
+		return getLatestVersion(pageVersion.getName());
 	}
 
 	/**
@@ -184,14 +184,16 @@ public class WikiServiceImpl implements WikiService{
 	public PageVersion forceCommit(PageVersion pageVersion) throws PageNotModifiedException{
 		wikiClient.savePageVersion(pageVersion.getName(), pageVersion.getContent(), pageVersion.getComment());
 		diskCache.remove(pageVersion.getServerId(),pageVersion.getName());
-		return wikiClient.getPageVersion(pageVersion.getName());
+		return getLatestVersion(pageVersion.getName());
 	}
 
 	/**
 	 * 
 	 */
 	public PageVersion getLatestVersion(String pageName) throws PageNotFoundException {
-		return wikiClient.getPageVersion(pageName);
+		PageVersion pageVersion = wikiClient.getPageVersion(pageName);
+		pageVersion.setServerId(server.getId());
+		return pageVersion;
 	}
 	
 	/**
