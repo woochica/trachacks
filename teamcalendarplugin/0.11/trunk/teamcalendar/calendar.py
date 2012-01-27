@@ -5,7 +5,7 @@ from pkg_resources import resource_filename
 
 from genshi.builder import tag
 
-from trac.config import Option
+from trac.config import Option, ListOption
 from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.core import Component, implements
 from trac.web import IRequestHandler
@@ -20,6 +20,13 @@ class TeamCalendar(Component):
     # How much to display by default?
     weeks_prior = Option('team-calendar', 'weeks_prior', u"1", doc="Defines how many weeks before the current week to show by default")
     weeks_after = Option('team-calendar', 'weeks_after', u"3", doc="Defines how many weeks before the current week to show by default")
+
+    # Default work week.
+    work_days = ListOption('team-calendar',
+                            'work_days',
+                            [],
+                            doc="Lists days of week that are worked. " + \
+                                "Defaults to none.  0 is Monday.")
 
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -64,11 +71,19 @@ class TeamCalendar(Component):
                                       to_date.isoformat(),))
         
         empty_day = dict([(p, 0.0) for p in people])
-        
+        full_day = dict([(p, 1.0) for p in people])
+
         timetable = {}
         current_date = from_date
         while current_date <= to_date:
-            timetable[current_date] = empty_day.copy()
+            # work_days contains strings because ListOption returns a
+            # list of strings.  Even if it had numbers, we couldn't
+            # include Monday (0) because of
+            # http://trac.edgewall.org/ticket/10541
+            if str(current_date.weekday()) in self.work_days:
+                timetable[current_date] = full_day.copy()
+            else:
+                timetable[current_date] = empty_day.copy()
             current_date += timedelta(1)
             
         for row in timetable_cursor:
