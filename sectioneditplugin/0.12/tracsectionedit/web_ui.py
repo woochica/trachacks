@@ -105,9 +105,10 @@ class WikiSectionEditModule(Component):
                 pre.append(line)
             elif count == int(section):
                 target.append(line)
-            elif count > int(section) :
+            elif count > int(section):
+                post = page_list[i:]
                 break
-        post = page_list[i:]
+
         if len(target) == 0:
             raise TracError(_('The section %(num)d that you chose could not be found.', num=int(section)), _('Initialize Error'))
 
