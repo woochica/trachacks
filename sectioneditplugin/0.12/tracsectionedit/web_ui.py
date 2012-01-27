@@ -22,8 +22,9 @@ class WikiSectionEditModule(Component):
     
     preview_whole_page = BoolOption('section-edit', 'preview_whole_page', True, 
                                     'Whether to preview the entire page or just the section.')
-    serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True,
-                                '???')
+    edit_subsections = BoolOption('section-edit', 'edit_subsections', False,
+                                 'Whether to edit all subsections or just the section.')
+    serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True, '???')
 
     # ITemplateProvider
     def get_templates_dirs(self):
@@ -92,6 +93,8 @@ class WikiSectionEditModule(Component):
         target = [] 
         post = [] 
         is_code_block = False
+        this_heading_level = []        
+        section_heading_level = []
         page_list = re.split('(\r\n|\r|\n)', page_text)
 
         for i, line in enumerate(page_list):
@@ -99,11 +102,17 @@ class WikiSectionEditModule(Component):
                 is_code_block = True
             elif is_code_block == True and re.match(r'^\s*}}}\s*$', line):
                 is_code_block = False
-            if is_code_block == False and re.match(r'^\s*([=#]{1,6})\s.*?', line):
+            
+            match = re.match(r'^\s*(?P<heading_markup>[=#]{1,6})\s.*?', line)
+            if is_code_block == False and match:
+                this_heading_level = len(match.group('heading_markup'))
                 count = count + 1
+                if count == int(section):
+                    section_heading_level = this_heading_level
+            
             if count < int(section):
                 pre.append(line)
-            elif count == int(section):
+            elif count == int(section) or (self.edit_subsections and this_heading_level > section_heading_level):
                 target.append(line)
             elif count > int(section):
                 post = page_list[i:]
