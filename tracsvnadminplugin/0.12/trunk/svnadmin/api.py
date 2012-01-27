@@ -25,6 +25,7 @@ class SvnRepositoryProvider(Component):
         self.parentpath = self.config.get('svnadmin', 'parent_path')
         self.client = self.config.get('svnadmin', 'svn_client_location')
         self.admin = self.config.get('svnadmin', 'svnadmin_location')
+        self.hookspath = self.config.get('svnadmin', 'hooks_path')
     
     def get_repositories(self):
         """Retrieve repositories in the SVN parent directory."""
@@ -78,6 +79,12 @@ class SvnRepositoryProvider(Component):
                                   "and the web server has write permissions for it.", name=name, parentpath=self.parentpath))
             else:
                 raise TracError(error)
+        if self.hookspath and os.path.exists(self.hookspath):
+	        hooksdir = os.path.join(dir, 'hooks/')
+	        files = os.listdir(self.hookspath)
+	        files = [self.hookspath + '/' + filename for filename in files]
+	        for file in files:
+	        	shutil.copy2(file, hooksdir)
         rm = RepositoryManager(self.env)
         rm.reload_repositories()
     

@@ -48,22 +48,26 @@ class SvnAdmin(Component):
         parentpath = self.config.get('svnadmin', 'parent_path')
         client = self.config.get('svnadmin', 'svn_client_location')
         admin = self.config.get('svnadmin', 'svnadmin_location')
+        hookspath = self.config.get('svnadmin', 'hooks_path')
         
     	if req.method == 'POST' and req.args.get('save_settings'):
     	    parentpath = req.args.get('parentpath')
             client = req.args.get('client')
             admin = req.args.get('admin')
+            hookspath = req.args.get('hookspath')
             
             self.config.set('svnadmin', 'parent_path', parentpath)
             self.config.set('svnadmin', 'svn_client_location', client)
             self.config.set('svnadmin', 'svnadmin_location', admin)
+            self.config.set('svnadmin', 'hooks_path', hookspath)
             self.config.save()
             add_notice(req, _('The settings have been saved.'))
         
     	data = {
     	    'parentpath': parentpath,
     	    'client': client,
-    	    'admin': admin
+    	    'admin': admin,
+    	    'hookspath': hookspath
     	}
         add_stylesheet(req, 'svnadmin/css/svnadmin.css')
         return 'config.html', data

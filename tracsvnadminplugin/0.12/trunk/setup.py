@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 # use package name as entry_points
 setup(
     name = 'TracSVNAdmin', 
-    version = '0.1',
+    version = '0.2',
     description = 'SVNAdmin for Trac',
     long_description = """
 		Use the SVNAdmin plugin to administer Subversion repositories.
