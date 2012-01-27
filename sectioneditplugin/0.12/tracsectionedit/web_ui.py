@@ -24,19 +24,19 @@ class WikiSectionEditModule(Component):
                                     'Whether to preview the entire page or just the section.')
     edit_subsections = BoolOption('section-edit', 'edit_subsections', False,
                                  'Whether to edit all subsections or just the section.')
-    serve_ui_files = BoolOption('section-edit', 'serve_ui_files', True, '???')
 
     # ITemplateProvider
     def get_templates_dirs(self):
         return []
+    
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracsectionedit',resource_filename(__name__, 'htdocs'))]
     
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if re.match(r'^/($|wiki)', req.path_info) \
-                and 'WIKI_MODIFY' in req.perm:
+        if re.match(r'/wiki(?:/(.+))?$', req.path_info) and \
+           'WIKI_MODIFY' in req.perm:
             if req.method=='POST' \
                     and 'section' in req.args \
                     and 'section_pre' in req.args \
@@ -47,15 +47,14 @@ class WikiSectionEditModule(Component):
                 if len(req.args['section_pre']) > 0 and req.args['section_pre'][-1] != '\n':
                     section_text = '\n' + section_text
                 req.args['section_text'] = req.args.get('text')
-                req.args['text'] = "%s%s%s"%(req.args.get('section_pre'), 
-                                             section_text, 
+                req.args['text'] = "%s%s%s"%(req.args.get('section_pre'),
+                                             section_text,
                                              req.args.get('section_post'))
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if self.serve_ui_files \
-                and not 'action' in req.args \
-                and 'WIKI_MODIFY' in req.perm:
+        if not 'action' in req.args \
+            and 'WIKI_MODIFY' in req.perm:
             add_script(req, 'tracsectionedit/js/tracsectionedit.js')
         return template, data, content_type
 
@@ -97,6 +96,7 @@ class WikiSectionEditModule(Component):
         section_heading_level = []
         page_list = re.split('(\r\n|\r|\n)', page_text)
 
+        # Split page text into lists of pre, section and post text
         for i, line in enumerate(page_list):
             if is_code_block == False and re.match(r'^\s*{{{\s*$', line):
                 is_code_block = True
@@ -119,6 +119,7 @@ class WikiSectionEditModule(Component):
                 break
 
         if len(target) == 0:
-            raise TracError(_('The section %(num)d that you chose could not be found.', num=int(section)), _('Initialize Error'))
+            raise TracError(_('The section %(num)d that you chose could not be found.',
+                              num=int(section)), _('Initialization Error'))
 
         return pre, target, post
