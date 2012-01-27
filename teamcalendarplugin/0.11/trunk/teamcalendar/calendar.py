@@ -97,11 +97,19 @@ class TeamCalendar(Component):
             if user not in users:
                 users.append(user)
         cursor = db.cursor()
+        # In 0.12, we could do
+        #
+        #   ','.join([db.quote(user) for user in users])
+        #
+        # but 0.11 doesn't have db.quote() so we build up enough
+        # instances of %s to accomodate all the users then let
+        # cursor.execute() quote the items from the list.
+        inClause = "username IN (%s)" % ','.join(('%s',) * len(users))
         cursor.execute("SELECT ondate, username, availability FROM %s " % \
                            self.table_name +
-                       "WHERE ondate >= '%s' " % fromDate.isoformat() +
-                       " AND ondate <= '%s' " % toDate.isoformat() +
-                       "   AND username IN ('%s')" % "', '".join(users))
+                       "WHERE ondate >= %s AND ondate <= %s " +
+                       "AND " + inClause,
+                       [fromDate.isoformat(), toDate.isoformat()] + users)
 
         updates = []
         inserts = []
@@ -133,12 +141,16 @@ class TeamCalendar(Component):
 
         if len(inserts):
             insert_cursor = db.cursor()
+            valuesClause = ','.join(('(%s,%s,%s)',) * len(inserts))
+            # FIXME - we likely want to do this earlier on all of tuples.
+            inserts = [(t[0], t[1], t[2] and 1 or 0) for t in inserts]
+            # Quickly flatten the list.  List comprehension is always
+            # weird.  See http://stackoverflow.com/questions/952914
+            flat = [item for sublist in inserts for item in sublist]
             insert_cursor.execute("INSERT INTO %s " % self.table_name + \
-                                      "(ondate, username, availability) " \
-                                      "VALUES %s " % \
-                                      ", ".join(["('%s', '%s', %d)" % 
-                                                 (t[0], t[1], t[2] and 1 or 0,) 
-                                                 for t in inserts]))
+                                      "(ondate, username, availability) " + \
+                                      "VALUES %s" % valuesClause,
+                                  flat)
 
         if len(updates):
             update_cursor = db.cursor()
@@ -146,8 +158,9 @@ class TeamCalendar(Component):
                 update_cursor.execute("UPDATE %s " % self.table_name + \
                                           "SET availability = %d " % \
                                           (t[2] and 1 or 0) + \
-                                          "WHERE ondate = '%s' " % t[0] + \
-                                          "AND username = '%s';" % t[1])
+                                          "WHERE ondate = %s "
+                                          "AND username = %s;",
+                                      (t[0], t[1]))
 
         if len(inserts) or len(updates):
             db.commit()
