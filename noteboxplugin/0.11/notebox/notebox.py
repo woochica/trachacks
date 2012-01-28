@@ -40,16 +40,12 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
 import re
+from genshi.builder import tag
 from trac.core import Component, implements
-from trac.wiki.api import WikiSystem, IWikiMacroProvider
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
-from trac.wiki.api import parse_args
-from trac.wiki.model import WikiPage
-from trac.wiki.formatter import Formatter, OneLinerFormatter
-from trac.util.html import Markup
-from genshi.builder import tag
-from StringIO import StringIO
+from trac.wiki.api import IWikiMacroProvider, parse_args
+from trac.wiki.formatter import format_to_html
 
 
 class NoteBox(Component):
@@ -60,15 +56,9 @@ class NoteBox(Component):
 
     def expand_macro(self, formatter, name, content):
         args, kwargs = parse_args(content)
-        buf = StringIO()
-        buf.write('<div class="notebox')
-        buf.write(args[0])
-        buf.write('">')
-        out = StringIO()
-        Formatter(formatter.env, formatter.context).format(args[1], out)
-        buf.write(out.getvalue())
-        buf.write('</div>')
-        return Markup(buf.getvalue())
+        div = tag.div(format_to_html(self.env, formatter.context, args[1]), 
+                      class_='notebox-%s' % (args[0],))
+        return div       
 
     def get_macro_description(self, name):
         from inspect import getdoc, getmodule
@@ -84,11 +74,10 @@ class NoteBox(Component):
 class NoteBoxFilter(Component):
     implements(IRequestFilter)
 
-    # IRequestFilter#pre_process_request
+    # IRequestFilter
     def pre_process_request(self, req, handler):
         return handler
 
-    # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
         add_stylesheet(req, 'notebox/css/notebox.css')
         return (template, data, content_type)

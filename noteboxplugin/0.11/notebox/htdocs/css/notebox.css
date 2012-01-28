@@ -21,24 +21,24 @@
 
 */
 
-.noteboxwarn {
+.notebox-warn {
 background-color:#FFDDDD;
 background-image:url(../warning.png);
 border: 1px solid red;
 }
-.noteboxtip {
+.notebox-tip {
 background-color:#DDFFDD;
 background-image:url(../tip.png);
 border: 1px solid green;
 }
-.noteboxnote {
+.notebox-note {
 background-color:#EEEEFF;
 background-image:url(../note.png);
 border: 1px solid #4B82FF;
 }
 
 
-.noteboxbase, .noteboxwarn, .noteboxnote, .noteboxtip {
+.notebox-base, .notebox-warn, .notebox-note, .notebox-tip {
 -moz-border-radius-bottomleft:20px;
 -moz-border-radius-bottomright:20px;
 -moz-border-radius-topleft:20px;
