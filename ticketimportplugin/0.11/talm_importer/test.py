@@ -375,6 +375,11 @@ datetime_format=%Y-%m-%d %H:%M
         self._do_test_diffs(env, 'celltypes-ticket-8804.xls', self._test_preview)
         self._do_test_diffs(env, 'celltypes-ticket-8804.xls', self._test_import)
 
+    def test_restkey_ticket_9730(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'restkey_9730.csv', self._test_import)
+        self._do_test_diffs(env, 'restkey_9730.csv', self._test_preview) 
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')

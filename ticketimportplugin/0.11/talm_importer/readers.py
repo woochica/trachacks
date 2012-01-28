@@ -57,7 +57,9 @@ class UTF8Reader(object):
 class CSVDictReader(csv.DictReader):
     def next(self):
         d = csv.DictReader.next(self)
-        return dict((_to_unicode(key), _to_unicode(val)) for key, val in d.iteritems())
+        return dict((_to_unicode(key), _to_unicode(val))
+                    for key, val in d.iteritems()
+                    if key is not None)
 
 class CSVReader(object):
     def __init__(self, filename, encoding):
