@@ -40,6 +40,8 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 """
 import re
+from inspect import getdoc, getmodule
+from pkg_resources import resource_filename
 from genshi.builder import tag
 from trac.core import Component, implements
 from trac.web.api import IRequestFilter
@@ -47,10 +49,10 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.wiki.formatter import format_to_html
 
-
 class NoteBox(Component):
-    implements(IWikiMacroProvider, ITemplateProvider)
+    implements(IWikiMacroProvider, ITemplateProvider, IRequestFilter)
 
+    # IWikiMacroProvider
     def get_macros(self):
         yield 'NoteBox'
 
@@ -60,19 +62,15 @@ class NoteBox(Component):
                       class_='notebox-%s' % (args[0],))
         return div       
 
-    def get_macro_description(self, name):
-        from inspect import getdoc, getmodule
+    def get_macro_description(self, name):        
         return getdoc(getmodule(self))
 
+    # ITemplateProvider
     def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
         return [('notebox', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        return [] # we don't provide templates
-
-class NoteBoxFilter(Component):
-    implements(IRequestFilter)
+        return []
 
     # IRequestFilter
     def pre_process_request(self, req, handler):
