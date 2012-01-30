@@ -1,44 +1,31 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2008 Bernhard Gruenewaldt <trac@gruenewaldt.net>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 """
-= !NoteBox: The HintBox for Trac =
+The !NoteBox macro will render a small colored box with an
+icon and text. 
 
-This macro renders a colored div box.
+To display a !NoteBox on a page, you must call the !NoteBox
+macro and pass the style and text as arguments. The text may
+contain wiki formatting, however it is not possible to embed
+other wiki macros within the macro. Also, commas must be
+escaped with a backslash.
 
-== Installation ==
-
-See http://trac-hacks.org/wiki/NoteBoxPlugin
-
-== Usage ==
-
-To display the notebox on a page, you must call the !NoteBox
-macro on that page an pass the textcontent as
-argument.
-
-== Additional information and a life example ==
-
-Please visit: http://trac-hacks.org/wiki/NoteBoxPlugin
-
-== Author and License ==
-
- * Copyright 2008, Bernhard Gruenewaldt (trac at gruenewaldt.net)
-
+Examples:
 {{{
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+[[NoteBox(warn,If you don't run `update` before `commit`\, your checkin may fail.)]]
+[[NoteBox(tip,The !NoteBox macro can bring '''attention''' to text within a page.)]]
+[[NoteBox(note,More styles may be added in a ''future'' release.)]]
 }}}
 
+[[NoteBox(warn,If you don't run `update` before `commit`\, your checkin may fail.)]]
+[[NoteBox(tip,The !NoteBox macro can bring '''attention''' to text within a page.)]]
+[[NoteBox(note,More styles may be added in a ''future'' release.)]]
 """
+
 import re
 from inspect import getdoc, getmodule
 from pkg_resources import resource_filename
