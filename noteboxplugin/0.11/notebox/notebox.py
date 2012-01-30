@@ -9,10 +9,13 @@ The !NoteBox macro will render a small colored box with an
 icon and text. 
 
 To display a !NoteBox on a page, you must call the !NoteBox
-macro and pass the style and text as arguments. The text may
-contain wiki formatting, however it is not possible to embed
-other wiki macros within the macro. Also, commas must be
-escaped with a backslash.
+macro and pass the ''style'' and ''text'' as arguments. The
+text may contain wiki formatting, however it is not possible
+to embed other wiki macros within the macro. Also, commas must
+be escaped with a backslash.
+
+The following styles are available: '''warn''', '''tip'''
+and '''note'''.
 
 Examples:
 {{{
