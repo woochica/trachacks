@@ -34,23 +34,23 @@ from inspect import getdoc, getmodule
 from pkg_resources import resource_filename
 from genshi.builder import tag
 from trac.core import Component, implements
-from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.wiki.formatter import format_to_html
 
 class NoteBox(Component):
-    implements(IWikiMacroProvider, ITemplateProvider, IRequestFilter)
+    implements(IWikiMacroProvider, ITemplateProvider)
 
     # IWikiMacroProvider
     def get_macros(self):
         yield 'NoteBox'
 
     def expand_macro(self, formatter, name, content):
+        add_stylesheet(formatter.req, 'notebox/css/notebox.css')
         args, kwargs = parse_args(content)
         div = tag.div(format_to_html(self.env, formatter.context, args[1]), 
                       class_='notebox-%s' % (args[0],))
-        return div       
+        return div
 
     def get_macro_description(self, name):        
         return getdoc(getmodule(self))
@@ -61,12 +61,4 @@ class NoteBox(Component):
 
     def get_templates_dirs(self):
         return []
-
-    # IRequestFilter
-    def pre_process_request(self, req, handler):
-        return handler
-
-    def post_process_request(self, req, template, data, content_type):
-        add_stylesheet(req, 'notebox/css/notebox.css')
-        return (template, data, content_type)
 
