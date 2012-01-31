@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='TracTab',
-      version='0.1.5',
+      version='0.2.0',
       license='BSD',
       author='Bobby Smith',
       author_email='bobbysmith007@gmail.com',
