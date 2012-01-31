@@ -5,7 +5,6 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-import re
 from pkg_resources import resource_filename
 from genshi.builder import tag
 from trac.core import implements
@@ -50,10 +49,9 @@ class NoteBox(WikiMacroBase):
         add_stylesheet(formatter.req, 'notebox/css/notebox.css')
         args, kwargs = parse_args(content)
         width = len(args) > 2 and args[2] or '70%'
-        div = tag.div(format_to_html(self.env, formatter.context, args[1]), 
-                      class_='notebox-%s' % (args[0],),
-                      style='width: %s' % (width,))
-        return div
+        return tag.div(format_to_html(self.env, formatter.context, args[1]), 
+                       class_='notebox-%s' % (args[0],),
+                       style='width: %s' % (width,))
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
