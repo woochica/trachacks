@@ -93,6 +93,10 @@ defaultrule.apply = function(input, spec){
         var doit = true;
         var value = spec.value;
         
+        // skip if field is hidden
+        if (field.is(":hidden"))
+            return;
+            
         // ensure default value is in list of select options
         if (field.get(0).tagName.toLowerCase() == 'select'){
             var opts = new Array();
