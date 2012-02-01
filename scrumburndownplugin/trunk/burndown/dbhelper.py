@@ -89,10 +89,9 @@ def table_field_exists(db, table_name, field_name):
         
 def get_startdate_for_milestone(db, milestone):
     cursor = db.cursor()
-    cursor.execute("SELECT started FROM milestone WHERE name = %s", [milestone])
+    cursor.execute("SELECT started FROM milestone WHERE name = %s", (milestone,))
     row = cursor.fetchone()
-
-    if(row and row[0]!=0 and row[0]!=0):
+    if row and row[0]:
         return datetime.fromtimestamp(row[0])
     else:
         return None
