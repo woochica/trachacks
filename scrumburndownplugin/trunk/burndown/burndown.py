@@ -167,8 +167,7 @@ class BurndownComponent(Component):
 
         data['draw_graph'] = req.hdf['draw_graph'] = True
         self.update_burndown_data()
-                
-        data['burndown_data'] = req.hdf['burndown_data'] = []
+        
         data['burndown_data'] = req.hdf['burndown_data'] = self.get_burndown_data(db, selected_milestone, components, selected_component)
         
         add_stylesheet(req, 'hw/css/burndown.css')
@@ -192,6 +191,9 @@ class BurndownComponent(Component):
         
     def get_burndown_data(self, db, selected_milestone, components, selected_component):
         cursor = db.cursor()
+        
+        if not selected_milestone:
+            raise TracError("No milestones defined, please create at least one milestone first.")
         
         component_data = {} # this will be a dictionary of lists of tuples -- e.g. component_data = {'componentName':[(id, hours_remaining), (id, hours_remaining), (id, hours_remaining)]}
         for comp in components:
