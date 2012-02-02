@@ -18,8 +18,8 @@ setup(
                                    'tracdownloader.db = tracdownloader.db',
                                    'tracdownloader.model = tracdownloader.model']
                   },
-  """install_requires = ['PyCAPTCHA >= 0.4',
-                         'PIL >= 1.1.5'],"""
+  #install_requires = ['PyCAPTCHA >= 0.4',
+  #                    'PIL >= 1.1.5'],
   extras_require = {},
   keywords = 'trac downloader',
   author = 'Petr Škoda',
