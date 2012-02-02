@@ -84,7 +84,7 @@ class TicketFormatter(Component):
     ticket_link_with_comment = BoolOption('announcer',
             'ticket_link_with_comment',
             'false',
-            """Include last change anchor to the ticket URL.""")
+            """Include last change anchor in the ticket URL.""")
 
     def styles(self, transport, realm):
         if realm == "ticket":
