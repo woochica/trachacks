@@ -4,7 +4,7 @@ from setuptools import setup
 themes = ['blue', 'default', 'dokuwiki', 'flower', 'i18n', 'pixel', 'yatil']
 
 data = ['templates/*.cs', 'templates/*.html', 'htdocs/*.png'] + \
-        ['htdocs/ui/%s/*.*' % theme for theme in themes]
+       ['htdocs/ui/%s/*.*' % theme for theme in themes]
 
 setup(name='SlideShow',
       version='0.2',

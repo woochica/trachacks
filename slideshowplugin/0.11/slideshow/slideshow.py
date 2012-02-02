@@ -3,11 +3,11 @@
 import re
 from trac.config import Option
 from trac.core import *
-from trac.mimeview.api import IContentConverter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
+from trac.mimeview.api import IContentConverter, Context
+from trac.web.chrome import Chrome, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import wiki_to_html
+from trac.wiki.formatter import format_to_html
 from trac.wiki.model import WikiPage
 from trac.util.html import escape, plaintext, Markup
 
@@ -29,8 +29,10 @@ class SlideShowRenderer(Component):
 
     def process_request(self, req):
 
+        context = Context.from_request(req, 'wiki')
+
         default_theme = self.config['slideshow'].get('default_theme',
-                                                       'default')
+                                                     'default')
         page = req.args.get('page', None)
         location = req.args.get('location', None)
         theme = req.args.get('theme', default_theme)
@@ -53,22 +55,21 @@ class SlideShowRenderer(Component):
         handout = ''
         slides = []
 
-        def htmlify(text):
-            return wiki_to_html(text, self.env, req)
-
         for line in page_text.splitlines():
             match = self.heading_re.match(line)
             if match:
-                # Insert accumulated text into appropiate location
+                print in_section
+                # Insert accumulated text into appropriate location
                 if in_section == 1:
-                    title_page = htmlify(text)
+                    title_page = format_to_html(self.env, context, text)
                 elif in_section == 2:
                     text = self.fixup_re.sub(r'\1', text)
-                    slides.append({'body': htmlify(text), 'handout': htmlify(handout)})
+                    slides.append({'body': format_to_html(self.env, context, text),
+                                   'handout': format_to_html(self.env, context, handout)})
 
                 if match.lastgroup == 'title':
                     title = match.group(match.lastgroup)
-                    html_title = htmlify(title)
+                    html_title = format_to_html(self.env, context, title)
                     title = plaintext(html_title)
                     in_section = 1
                 else:
@@ -76,12 +77,14 @@ class SlideShowRenderer(Component):
                 text = ''
 
             text += line + '\n'
-
+        print slides
         if in_section == 1:
-            title_page = htmlify(text)
+            title_page = format_to_html(self.env, context, text)
         elif in_section == 2:
             text = self.fixup_re.sub(r'\1', text)
-            slides.append({'body': htmlify(text), 'handout': htmlify(handout)})
+            print text
+            slides.append({'body': format_to_html(self.env, context, text),
+                           'handout': format_to_html(self.env, context, handout)})
 
         data = {}
         data['theme'] = theme
@@ -90,6 +93,9 @@ class SlideShowRenderer(Component):
         data['location'] = location
         data['title_page'] = title_page
         data['slides'] = slides
+        
+        add_stylesheet(req, 'common/css/code.css')
+        add_stylesheet(req, 'common/css/diff.css')
 
         return 'slideshow.html', data, 'text/html'
 
@@ -122,8 +128,12 @@ class SlideShowRenderer(Component):
         yield 'SlideShow'
 
     def get_macro_description(self, name):
-        return """Allow the current Wiki page to be viewed as an S5 slideshow. The theme can be specied using the argument ''theme=<theme>''. If the theme is not specified, then the default theme will be used. The available themes are blue, default, dokuwiki, flower, i18n, pixel, and yatil.
-        """
+        return """Allow the current Wiki page to be viewed as an S5 slideshow.
+                  The theme can be specified using the argument ''theme=<theme>''.
+                  If the theme is not specified, then the default theme will be
+                  used. The available themes are blue, default, dokuwiki, flower,
+                  i18n, pixel, and yatil.
+                """
 
     def expand_macro(self, formatter, name, content):
         match = re.match('^/wiki/(.*)', formatter.req.path_info)
