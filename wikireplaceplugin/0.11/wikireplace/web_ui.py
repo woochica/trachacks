@@ -6,7 +6,7 @@ import urllib
 
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import ITemplateProvider, add_ctxtnav
+from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_notice, add_warning
 from trac.web.api import IRequestFilter
 from trac.admin.web_ui import IAdminPanelProvider
 from genshi.core import Markup
@@ -41,8 +41,19 @@ class WikiReplaceModule(Component):
         }
         
         if req.method == 'POST':
-            wiki_text_replace(self.env, data['find'], data['replace'], data['wikipages'], req.authname, req.remote_addr, debug=self.log.debug)
-
+            # Check that required fields are filled in.
+            if not data['find']:
+                add_warning(req, 'The Find field was empty. Nothing was changed.')
+            if not data['wikipages'] or not data['wikipages'][0]:
+                add_warning(req, 'The Wiki pages field was empty. Nothing was changed.')            
+            
+            # Replace the text if the find and wikipages fields have been input.
+            if data['find'] and data['wikipages'] and data['wikipages'][0]:
+                add_notice(req, 'Replaced "%s" with "%s". See the timeline for modified pages.'
+                           % (data['find'], data['replace']))
+                wiki_text_replace(self.env, data['find'], data['replace'], data['wikipages'],
+                                  req.authname, req.remote_addr, debug=self.log.debug)
+                
             # Reset for the next display
             data['find'] = ''
             data['replace'] = ''

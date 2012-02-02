@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracWikiReplace',
-    version = '1.1.0',
+    version = '1.1.1',
     packages = ['wikireplace'],
     package_data = {'wikireplace': ['templates/*.html']},
 
