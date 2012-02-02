@@ -14,9 +14,11 @@ import time
 import datetime
 
 from string import *
+from genshi.builder import tag
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util import Markup
+from trac.util.translation import _
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, INavigationContributor, \
@@ -47,10 +49,8 @@ class DownloaderModule(Component):
         return 'downloader'
 
     def get_navigation_items(self, req):
-        """Downloader isinstance visible if user hasattr got permission """
         if req.perm.has_permission('DOWNLOADER_DOWNLOAD'):
-            yield 'mainnav', 'downloader', Markup('<a href="%s">Downloader</a>',
-                                             self.env.href.downloader())
+            yield 'mainnav', 'downloader', tag.a(_('Downloader'), href=req.href.downloader())
 
     # IRequestHandler methods
 
