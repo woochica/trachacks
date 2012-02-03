@@ -14,10 +14,9 @@
 from genshi.filters import Transformer
 from genshi.builder import tag
 from genshi import HTML
-from trac.web.api import IRequestFilter, ITemplateStreamFilter, _RequestArgs
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.core import Component, implements
 from trac.util.translation import domain_functions
-from trac.web.api import arg_list_to_args
 from operator import attrgetter
 from pkg_resources import resource_filename #@UnresolvedImport
 import re
@@ -333,7 +332,7 @@ which allows you to sort milestones in descending order of due date."""
             stats = data['milestone_stats']
             new_stats = []
             
-            for i, m in enumerate(sortedmilestones):
+            for  m in sortedmilestones:
                 for j, om in enumerate(milestones):
                     if m.name == om.name:
                         new_stats.append(stats[j])
