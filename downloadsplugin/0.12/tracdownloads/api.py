@@ -44,7 +44,8 @@ class DownloadsApi(Component):
     path = PathOption('downloads', 'path', '../downloads',
       doc = 'Path where to store uploaded downloads.')
     ext = ListOption('downloads', 'ext', 'zip,gz,bz2,rar',
-      doc = 'List of file extensions allowed to upload.')
+      doc = 'List of file extensions allowed to upload. Set to ''all'' ' \
+            'to specify that any file extensions is allowed.')
     max_size = IntOption('downloads', 'max_size', 268697600,
       'Maximum allowed file size (in bytes) for downloads. Default is 256 MB.')
     visible_fields = ListOption('downloads', 'visible_fields',

@@ -122,7 +122,7 @@ class DownloadsConsoleAdmin(Component):
         self.log.debug(download)
 
         # Upload file to DB and file storage.
-        api.store_download(context, download, file)
+        api._add_download(context, download, file)
 
         # Close input file and commit changes in DB.
         file.close()
