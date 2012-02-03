@@ -11,23 +11,67 @@
 #
 # Author: Franz Mayer <franz.mayer@gefasoft.de>
 
-from trac.core import *
 from genshi.filters import Transformer
 from genshi.builder import tag
 from genshi import HTML
-from trac.web.api import IRequestFilter, ITemplateStreamFilter
-from operator import attrgetter
+from trac.web.api import IRequestFilter, ITemplateStreamFilter, _RequestArgs
+from trac.core import Component, implements
 from trac.util.translation import domain_functions
-import pkg_resources
+from trac.web.api import arg_list_to_args
+from operator import attrgetter
+from pkg_resources import resource_filename #@UnresolvedImport
 import re
 
 
 _, tag_, N_, add_domain = domain_functions('roadmapplugin', '_', 'tag_', 'N_', 'add_domain')
 
+keys = [u'noduedate',u'completed']
+showkeys = {'noduedate':'hidenoduedate','completed':'showcompleted'}
 
-def get_session_key(name):
+# returns the name of the attribute plus the prefix roadmap.filter
+def _get_session_key_name(name):
         return "roadmap.filter.%s" % name
+# saves a single attribute as a session key
+def _set_session_attrib(req, name, value):
+        req.session[_get_session_key_name(name)] = value
+        
+def _save_show_to_session(req):
+    if req.args.has_key('show'):
+        for key in keys:
+            if key in req.args['show']:
+                _set_session_attrib(req, showkeys[key], '1')
+            else:
+                _set_session_attrib(req, showkeys[key], '0')
+    else:
+        for key in keys:
+            _set_session_attrib(req, showkeys[key], '0')
+            
+def _get_show(req):
+    show = []
+    for key in keys:
+        erg = req.session.get(_get_session_key_name(showkeys[key]),'0')
+        if erg == '1':
+            if len(show) == 0:
+                show = [key]
+            else:
+                show.append(key)
+    return show
 
+def _get_settings(req, name, default):
+    sessionKey = _get_session_key_name(name)
+    #user pressed submit button in the config area so this settings have to be used 
+    if req.args.has_key('user_modification'):
+        if not (req.args.has_key(name)): #key with given name does not exist in request
+            return default
+        else: #value of the given key is saved to session keys
+            req.session[sessionKey] = req.args[name]
+            return req.args[name]
+    #user reloaded the page or gave no attribs, so session keys will be given, if existing
+    elif req.session.has_key(sessionKey):
+        return req.session[sessionKey]
+    else:
+        return default
+    
 class FilterRoadmap(Component):
     """Filters roadmap milestones.
 
@@ -49,26 +93,10 @@ Thanks to [http://trac-hacks.org/wiki/daveappendix daveappendix]."""
     implements(IRequestFilter, ITemplateStreamFilter)
 
     def _session(self, req, name, default):
-        return req.session.get(get_session_key(name), default)
-
-    def _setSessionKey(self, req, name, value):
-        sessionKey = get_session_key(name)
-        req.session[sessionKey] = value
-        
-    def _getFilter(self, req, name):
-        sessionKey = get_session_key(name)
-        result = ''
-        if req.args.has_key(name):
-            result = req.args[name]
-            # make value persistent...
-            req.session[sessionKey] = result
-        elif req.session.has_key(sessionKey):
-            # use persistent value...
-            result = req.session[sessionKey]
-        return result
-
+        return req.session.get(_get_session_key_name(name), default)
+       
     def _getCheckbox(self, req, name, default):
-        sessionKey = get_session_key(name)
+        sessionKey = _get_session_key_name(name)
         result = '0'
 
         if req.args.has_key('user_modification'):
@@ -108,32 +136,19 @@ Thanks to [http://trac-hacks.org/wiki/daveappendix daveappendix]."""
     # IRequestFilter methods
 
     def pre_process_request(self, req, handler):
+        if req.args.has_key('user_modification'):
+            _save_show_to_session(req)
+        else:
+            req.args['show'] = _get_show(req)
         return handler
 
     def post_process_request(self, req, template, data, content_type):
         if template == 'roadmap.html':
-            inc_milestones = self._getFilter(req, 'inc_milestones')
-            exc_milestones = self._getFilter(req, 'exc_milestones')
+                
+            inc_milestones = _get_settings(req, 'inc_milestones','')
+            exc_milestones = _get_settings(req, 'exc_milestones','')
             show_descriptions = self._getCheckbox(req, 'show_descriptions', '1') == '1'
             
-            keys = [u'noduedate',u'completed']
-            showkeys = {'noduedate':'hidenoduedate','completed':'showcompleted'}
-            if req.args.has_key('user_modification'):
-                if req.args.has_key('show'):
-                    for key in keys:
-                        if key in req.args['show']:
-                            self._setSessionKey(req, showkeys[key], '1')
-                        else:
-                            self._setSessionKey(req, showkeys[key], '0')
-                else:
-                    for key in keys:
-                        self._setSessionKey(req, showkeys[key], '0')              
-            else:
-                for key in keys:
-                    erg =self._session(req, showkeys[key], '0')
-                    if erg == '1':
-                        data['show'].append(key)
-                
             if inc_milestones != '':
                 inc_milestones = [m.strip() for m in inc_milestones.split('|')]
                 filteredMilestones = []
@@ -222,57 +237,60 @@ which allows you to sort milestones in descending order of due date."""
     criterias = ['Name', 'Due']
     
     def __init__(self):
-        locale_dir = pkg_resources.resource_filename(__name__, 'locale') 
+        locale_dir = resource_filename(__name__, 'locale') 
         add_domain(self.env.path, locale_dir)
         
     def _comparems(self, m1, m2, sort_crit):
-       if sort_crit == self.criterias[0]:
-           # the milestone names are divided at the dots to compare (sub)versions            
-           v1 = m1.name.upper().split('.')
-           v2 = m2.name.upper().split('.')
-           depth = 0
-           # As long as both have entries and no result so far
-           while depth < len(v1) and depth < len(v2):
-               # if (sub)version is different
-               if v1[depth] != v2[depth]:
-                   # Find leading Numbers in both entrys
-                   leadnum1 = re.search(r"\A\d+", v1[depth])
-                   leadnum2 = re.search(r"\A\d+", v2[depth])
-                   if leadnum1 and leadnum2:         
-                       if leadnum1 != leadnum2:
-                           return int(leadnum1.group(0)) - int(leadnum2.group(0))
-                       else:
-                           r1 = v1[depth].lstrip(leadnum1.group(0))
-                           r2 = v2[depth].lstrip(leadnum2.group(0))
-                           return 1 if (r1 > r2) else -1
-                   elif leadnum1:
-                       return 1
-                   elif leadnum2:
-                       return -1
-                   else: 
-                       return 1 if (v1[depth] > v2[depth]) else -1
-               # otherwise look in next depth
-               depth += 1
-           # End of WHILE
-               
-           # At least one of the arrays ended and all numbers were equal so far
-           # milestone with more numbers is bigger
-           return len(v1) - len(v2)
-       # other criteria not needed. Can be sorted easier by buildin methods  
-       else:
-           return 0
+        if sort_crit == self.criterias[0]:
+            # the milestone names are divided at the dots to compare (sub)versions
+            v1 = m1.name.upper().split('.')
+            v2 = m2.name.upper().split('.')
+            depth = 0
+            # As long as both have entries and no result so far
+            while depth < len(v1) and depth < len(v2):
+                # if (sub)version is different
+                if v1[depth] != v2[depth]:
+                    # Find leading Numbers in both entrys
+                    leadnum1 = re.search(r"\A\d+", v1[depth])
+                    leadnum2 = re.search(r"\A\d+", v2[depth])
+                    if leadnum1 and leadnum2:         
+                        if leadnum1 != leadnum2:
+                            return int(leadnum1.group(0)) - int(leadnum2.group(0))
+                        else:
+                            r1 = v1[depth].lstrip(leadnum1.group(0))
+                            r2 = v2[depth].lstrip(leadnum2.group(0))
+                            return 1 if (r1 > r2) else -1
+                    elif leadnum1:
+                        return 1
+                    elif leadnum2:
+                        return -1
+                    else: 
+                        return 1 if (v1[depth] > v2[depth]) else -1
+                # otherwise look in next depth
+                depth += 1
+                # End of WHILE
+                   
+            # At least one of the arrays ended and all numbers were equal so far
+            # milestone with more numbers is bigger
+            return len(v1) - len(v2)
+        # other criteria not needed. Can be sorted easier by buildin methods  
+        else:
+            return 0
               
     def pre_process_request(self, req, handler):
+        if req.args.has_key('user_modification'): 
+            _save_show_to_session(req)
+        else:
+            req.args['show'] = _get_show(req)
         """ overridden from IRequestFilter"""
         return handler
         
     def post_process_request(self, req, template, data, content_type):
         """ overridden from IRequestFilter"""
         if template == 'roadmap.html':
-#            sort_desc = self._get_settings(req)
-#            sort_desc = self._get_settings(req)
-            sort_direct = self._get_settings(req, 'sortdirect', self.directions[0])
-            sort_crit = self._get_settings(req, 'sortcrit', self.criterias[0])
+                            
+            sort_direct = _get_settings(req, 'sortdirect', self.directions[0])
+            sort_crit = _get_settings(req, 'sortcrit', self.criterias[0])
             
             milestones = data['milestones']
             sortedmilestones = []
@@ -285,14 +303,14 @@ which allows you to sort milestones in descending order of due date."""
                         index = 0
                         inserted = False
                         while not inserted and index < len(sortedmilestones):
-                           sm = sortedmilestones[index]
-                           if  self._comparems(m, sm, sort_crit) >= 0:
-                               sortedmilestones.insert(index, m)
-                               inserted = True
-                           else:
-                               index += 1
-                           if inserted:
-                               break
+                            sm = sortedmilestones[index]
+                            if  self._comparems(m, sm, sort_crit) >= 0:
+                                sortedmilestones.insert(index, m)
+                                inserted = True
+                            else:
+                                index += 1
+                            if inserted:
+                                break
                         # All milestonenames were lower so append the milestone
                         if not inserted:
                             sortedmilestones.append(m)
@@ -318,16 +336,16 @@ which allows you to sort milestones in descending order of due date."""
             for i, m in enumerate(sortedmilestones):
                 for j, om in enumerate(milestones):
                     if m.name == om.name:
-                       new_stats.append(stats[j])
-                       continue
+                        new_stats.append(stats[j])
+                        continue
             data['milestones'] = sortedmilestones
             data['milestone_stats'] = new_stats
         return template, data, content_type
             
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'roadmap.html':
-            sortcrit = self._get_settings(req, 'sortcrit', self.criterias[0])
-            sortdirect = self._get_settings(req, 'sortdirect', self.directions[0])
+            sortcrit = _get_settings(req, 'sortcrit', self.criterias[0])
+            sortdirect = _get_settings(req, 'sortdirect', self.directions[0])
 
             sel = ' selected = "selected"'
             html_str = '<div>' + _('Sort by: ')
@@ -343,18 +361,3 @@ which allows you to sort milestones in descending order of due date."""
             filter = Transformer('//form[@id="prefs"]/div[@class="buttons"]')
             return stream | filter.before(html)
         return stream
-    
-    
-    def _get_settings(self, req, name, default):
-        sessionKey = get_session_key(name)
-        if req.args.has_key('user_modification'):
-            # User has hit the update button on the form,
-            # so update the session data.
-            req.session[sessionKey] = req.args[name]
-            return req.args[name]
-        elif req.session.has_key(sessionKey):
-            return req.session[sessionKey]
-        else:
-            return default
-    
-                 
