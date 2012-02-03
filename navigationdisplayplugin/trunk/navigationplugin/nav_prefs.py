@@ -15,7 +15,7 @@ from trac.util.translation import domain_functions
 from trac.web.chrome import ITemplateProvider
 from trac.prefs.api import IPreferencePanelProvider
 from pkg_resources import resource_filename #@UnresolvedImport
-from navigation import Navigation
+from navigation import Navigation, CHOICES_DOC
 
 _, tag_, N_, add_domain = \
     domain_functions('navigationplugin', '_', 'tag_', 'N_', 'add_domain')
@@ -41,16 +41,18 @@ display."""
         nav = Navigation(self.env)
         if panel == 'navigation':
             nav.save(req)
-        selected = {'display_nav': nav.get_display(req),
-                    'wiki.href': nav.get_wiki_href(req)}
+            
         nav_choices = nav.get_display_choices()
-#        session_keys = nav.get_session_keys()
+        selected = {'display_nav': nav.get_display(req),
+                    'wiki.href': nav.get_wiki_href(req),
+                    'tickets.href': nav.get_ticket_href(req)}
         system_defaults = {'display_nav': nav.get_system_default_display(), 
-                           'wiki.href': nav.get_system_default_wiki_href()}
+                           'wiki.href': nav.get_system_default_wiki_href(),
+                           'tickets.href': nav.get_system_default_tickets_href()}
         
         data = {'selected': selected,
                 'nav_choices': nav_choices,
-#                'session_keys': session_keys,
+                'choices_doc': CHOICES_DOC,
                 'system_defaults': system_defaults}
         return 'prefs_display.html', data
         

@@ -12,7 +12,7 @@ msgstr ""
 "Project-Id-Version: NavigationPlugin 0.0.x\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2011-03-10 01:38+0200\n"
-"PO-Revision-Date: 2012-01-25 14:17+0100\n"
+"PO-Revision-Date: 2012-02-03 09:37+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de_DE <trac-dev@googlegroups.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
@@ -24,11 +24,8 @@ msgstr ""
 msgid "Display navigation bar"
 msgstr "Anzeige der Menüleiste"
 
-msgid "Navigation"
-msgstr "Navigation"
-
-msgid "System default is"
-msgstr "Systemstandard ist"
+msgid "System default"
+msgstr "Systemstandard"
 
 msgid "Main navigation links"
 msgstr "Links für Menüleiste"
@@ -39,4 +36,16 @@ msgstr "Name für Wiki-Menü"
 #, python-format
 msgid "%(page)s is not a valid Wiki page"
 msgstr "Wiki-Seite %(page)s existiert nicht"
+
+msgid "Trac default"
+msgstr "Trac-Standard"
+
+msgid "Display another context menu at the buttom of page"
+msgstr "Zusätzliches Kontextmenü am Seitenende anzeigen"
+
+msgid "Display banner and menu fixed on top of page (under development)"
+msgstr "Banner und Menü am Seitenanfang fixieren (in der Entwicklung)"
+
+msgid "Insert valid Wiki page or clear it to reset it to default"
+msgstr "Bitte eine valide Wiki-Seite angeben oder das Feld leeren um den Standard wiederherzustellen"
 

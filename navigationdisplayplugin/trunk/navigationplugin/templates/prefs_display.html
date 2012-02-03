@@ -11,42 +11,47 @@
     <title>Navigation</title>
   </head>
   <body>
-  <table>
-	<tr>
-		<td colspan="2">
-			<h2>Display navigation bar</h2>
-		</td>
-	</tr>
-  	<tr>
-  		<td><label>Navigation</label>:</td>
-  		<td>
-	  		<select name="display_nav">
-	  		<py:for each="row in nav_choices">
-	  			<option value="${row}" selected="${selected['display_nav'] == row and 'selected' or None}">${row}</option>
-	  		</py:for>
-	  		</select>
-  		</td>
-	</tr>
-	<tr>
-  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_defaults['display_nav']}</b></i></td>
-  	</tr>
-</table>
+	<fieldset>
+	<legend>Display navigation bar</legend>
+	<py:for each="row in nav_choices">
+		<div>
+  			<input type="radio" id="display_nav_${row}" name="display_nav" value="${row}" 
+				checked="${selected['display_nav'] == row and 'checked' or None}" />
+			<label for="display_nav_${row}">${choices_doc[row]}</label>
+			<span> <i py:if="system_defaults['display_nav'] == row">(<label>System default</label>)</i></span>
+		</div>
+	</py:for>
+	</fieldset>
 
-<table>
-	<tr>
-		<td colspan="2">
-			<h2>Main navigation links</h2>
-		</td>
-	</tr>
-  	<tr>
-  		<td><label>Page for Wiki menu</label>:</td>
-  		<td>
-	  		<input type="text" name="wiki.href" value="${selected['wiki.href'] or ''}" />
-  		</td>
-	</tr>
-	<tr>
-  		<td colspan="2"><i><b>Note:</b> <span>System default is</span> <b>${system_defaults['wiki.href'] or '---'}</b></i></td>
-  	</tr>
-  </table>
+	<fieldset>
+		<legend>Main navigation links</legend>
+		<table>
+		  	<tr>
+		  		<td><label for="wiki.href">Page for Wiki menu</label>:</td>
+		  		<td>
+			  		<input type="text" id="wiki.href" name="wiki.href" value="${selected['wiki.href'] or ''}" 
+						title="Insert valid Wiki page or clear it to reset it to default" />
+		  		</td>
+			</tr>
+			<tr>
+		  		<td colspan="2"><b>System default</b>: <i>${system_defaults['wiki.href'] or '---'}</i></td>
+		  	</tr>
+		  	<tr>
+		  		<td><label for="tickets.href">Report ID for menu "View tickets"</label>:</td>
+		  		<td>
+			  		<input type="text" id="tickets.href" name="tickets.href" value="${selected['tickets.href'] or ''}" />
+		  		</td>
+			</tr>
+			<tr>
+		  		<td colspan="2">
+					<div>
+						<i>Either enter a valid report number, 'report_list' for report overiew list, 
+						'query' for individual query or clear it to reset it to default</i><br/>
+						<b>System default</b>: <i>${system_defaults['tickets.href'] or '---'}</i>
+					</div>
+				</td>
+		  	</tr>
+		  </table>
+	</fieldset>
   </body>
 </html>

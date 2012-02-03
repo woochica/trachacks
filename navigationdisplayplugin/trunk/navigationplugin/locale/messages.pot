@@ -28,10 +28,7 @@ msgstr ""
 msgid "Display navigation bar"
 msgstr ""
 
-msgid "Navigation"
-msgstr ""
-
-msgid "System default is"
+msgid "System default"
 msgstr ""
 
 msgid "Main navigation links"
@@ -41,4 +38,16 @@ msgid "Page for Wiki menu"
 msgstr ""
 
 msgid "%(page)s is not a valid Wiki page"
+msgstr ""
+
+msgid "Trac default"
+msgstr ""
+
+msgid "Display another context menu at the buttom of page"
+msgstr ""
+
+msgid "Display banner and menu fixed on top of page (under development)"
+msgstr ""
+
+msgid "Insert valid Wiki page or clear it to reset it to default"
 msgstr ""
