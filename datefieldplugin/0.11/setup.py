@@ -8,7 +8,7 @@ setup(
     version = '1.0.3',
     packages = ['datefield'],
     package_data = { 'datefield': ['templates/*.html', 'htdocs/css/*.css', 
-        'htdocs/js/*.js', 'htdocs/images/*.png' ] },
+        'htdocs/js/*.js', 'htdocs/css/images/*.png' ] },
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
