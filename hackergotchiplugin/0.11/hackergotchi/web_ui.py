@@ -28,9 +28,7 @@ class HackergotchiModule(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if req.path_info.startswith('/timeline'):
-            closure_state = [0]
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
+            closure_state = [0]            
             cache = {}
             def f(stream):
                 # Update the closed value
@@ -43,7 +41,8 @@ class HackergotchiModule(Component):
                 if user_info is not None:
                     author, name, email = user_info
                 else:
-                    user_info = self._get_info(author, cursor)
+                    db = self.env.get_db_cnx()
+                    user_info = self._get_info(author, db)
                     cache[author] = user_info
                     author, name, email = user_info
                 
@@ -75,7 +74,7 @@ class HackergotchiModule(Component):
         return []
     
     # Internal methods
-    def _get_info(self, author, cursor):
+    def _get_info(self, author, db):
         if author == 'anonymous':
             # Don't even bother trying for "anonymous"
             return author, None, None
@@ -85,6 +84,7 @@ class HackergotchiModule(Component):
             # name <email>
             return 'anonymous', md.group(1), md.group(2)
         
+        cursor = db.cursor()        
         cursor.execute('SELECT name, value FROM session_attribute WHERE sid=%s AND authenticated=%s',
                        (author, 1))
         rows = cursor.fetchall()

@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracHackergotchi',
-    version = '1.0',
+    version = '1.1',
     packages = ['hackergotchi'],
     package_data = {'hackergotchi': ['htdocs/*.js', 'htdocs/*.css']},
 
