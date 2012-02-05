@@ -86,7 +86,8 @@ class MilestoneVersion(Component):
         return stream | filter
 
     def _version_display(self, req, milestone):
-        cursor = self.env.get_read_db().cursor()
+        db = self.env.get_read_db()
+        cursor = db.cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
 
@@ -100,7 +101,8 @@ class MilestoneVersion(Component):
 
     def _version_edit(self, data):
         milestone = data.get('milestone').name
-        cursor = self.env.get_read_db().cursor()
+        db = self.env.get_read_db()
+        cursor = db.cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
         value = row and row[0]
