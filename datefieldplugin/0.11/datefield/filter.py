@@ -1,3 +1,5 @@
+# -*- coding: utf8 -*-
+
 from trac.core import *
 from trac.web.api import IRequestFilter, IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
@@ -61,7 +63,7 @@ class DateFieldModule(Component):
         data['change_month'] = self.change_month
         data['change_year'] = self.change_year
         data['num_months'] = self.num_months
-        return 'datefield.html', {'data': data},'text/javascript' 
+        return 'datefield.html', {'data': data}, 'text/javascript' 
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -99,11 +101,11 @@ class DateFieldModule(Component):
                 break
 
         if match:
-            add_script(req, 'datefield/js/jquery-1.3.2.min.js')
-            add_script(req, 'datefield/js/jquery-ui-1.7.3.custom.min.js')
+            add_script(req, 'datefield/js/jquery-ui-1.6.custom.min.js')
             # virtual script
             add_script(req, '/datefield/datefield.js')
-            add_stylesheet(req, 'datefield/css/jquery-ui-1.7.3.custom.css')
+            add_stylesheet(req, 'datefield/css/ui.datepicker.css')
+            add_stylesheet(req, 'datefield/css/ui.all.css')
         return template, data, content_type
         
     # ITemplateProvider methods
