@@ -1,6 +1,6 @@
 from trac.core import *
-from trac.web.api import IRequestFilter, IRequestHandler, ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_script, add_script_data, add_stylesheet
 from trac.ticket.api import ITicketManipulator
 from trac.config import Option, IntOption, BoolOption, ListOption
 
@@ -37,31 +37,8 @@ class DateFieldModule(Component):
         If you turn this on, you must use MM/DD/YYYY for the date format.
         Set format to mdy and separator to / (default=Off)""")
 
-    implements(IRequestFilter, IRequestHandler, ITemplateProvider, \
+    implements(IRequestFilter, ITemplateProvider, \
             ITicketManipulator, ITemplateStreamFilter)
-
-    # IRequestHandler methods
-    def match_request(self, req):
-        return req.path_info.startswith('/datefield')
-
-    def process_request(self, req):
-        # Use get to handle default format
-        format = { 
-            'dmy': 'dd%smm%syy',
-            'mdy': 'mm%sdd%syy',
-            'ymd': 'yy%smm%sdd' 
-        }.get(self.date_format, 'dd%smm%syy')%(self.date_sep, self.date_sep)
-
-        data = {}
-        data['calendar'] = req.href.chrome('common', 'ics.png')
-        data['format'] = format
-        data['first_day'] = self.first_day
-        data['show_week'] = self.show_week
-        data['show_panel'] = self.show_panel
-        data['change_month'] = self.change_month
-        data['change_year'] = self.change_year
-        data['num_months'] = self.num_months
-        return 'datefield.html', {'data': data},'text/javascript' 
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -99,9 +76,22 @@ class DateFieldModule(Component):
                 break
 
         if match:
+            format = {'dmy': 'dd%smm%syy',
+                      'mdy': 'mm%sdd%syy',
+                      'ymd': 'yy%smm%sdd' 
+                      }.get(self.date_format, 'dd%smm%syy') % (self.date_sep, self.date_sep)
+            add_script_data(req, {'datefield': {
+                'calendar': req.href.chrome('common', 'ics.png'),
+                'format': format,
+                'first_day': self.first_day,
+                'show_week': self.show_week,
+                'show_panel': self.show_panel,
+                'num_months': self.num_months,                
+                'change_month': self.change_month,
+                'change_year': self.change_year
+                }})
             add_script(req, 'datefield/js/jquery-ui-1.8.16.custom.min.js')
-            # virtual script
-            add_script(req, '/datefield/datefield.js')
+            add_script(req, 'datefield/js/datefield.js')
             add_stylesheet(req, 'datefield/css/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
         
@@ -111,8 +101,7 @@ class DateFieldModule(Component):
         return [('datefield', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
+        return []
         
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions):

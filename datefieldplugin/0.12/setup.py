@@ -5,11 +5,10 @@ from setuptools import setup
 
 setup(
     name = 'TracDateField',
-    version = '1.0.4',
+    version = '2.0.0',
     packages = ['datefield'],
-    package_data = { 'datefield': ['templates/*.html', 'htdocs/css/*.css', 
+    package_data = { 'datefield': ['htdocs/css/*.css', 
         'htdocs/js/*.js', 'htdocs/css/images/*.png' ] },
-
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
     description = 'Add custom date fields to Trac tickets.',
@@ -19,9 +18,7 @@ setup(
     classifiers = [
         'Framework :: Trac',
     ],
-    
-    install_requires = [],
-
+    install_requires = ['Trac >= 0.12'],
     entry_points = {
         'trac.plugins': [
             'datefield.filter = datefield.filter',
