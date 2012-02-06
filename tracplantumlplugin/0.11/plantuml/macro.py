@@ -11,6 +11,7 @@ from subprocess import Popen, PIPE
 from trac.core import *
 from trac.config import Option
 from trac.web import IRequestHandler, RequestDone
+from trac.wiki.api import parse_args
 from trac.wiki.formatter import format_to_html, system_message
 from trac.wiki.macros import WikiMacroBase
 
@@ -26,15 +27,16 @@ class PlantUMLMacro(WikiMacroBase):
     plantuml_jar = Option("plantuml", "plantuml_jar", "", "Path to PlantUML .jar file")
     java_bin = Option("plantuml", "java_bin", "java", "Path to the Java binary file") 
 
-    def expand_macro(self, formatter, name, args):
-        if args is None:
+    def expand_macro(self, formatter, name, content):
+        if content is None:
             return system_message("No UML text defined!")
         if not self.plantuml_jar:
             return system_message("plantuml_jar option not defined in .ini")
         if not os.path.exists(self.plantuml_jar):
             return system_message("plantuml.jar not found: %s" % self.plantuml_jar)
 
-        source = str(args).strip()
+        args, _ = parse_args(content)
+        source = args[0].encode('utf-8').strip()
 
         try:
             graphs = pickle.loads(base64.b64decode(formatter.req.session.get('plantuml',"")))
@@ -50,7 +52,7 @@ class PlantUMLMacro(WikiMacroBase):
 
         if not graphs.has_key(img_id):
             
-            cmd = "%s -jar -Djava.awt.headless=true \"%s\" -pipe" % (self.java_bin, self.plantuml_jar)
+            cmd = "%s -jar -Djava.awt.headless=true \"%s\" -charset UTF-8 -pipe" % (self.java_bin, self.plantuml_jar)
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             (stdout, stderr) = p.communicate(input=source)
             if p.returncode != 0:
