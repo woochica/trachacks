@@ -1,7 +1,7 @@
 import re
 
+from trac.core import Component, implements
 from trac.config import Option
-from trac.core import *
 from trac.resource import ResourceNotFound
 from trac.ticket.api import IMilestoneChangeListener
 from trac.ticket.model import Version

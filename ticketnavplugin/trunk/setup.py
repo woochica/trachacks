@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='TicketDisplay', 
-    version='0.5.0',
+    version='0.5.1',
     author = 'Franz Mayer, Gefasoft AG',
     author_email = 'franz.mayer@gefasoft.de',
     description = 'Some small changes in ticket-view, like having a navigation frame, sorting milestone and version, etc.',

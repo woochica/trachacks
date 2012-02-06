@@ -1,11 +1,11 @@
-from trac.core import *
 from trac.web.api import ITemplateStreamFilter
 
 from genshi.builder import tag
 from genshi.filters import Transformer
 from trac.util.translation import domain_functions
 from trac.config import Option
-import pkg_resources
+from pkg_resources import resource_filename #@UnresolvedImport
+from trac.core import Component, implements
 
 _, tag_, N_, add_domain = domain_functions('ticketnav', '_', 'tag_', 'N_', 'add_domain')
 
@@ -29,7 +29,7 @@ of Clone-Button and translated text.
 
     def __init__(self):
             # bind the 'tracnav' catalog to the locale directory 
-            locale_dir = pkg_resources.resource_filename(__name__, 'locale') 
+            locale_dir = resource_filename(__name__, 'locale') 
             add_domain(self.env.path, locale_dir)
         
     def filter_stream(self, req, method, filename, stream, data):

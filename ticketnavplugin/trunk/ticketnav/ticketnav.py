@@ -1,38 +1,31 @@
-from pkg_resources import resource_filename
 
-import re
-#import os
-#import shutil
-
-from trac.core import * 
 from genshi import HTML
-from genshi.core import TEXT, START, END
 from genshi.builder import tag
 from genshi.filters import Transformer
-from genshi.filters.transform import StreamBuffer, PushBackStream
-from genshi.path import Path
-from trac.web.chrome import add_stylesheet, add_script, ITemplateProvider
-from trac.web.api import ITemplateStreamFilter, IRequestFilter, IRequestHandler
-from trac.util.datefmt import format_datetime, pretty_timedelta
-from trac.ticket.web_ui import TicketModule
+from genshi.filters.transform import StreamBuffer
+from trac.config import Option
+from trac.core import Component, implements
 from trac.util.translation import domain_functions
-import pkg_resources
-from trac.config import Option, ListOption
-from trac.attachment import IAttachmentChangeListener, IAttachmentManipulator
+from trac.web.chrome import add_stylesheet, add_script, ITemplateProvider
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
+from pkg_resources import resource_filename #@UnresolvedImport
 import os
 
 # domain name has to be the same entry_points, described in setup.py
-_, tag_, N_, add_domain = domain_functions('ticketnav', '_', 'tag_', 'N_', 'add_domain')
+_, tag_, N_, add_domain = \
+    domain_functions('ticketnav', '_', 'tag_', 'N_', 'add_domain')
 
 class TextAreaDescription(Component):
-    """Shows next to a text area (like description itself or any custom description) 
+    """Shows next to a text area 
+(like description itself or any custom description) 
 an description for what the field is for.
 
 Default values for options:
 {{{
 [ticket]
 description_descr = 
-descr_template = <div style="white-space: normal; height: 250px; overflow:scroll;" class="system-message">%s<div>
+descr_template = <div style="white-space: normal; height: 250px; 
+overflow:scroll;" class="system-message">%s<div>
 }}}
     """
     implements(ITemplateStreamFilter, IRequestFilter, ITemplateProvider)
@@ -40,7 +33,8 @@ descr_template = <div style="white-space: normal; height: 250px; overflow:scroll
     description_descr = Option('ticket', 'description_descr', '',
         """Explaination of description.""")
     descr_template = Option('ticket', 'descr_template',
-        '<div style="white-space: normal; width: 250px; height: 250px; overflow:scroll;" class="%s">%s<div>',
+        '<div style="white-space: normal; width: 250px; height: 250px; '
+        'overflow:scroll;" class="%s">%s<div>',
         """Explaination of description.""")
        
     def filter_stream(self, req, method, filename, stream, data):
@@ -50,17 +44,20 @@ descr_template = <div style="white-space: normal; height: 250px; overflow:scroll
             if self.description_descr:
 #                print "having description_descr: %s" % self.description_descr
 #                print "having description_template: %s" % self.descr_template
-                html_d = self.descr_template % ('ticket-rndescr',self.description_descr)
-                stream |= Transformer('.//th/label[@for="field-description"]').after(HTML(html_d))
+                html_d = self.descr_template % \
+                    ('ticket-rndescr', self.description_descr)
+                stream |= Transformer('.//th/label[@for="field-description"]')\
+                    .after(HTML(html_d))
                 
             for f in fields:
-                if f['skip'] or not f['type'] == 'textarea': # or not f.has_key('descr'):
+                if f['skip'] or not f['type'] == 'textarea':
                     continue 
                  
                 descr = self.config.get('ticket-custom', '%s.descr' % f['name'])
                 if descr:
 #                    print "processing field %s" % f
-                    css_class = self.config.get('ticket-custom', '%s.css_class' % f['name'])
+                    css_class = self.config.get('ticket-custom','%s.css_class'\
+                                                 % f['name'])
 #                    print css_class
                     field_name = 'field-%s' % f['name']
                     tr_str = './/label[@for="%s"]' % field_name
@@ -71,9 +68,9 @@ descr_template = <div style="white-space: normal; height: 250px; overflow:scroll
     # IRequestHandler methods
     def pre_process_request(self, req, handler):        
         return handler
-    #===========================================================================
+    #==========================================================================
     # Add JavaScript an an additional css to ticket template
-    #===========================================================================
+    #==========================================================================
 #    def post_process_request(self, req, template, data, content_type):
 #        if req.path_info .startswith('/newticket')or \
 #            req.path_info .startswith('/ticket'):
@@ -89,7 +86,6 @@ descr_template = <div style="white-space: normal; height: 250px; overflow:scroll
         return #[resource_filename(__name__, 'templates')]
     
     def get_htdocs_dirs(self):
-#        self.log.debug('TextAreaDescription. get_htdocs_dirs: %s' % resource_filename(__name__, 'htdocs') )
         return [('hw', resource_filename(__name__, 'htdocs'))]
 
 class CssTemplate(Component):
@@ -170,7 +166,7 @@ Examples for files which resides in projects `templates` folder:
             templ_name = "*"
         else: 
             idx = file_name.find("_")
-            if idx <> -1:
+            if idx != -1:
                 templ_name = file_name[0:idx]
                 templ_name += ".html"
         return templ_name
@@ -187,8 +183,10 @@ Concretely:
     
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html':
-            stream |= Transformer('.//input[@id="field-reporter"]').attr('disabled', 'disabled')
-            stream |= Transformer('.//form[@id="addreply"]').attr('style', 'display: none')
+            stream |= Transformer('.//input[@id="field-reporter"]') \
+                .attr('disabled', 'disabled')
+            stream |= Transformer('.//form[@id="addreply"]') \
+                .attr('style', 'display: none')
         return stream
 
     
@@ -235,9 +233,9 @@ inbox, Inbox, v1, V1, v2, V2
     def get_field_list(self, fields, fieldname):
         if not fields or not fieldname:
             return None
-        for i, f in enumerate(fields):
-            if fields[i]['name'] == fieldname:
-                return fields[i]
+        for fld in fields:
+            if fld['name'] == fieldname:
+                return fld
 
                     
 class TicketNavigation(Component):
@@ -256,11 +254,11 @@ newStream = HTML(stream)
 """  
     implements(ITemplateStreamFilter, IRequestFilter, ITemplateProvider) 
             
-    css_banner_top1 = tag.div(id_='top1');    
-    css_banner_top2 = tag.div(id_='top2');
-    css_banner_top3 = tag.div(id_='top3');    
-    css_banner_top4 = tag.div(id_='top4');
-    css_left = tag.div(id_='left');
+    css_banner_top1 = tag.div(id_='top1')
+    css_banner_top2 = tag.div(id_='top2')
+    css_banner_top3 = tag.div(id_='top3')
+    css_banner_top4 = tag.div(id_='top4')
+    css_left = tag.div(id_='left')
 
     # ITemplateStreamFilter methods
     #self.log.debug("Filer: %r", filter) oder print
@@ -269,7 +267,7 @@ newStream = HTML(stream)
             stream = self.__getAnchors(stream)
             stream = self._customize_View(stream)
             return stream
-        return stream;         
+        return stream
                   
     # IRequestHandler methods
     def pre_process_request(self, req, handler):        
@@ -285,10 +283,10 @@ newStream = HTML(stream)
             add_stylesheet(req, 'hw/css/navstyle.css')
         return template, data, content_type
     
-    #===============================================================================
+    #==========================================================================
     # ITemplateProvider methods
     # Used to add the plugin's templates and htdocs 
-    #===============================================================================
+    #==========================================================================
     def get_templates_dirs(self):
         return #[resource_filename(__name__, 'templates')]
     
@@ -305,7 +303,8 @@ newStream = HTML(stream)
     #===========================================================================
     def __getAnchors(self, stream):
         #=======================================================================
-        # this code fragment is evil, since it raises an error on imported umlauts:
+        # this code fragment is evil, since it raises an error on 
+        # imported umlauts:
         # newStream = HTML(stream)
         #
         # *** tried also this, but didn't work:
@@ -332,8 +331,9 @@ newStream = HTML(stream)
         #            else:
         #                head += event[1]
         #        #START (QName('child'), Attrs([(QName('id'), u'2')]))
-        #print "namespaces, variables; head: %s, %s; %s" % (namespaces, variables, head)
-        #=======================================================================
+        #print "namespaces, variables; head: %s, %s; %s" % \ 
+        #     (namespaces, variables, head)
+        #======================================================================
         newStream = HTML(stream)
         self.anchors = {}
         self.keylist = []
@@ -360,40 +360,43 @@ newStream = HTML(stream)
 
         return newStream
      
-    #============================================================================
+    #==========================================================================
     # Customize the Ticket view to provide an frame like look an additional
     # document navigation menue 
-    #============================================================================
+    #==========================================================================
     def _customize_View(self, stream):
 
-        filter = Transformer('.//div [@id="banner"]');
-        stream = stream | filter.wrap(self.css_banner_top2);
+        filter = Transformer('.//div [@id="banner"]')
+        stream = stream | filter.wrap(self.css_banner_top2)
           
         buffer = StreamBuffer();
         stream = stream | Transformer('.//div [@id="banner"]').copy(buffer) \
-              .end().select('.//div [@id="top2"]').after(tag.div(id_='top1')(buffer));
+              .end().select('.//div [@id="top2"]') \
+              .after(tag.div(id_='top1')(buffer))
                 
-        filter = Transformer('.//div [@id="mainnav"]');
-        stream = stream | filter.wrap(self.css_banner_top4);
+        filter = Transformer('.//div [@id="mainnav"]')
+        stream = stream | filter.wrap(self.css_banner_top4)
             
-        buffer = StreamBuffer();
+        buffer = StreamBuffer()
         stream = stream | Transformer('.//div [@id="mainnav"]').copy(buffer) \
-              .end().select('.//div [@id="top4"]').after(tag.div(id_='top3')(buffer));    
+              .end().select('.//div [@id="top4"]') \
+              .after(tag.div(id_='top3')(buffer))    
         
         filter = Transformer('.//div [@id="top3"]');
         stream = stream | filter.after(tag.div(id_='right')(tag.p()))
         
         filter = Transformer('.//div [@id="right"]')  
-        stream = stream | filter.append(tag.div(class_='wiki-toc')(tag.h4(_('Table of Contents'))))   
+        stream = stream | filter. \
+            append(tag.div(class_='wiki-toc')(tag.h4(_('Table of Contents'))))   
         
         # just for the menu / TOC
-        filter = Transformer('.//div [@class="wiki-toc"]')                        
+        filter = Transformer('.//div [@class="wiki-toc"]')
         
         if self.anchors and self.keylist:
             for key in self.keylist:
                 stream = stream | filter.append(tag.a(key,
-                                                      href='#' + self.anchors.get(key),
-                                                      onclick="scrollup();") + tag.br())
+                                          href='#' + self.anchors.get(key),
+                                          onclick="scrollup();") + tag.br())
         filter = Transformer('.//div [@id="main"]')
         stream = stream | filter.wrap(self.css_left)
             
@@ -455,7 +458,8 @@ Line 3 has to be inserted into `py:choose` block in above template-snippet.
 </div>
 }}}
 
-Also `py:choose` block has to be added into div-block near the end of file (see above template-snippet)."""
+Also `py:choose` block has to be added into div-block near the end of file 
+(see above template-snippet)."""
     implements(IRequestFilter, ITemplateStreamFilter)
     
     description_format = Option('ticket', 'description_format', '',
@@ -486,12 +490,16 @@ Also `py:choose` block has to be added into div-block near the end of file (see 
         return template, data, content_type
     
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'ticket.html' and self.editor_source and self.editor_replace:
-            self.log.debug ("further processing: template %s, editor-source %s, editor-replace %s" % (filename, self.editor_source, self.editor_replace))
+        if filename == 'ticket.html' and self.editor_source \
+            and self.editor_replace:
+            self.log.debug ("further processing: template %s, "
+                            "editor-source %s, editor-replace %s" % \
+                            (filename, self.editor_source, self.editor_replace))
             
             # check if description should be in HTML
             if self.description_format == "html":
-                add_editor = self.editor_replace.replace("@FIELD_NAME@", "field_description")
+                add_editor = self.editor_replace \
+                    .replace("@FIELD_NAME@", "field_description")
                 html = HTML(add_editor)
                 self.log.debug ("add_editor is %s" % add_editor)
                 stream |= Transformer('.//textarea[@name="field_description"]').after(html)
@@ -515,127 +523,6 @@ Also `py:choose` block has to be added into div-block near the end of file (see 
 # UNUSED COMPONENTS
 # These components are not used yet, because they are not working and
 # are only made because in a research manner.
-#===============================================================================
-
-#===============================================================================
-# class DisplayDate(Component):
-#    """DEPRECATED
-# 
-# '''Deprecated - use trac itself with revision 10629 or later! '''
-# (see Trac-Ticket [http://trac.edgewall.org/ticket/9777 #9777])
-# Displays date next to summary as absolute date instead of timedelta.
-# Timedelta will be displayed only as title.
-# 
-# '''Attention''': This works partly fine in German and English. Other languages / locales haven't been tested.
-# It doesn't set the language correct in changes (like comments / attachments). 
-# You also have to edit your `template.htm` and place it under your project folder.
-# 
-# Sample change:
-# {{{
-#  <div class="date">
-#    <py:choose>
-#        <py:when test="date_format == 'absolute'">
-#            <p i18n:msg="created" py:if="ticket.exists">Creation date: ${dateinfo_abs(ticket.time)}</p>
-#            <p i18n:msg="modified" py:if="ticket.changetime != ticket.time">Modify date: ${dateinfo_abs(ticket.changetime)}</p>
-#        </py:when>
-#        <py:otherwise>
-#            <p i18n:msg="created" py:if="ticket.exists">Opened ${dateinfo(ticket.time)} ago</p>
-#            <p i18n:msg="modified" py:if="ticket.changetime != ticket.time">Last modified ${dateinfo(ticket.changetime)} ago</p>
-#        </py:otherwise>
-#    </py:choose>
-#    <p py:if="not ticket.exists"><i>(ticket not yet created)</i></p>
-#  </div>
-# }}}
-# 
-# Options:
-# || '''option name''' || '''values''' || '''description''' ||
-# || date_format || `relative` | `absolute` || format of date in ticket view (default: '''relative''') ||
-# 
-# Sample configuration:
-# {{{
-# [ticket]
-# date_format = absolute
-# }}}
-# 
-# You might restart your webserver after installing this plugin, since it doesn't display the date correctly.
-# """
-#    implements (IRequestFilter, ITemplateStreamFilter)
-#    
-#    date_format = Option('ticket', 'date_format', 'relative',
-#        """Format of date in ticket view.
-#        Empty or relative is Trac Standard; absolute formats date as date/time.""")
-#    
-#    def __init__(self):
-#        locale_dir = pkg_resources.resource_filename(__name__, 'locale') 
-#        add_domain(self.env.path, locale_dir)
-#        
-#    def pre_process_request(self, req, handler):
-#        return handler
-#    
-#    def post_process_request(self, req, template, data, content_type):
-#        if data and template == 'ticket.html':
-#            self.log.info("[post_process_request] called this method with data with template: %s" % template)
-#            def dateinfo_abs(date):
-#                self.log.info("[post_process_request] called method 'dateinfo'")
-#                return tag.span(format_datetime(date),
-#                                title=pretty_timedelta(date))
-#            data['date_format'] = self.date_format
-#            if self.date_format == "absolute":
-#                data['dateinfo_abs'] = dateinfo_abs
-#            
-#            self.log.debug("data %r" % data)
-#        return template, data, content_type
-#    
-#    def filter_stream(self, req, method, filename, stream, data):
-# #        if not self.date_format == "absolute":
-# #            return stream
-# #        
-# #        if filename == 'ticket.html':
-# #            self.log.debug( "replacing relative datetime to absolute datetime" )
-# #            # just a hack (works at least well in German and English)
-# #            def replace_descr(stream):
-# #                for mark, (kind, data, pos) in stream:
-# #                    if mark and kind is TEXT:
-# #                        test = data.upper()
-# #                        if re.match(r'[0-9]{2}', test):
-# #                            yield mark, (kind, data, pos)
-# #                        else:
-# #                            yield mark, (kind, '', pos)
-# #                    else:
-# #                        yield mark, (kind, data, pos)
-# #            
-# #            stream =  stream | Transformer('.//div[@id="ticket"]/div[@class="date"]/p[1]') \
-# #                            .apply( replace_descr ).prepend( _('Creation date') + ': ' )
-# #            stream =  stream | Transformer('.//div[@id="ticket"]/div[@class="date"]/p[2]') \
-# #                            .apply( replace_descr ).prepend( _('Modify date') + ': ' )
-# #            
-#            # just a hack, which works in German, but not in English!
-# #            def replace_comment_descr(stream):
-# #                do_replace_text = 0
-# #                for mark, (kind, data, pos) in stream:
-# #                    if mark and kind is END:
-# #                        try:
-# #                            if data.localname == "h3":
-# #                                do_replace_text = 0
-# #                            elif data.localname == "span":
-# #                                do_replace_text += 1
-# #                        except Exception, e:
-# #                            print "*** EXEPTION *** %s" % e
-# #                        yield mark, (kind, data, pos)
-# #                    elif mark and kind is TEXT:
-# #                        test = data.upper()
-# #                        if re.match(r'[0-9]{2}', test):
-# #                            yield mark, (kind, data, pos)
-# #                        elif do_replace_text == 2:
-# #                            yield mark, (kind, '', pos)
-# #                        else:
-# #                            yield mark, (kind, data, pos)
-# #                    else:
-# #                        yield mark, (kind, data, pos)
-# #            
-# #            stream =  stream | Transformer('.//h3 [@class="change"]') \
-# #                            .apply( replace_comment_descr ).prepend( _('Modify date') + ': ' )
-#        return stream
 #===============================================================================
 
 
