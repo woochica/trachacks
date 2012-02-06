@@ -1,21 +1,16 @@
-import inspect
-import urllib
+import base64
 import hashlib
-from StringIO import StringIO
+import os
+import pickle
+import re
+from datetime import datetime
+from subprocess import Popen, PIPE
 
 from trac.core import *
 from trac.config import Option
-from trac.wiki.formatter import wiki_to_html, system_message
-from trac.wiki.macros import WikiMacroBase
 from trac.web import IRequestHandler, RequestDone
-from subprocess import Popen, PIPE
-import pickle
-import os
-import re
-import tempfile
-import urllib
-from datetime import datetime
-import base64
+from trac.wiki.formatter import format_to_html, system_message
+from trac.wiki.macros import WikiMacroBase
 
 __all__ = ["PlantUMLMacro", "PlantUMLRenderer"]
 
@@ -25,6 +20,7 @@ class PlantUMLMacro(WikiMacroBase):
     """
 
     plantuml_jar = Option("plantuml", "plantuml_jar", "", "Path to PlantUML .jar file")
+    java_bin = Option("plantuml", "java_bin", "java", "Path to the Java binary file") 
 
     def expand_macro(self, formatter, name, args):
         if args is None:
@@ -49,20 +45,19 @@ class PlantUMLMacro(WikiMacroBase):
                 del graphs[key]              
 
         if not graphs.has_key(img_id):
-        
-            cmd = "java -jar -Djava.awt.headless=true \"%s\" -pipe" % (self.plantuml_jar)
+            
+            cmd = "%s -jar -Djava.awt.headless=true \"%s\" -pipe" % (self.java_bin, self.plantuml_jar)
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             (stdout, stderr) = p.communicate(input=source)
             if p.returncode != 0:
                 return system_message("Error running plantuml: %s" % stderr)
 
-            graphs[img_id] = (stdout, datetime.now())        
-        
+            graphs[img_id] = (stdout, datetime.now())
         
         formatter.req.session['plantuml'] = base64.b64encode(pickle.dumps(graphs))
 
         out = "{{{\n#!html\n<img src='%s' alt='PlantUML Diagram' />\n}}}\n" % formatter.href("plantuml", id=img_id)
-        return wiki_to_html(out, self.env, formatter.req)
+        return format_to_html(self.env, formatter.context, out)
 
 
 class PlantUMLRenderer(Component):
