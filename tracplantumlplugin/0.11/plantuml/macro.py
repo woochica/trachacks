@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import base64
 import hashlib
 import os
@@ -18,6 +20,8 @@ class PlantUMLMacro(WikiMacroBase):
     """
     A macro to include a PlantUML Diagrams
     """
+    
+    implements(IRequestHandler)
 
     plantuml_jar = Option("plantuml", "plantuml_jar", "", "Path to PlantUML .jar file")
     java_bin = Option("plantuml", "java_bin", "java", "Path to the Java binary file") 
@@ -59,16 +63,10 @@ class PlantUMLMacro(WikiMacroBase):
         out = "{{{\n#!html\n<img src='%s' alt='PlantUML Diagram' />\n}}}\n" % formatter.href("plantuml", id=img_id)
         return format_to_html(self.env, formatter.context, out)
 
-
-class PlantUMLRenderer(Component):
-    implements(IRequestHandler)
-    
-    ##################################
-    ## IRequestHandler
-    
+    # IRequestHandler
     def match_request(self, req):
         return re.match(r'/plantuml?$', req.path_info)
-
+    
     def process_request(self, req):
         graphs = pickle.loads(base64.b64decode(req.session.get('plantuml', None)))
         
