@@ -5,14 +5,18 @@ import os
 import re
 from subprocess import Popen, PIPE
 
+from genshi.builder import tag
 from trac.config import Option
 from trac.core import implements
+from trac.util.translation import _
 from trac.web import IRequestHandler
 from trac.wiki.api import parse_args
 from trac.wiki.formatter import format_to_html, system_message
 from trac.wiki.macros import WikiMacroBase
 
 __all__ = ["PlantUMLMacro", "PlantUMLRenderer"]
+
+img_dir = 'cache/plantuml'
 
 class PlantUMLMacro(WikiMacroBase):
     """
@@ -23,11 +27,9 @@ class PlantUMLMacro(WikiMacroBase):
 
     plantuml_jar = Option('plantuml', 'plantuml_jar', '', 'Path to PlantUML .jar file')
     java_bin = Option('plantuml', 'java_bin', 'java', 'Path to the Java binary file')
-    img_dir = Option('plantuml', 'img_dir', 'cache/plantuml',
-                     'Path relative to project environment in which images are cached')
     
     def __init__(self):
-        self.abs_img_dir = os.path.join(os.path.abspath(self.env.path), self.img_dir)
+        self.abs_img_dir = os.path.join(os.path.abspath(self.env.path), img_dir)
         if not os.path.isdir(self.abs_img_dir):
             os.makedirs(self.abs_img_dir)
 
@@ -50,9 +52,9 @@ class PlantUMLMacro(WikiMacroBase):
             if p.returncode != 0:
                 return system_message("Error running plantuml: %s" % stderr)            
             self._write_img_to_file(img_id, img_data)
-
-        out = "{{{\n#!html\n<img src='%s' alt='PlantUML Diagram' />\n}}}\n" % formatter.href("plantuml", id=img_id)
-        return format_to_html(self.env, formatter.context, out)
+        
+        link = formatter.href('plantuml', id=img_id)
+        return tag.img(src=link)
 
     # IRequestHandler
     def match_request(self, req):
