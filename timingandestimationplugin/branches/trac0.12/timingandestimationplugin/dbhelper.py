@@ -92,6 +92,9 @@ def current_schema (env):
     elif (type(db.cnx) == trac.db.postgres_backend.PostgreSQLConnection):
         return get_scalar(env, 'SHOW search_path;')
 
+def _prep_schema(s):
+    return ','.join(("'"+i.replace("'","''")+"'"
+                     for i in s.split(',')))
 
 def db_table_exists(env,  table):
     db = env.get_read_db()
@@ -101,8 +104,10 @@ def db_table_exists(env,  table):
         cnt = get_scalar(env, sql, 0, table)
     else:
         sql = """SELECT count(*) FROM information_schema.tables 
-                 WHERE table_name = %s and table_schema=%s"""
-        cnt = get_scalar(env, sql, 0, table, current_schema(env))
+                 WHERE table_name = %%s and table_schema in (%s)
+              """ % _prep_schema(current_schema(env))
+        print sql
+        cnt = get_scalar(env, sql, 0, table)
     return cnt > 0
 
 def get_column_as_list(env, sql, col=0, *params):
