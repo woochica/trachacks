@@ -106,7 +106,6 @@ def db_table_exists(env,  table):
         sql = """SELECT count(*) FROM information_schema.tables 
                  WHERE table_name = %%s and table_schema in (%s)
               """ % _prep_schema(current_schema(env))
-        print sql
         cnt = get_scalar(env, sql, 0, table)
     return cnt > 0
 
