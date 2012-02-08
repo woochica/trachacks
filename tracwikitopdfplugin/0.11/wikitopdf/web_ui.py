@@ -3,15 +3,15 @@ Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
 Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 """
 
+from genshi.core import Markup
+from trac.admin.web_ui import IAdminPanelProvider
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.web.chrome import ITemplateProvider, add_script
+from trac.util.translation import _
 from trac.web.api import IRequestFilter
-from trac.admin.web_ui import IAdminPanelProvider
-from genshi.core import Markup
-from api import IWikiToPdfFormat
+from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.api import WikiSystem
-import urllib
+from api import IWikiToPdfFormat
 import re
 
 class WikiToPdfAdmin(Component):
@@ -33,12 +33,11 @@ class WikiToPdfAdmin(Component):
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('wikitopdf', resource_filename(__name__, 'htdocs'))]
-        #return []
 
     # IAdminPanelsProvider methods
     def get_admin_panels(self, req):
         if req.perm.has_permission('WIKI_ADMIN'):
-            yield ('general', 'General', 'wikitopdf', 'WikiToPdf')
+            yield ('general', _('General'), 'wikitopdf', _('WikiToPdf'))
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):

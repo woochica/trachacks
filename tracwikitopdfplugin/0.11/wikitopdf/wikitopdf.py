@@ -2,18 +2,17 @@
 Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
 Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 """
-
-from trac.core import *
-from trac.util import escape
-from trac.mimeview.api import IContentConverter
-from trac.wiki.formatter import wiki_to_html
-import tempfile
-from tempfile import mkstemp
 import os
-import re
 import random
-from urllib import urlretrieve
+import re
 import xml.sax.saxutils
+from urllib import urlretrieve
+from tempfile import NamedTemporaryFile, mkstemp
+from trac.core import *
+from trac.mimeview.api import Context, IContentConverter
+from trac.util import escape
+from trac.wiki.formatter import format_to_html
+
 EXCLUDE_RES = [
     re.compile(r'\[\[PageOutline([^]]*)\]\]'),
     re.compile(r'\[\[TracGuideToc([^]]*)\]\]'),
@@ -48,8 +47,10 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
         text = r.sub('', text)
     
     env.log.debug('WikiToPdf => Wiki intput for WikiToPdf: %r' % text)
+        
+    context = Context.from_request(req)
+    page = format_to_html(env, context, text)
     
-    page = wiki_to_html(text, env, req)
     page = page.replace('<img', '<img border="0"')
     page = page.replace('?format=raw', '')
 
@@ -63,9 +64,10 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
     page = page.replace('<table class="wiki">', '<table class="wiki" border="1" width="100%">')
     tracuri = env.config.get('wikitopdf', 'trac_uri')
     tmp_dir = env.config.get('wikitopdf', 'tmp_dir')
+    
     if tracuri != '' and tmp_dir != '':
         # Download images so that dynamic images also work right
-	# Create a random prefix
+        # Create a random prefix
         random.seed()
         tmp_dir += '/%(#)04x_' %{"#":random.randint(0,65535)}
         # Create temp dir
@@ -75,43 +77,42 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
         imgpos = page.find('<img')
 
         while imgpos != -1:
-                addrpos = page.find('src="',imgpos)
-                theimg = page[addrpos+5:]
-                thepos = theimg.find('"')
-                theimg = theimg[:thepos]
-                if theimg[:1] == '/':
-                        theimg = tracuri + theimg
-		try:
-		    newimg = IMG_CACHE[theimg]
-		except:    
-                    #newimg = tmp_dir + '%(#)d_' %{"#":imgcounter} + theimg[theimg.rfind('/')+1:]
-                    file = tempfile.NamedTemporaryFile(mode='w',prefix='%(#)d_' %{"#":imgcounter},dir=tmp_dir)
-		    newimg = file.name
-                    file.close()
-                    #download
-                    theimg = xml.sax.saxutils.unescape(theimg)
-                    theimg = theimg.replace(" ","%20")
-                    urlretrieve(theimg, newimg)
-		    IMG_CACHE[theimg] = newimg
-                    env.log.debug("ISLAM the image is %s new image is %s" % ( theimg, newimg))
-		    imgcounter += 1
+            addrpos = page.find('src="',imgpos)
+            theimg = page[addrpos+5:]
+            thepos = theimg.find('"')
+            theimg = theimg[:thepos]
+            if theimg[:1] == '/':
+                theimg = tracuri + theimg
+        try:
+            newimg = IMG_CACHE[theimg]
+        except:    
+            #newimg = tmp_dir + '%(#)d_' %{"#":imgcounter} + theimg[theimg.rfind('/')+1:]
+            file = NamedTemporaryFile(mode='w', prefix='%(#)d_' %{"#":imgcounter}, dir=tmp_dir)
+            newimg = file.name
+            file.close()
+            #download
+            theimg = xml.sax.saxutils.unescape(theimg)
+            theimg = theimg.replace(" ","%20")
+            urlretrieve(theimg, newimg)
+            IMG_CACHE[theimg] = newimg
+            env.log.debug("ISLAM the image is %s new image is %s" % ( theimg, newimg))
+            imgcounter += 1
 
-                page = page[:addrpos+5] + newimg + page[addrpos+5+thepos:]
-                imgpos = page.find('<img', addrpos)
-
+            page = page[:addrpos+5] + newimg + page[addrpos+5+thepos:]
+            imgpos = page.find('<img', addrpos)
 
     else:
         # Use old search for images in path
-	page = page.replace('raw-attachment', 'attachments')
-
+        page = page.replace('raw-attachment', 'attachments')
+        
         imgpos = page.find('<img')
 
         while imgpos != -1:
-            addrpos = page.find('src=',imgpos)
+            addrpos = page.find('src=', imgpos)
 #            base_dir = base_dir.encode('ascii')
             page = page[:addrpos+5] + base_dir + page[addrpos+5:]
             imgpos = page.find('<img', addrpos)
-
+    
     # Add center tags, since htmldoc 1.9 does not handle align="center"
     (tablepos,tableend) = tagattrfind(page, 'table', 'align="center"', 0)
     while tablepos != -1:
