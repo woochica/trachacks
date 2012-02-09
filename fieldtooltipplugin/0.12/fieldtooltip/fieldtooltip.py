@@ -10,6 +10,7 @@ from trac.mimeview import Context
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiChangeListener, WikiSystem
 from trac.wiki.formatter import format_to_html
+from trac.wiki.model import WikiPage
 
 class FieldTooltip(Component):
     """ Provides tooltip for ticket fields. (In Japanese/KANJI) チケットフィールドのツールチップを提供します。
@@ -49,13 +50,10 @@ class FieldTooltip(Component):
     def pages(self, db):
         # retrieve wiki contents for field help
         pages = {}
-        cursor = db.cursor()
-        wiki_pages = WikiSystem(self.env).get_pages(FieldTooltip._wiki_prefix)
         prefix_len = len(FieldTooltip._wiki_prefix)
+        wiki_pages = WikiSystem(self.env).get_pages(FieldTooltip._wiki_prefix)
         for page in wiki_pages:
-            cursor.execute("SELECT text FROM wiki WHERE name = %s ORDER BY version DESC LIMIT 1", (page,))
-            for text, in cursor:
-                pages[page[prefix_len:]] = text
+            pages[page[prefix_len:]] = WikiPage(self.env, page, db=db).text
         return pages
 
     # ITemplateStreamFilter methods
