@@ -23,15 +23,15 @@
 #
 
 from StringIO import StringIO
-from trac.util.html import Markup
-from trac.wiki.formatter import Formatter 
-
 from datetime import datetime
-from trac.util.datefmt import format_datetime, utc
-from trac.wiki.macros import WikiMacroBase
-from trac.resource import get_resource_name
 
-revison = "$Rev$"
+from trac.resource import get_resource_name
+from trac.util.datefmt import format_datetime, utc
+from trac.util.html import Markup
+from trac.wiki.formatter import Formatter
+from trac.wiki.macros import WikiMacroBase, parse_args
+
+revision = "$Rev$"
 url = "$URL$"
 
 class LastModifiedMacro(WikiMacroBase):
@@ -40,11 +40,11 @@ class LastModifiedMacro(WikiMacroBase):
     revision = "$Rev$"
     url = "$URL$"
 
-    def expand_macro(self, formatter, name, arguments):
+    def expand_macro(self, formatter, name, content):
 
-        args = arguments.split(',')
-
-        if not arguments:
+        args, _ = parse_args(content)
+        
+        if not args:
             page_name = get_resource_name( self.env, formatter.resource )
             mode='normal'
         elif len(args) == 1:
@@ -58,7 +58,7 @@ class LastModifiedMacro(WikiMacroBase):
         cursor=db.cursor()
         cursor.execute("SELECT author, time FROM wiki WHERE name = '%s' "
                        "ORDER BY version DESC LIMIT 1" % page_name)
-        row      = cursor.fetchone()
+        row = cursor.fetchone()
         if not row:
             out = StringIO('cannot find "' + page_name + '"')
             return Markup(out.getvalue())
