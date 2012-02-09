@@ -2,8 +2,11 @@ from setuptools import setup
 
 extra = {}
 
-from trac.util.dist import get_l10n_cmdclass
-cmdclass = get_l10n_cmdclass()
+try:
+    from trac.util.dist import get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+except ImportError:
+    cmdclass = None
 if cmdclass:
     extra['cmdclass'] = cmdclass
     extractors = [
