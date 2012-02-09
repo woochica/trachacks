@@ -6,7 +6,7 @@ from setuptools import setup
 
 setup(
     name = 'TracIncludeMacro',
-    version = '2.1',
+    version = '2.2',
     packages = ['includemacro'],
 
     author = 'Noah Kantrowitz',

@@ -2,15 +2,15 @@
 import urllib2
 from StringIO import StringIO
 
+from genshi.core import escape
+from genshi.filters.html import HTMLSanitizer
+from genshi.input import HTMLParser, ParseError
 from trac.core import *
+from trac.mimeview.api import Mimeview, get_mimetype, Context
+from trac.perm import IPermissionRequestor
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
 from trac.wiki.model import WikiPage
-from trac.mimeview.api import Mimeview, get_mimetype, Context
-from trac.perm import IPermissionRequestor
-from genshi.core import escape
-from genshi.input import HTMLParser, ParseError
-from genshi.filters.html import HTMLSanitizer
 
 __all__ = ['IncludeMacro']
 
@@ -27,7 +27,7 @@ class IncludeMacro(WikiMacroBase):
     }
     
     # IWikiMacroProvider methods
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         args = [x.strip() for x in content.split(',')]
         if len(args) == 1:
             args.append(None)
@@ -53,8 +53,9 @@ class IncludeMacro(WikiMacroBase):
             # could be a source of abuse allow selectively blocking it.
             # RFE: Allow blacklist/whitelist patterns for URLS. <NPK>
             # RFE: Track page edits and prevent unauthorized users from ever entering a URL include. <NPK>
-            if not req.perm.has_permission('INCLUDE_URL'):
-                self.log.info('IncludeMacro: Blocking attempt by %s to include URL %s on page %s', req.authname, source, req.path_info)
+            if not formatter.perm.has_permission('INCLUDE_URL'):
+                self.log.info('IncludeMacro: Blocking attempt by %s to include URL %s on page %s',
+                              formatter.req.authname, source, formatter.req.path_info)
                 return ''
             try:
                 urlf = urllib2.urlopen(source)
@@ -63,25 +64,25 @@ class IncludeMacro(WikiMacroBase):
                 return system_message('Error while retrieving file', str(e))
             except TracError, e:
                 return system_message('Error while previewing', str(e))
-            ctxt = Context.from_request(req)
+            ctxt = Context.from_request(formatter.req)
         elif source_format == 'wiki':
             # XXX: Check for recursion in page includes. <NPK>
-            if not req.perm.has_permission('WIKI_VIEW'):
+            if not formatter.perm.has_permission('WIKI_VIEW'):
                 return ''
             page = WikiPage(self.env, source_obj)
             if not page.exists:
                 return system_message('Wiki page %s does not exist'%source_obj)
             out = page.text
-            ctxt = Context.from_request(req, 'wiki', source_obj)
+            ctxt = Context.from_request(formatter.req, 'wiki', source_obj)
         elif source_format == 'source':
-            if not req.perm.has_permission('FILE_VIEW'):
+            if not formatter.perm.has_permission('FILE_VIEW'):
                 return ''
-            repo = self.env.get_repository(req.authname)
+            repo = self.env.get_repository(formatter.req.authname)
             node = repo.get_node(source_obj)
             out = node.get_content().read()
             if dest_format is None:
                 dest_format = node.content_type or get_mimetype(source_obj, out)
-            ctxt = Context.from_request(req, 'source', source_obj)
+            ctxt = Context.from_request(formatter.req, 'source', source_obj)
         # RFE: Add ticket: and comment: sources. <NPK>
         # RFE: Add attachment: source. <NPK>
         else:
@@ -89,7 +90,7 @@ class IncludeMacro(WikiMacroBase):
             
         # If we have a preview format, use it
         if dest_format:
-            out = Mimeview(self.env).render(ctxt, dest_format, out)
+            out = Mimeview(self.env).render(formatter.context, dest_format, out)
         
         # Escape if needed
         if not self.config.getbool('wiki', 'render_unsafe_content', False):
