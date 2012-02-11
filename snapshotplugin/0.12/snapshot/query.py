@@ -12,6 +12,8 @@ from trac.web.api import ITemplateStreamFilter
 from trac.wiki.model import WikiPage
 
 class Query(Component):
+    """ add \"Save to wiki\" button in CUSTOM QUERY page.
+a \"page_name\" URL Parameter uses for default name if exists."""
     implements (ITemplateStreamFilter)
     
     @classmethod
@@ -49,6 +51,8 @@ class Query(Component):
             .append(tag.form(div, action=get_resource_url(self.env, Resource('wiki'), self.env.href)))
             
 class Report(Component):
+    """ add \"Save to wiki\" button in REPORT page. """
+
     implements(ITemplateStreamFilter)
 
     @classmethod

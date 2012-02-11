@@ -9,11 +9,28 @@ from trac.wiki.api import IWikiMacroProvider
 import sys
 
 class QueryResults(Component):
+    """ Show following static data in query table format. """
     implements (IWikiMacroProvider)
     
     # IWikiMacroProvider methods
     def get_macros(self):
         yield 'QueryResults'
+        
+    def get_macro_description(self, name):
+        return """ @param group=column_name (Optional)
+        Show following static data in query table format.
+Example:
+{{{
+    {{{#!QueryResults(group=milestone) 
+    ||= href =||= id =||= summary =||= status =||= owner =||= time
+    || group: milestone1
+    || /trac/project1/ticket/1 || 1 || Example || accepted || admin || 2012/02/03 0:48:05
+    || group: 
+    || /trac/project1/ticket/2 || 2 || Summary || assigned || matobaa || 2012/02/06 8:25:51
+    || /trac/project1/ticket/3 || 3 || Closed || closed || admin || 2012/02/07 23:55:19
+    || /trac/project1/ticket/4 || 4 || active ticket || new || somebody || 2012/02/11 15:21:29
+    }}}
+}}}"""
 
     def expand_macro(self, formatter, name, content, args=[]):
         try:
