@@ -246,11 +246,12 @@ class BookmarkSystem(Component):
             linkname = 'WikiStart'
 
         return {
-                'realm': realm,
-                'url': url,
-                'linkname': linkname,
-                'name': name,
-                'delete': req.href.bookmark('delete_in_page', url)}
+            'realm': realm,
+            'url': req.href(url),
+            'linkname': linkname,
+            'name': name,
+            'delete': req.href.bookmark('delete_in_page', url),
+        }
 
     def __format_report_name(self, id):
         db = self.env.get_db_cnx()
