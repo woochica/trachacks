@@ -6,6 +6,8 @@ setup(
     packages=['tracbookmark'],
     package_data={'tracbookmark' : [
         'templates/*.html', 'htdocs/*.*', 'htdocs/js/*.js', 'htdocs/css/*.css']},
+    exclude_package_data={'': ['tests/*']},
+    test_suite = 'tracbookmark.tests.suite',
     author='Yoshiyuki Sugimoto',
     maintainer = 'Yoshiyuki Sugimoto',
     maintainer_email = 's.yosiyuki@gmail.com',

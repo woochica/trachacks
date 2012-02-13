@@ -157,7 +157,7 @@ class BookmarkSystem(Component):
 
         bookmarks = []
         for url, name, username in self.get_bookmarks(req):
-            bookmarks.append(self.__format_name(req, url))
+            bookmarks.append(self._format_name(req, url))
 
         return 'list.html', { 'bookmarks': bookmarks }, None
 
@@ -200,7 +200,7 @@ class BookmarkSystem(Component):
 
     ### internal methods
 
-    def __format_name(self, req, url):
+    def _format_name(self, req, url):
         linkname = url
         name = ""
 
@@ -219,11 +219,12 @@ class BookmarkSystem(Component):
                     linkname = get_resource_description(self.env, resource, 'compact')
                 elif realm == 'report':
                     linkname = "{%s}" % path[2]
-                    name = self.__format_report_name(path[2])
+                    name = self._format_report_name(path[2])
                 elif realm == 'changeset':
-                    parent = Resource('source', path[3])
-                    resource = Resource(realm, path[2], False, parent)
-                    linkname = "[%s]" % path[2]
+                    rev = path[2]
+                    parent = Resource('source', '/'.join(path[3:]))
+                    resource = Resource(realm, rev, False, parent)
+                    linkname = "[%s]" % rev
                     name = get_resource_description(self.env, resource)
                 elif realm == 'browser':
                     parent = Resource('source', path[2])
@@ -258,7 +259,7 @@ class BookmarkSystem(Component):
             'delete': req.href.bookmark('delete_in_page', url),
         }
 
-    def __format_report_name(self, id):
+    def _format_report_name(self, id):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT id, title from report WHERE id=%s', (id,))
@@ -294,7 +295,7 @@ class BookmarkSystem(Component):
 
         for url, name, username in self.get_bookmarks(req):
             base_path = req.base_path
-            params = self.__format_name(req, url)
+            params = self._format_name(req, url)
             if params['name']:
                 name = ' '.join([params['linkname'], params['name']])
             else:
