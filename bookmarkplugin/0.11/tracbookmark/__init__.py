@@ -245,9 +245,14 @@ class BookmarkSystem(Component):
             realm = 'wiki'
             linkname = 'WikiStart'
 
+        path_info = url
+        query_string = ''
+        idx = path_info.find('?')
+        if idx >= 0:
+            path_info, query_string = path_info[:idx], path_info[idx:]
         return {
             'realm': realm,
-            'url': req.href(url),
+            'url': req.href(path_info) + query_string,
             'linkname': linkname,
             'name': name,
             'delete': req.href.bookmark('delete_in_page', url),
