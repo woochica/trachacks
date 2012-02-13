@@ -1,6 +1,15 @@
 #!/usr/bin/env python
-
+import sys
 from setuptools import setup
+
+min_python = (2, 5)
+if sys.version_info < min_python:
+    print "TimingAndEstimation requires Python %d.%d or later" % min_python
+    sys.exit(1)
+if sys.version_info >= (3,):
+    print "TimingAndEstimation doesn't support Python 3 (yet)"
+    sys.exit(1)
+
 
 PACKAGE = 'timingandestimationplugin'
 
