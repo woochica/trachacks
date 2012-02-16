@@ -8,7 +8,7 @@ setup(
     version = '1.1.0',
     packages = ['datefield'],
     package_data = { 'datefield': ['templates/*.html', 'htdocs/css/*.css', 
-        'htdocs/js/*.js', 'htdocs/css/images/*.png' ] },
+        'htdocs/js/*.js', 'htdocs/css/images/*.png', 'htdocs/css/images/*.gif' ] },
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
     description = 'Add custom date fields to Trac tickets.',
