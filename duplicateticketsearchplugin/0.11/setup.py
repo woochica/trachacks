@@ -4,6 +4,7 @@ setup(
     name = 'DuplicateTicketSearch', 
     version = '1.0.1',
     author = 'gregmac',
+	license = 'BSD',
     description = 'Adds XMLRPC-based check from ticket entry page for potential duplicate tickets.',
     keywords = 'trac duplicate ticket search plugin',
     url = 'http://trac-hacks.org/wiki/DuplicateTicketSearchPlugin',
