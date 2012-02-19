@@ -35,6 +35,7 @@ chartrans = {
 kwtrans = {
     'class'     : '_class',
     'id'        : '_id',
+    'mode'      : '_mode',
     'title'     : '_title',
     }
 
@@ -151,6 +152,7 @@ class FormProcessor(object):
         while self.updated:
             self.updated = False
             text = tfRE.sub(self.process, text)
+            self.formatter.env.log.debug('TRACFORM_PARSER_OUT: ' + text)
         setattr(formatter.req, type(self).__name__, None)
 
         # Handle any backslash-escaped content.
@@ -432,16 +434,20 @@ class FormProcessor(object):
         return current
 
     def op_input(self, field, content=None, size=None, maxlen=None,
-                 _title=None, _id=None, _class=None):
+                 _title=None, _id=None, _class=None, _mode='rw'):
         current = self.get_field(field)
         if current is not None:
             content = current
-        return ("<INPUT name='%s'" % field +
+        readonly = False
+        if _mode == 'ro' or (_mode == 'once' and current is not None):
+            readonly = True
+        return ((_mode != 'rd' and "<INPUT name='%s'" % field or "<INPUT ") +
                 (size is not None and ' size="%s"' % size or '') +
                 (maxlen is not None and ' maxlength="%s"' % maxlen or '') +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
                 (_title is not None and ' title="%s"' % _title or '') +
+                (readonly is True and ' readonly="readonly"' or '') +
                 (content is not None and (' value="%s"'
                                            % xml_escape(content)) or '') +
                 '>')
@@ -491,16 +497,22 @@ class FormProcessor(object):
         return ''.join(result)
 
     def op_textarea(self, field, content='', cols=None, rows=None,
-                    _title=None, _id=None, _class=None):
+                    _title=None, _id=None, _class=None, _mode='rw'):
         current = self.get_field(field)
         if current is not None:
             content = current
-        return ("<TEXTAREA name='%s'" % field +
+        readonly = False
+        if _mode == 'ro' or (_mode == 'once' and current is not None):
+            readonly = True
+        return ((_mode != 'rd' and "<TEXTAREA name='%s'" % field or \
+                 "<TEXTAREA ") +
                 (cols is not None and ' cols="%s"' % cols or '') +
                 (rows is not None and ' rows="%s"' % rows or '') +
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
                 (_title is not None and ' title="%s"' % _title or '') +
+                (_mode == 'rd' and ' disabled="disabled="' or '') +
+                (readonly is True and ' readonly="readonly"' or '') +
                 '>' + xml_escape(content) + '</TEXTAREA>')
 
     def op_context(self):

@@ -7,6 +7,8 @@ tracforms-0.5 (yet unreleased):
    adding a private, optionally cached version of `env.get_known_users()`
  * #9286: Only first update of Form works, all others fail
  new features
+ * #5353: Transform input text to static text on submit
+   by adding several field modes: 'ro', 'rd', 'rw', 'once'
  * add universal title keyword argument for all typs of input field
  * allow to translate another optional argument into MAXLENGTH attribute
    for input fields of tpye TEXT exclusively, hint: others require HTML5
