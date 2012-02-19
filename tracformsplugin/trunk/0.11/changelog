@@ -13,6 +13,7 @@ tracforms-0.5 (yet unreleased):
  * add 'parent_blacklist' Option to prevent form submission from parent
    resources known as template
  * fix single-line input broken by literal single quotes in user input
+ * allow correct presentation of multi-line content in text area fields
 
 
 tracforms-0.4.1 (22-Jul-2011):

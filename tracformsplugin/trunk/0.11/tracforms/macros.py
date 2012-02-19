@@ -26,6 +26,12 @@ tfRE = re.compile('\['
     'tf(?:\.([a-zA-Z_]+?))?'
     '(?::([^\[\]]*?))?'
     '\]')
+chartrans = {
+    u'"'        : u'&#34;',
+    u'\t'       : u'&#x9;',
+    u'\n'       : u'&#xA;',
+    u'\r'       : u'&#xD;',
+    }
 kwtrans = {
     'class'     : '_class',
     'id'        : '_id',
@@ -121,7 +127,7 @@ class FormProcessor(object):
         self.formatter.env.log.debug(
             'TracForms state = ' + (state is not None and state or ''))
         for name, value in json.loads(state or '{}').iteritems():
-            self.env[name] = value
+            self.env[name] = _xml_escape(value)
             self.formatter.env.log.debug(
                 name + ' = ' + to_unicode(value))
             if self.subcontext is not None:
@@ -147,6 +153,8 @@ class FormProcessor(object):
             text = tfRE.sub(self.process, text)
         setattr(formatter.req, type(self).__name__, None)
 
+        # Handle any backslash-escaped content.
+        text = text.encode('utf-8').decode('string_escape')
         self.formatter.env.log.debug('TracForms parsing finished')
         if 'FORM_EDIT_VAL' in formatter.perm:
             self.allow_submit = True
@@ -493,7 +501,7 @@ class FormProcessor(object):
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
                 (_title is not None and ' title="%s"' % _title or '') +
-                '>' + content + '</TEXTAREA>')
+                '>' + xml_escape(content) + '</TEXTAREA>')
 
     def op_context(self):
         return str(self.context)
@@ -607,4 +615,14 @@ class FormProcessor(object):
         for key in fnmatch.filter(self.get_sorted_env(), pattern):
             result.append('%s = %s<BR>' % (key, self.env[key]))
         return ''.join(result)
+
+def _xml_escape(text):
+    """Escape literal '&' first to prevent evaluation of valid HTML escape
+    sequences from user input.
+    """
+    # DEVEL: Research how to rework more elegant using a custom codec.
+    text = text.replace(u'&', u'&amp;')
+    for k in chartrans.keys():
+        text = text.replace(k, chartrans[k])
+    return text
 
