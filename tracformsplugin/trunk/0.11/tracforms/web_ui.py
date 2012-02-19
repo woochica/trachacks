@@ -181,11 +181,15 @@ class FormUI(FormDBUser):
         rendered = []
         for name, value in fields.iteritems():
             if value == 'on':
-               value = _("checked (checkbox)")
+                value = _("checked (checkbox)")
             elif value == '':
-               value = _("empty (text field)")
+                value = _("empty (text field)")
+            elif isinstance(value, str):
+                value = "'".join(['', value, ''])
             else:
-               value = '\'' + value + '\''
+                # Still try to display something useful instead of corrupting
+                #   parent page beyond hope of recovery through the web_ui.
+                value = "'".join(['', repr(value), ''])
             author, time = self.get_tracform_fieldinfo(form_id, name)
             author = format_author(self.env, req, author, 'value')
             rendered.append(
