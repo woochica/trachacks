@@ -14,6 +14,7 @@ tracforms-0.5 (yet unreleased):
    resources known as template
  * fix single-line input broken by literal single quotes in user input
  * allow correct presentation of multi-line content in text area fields
+ * prevent UnicodeEncodeError on using nested TracForm operation as form value
 
 
 tracforms-0.4.1 (22-Jul-2011):

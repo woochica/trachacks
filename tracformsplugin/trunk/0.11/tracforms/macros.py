@@ -294,7 +294,7 @@ class FormProcessor(object):
                 return ' '.join(
                     quote and repr(str(item)) or str(item) for item in value)
             else:
-                value = str(value)
+                value = xml_escape(value)
                 if quote:
                     value = repr(value)
                 return value
