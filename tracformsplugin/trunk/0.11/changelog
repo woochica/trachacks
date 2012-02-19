@@ -12,6 +12,7 @@ tracforms-0.5 (yet unreleased):
    for input fields of tpye TEXT exclusively, hint: others require HTML5
  * add 'parent_blacklist' Option to prevent form submission from parent
    resources known as template
+ * fix single-line input broken by literal single quotes in user input
 
 
 tracforms-0.4.1 (22-Jul-2011):

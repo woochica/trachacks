@@ -434,8 +434,8 @@ class FormProcessor(object):
                 (_id is not None and ' id="%s"' % _id or '') +
                 (_class is not None and ' class="%s"' % _class or '') +
                 (_title is not None and ' title="%s"' % _title or '') +
-                (content is not None and (" value=%r" % xml_escape(
-                                                     content)) or '') +
+                (content is not None and (' value="%s"'
+                                           % xml_escape(content)) or '') +
                 '>')
 
     def op_checkbox(self, field, value=None, _title=None, _id=None,
