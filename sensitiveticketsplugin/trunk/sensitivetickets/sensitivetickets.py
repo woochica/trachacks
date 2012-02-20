@@ -7,9 +7,11 @@ See: http://trac.edgewall.org/browser/trunk/sample-plugins/permissions/vulnerabi
 """
 
 from trac.core import *
+from trac.config import BoolOption
 from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.model import Ticket
+from trac.ticket.api import ITicketManipulator
 from trac.resource import ResourceNotFound
 
 class SensitiveTicketsPolicy(Component):
@@ -28,7 +30,30 @@ class SensitiveTicketsPolicy(Component):
     }}}
     """
     
-    implements(IPermissionPolicy, IPermissionRequestor, IEnvironmentSetupParticipant)
+    implements(IPermissionPolicy, IPermissionRequestor, IEnvironmentSetupParticipant, ITicketManipulator)
+
+    allow_reporter = BoolOption('sensitivetickets', 'allow_reporter', 'false',
+                                '''Whether the reporter of a sensitive
+ticket should have access to that ticket even if they do not have
+SENSITIVE_VIEW privileges''')
+
+    allow_cc = BoolOption('sensitivetickets', 'allow_cc', 'false',
+                          '''Whether users listed in the cc field of a
+sensitive ticket should have access to that ticket even if they do not
+have SENSITIVE_VIEW privileges''')
+
+    allow_owner = BoolOption('sensitivetickets', 'allow_owner', 'true',
+                             '''Whether the owner of a sensitive
+ticket should have access to that ticket even if they do not have
+SENSITIVE_VIEW privileges''')
+
+    limit_sensitivity = BoolOption('sensitivetickets', 'limit_sensitivity', 'false',
+                                    '''With limit_sensitivity set to
+true, users cannot set the sensitivity checkbox on a ticket unless
+they are authenticated and would otherwise be permitted to deal with
+the ticket if it were marked sensitive.
+
+This prevents users from marking the tickets of other users as "sensitive".''')
 
     # IPermissionPolicy methods
 
@@ -46,20 +71,40 @@ class SensitiveTicketsPolicy(Component):
             resource = resource.parent
 
         if resource and resource.realm == 'ticket' and resource.id is not None:
+            bypass = False
             try:
                 ticket = Ticket(self.env, int(resource.id))
                 sensitive = ticket['sensitive']
+                if sensitive and int(sensitive):
+                    bypass = self.bypass_sensitive_view(ticket, username)
             except ResourceNotFound:
                 sensitive = 1  # Fail safe to prevent a race condition.
 
             if sensitive and int(sensitive):
-                if 'SENSITIVE_VIEW' not in perm:
+                if 'SENSITIVE_VIEW' not in perm and not bypass:
                     return False
 
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
         yield 'SENSITIVE_VIEW'
+
+    # ITicketManipulator methods:
+    def validate_ticket(self, req, ticket):
+        if not self.limit_sensitivity:
+            return []
+        sensitive = 1
+        try:
+            sensitive = ticket['sensitive']
+        except:
+            pass
+        if sensitive and int(sensitive):
+            if req.authname is 'anonymous':
+                return [(None, 'Sorry, you cannot create or update a sensitive ticket without at least logging in first')]
+            if self.bypass_sensitive_view(ticket, req.authname):
+                return []
+            req.perm(ticket.resource).require('SENSITIVE_VIEW')
+        return []
 
 
     ### methods for IEnvironmentSetupParticipant
@@ -103,3 +148,12 @@ class SensitiveTicketsPolicy(Component):
         
 
         
+    def bypass_sensitive_view(self, ticket, username):
+        '''Returns whether the sensitivetickets permission allows a
+        bypass of the SENSITIVE_VIEW setting for a given ticket
+        '''
+        if username == 'anonymous':
+            return False
+        return (self.allow_owner and (ticket['owner'] == username)) or \
+            (self.allow_reporter and (ticket['reporter'] == username)) or \
+            (self.allow_cc and (username in [x.strip() for x in ticket['cc'].split(',')]))
