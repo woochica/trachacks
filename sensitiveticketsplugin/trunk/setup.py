@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-version='0.12~rc1'
+version='0.20'
 
 setup(name='sensitivetickets',
       version=version,
