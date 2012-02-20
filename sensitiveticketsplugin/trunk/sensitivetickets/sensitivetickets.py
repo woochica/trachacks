@@ -12,7 +12,11 @@ from trac.perm import IPermissionPolicy, IPermissionRequestor
 from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.model import Ticket
 from trac.ticket.api import ITicketManipulator
+from trac.timeline.api import ITimelineEventProvider
 from trac.resource import ResourceNotFound
+from datetime import datetime
+from trac.util.datefmt import format_datetime, from_utimestamp, \
+                              to_utimestamp, utc
 
 class SensitiveTicketsPolicy(Component):
     """Prevent public access to security sensitive tickets.
@@ -28,9 +32,19 @@ class SensitiveTicketsPolicy(Component):
     permission_policies = SensitiveTicketsPolicy, AuthzPolicy, 
                           DefaultPermissionPolicy, LegacyAttachmentPolicy
     }}}
+
+    This plugin also adds the REDACTED_SENSITIVE_ACTIVITY_VIEW
+    permission.  Accounts with this permission will be able to see
+    activity on sensitive material in the timeline, but will only be
+    able to identify it by ticket number, comment number, and
+    timestamp.
+    
+    REDACTED_SENSITIVE_ACTIVITY_VIEW can be useful (for example) for
+    providing a notification daemon the ability to tell that some
+    activity happened without leaking the content of that activity.
     """
     
-    implements(IPermissionPolicy, IPermissionRequestor, IEnvironmentSetupParticipant, ITicketManipulator)
+    implements(IPermissionPolicy, IPermissionRequestor, IEnvironmentSetupParticipant, ITicketManipulator, ITimelineEventProvider)
 
     allow_reporter = BoolOption('sensitivetickets', 'allow_reporter', 'false',
                                 '''Whether the reporter of a sensitive
@@ -88,6 +102,7 @@ This prevents users from marking the tickets of other users as "sensitive".''')
 
     def get_permission_actions(self):
         yield 'SENSITIVE_VIEW'
+        yield 'REDACTED_SENSITIVE_ACTIVITY_VIEW'
 
     # ITicketManipulator methods:
     def validate_ticket(self, req, ticket):
@@ -145,8 +160,61 @@ This prevents users from marking the tickets of other users as "sensitive".''')
         custom.set('sensitive.value', '0')
 
         self.config.save()
-        
 
+    ### ITimelineEventProvider methods:
+    def get_timeline_filters(self, req):
+        if ('REDACTED_SENSITIVE_ACTIVITY_VIEW' in req.perm and
+            'SENSITIVE_VIEW' not in req.perm):
+            yield ('redacted_timeline_events', 'Activity on sensitive tickets', False)
+
+    def get_timeline_events(self, req, start, stop, filters):
+        if ('redacted_timeline_events' in filters and
+            'REDACTED_SENSITIVE_ACTIVITY_VIEW' in req.perm and
+            'SENSITIVE_VIEW' not in req.perm):
+            ts_start = to_utimestamp(start)
+            ts_stop = to_utimestamp(stop)
+
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+
+            if 'ticket_details' in filters:
+                # only show sensitive ticket changes (edits, closure) if the 'ticket_details' filter is on:
+                cursor.execute("""
+                    SELECT DISTINCT t.id,tc.time,tc.oldvalue
+                    FROM ticket_change tc 
+                        INNER JOIN ticket t ON t.id = tc.ticket 
+                            AND tc.time >= %s AND tc.time <= %s  AND tc.field = %s
+                        INNER JOIN ticket_custom td ON t.id = td.ticket
+                            AND td.name = %s AND td.value = %s
+                    ORDER BY tc.time
+                    """, (ts_start, ts_stop, 'comment', 'sensitive', '1'))
+                for tid,t,cid in cursor:
+                    yield ('sensitive_activity', from_utimestamp(t), 'redacted', (tid, cid))
+            # always show new sensitive tickets:
+            cursor.execute('''
+               SELECT DISTINCT id, time FROM
+                  ticket t INNER JOIN ticket_custom tc ON t.id = tc.ticket
+                   AND t.time >= %s AND t.time <= %s
+                   AND tc.name = %s AND tc.value = %s
+               ORDER BY time
+               ''', (ts_start, ts_stop, 'sensitive', '1'))
+            for tid,t in cursor:
+                yield ('sensitive_activity', from_utimestamp(t), 'redacted', (tid, None))
+
+    def render_timeline_event(self, context, field, event):
+        tid, cid = event[3]
+        if field == 'title':
+            return 'Sensitive Activity'
+        elif field == 'description':
+            return '[REDACTED]'
+        elif field == 'url':
+            href = context.href.ticket(tid)
+            if cid:
+                href += '#comment:' + str(cid)
+            return href
+
+
+    ### private methods:
         
     def bypass_sensitive_view(self, ticket, username):
         '''Returns whether the sensitivetickets permission allows a
