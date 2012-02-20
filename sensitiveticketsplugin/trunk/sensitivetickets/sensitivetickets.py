@@ -17,6 +17,7 @@ from trac.resource import ResourceNotFound
 from datetime import datetime
 from trac.util.datefmt import format_datetime, from_utimestamp, \
                               to_utimestamp, utc
+from trac.util import as_bool
 
 class SensitiveTicketsPolicy(Component):
     """Prevent public access to security sensitive tickets.
@@ -89,12 +90,12 @@ This prevents users from marking the tickets of other users as "sensitive".''')
             try:
                 ticket = Ticket(self.env, int(resource.id))
                 sensitive = ticket['sensitive']
-                if sensitive and int(sensitive):
+                if as_bool(sensitive):
                     bypass = self.bypass_sensitive_view(ticket, username)
             except ResourceNotFound:
                 sensitive = 1  # Fail safe to prevent a race condition.
 
-            if sensitive and int(sensitive):
+            if as_bool(sensitive):
                 if 'SENSITIVE_VIEW' not in perm and not bypass:
                     return False
 
@@ -113,7 +114,7 @@ This prevents users from marking the tickets of other users as "sensitive".''')
             sensitive = ticket['sensitive']
         except:
             pass
-        if sensitive and int(sensitive):
+        if as_bool(sensitive):
             if req.authname is 'anonymous':
                 return [(None, 'Sorry, you cannot create or update a sensitive ticket without at least logging in first')]
             if self.bypass_sensitive_view(ticket, req.authname):
