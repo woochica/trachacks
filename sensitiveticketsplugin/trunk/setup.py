@@ -1,6 +1,18 @@
 from setuptools import find_packages, setup
+import sys
 
 version='0.20'
+
+# Check Trac version if installed (see
+# http://trac-hacks.org/ticket/9800#comment:4)
+try:
+    import trac
+    if trac.__version__ < '0.11.6':
+        print "SensitiveTickets %s requires Trac >= 0.11.6" % version
+        sys.exit(1)
+except ImportError:
+    pass
+
 
 setup(name='sensitivetickets',
       version=version,
