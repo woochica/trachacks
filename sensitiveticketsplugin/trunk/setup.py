@@ -1,7 +1,7 @@
 from setuptools import find_packages, setup
 import sys
 
-version='0.20'
+version='0.21'
 
 # Check Trac version if installed (see
 # http://trac-hacks.org/ticket/9800#comment:4)

@@ -34,15 +34,16 @@ class SensitiveTicketsPolicy(Component):
                           DefaultPermissionPolicy, LegacyAttachmentPolicy
     }}}
 
-    This plugin also adds the REDACTED_SENSITIVE_ACTIVITY_VIEW
-    permission.  Accounts with this permission will be able to see
-    activity on sensitive material in the timeline, but will only be
-    able to identify it by ticket number, comment number, and
-    timestamp.
+    This plugin also adds the SENSITIVE_ACTIVITY_VIEW permission,
+    which is narrower in scope than SENSITIVE_VIEW.  Accounts with
+    SENSITIVE_ACTIVITY_VIEW will be able to see activity on sensitive
+    material in the timeline, but will only be able to identify it by
+    ticket number, comment number, and timestamp.  All other content
+    will be redacted.
     
-    REDACTED_SENSITIVE_ACTIVITY_VIEW can be useful (for example) for
-    providing a notification daemon the ability to tell that some
-    activity happened without leaking the content of that activity.
+    SENSITIVE_ACTIVITY_VIEW can be useful (for example) for providing
+    a notification daemon the ability to tell that some activity
+    happened without leaking the content of that activity.
     """
     
     implements(IPermissionPolicy, IPermissionRequestor, IEnvironmentSetupParticipant, ITicketManipulator, ITimelineEventProvider)
@@ -103,7 +104,7 @@ This prevents users from marking the tickets of other users as "sensitive".''')
 
     def get_permission_actions(self):
         yield 'SENSITIVE_VIEW'
-        yield 'REDACTED_SENSITIVE_ACTIVITY_VIEW'
+        yield 'SENSITIVE_ACTIVITY_VIEW'
 
     # ITicketManipulator methods:
     def validate_ticket(self, req, ticket):
@@ -164,13 +165,13 @@ This prevents users from marking the tickets of other users as "sensitive".''')
 
     ### ITimelineEventProvider methods:
     def get_timeline_filters(self, req):
-        if ('REDACTED_SENSITIVE_ACTIVITY_VIEW' in req.perm and
+        if ('SENSITIVE_ACTIVITY_VIEW' in req.perm and
             'SENSITIVE_VIEW' not in req.perm):
-            yield ('redacted_timeline_events', 'Activity on sensitive tickets', False)
+            yield ('sensitive_activity', 'Activity on sensitive tickets', False)
 
     def get_timeline_events(self, req, start, stop, filters):
-        if ('redacted_timeline_events' in filters and
-            'REDACTED_SENSITIVE_ACTIVITY_VIEW' in req.perm and
+        if ('sensitive_activity' in filters and
+            'SENSITIVE_ACTIVITY_VIEW' in req.perm and
             'SENSITIVE_VIEW' not in req.perm):
             ts_start = to_utimestamp(start)
             ts_stop = to_utimestamp(stop)
