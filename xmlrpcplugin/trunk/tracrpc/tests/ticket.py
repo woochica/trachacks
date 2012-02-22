@@ -26,6 +26,15 @@ class RpcTicketTestCase(TracRpcTestCase):
     def tearDown(self):
         TracRpcTestCase.tearDown(self)
 
+    def test_create_get_delete(self):
+        tid = self.admin.ticket.create("create_get_delete", "fooy", {})
+        tid, time_created, time_changed, attributes = self.admin.ticket.get(tid)
+        self.assertEquals('fooy', attributes['description'])
+        self.assertEquals('create_get_delete', attributes['summary'])
+        self.assertEquals('new', attributes['status'])
+        self.assertEquals('admin', attributes['reporter'])
+        self.admin.ticket.delete(tid)
+
     def test_getActions(self):
         tid = self.admin.ticket.create("ticket_getActions", "kjsald", {})
         actions = self.admin.ticket.getActions(tid)
