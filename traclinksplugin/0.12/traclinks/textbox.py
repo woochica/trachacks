@@ -26,13 +26,13 @@ class TextBox(Component):
         elif filename in ['browser.html']: # source:
             resource = data['context'].resource
             if resource.parent and resource.parent.realm == 'repository':
-                resource.id = '/'.join((resource.parent.id, resource.id))
+                resource.id = '%s/%s' % (resource.parent.id, resource.id)
                 resource.parent = None
         elif filename in ['revisionlog.html']: # log:
             resource = data['context'].resource
             resource.realm = 'log'
             if resource.parent and resource.parent.realm == 'repository':
-                resource.id = '/'.join((resource.parent.id, resource.id))
+                resource.id = '%s/%s' % (resource.parent.id, resource.id)
                 resource.parent = None
             revranges = data.get('revranges',None)
             rev = data.get('rev',None)
@@ -44,10 +44,14 @@ class TextBox(Component):
             else:
                 pass # attachment list page of the ticket; no TracLinks defined
         elif filename in ['timeline.html']: # timeline:
-            resource = Resource('timeline', format_datetime(data['fromdate'], 'iso8601'))
+            #precisedate
+            resource = Resource('timeline', format_datetime(data['precisedate'], 'iso8601'))
         elif filename in ['changeset.html']:
             if data['changeset']: # changeset:
                 resource = data['context'].resource
+                if resource.parent and resource.parent.realm == 'repository':
+                    resource.id = '%s/%s' % (resource.id, resource.parent.id) # OK, I know
+                    resource.parent = None
                 if data['restricted']: resource.id = '%s/%s' % (resource.id, data['new_path'])
             else: # diff:
                 args = req.args
