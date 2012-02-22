@@ -20,6 +20,7 @@ class PdfImgMacro(WikiMacroBase):
     {{{
     [[PdfImg(Book.pdf,width=400,page=100,caption="Page 100 from Book Example")]]
     [[PdfImg(sketch.svg,cache=False)]] 
+    [[PdfImg(OtherPage:foo.pdf)]]
     }}}
     
     The Location of the file can only be an attachment sofar.
@@ -85,7 +86,7 @@ class PdfImgMacro(WikiMacroBase):
             self.env.log.debug("***  convert command   %s ***", cmd )
             
             if ret > 0 :
-                raise TracError( ("Cant display %s"%(self.pdfinput)) )
+                raise TracError( ("Cant display %s"%(pdfinput)) )
                 
             
         #generate HTML-Output
