@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'PdfImg',
-    version = '0.0.1',
+    version = '0.0.2',
 
     packages = ['PdfImg'],
     include_package_data = True,
@@ -14,7 +14,7 @@ setup(
 
     author = "Urs Wihlfahrt",
     author_email = "trac-hacks@wihlfahrt.net",
-    description = "Display PDF-Files and vectorgraphics as Images in wiki-pages",
+    description = "Display PDF-Files and vectorgraphics as images in wiki-pages",
     long_description = " Insert PDFs or vectorgraphics like SVGs as PNG-Image into a wikipage. \
     The handling and the parameters are inspired by LaTeX includegraphics. ",
     license = "GPLv2",

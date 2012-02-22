@@ -23,7 +23,7 @@ class PdfImgMacro(WikiMacroBase):
     [[PdfImg(OtherPage:foo.pdf)]]
     }}}
     
-    The Location of the file can only be an attachment sofar.
+    The Location of the file can be an attachment (wikipage or ticket) or a local file (keyword "file:").
     Locations in the SVN could lead into authentification Problems.
     External Locations means first downloading the resource. 
       
@@ -58,12 +58,8 @@ class PdfImgMacro(WikiMacroBase):
             return ''
    
         self.formatter = formatter
-      
         self.parse_arguments(content)
          
-        ## Resource to attachment      
-        pdfinput=( Attachment(self.env,self.desc) ).path
-        #self.env.log.debug("***  Attachment   %r ***", pdfinput )
         
         ## 2. Schritt convert pdf to png like in LatexMacri
         png_filename  = hashlib.sha224(content).hexdigest()
@@ -80,17 +76,21 @@ class PdfImgMacro(WikiMacroBase):
                 self.page -= 1  
             # example:    convert eingabe.pdf[1] -density 600x600 -resize 800x560 PNG:'ausgabe.png'
             cmd= "convert %s[%s]  -scale %s PNG:'%s/%s.png'" \
-                 % (pdfinput , self.page, self.width, images_folder,png_filename)                
+                 % (self.pdfinput , self.page, self.width, images_folder,png_filename)                
             ret = os.system(cmd)
             
-            self.env.log.debug("***  convert command   %s ***", cmd )
+            self.env.log.debug("PdfImg..convert command:   %s  %s ***",ret, cmd )
             
             if ret > 0 :
-                raise TracError( ("Cant display %s"%(pdfinput)) )
+                raise TracError( ("Cant display %s"%(self.pdfinput)) )
                 
             
-        #generate HTML-Output
+        # start generate HTML-Output
         html_strg   = "\n <!-- PdfImg  %s -->" %(self.url)
+        
+        # For Debug purpose
+        # html_strg += "\n<br/>[[PdfImg(%s)]]<br/>\n"%(content)
+        
         lwitdh=int(self.width) + 3
         html_strg  += '\n <div style="border: 1px solid #CCCCCC;padding: 3px !important;width:%ipx ' \
                     %( lwitdh )
@@ -101,9 +101,14 @@ class PdfImgMacro(WikiMacroBase):
         if self.label:
             html_strg +=  ' id="%s"' %(self.label)
         
-        displaytitle = self.pdffile        
+        # This is the Hover with "wikilink,page"
+        if self.page > 1 :
+            img_hover ="%s,%s"%(self.wikilink,self.page) 
+        else:   
+            img_hover ="%s"%(self.wikilink)
+                     
         html_strg  += '> \n  <a  style="padding:0; border:none" href="%s">\n   <img style="border: 1px solid #CCCCCC;" title="%s" src="%s/%s.png" />\n  </a> ' \
-             %(self.rawurl,displaytitle,images_url,png_filename) 
+             %(self.rawurl,img_hover,images_url,png_filename) 
         
         if self.caption:
             html_strg += '\n  <div>%s</div>' %(self.caption) 
@@ -162,13 +167,29 @@ class PdfImgMacro(WikiMacroBase):
                 
                 
         parts = filespec.split(':')
-        url = raw_url = desc = None
-        attachment = None
-        
+        partszero_lower=parts[0].lower()
+ 
+        ## Check for special Keys
+        if partszero_lower in ('file'): 
+            self.parse_file(parts[1])
+        else :
+            # default trac options
+            self.parse_trac(filespec)
+    
+    
+    def parse_trac(self,filespec):
+        """
+         Parse arguments in trac like style
+        """
+        parts = filespec.split(':')
+      
+        url = raw_url =  None
+        attachment = None  
         if len(parts) == 3:                 # realm:id:attachment-filename
-            realm, id, filename = parts
+            realm, filename = parts
             attachment = Resource(realm, id).child('attachment', filename)
         elif len(parts) == 2:
+            # TODO howto Access the Subversion / Browser ...
             # FIXME: somehow use ResourceSystem.get_known_realms()
             #        ... or directly trac.wiki.extract_link
                     #            from trac.versioncontrol.web_ui import BrowserModule
@@ -192,7 +213,8 @@ class PdfImgMacro(WikiMacroBase):
                     #
                     #                desc = filespec
                     #            else: # #ticket:attachment or WikiPage:attachment
-            if True:   # FIXME: do something generic about shorthand forms...
+            if True: ## else : # #ticket:attachment or WikiPage:attachment
+                # FIXME: do something generic about shorthand forms...
                 realm = None
                 id, filename = parts
                 if id and id[0] == '#':
@@ -213,7 +235,28 @@ class PdfImgMacro(WikiMacroBase):
             raw_url = get_resource_url(self.env, attachment, self.formatter.href,
                                        format='raw')
         
+        self.wikilink=filespec
         self.url=url
         self.rawurl=raw_url
         self.desc=attachment
-        ## END 1. Schritt pdf file ...
+        ## Resource to attachment      
+        self.pdfinput=( Attachment(self.env,self.desc) ).path
+        self.env.log.debug("PdfImg..trac-Attachment  %r ***", self.pdfinput )
+
+        
+    def parse_file(self,rel_filename):
+        """ 
+        Display a (internal) file in the filesystem 
+        """
+        # allow only files below the filepre_path
+        # TODO  Option for file_prepath and url_prepath
+        file_prepath="/"
+        url_prepath='' 
+        
+        self.wikilink="file:%s"%(rel_filename)
+                    
+        self.rawurl = self.url = '%s/%s'%( url_prepath, '') 
+        self.pdfinput= '%s/%s'%( file_prepath, rel_filename )
+        
+        self.env.log.debug("PdfImg..file:%s -> %s ***",  rel_filename,self.pdfinput )
+        return

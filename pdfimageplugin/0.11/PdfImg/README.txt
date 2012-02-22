@@ -1,29 +1,18 @@
 
 
 == Installation ==
-trac als DEB installiert,
+# trac als DEB installiert,
 apt-get install trac python-mysqldb
 
 
+
+==== installieren ====
+
 trac-admin /opt/tracenv initenv 
-
-=== mit user ===
-{{{#!sh
-
-htpasswd -c /opt/tracenv/.htpasswd urs
-trac-admin /opt/tracenv permission add urs TRAC_ADMIN
-## starten
-tracd -p 8000 --basic-auth=tracenv,/opt/tracenv/.htpasswd,/opt/tracenv  /opt/tracenv
-}}}
-
-==== anonymous darf alles ====
 trac-admin /opt/tracenv permission add anonymous TRAC_ADMIN
 
 
 ==== alles neu aufsetzen ====
-
-
-
 rm -rf /opt/tracenv
 trac-admin /opt/tracenv initenv DEVTRAC sqlite:db/trac.db  svn /dev/null
 trac-admin /opt/tracenv permission add anonymous TRAC_ADMIN
@@ -34,11 +23,6 @@ touch /opt/tracenv/htdocs/your_project_logo.png
 
 # server starten
 tracd -p 8000  /opt/tracenv -r -s  
-
-cd /home/urs/work/ws_trac/PdfImg
-python setup.py develop --multi-version --exclude-scripts --install-dir  /opt/tracenv/plugins
-
-fg
 
 ==== config ===
 [trac]
@@ -53,8 +37,7 @@ tracd -p 8000  /opt/tracenv -r -s
 == Development ==
 
 cd /path/to/plugin/src
-
 python setup.py develop --multi-version --exclude-scripts --install-dir /path/to/projenv/plugins
 
-python setup.py develop -mxd /opt/tracenv/plugins
+# python setup.py develop -mxd /opt/tracenv/plugins
 
