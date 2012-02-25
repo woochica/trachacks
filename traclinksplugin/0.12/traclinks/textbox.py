@@ -2,28 +2,38 @@
 # -*- coding: utf-8 -*-
 
 from genshi.filters.transform import Transformer
+from pkg_resources import ResourceManager
 from trac.attachment import Attachment
 from trac.core import Component, implements, ExtensionPoint
 from trac.resource import Resource
 from trac.util.datefmt import format_datetime
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.api import IWikiSyntaxProvider
 
 class TextBox(Component):
     """ Generate TracLinks in search box for:
     { wiki: report: query: ticket: attachment: source: diff: log: milestone: timeline: search: }
     """
-    implements (ITemplateStreamFilter)
+    implements (ITemplateStreamFilter, ITemplateProvider)
     
     def list_namespaces(self):
         providers = ExtensionPoint(IWikiSyntaxProvider).extensions(self.compmgr)
         for provider in providers:
             for (namespace, formatter) in provider.get_link_resolvers():
                 self.log.debug('namespace: %s' % namespace)
-        
+    
+    #ITemplateProvider methods
+    def get_templates_dirs(self):
+        return []
+    
+    def get_htdocs_dirs(self):
+        return [('common', ResourceManager().resource_filename(__name__, 'htdocs'))]
+    
     #ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
 #        self.list_namespaces()
+        # generate TracLink string
         resource = None
         if filename in ['ticket.html', 'wiki_view.html', 'report_view.html', 'milestone_view.html'] \
                 and 'context' in data:
@@ -76,6 +86,10 @@ class TextBox(Component):
                 resource = Resource('query', data['query'].to_string().replace("\n", "")[7:])
         else:
             pass
+        # link hash
+        if filename in ['browser.html', 'ticket.html']:
+            add_script(req, 'common/js/onhashchange.js')
+        #
         if resource:
             traclinks = '%s:%s' % (resource.realm, resource.id)
             if resource.version != None:
@@ -96,6 +110,7 @@ class TextBox(Component):
  - report:7 (Query)
  - query:owner=admin
  - attachment:test.txt:ticket:1
+ - attachment:image.png:wiki:WikiStart # linked but not searchable
  - log:@1:2
  - log:/trunk@1
  - log:anotherrepo/trunk@1
@@ -109,9 +124,20 @@ class TextBox(Component):
  - search:searchtext
  - source:/trunk/file.txt
  - source:/trunk/file.txt@2
+ - source:anotherrepo/trunk/file.txt
+ - source:anotherrepo/trunk/file.txt@3
 """
+# Not Implemented
+# 'comment', 
+# source:...#L10
+# diff:...#file0
 
 # Won't Implement
-# 'comment', 
 # 'raw-attachment', 
 # 'htdocs'
+# /ticket/2?action=diff&version=1
+# /ticket/2?action=comment-diff&cnum=2&version=1
+
+# Known bugs
+# /ticket/2?version=1 makes 'ticket:2@1' but it's wrong
+ 
