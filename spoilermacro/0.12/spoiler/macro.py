@@ -6,7 +6,7 @@ from genshi.builder import tag
 from genshi.core import Markup
 
 from trac.core import *
-from trac.wiki.formatter import format_to_html
+from trac.wiki.formatter import format_to_oneliner
 from trac.util import TracError
 from trac.util.text import to_unicode
 from trac.web.chrome import add_stylesheet, add_javascript, ITemplateProvider
@@ -27,13 +27,9 @@ class SpoilerMacro(WikiMacroBase):
         self.log.debug("SpoilerMacro: expand_macro")
         add_stylesheet(formatter.req, 'spoiler/css/spoiler.css')
         add_javascript(formatter.req, 'spoiler/js/spoiler.js')
-        output = "<div class='spoiler'>"       
-        out = StringIO()
-        Formatter(self.env, formatter.context).format(content, out)
-        output += out.getvalue()
-        output += "</div>"
+        output = tag.div(class_="spoiler")(format_to_oneliner(self.env, formatter.context,content))
         self.log.debug("SpoilerMacro: expand_macro output")
-        return Markup(output)
+        return output
     
     ## ITemplateProvider
             
