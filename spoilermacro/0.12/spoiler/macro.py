@@ -3,6 +3,7 @@ import re, time
 from StringIO import StringIO
 
 from genshi.builder import tag
+from genshi.core import Markup
 
 from trac.core import *
 from trac.wiki.formatter import format_to_html
@@ -13,6 +14,7 @@ from trac.wiki.api import parse_args, IWikiMacroProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 from trac.wiki.web_ui import WikiModule
+from trac.wiki import Formatter
 
 class SpoilerMacro(WikiMacroBase):
     """A macro to add spoilers to a page. Usage:
@@ -23,14 +25,18 @@ class SpoilerMacro(WikiMacroBase):
         self.log.debug("SpoilerMacro: expand_macro")
         add_stylesheet(formatter.req, 'spoiler/css/spoiler.css')
         add_javascript(formatter.req, 'spoiler/js/spoiler.js')
-        output = tag.div(class_="spoiler")
-        input = tag.input(type_="button", onclick_="showSpoiler(this);", value="Spoiler!")
+        output = "<div class='spoiler'>"
+        output += "<input type='button' onclick='showSpoiler(this);' value='Spoiler!'/>"
+#        input = tag.input(type_="button", onclick_="showSpoiler(this);", value="Spoiler!")
+
         text = tag.div(class_="spoilerinner", style_="display:none;")
-        text.append(content)
-        output.append(input)
-        output.append(text)
+        output += "<div class='spoilerinner' style='display:none;'>"
+        out = StringIO()
+        Formatter(self.env, formatter.context).format(content, out)
+        output += out.getvalue()
+        output += "</div></div>"
         self.log.debug("SpoilerMacro: expand_macro output")
-        return output
+        return Markup(output)
     
     ## ITemplateProvider
             

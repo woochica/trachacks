@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracSpoilerMacro',
-    version = '0.1',
+    version = '0.2',
     packages = ['spoiler'],
     package_data={ 'spoiler' : [ 'htdocs/css/*.css', 'htdocs/js/*.js' ] },
     author = "Benjamin Lau",
