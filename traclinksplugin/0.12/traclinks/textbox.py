@@ -126,15 +126,16 @@ class TextBox(Component):
  - source:/trunk/file.txt@2
  - source:anotherrepo/trunk/file.txt
  - source:anotherrepo/trunk/file.txt@3
+ - comment:1:ticket:1             # works only browser that window.onhashchange implemented
+ - source:/trunk/file.txt#L20     # works only browser that window.onhashchange implemented
 """
-# Not Implemented
-# 'comment', 
-# source:...#L10
-# diff:...#file0
+
+# Not Implemented Yet
 
 # Won't Implement
 # 'raw-attachment', 
 # 'htdocs'
+# diff:...#file0
 # /ticket/2?action=diff&version=1
 # /ticket/2?action=comment-diff&cnum=2&version=1
 
