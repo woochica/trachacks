@@ -38,7 +38,8 @@ class PdfImgMacro(WikiMacroBase):
     || || || || ||
     || cache       || build once or each time || True      ||  time consumption or changing vectorgraphics  ||
     || align       || left|right              || nothing   ||                         ||
-      """
+    
+     """
     
     
     ## Parameters inspired by LaTeX-includegraphics
@@ -252,8 +253,12 @@ class PdfImgMacro(WikiMacroBase):
         """ 
         Display a (internal) file in the filesystem 
         
-        needs configuration pdfimg->file.prepath. This is the entrypoint for the Location 'file:'
-          
+        To use the Resource 'file:' the following configuration must set! 
+    {{{
+    [pdfimg]
+    file.prepath = /relative/entry/directory
+    file.preurl  = http://example.com/entrydir
+    }}}
         """
         
         file_prepath = self.config.get('pdfimg', 'file.prepath',None)
@@ -262,7 +267,7 @@ class PdfImgMacro(WikiMacroBase):
         self.env.log.debug("PdfImg..Location file with file_prepath   %r ***", file_prepath )
         
         if not file_prepath : 
-            raise TracError ('Cant use Location \'file:\' without configuration for pdfimg->file.prepath') 
+            raise TracError ('Cant use Resource \'file:\' without configuration for pdfimg->file.prepath') 
         
         self.wikilink="file:%s"%(rel_filename)
                     
