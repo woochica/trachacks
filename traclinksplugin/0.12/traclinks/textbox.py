@@ -28,7 +28,7 @@ class TextBox(Component):
         return []
     
     def get_htdocs_dirs(self):
-        return [('common', ResourceManager().resource_filename(__name__, 'htdocs'))]
+        return [('traclinks', ResourceManager().resource_filename(__name__, 'htdocs'))]
     
     #ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -88,7 +88,7 @@ class TextBox(Component):
             pass
         # link hash
         if filename in ['browser.html', 'ticket.html']:
-            add_script(req, 'common/js/onhashchange.js')
+            add_script(req, 'traclinks/js/onhashchange.js')
         #
         if resource:
             traclinks = '%s:%s' % (resource.realm, resource.id)
