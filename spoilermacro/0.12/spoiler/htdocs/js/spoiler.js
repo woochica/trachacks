@@ -1,8 +1,9 @@
-function showSpoiler(obj)
-    {
-    var inner = obj.parentNode.getElementsByTagName("div")[0];
-    if (inner.style.display == "none")
-        inner.style.display = "";
-    else
-        inner.style.display = "none";
-    }
+$(document).ready(function() { 
+  $("div.spoiler").hide();
+  $('<a class="reveal">Reveal Spoiler &gt;&gt;</a>').insertBefore('.spoiler');
+  $("a.reveal").click(function(){
+    $(this).next("div.spoiler").fadeIn(1200);
+    $(this).fadeOut(600);
+  });
+});
+

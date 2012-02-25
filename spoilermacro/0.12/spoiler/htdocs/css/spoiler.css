@@ -1,5 +1,20 @@
-.spoiler
-    {
-    display:inline;
-    }
+a.reveal {
+       
+               font-size: 65%;
+              
+	              padding: 3px;
+                     
+		             background: #990000;
+                            
+			            color: white;
+                                   
+				           font-family: Georgia,
+serif;                                            
+        font-style: italic;
+       
+               cursor: pointer;
+              
+	      }                          
+	      
+
 

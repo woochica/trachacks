@@ -20,21 +20,18 @@ class SpoilerMacro(WikiMacroBase):
     """A macro to add spoilers to a page. Usage:
     """
     implements(IWikiMacroProvider, ITemplateProvider)
+    
+    #REHIDE SPOILER WHEN CLICKING ON SPOILER TEXT... set the text background to some "spoiler color"
 
     def expand_macro(self, formatter, name, content, args):
         self.log.debug("SpoilerMacro: expand_macro")
         add_stylesheet(formatter.req, 'spoiler/css/spoiler.css')
         add_javascript(formatter.req, 'spoiler/js/spoiler.js')
-        output = "<div class='spoiler'>"
-        output += "<input type='button' onclick='showSpoiler(this);' value='Spoiler!'/>"
-#        input = tag.input(type_="button", onclick_="showSpoiler(this);", value="Spoiler!")
-
-        text = tag.div(class_="spoilerinner", style_="display:none;")
-        output += "<div class='spoilerinner' style='display:none;'>"
+        output = "<div class='spoiler'>"       
         out = StringIO()
         Formatter(self.env, formatter.context).format(content, out)
         output += out.getvalue()
-        output += "</div></div>"
+        output += "</div>"
         self.log.debug("SpoilerMacro: expand_macro output")
         return Markup(output)
     
