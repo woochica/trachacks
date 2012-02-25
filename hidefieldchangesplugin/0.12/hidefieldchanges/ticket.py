@@ -23,7 +23,7 @@ class HideFieldChanges(Component):
     def pre_process_request(self, req, handler):
         # when show a ticket, add script for 'hide customfield' buttons
         if req.path_info.startswith('/ticket'):
-            add_script(req, 'common/js/hidefieldchanges.js')
+            add_script(req, 'hidefieldchanges/js/hidefieldchanges.js')
                 
         return handler
         
@@ -63,7 +63,7 @@ class HideFieldChanges(Component):
         return [] # ResourceManager().resource_filename(__name__, 'templates')]
     
     def get_htdocs_dirs(self):
-        return [('common', ResourceManager().resource_filename(__name__, 'htdocs'))]
+        return [('hidefieldchanges', ResourceManager().resource_filename(__name__, 'htdocs'))]
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
