@@ -7,6 +7,7 @@ from trac.attachment import Attachment
 
 import os, hashlib
 from string import strip
+from trac.config import Option
 
 class PdfImgMacro(WikiMacroBase):
     """
@@ -79,10 +80,10 @@ class PdfImgMacro(WikiMacroBase):
                  % (self.pdfinput , self.page, self.width, images_folder,png_filename)                
             ret = os.system(cmd)
             
-            self.env.log.debug("PdfImg..convert command:   %s  %s ***",ret, cmd )
+            self.env.log.info("PdfImg..convert command:   %s  %s ***",ret, cmd )
             
             if ret > 0 :
-                raise TracError( ("Cant display %s"%(self.pdfinput)) )
+                raise TracError( ("Can't display %s, ImageMagick->convert failed with errorcode=%s , command=%s"%(self.wikilink,ret,cmd)) )
                 
             
         # start generate HTML-Output
@@ -107,8 +108,11 @@ class PdfImgMacro(WikiMacroBase):
         else:   
             img_hover ="%s"%(self.wikilink)
                      
-        html_strg  += '> \n  <a  style="padding:0; border:none" href="%s">\n   <img style="border: 1px solid #CCCCCC;" title="%s" src="%s/%s.png" />\n  </a> ' \
-             %(self.rawurl,img_hover,images_url,png_filename) 
+        html_strg  += '> \n  <a  style="padding:0; border:none"'
+        if self.rawurl: 
+            html_strg  += ' href="%s" '%(self.rawurl)
+        html_strg  += '>\n    <img style="border: 1px solid #CCCCCC;" title="%s" src="%s/%s.png" />\n  </a> ' \
+             %(img_hover,images_url,png_filename) 
         
         if self.caption:
             html_strg += '\n  <div>%s</div>' %(self.caption) 
@@ -247,16 +251,27 @@ class PdfImgMacro(WikiMacroBase):
     def parse_file(self,rel_filename):
         """ 
         Display a (internal) file in the filesystem 
+        
+        needs configuration pdfimg->file.prepath. This is the entrypoint for the Location 'file:'
+          
         """
-        # allow only files below the filepre_path
-        # TODO  Option for file_prepath and url_prepath
-        file_prepath="/"
-        url_prepath='' 
+        
+        file_prepath = self.config.get('pdfimg', 'file.prepath',None)
+        url_prepath  = self.config.get('pdfimg', 'file.preurl' ,None)
+        
+        self.env.log.debug("PdfImg..Location file with file_prepath   %r ***", file_prepath )
+        
+        if not file_prepath : 
+            raise TracError ('Cant use Location \'file:\' without configuration for pdfimg->file.prepath') 
         
         self.wikilink="file:%s"%(rel_filename)
                     
-        self.rawurl = self.url = '%s/%s'%( url_prepath, '') 
-        self.pdfinput= '%s/%s'%( file_prepath, rel_filename )
+        if url_prepath: 
+            self.rawurl = self.url = '%s/%s'%( url_prepath , rel_filename)
+        else:
+            self.rawurl = self.url = None
+            
+        self.pdfinput          = '%s/%s'%( file_prepath, rel_filename)
         
         self.env.log.debug("PdfImg..file:%s -> %s ***",  rel_filename,self.pdfinput )
         return
