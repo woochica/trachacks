@@ -3,10 +3,11 @@
 
 from genshi.filters.transform import Transformer
 from trac.attachment import Attachment
-from trac.core import Component, implements
+from trac.core import Component, implements, ExtensionPoint
 from trac.resource import Resource
 from trac.util.datefmt import format_datetime
 from trac.web.api import ITemplateStreamFilter
+from trac.wiki.api import IWikiSyntaxProvider
 
 class TextBox(Component):
     """ Generate TracLinks in search box for:
@@ -14,9 +15,15 @@ class TextBox(Component):
     """
     implements (ITemplateStreamFilter)
     
+    def list_namespaces(self):
+        providers = ExtensionPoint(IWikiSyntaxProvider).extensions(self.compmgr)
+        for provider in providers:
+            for (namespace, formatter) in provider.get_link_resolvers():
+                self.log.debug('namespace: %s' % namespace)
+        
     #ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-#       providers = ExtensionPoint(IWikiSyntaxProvider).extensions(self.compmgr)
+#        self.list_namespaces()
         resource = None
         if filename in ['ticket.html', 'wiki_view.html', 'report_view.html', 'milestone_view.html'] \
                 and 'context' in data:
@@ -44,7 +51,6 @@ class TextBox(Component):
             else:
                 pass # attachment list page of the ticket; no TracLinks defined
         elif filename in ['timeline.html']: # timeline:
-            #precisedate
             resource = Resource('timeline', format_datetime(data['precisedate'], 'iso8601'))
         elif filename in ['changeset.html']:
             if data['changeset']: # changeset:
