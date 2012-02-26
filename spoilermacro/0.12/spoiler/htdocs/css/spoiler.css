@@ -8,7 +8,7 @@ a.reveal {
   cursor: pointer;
 }
 
-div.spoiler {
+span.spoiler div.spoiler {
   border-right-width-value: 1px;
   border-right-width-ltr-source: physical;
   border-right-width-rtl-source: physical;
