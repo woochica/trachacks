@@ -7,5 +7,10 @@ $(document).ready(function() {
     $(this).next(".spoiler").css('display', 'inline');
     $(this).fadeOut(600);
   });
+  $(".spoiler").click(function(){
+    $(this).prev("a.reveal").fadeIn(1200);
+    $(this).fadeOut(600);
+    $(this).css('display','none');
+  });
 });
 

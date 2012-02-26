@@ -8,7 +8,42 @@ a.reveal {
   cursor: pointer;
 }
 
-span.spoiler div.spoiler {
+span.spoiler {
+  border-right-width-value: 1px;
+  border-right-width-ltr-source: physical;
+  border-right-width-rtl-source: physical;
+  border-bottom-width: 1px;
+  border-left-width-value: 1px;
+  border-left-width-ltr-source: physical;
+  border-left-width-rtl-source: physical;
+  border-right-style-value: dotted;
+  border-right-style-ltr-source: physical;
+  border-right-style-rtl-source: physical;
+  border-bottom-style: dotted;
+  border-left-style-value: dotted;
+  border-left-style-ltr-source: physical;
+  border-left-style-rtl-source: physical;
+  border-right-color-value: gray;
+  border-right-color-ltr-source: physical;
+  border-right-color-rtl-source: physical;
+  border-bottom-color: gray;
+  border-left-color-value: gray;
+  border-left-color-ltr-source: physical;
+  border-left-color-rtl-source: physical;
+  border-top-width: medium;
+  border-top-style: none;
+  border-top-color: -moz-use-text-color;
+  background-color: white;
+  background-image: none;
+  background-repeat: repeat;
+  background-attachment: scroll;
+  background-position: 0% 0%;
+  background-clip: border-box;
+  background-origin: padding-box;
+  background-size: auto auto;
+}
+
+div.spoiler {
   border-right-width-value: 1px;
   border-right-width-ltr-source: physical;
   border-right-width-rtl-source: physical;
