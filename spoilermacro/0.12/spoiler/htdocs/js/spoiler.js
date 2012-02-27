@@ -1,33 +1,34 @@
-$(document).ready(function() { 
-  $("div.spoiler").hide();
-  $("span.spoiler").hide();
-  $('<a class="reveal">Reveal Spoiler &gt;&gt;</a>').insertBefore('.spoiler');
-  $('<a class="revealall">Reveal All Spoilers&gt;&gt;</a>').insertAfter('div.wikipage');
-  $('<a class="hideall">Hide All Spoilers&gt;&gt;</a>').insertAfter('a.revealall');
-  $('a.hideall').css('display', 'none');
-  $("a.revealall").click(function(){
-    $(this).fadeOut(600);
-    $('a.hideall').fadeIn(1200);
-    $('a.reveal').each(function(index) {
-      $(this).click()
+jQuery(document).ready(function() { 
+  jQuery("div.spoiler").hide();
+  jQuery("span.spoiler").hide();
+  jQuery('<a class="reveal">Reveal Spoiler &gt;&gt;</a>').insertBefore('.spoiler');
+  jQuery('<a class="revealall">Reveal All Spoilers&gt;&gt;</a>').insertAfter('div.wikipage');
+  jQuery('<a class="hideall">Hide All Spoilers&gt;&gt;</a>').insertAfter('a.revealall');
+  jQuery('a.hideall').css('display', 'none');
+  jQuery("a.revealall").click(function(){
+    jQuery(this).fadeOut(600);
+    jQuery('a.hideall').fadeIn(1200);
+    jQuery('a.reveal').each(function(index) {
+      jQuery(this).click()
     });
   });
-  $("a.hideall").click(function(){
-    $(this).fadeOut(600);
-    $('a.revealall').fadeIn(1200);
-    $('.spoiler').each(function(index) {
-      $(this).click()
+  jQuery("a.hideall").click(function(){
+    jQuery(this).fadeOut(600);
+    jQuery('a.revealall').fadeIn(1200);
+    jQuery('.spoiler').each(function(index) {
+      jQuery(this).click()
     });
   });
-  $("a.reveal").click(function(){
-    $(this).next(".spoiler").fadeIn(1200);
-    $(this).next(".spoiler").css('display', 'inline');
-    $(this).fadeOut(600);
+  jQuery("a.reveal").click(function(){
+    jQuery(this).next(".spoiler").fadeIn(1200);
+    jQuery(this).next(".spoiler").css('display', 'inline');
+    jQuery(this).next(".spoiler").css('background', '#ffcccc');
+    jQuery(this).fadeOut(600);
   });
-  $(".spoiler").click(function(){
-    $(this).prev("a.reveal").fadeIn(1200);
-    $(this).fadeOut(600);
-    $(this).css('display','none');
+  jQuery(".spoiler").click(function(){
+    jQuery(this).prev("a.reveal").fadeIn(1200);
+    jQuery(this).fadeOut(600);
+    jQuery(this).css('display','none');
   });
 });
 
