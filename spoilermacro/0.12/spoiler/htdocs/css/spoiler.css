@@ -8,6 +8,26 @@ a.reveal {
   cursor: pointer;
 }
 
+a.revealall {
+  font-size: 65%;
+  padding: 3px;
+  background: #990000;
+  color: white;
+  font-family: Georgia,serif;                                            
+  font-style: italic;
+  cursor: pointer;
+}
+
+a.hideall {
+  font-size: 65%;
+  padding: 3px;
+  background: #000099;
+  color: white;
+  font-family: Georgia,serif;                                            
+  font-style: italic;
+  cursor: pointer;
+}
+
 span.spoiler {
   border-right-width-value: 1px;
   border-right-width-ltr-source: physical;
