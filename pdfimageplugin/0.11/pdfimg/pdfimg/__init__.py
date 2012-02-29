@@ -5,4 +5,4 @@ __id__        = '$Id$'
 __headurl__   = '$HeadURL$'
 
 
-from PdfImg import *
+from pdfimg import *

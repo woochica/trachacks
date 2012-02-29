@@ -7,7 +7,7 @@ setup(
     name = 'PdfImg',
     version = '0.0.3',
 
-    packages = ['PdfImg'],
+    packages = ['pdfimg'],
     include_package_data = True,
 
     install_requires = ['trac>=0.11'],
@@ -22,7 +22,7 @@ setup(
     url = "http://trac-hacks.org/wiki/PdfImagePlugin",
     entry_points = {
         'trac.plugins': [
-            'PdfImg.PdfImg = PdfImg.PdfImg'
+            'pdfimg.pdfimg = pdfimg.pdfimg'
         ],
     },
 
