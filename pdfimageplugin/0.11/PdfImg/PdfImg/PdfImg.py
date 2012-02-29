@@ -7,26 +7,29 @@ from trac.attachment import Attachment
 
 import os, hashlib
 from string import strip
-from trac.config import Option
 
 class PdfImgMacro(WikiMacroBase):
     """
-    Insert PDFs or vectorgraphics like SVGs as PNG-Image into a wikipage.
+    Insert PDFs or vector graphics like SVGs as PNG-images into a wikipage or ticket.
     
-    requires convert from [http://www.imagemagick.org ImageMagick].
+    Requires `convert` from [http://www.imagemagick.org ImageMagick], `convert` may fail on specific files. 
     
-    The handling and the parameters are inspired by LaTeX includegraphics. 
+    The handling and the parameters are inspired by LaTeX includegraphics and the trac !ImageMacro. 
 
     Examples:
     {{{
     [[PdfImg(Book.pdf,width=400,page=100,caption="Page 100 from Book Example")]]
-    [[PdfImg(sketch.svg,cache=False)]] 
-    [[PdfImg(OtherPage:foo.pdf)]]
+    [[PdfImg(source:testpro/drawing.svg@10,width=600,caption="SVG-image from repository in version 10")]]
+    [[PdfImg(ticket:1:file.pdf)]]
     }}}
     
-    The Location of the file can be an attachment (wikipage or ticket) or a local file (keyword "file:").
-    Locations in the SVN could lead into authentification Problems.
-    External Locations means first downloading the resource. 
+    Possible trac links for resource:
+    The Location of the file can be an attachment (wikipage, ticket, svn) or a local file (keyword "file:").
+    ||= trac link =||= alternatives =||= comment              =||
+    || wiki        ||  !JustPageName || Attachment in wikipage ||
+    || ticket      ||  !#1           ||                        ||
+    || source      ||  browser,repos ||                        ||
+    || file        ||                || need configuration `file.prepath`   ||
       
     Parameters:
     ||= Parameter =||= Value                 =||= default =||                         || 
@@ -51,7 +54,8 @@ class PdfImgMacro(WikiMacroBase):
     
     cache  =True
     align  =None
-    
+
+        
     ##
     ##
     ##
@@ -59,26 +63,27 @@ class PdfImgMacro(WikiMacroBase):
         if not content:
             return ''
    
+        ## Filenames
+        self.filenamehash  = hashlib.sha224(content).hexdigest()
+        self.images_folder = os.path.join(os.path.normpath(self.env.get_htdocs_dir()), 'pfdimg-images')
+       
+        # Arguments
         self.formatter = formatter
         self.parse_arguments(content)
          
+        images_url = self.formatter.href.chrome('site', '/pfdimg-images')
         
-        ## 2. Schritt convert pdf to png like in LatexMacri
-        png_filename  = hashlib.sha224(content).hexdigest()
-        images_url    = self.formatter.href.chrome('site', '/pfdimg-images')
-        images_folder = os.path.join(os.path.normpath(self.env.get_htdocs_dir()), 'pfdimg-images')
-        
-        if not os.path.exists(images_folder):
-            os.mkdir(images_folder)
+        if not os.path.exists(self.images_folder):
+            os.mkdir(self.images_folder)
         
         # generate PNG if not existing
-        if  not os.access('%s/%s.png' % (images_folder, png_filename), os.F_OK) or not self.cache:
+        if  not os.access('%s/%s.png' % (self.images_folder, self.filenamehash), os.F_OK) or not self.cache:
             # human starts with page 1 ; convert with 0
             if self.page > 0:
                 self.page -= 1  
             # example:    convert eingabe.pdf[1] -density 600x600 -resize 800x560 PNG:'ausgabe.png'
             cmd= "convert %s[%s]  -scale %s PNG:'%s/%s.png'" \
-                 % (self.pdfinput , self.page, self.width, images_folder,png_filename)                
+                 % (self.pdfinput , self.page, self.width, self.images_folder,self.filenamehash)                
             ret = os.system(cmd)
             
             self.env.log.info("PdfImg..convert command:   %s  %s ***",ret, cmd )
@@ -113,9 +118,9 @@ class PdfImgMacro(WikiMacroBase):
         if self.rawurl: 
             html_strg  += ' href="%s" '%(self.rawurl)
         html_strg  += '>\n    <img style="border: 1px solid #CCCCCC;" title="%s" src="%s/%s.png" />\n  </a> ' \
-             %(img_hover,images_url,png_filename) 
+             %(img_hover,images_url,self.filenamehash) 
         
-        if self.caption:
+        if self.caption: 
             html_strg += '\n  <div>%s</div>' %(self.caption) 
             
         html_strg += '\n </div>\n <!-- End PdfImg -->\n'
@@ -184,41 +189,62 @@ class PdfImgMacro(WikiMacroBase):
     
     def parse_trac(self,filespec):
         """
-         Parse arguments in trac like style
+         Parse arguments like in the ImageMacro (trac/wiki/macros.py)
         """
         parts = filespec.split(':')
       
         url = raw_url =  None
         attachment = None  
-        if len(parts) == 3:                 # realm:id:attachment-filename
-            realm, filename = parts
+        if len(parts) == 3:  # realm:id:attachment-filename
+            realm, id, filename = parts
             attachment = Resource(realm, id).child('attachment', filename)
         elif len(parts) == 2:
             # TODO howto Access the Subversion / Browser ...
             # FIXME: somehow use ResourceSystem.get_known_realms()
             #        ... or directly trac.wiki.extract_link
-                    #            from trac.versioncontrol.web_ui import BrowserModule
-                    #            try:
-                    #                browser_links = [res[0] for res in
-                    #                                 BrowserModule(self.env).get_link_resolvers()]
-                    #            except Exception:
-                    #                browser_links = []
-                    #                # TODO what to do with browserlinks...
-                    #            if parts[0] in browser_links:   # source:path
-                    #                # TODO: use context here as well
-                    #                realm, filename = parts
-                    #                rev = None
-                    #                if '@' in filename:
-                    #                    filename, rev = filename.split('@')
-                    #                url = self.formatter.href.browser(filename, rev=rev)
-                    #                raw_url = self.formatter.href.browser(filename, rev=rev,    format='raw')
-                    #                #raw_url = get_resource_url(self.env, attachment, self.formatter.href,     format='raw')
-                    #                self.env.log.debug("***  url      %s ***",url)
-                    #                self.env.log.debug("***  rawurl   %s ***",browser_links)
-                    #
-                    #                desc = filespec
+            from trac.versioncontrol.web_ui import BrowserModule
+            try:
+                browser_links = [res[0] for res in
+                                 BrowserModule(self.env).get_link_resolvers()]
+            except Exception:
+                browser_links = []
+                # TODO what to do with browserlinks...
+            if parts[0] in browser_links:   # source:path
+                ##  ['repos', 'export', 'source', 'browser']
+                # TODO: use context here as well
+                realm, filename = parts
+                rev = None
+                if '@' in filename:
+                    filename, rev = filename.split('@')
+                url = self.formatter.href.browser(filename, rev=rev)
+                raw_url = self.formatter.href.browser(filename, rev=rev, format='raw')
+                
+                from trac.versioncontrol.web_ui import get_existing_node
+                from trac.versioncontrol import RepositoryManager
+                
+                if hasattr(RepositoryManager, 'get_repository_by_path'): # Trac 0.12
+                    repo = RepositoryManager(self.env).get_repository_by_path(file)[1:3]
+                else:
+                    repo = RepositoryManager(self.env).get_repository(self.formatter.req.authname)
+                obj = get_existing_node(self.formatter.req, repo, filename, rev)
+                svn_core_stream=obj.get_content()
+                
+                # write file to filesystem (needed for convert
+                imgname="%s/%s" %(self.images_folder,self.filenamehash)
+                f = open( imgname , 'w+')
+                f.write( svn_core_stream.read() )
+                f.close()
+                
+                # set standard properties
+                # SVN is always cache because it may change...
+                self.cache = False
+                self.pdfinput = imgname
+                self.url=url
+                self.rawurl=raw_url
+                self.wikilink=filespec 
+                return
                     #            else: # #ticket:attachment or WikiPage:attachment
-            if True: ## else : # #ticket:attachment or WikiPage:attachment
+            else : # #ticket:attachment or WikiPage:attachment
                 # FIXME: do something generic about shorthand forms...
                 realm = None
                 id, filename = parts
@@ -243,15 +269,14 @@ class PdfImgMacro(WikiMacroBase):
         self.wikilink=filespec
         self.url=url
         self.rawurl=raw_url
-        self.desc=attachment
-        ## Resource to attachment      
-        self.pdfinput=( Attachment(self.env,self.desc) ).path
+
+        self.pdfinput=( Attachment(self.env,attachment) ).path
         self.env.log.debug("PdfImg..trac-Attachment  %r ***", self.pdfinput )
 
         
     def parse_file(self,rel_filename):
         """ 
-        Display a (internal) file in the filesystem 
+        Display a (internal) file in the file system. 
         
         To use the Resource 'file:' the following configuration must set! 
     {{{
@@ -280,3 +305,4 @@ class PdfImgMacro(WikiMacroBase):
         
         self.env.log.debug("PdfImg..file:%s -> %s ***",  rel_filename,self.pdfinput )
         return
+    
