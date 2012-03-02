@@ -19,7 +19,7 @@ setup(
         'trac.plugins': [
                 'wikistats.stats = wikistats.stats',
                 'wikistats.usercount = wikistats.usercount',
-        'wikistats.pagecount = wikistats.pagecount'
+                'wikistats.pagecount = wikistats.pagecount'
                 ],
     }
 )
