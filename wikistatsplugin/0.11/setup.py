@@ -4,6 +4,8 @@ setup(
     name='TracWikiStats',
     author = 'RottenChester',
     author_email = 'rottenchester@gmail.com',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryan.j.ollos@gmail.com',
     url = 'http://trac-hacks.org/wiki/WikiStatsPlugin',
     license = 'bsd',
     version='0.1',
@@ -17,8 +19,8 @@ setup(
         'trac.plugins': [
                 'wikistats.stats = wikistats.stats',
                 'wikistats.usercount = wikistats.usercount',
-		'wikistats.pagecount = wikistats.pagecount'
+        'wikistats.pagecount = wikistats.pagecount'
                 ],
     }
 )
-      
+
