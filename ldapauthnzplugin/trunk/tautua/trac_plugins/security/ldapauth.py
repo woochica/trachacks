@@ -70,7 +70,7 @@ class LDAPAuthNStore (Component):
         connection = ldap.initialize(self.server)
 
         if self.server.startswith('ldaps'):
-            connection.star_tls_s()
+            connection.start_tls_s()
 
         if not self.anonymous_bind:
             resp = connection.simple_bind_s(self.bind_dn, self.bind_passwd)
