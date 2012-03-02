@@ -82,7 +82,7 @@ class PdfImgMacro(WikiMacroBase):
             if self.page > 0:
                 self.page -= 1  
             # example:    convert eingabe.pdf[1] -density 600x600 -resize 800x560 PNG:'ausgabe.png'
-            cmd= "convert %s[%s]  -scale %s PNG:'%s/%s.png'" \
+            cmd= "convert %s[%s]  -scale %s PNG:%s/%s.png" \
                  % (self.pdfinput , self.page, self.width, self.images_folder,self.filenamehash)                
             ret = os.system(cmd)
             
