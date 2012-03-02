@@ -77,7 +77,7 @@ class PrivateReports(Component):
 				if req.args.get('add'):
 
 					newpermission = req.args.get('newpermission')
-					if newpermission == None:
+					if newpermission == None or newpermission.isupper() == False:
 						req.redirect(self.env.href('/admin/privatereports/privatereports'))
 
 					report_permissions = self._get_report_permissions(report_id)
@@ -225,7 +225,7 @@ class PrivateReports(Component):
 		cursor.execute(sql)
 		rows = cursor.fetchall()
 		for action in rows:
-			if action[0].islower():
+			if action[0].isupper():
 				groups.append(action[0])
 			
 		return groups
