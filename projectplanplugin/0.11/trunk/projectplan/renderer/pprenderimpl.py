@@ -174,6 +174,11 @@ class RenderImpl():
     '''
     return wiki_to_html(mystring, self.macroenv.tracenv, self.macroenv.tracreq)
 
+  def divWarning(self, mystr):
+    '''
+      computes a div with a warning markup
+    '''
+    return tag.div( mystr, class_='ppwarning' )
 
   def render(self, ticketset):
     '''

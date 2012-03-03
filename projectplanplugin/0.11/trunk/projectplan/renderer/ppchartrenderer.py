@@ -9,6 +9,7 @@
 import string
 import datetime
 import time
+import random
 from genshi.builder import tag
 from genshi.input import HTMLParser
 from genshi.core import Stream as EventStream, Markup
@@ -23,6 +24,7 @@ class ChartRenderer(RenderImpl):
     a javascript renderer is used
   '''
   fielddefault = 'status'
+  TICKET_STATUS_FIELD = 'status' # constant: observes the ticket status change
   weekdays = ['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su' ]
   FRAME_LABEL = 'Burn-down Chart'
   
@@ -37,7 +39,7 @@ class ChartRenderer(RenderImpl):
     if title != None:
       return('%s: %s' % (self.FRAME_LABEL,title))
     else:
-      return('%s' % (self.FRAME_LABEL,))
+      return('%s (per %s)' % (self.FRAME_LABEL,self.segment))
 
  
   def getField( self ):
@@ -47,7 +49,7 @@ class ChartRenderer(RenderImpl):
     return self.macroenv.macrokw.get( 'field', self.fielddefault )
 
   def getNameOfRenderFrame(self): 
-    return( '__insert_key_here__'+str(self.macroenv.macrokw.get( 'macroid', 'defaultid')) )
+    return( 'ppburndown_chart_'+str(self.macroenv.macrokw.get( 'macroid', 'defaultid')) )
 
   def datetime2seconds( self, dt ):
     return time.mktime(dt.timetuple())
@@ -55,15 +57,44 @@ class ChartRenderer(RenderImpl):
   def seconds2datetime( self, secs ):
     return(datetime.datetime.fromtimestamp(secs))
 
-  def getDayString( self, mytime ) :
+  def seconds2dayseconds( self, secs ):
+    '''
+      normalize the seconds per day, i.e. computes the seconds to 00:00:01 of the day
+    '''
+    return((secs % 86400) * 86400 + 1)
+
+  def getDateString( self, mytime ) :
     '''
       input seconds, returns year month day space-separated
     '''
+    def getFormatBySegment( myDateTime ):
+      if self.segment in ['day']: # day segments
+        return myDateTime.strftime("%Y-%m-%d")
+      elif self.segment in ['week','twoweek']: # other segments, e.g.: weeks, 2weeks, ...
+        firstDateTime = self.getFirstDate()
+        diff = myDateTime.date() - firstDateTime.date()
+        extraDays = diff.days % 7 
+        extraWeeks = diff.days / 7 
+        if self.segment in ['week']:
+          extraWeeks = diff.days / 7 
+          dayoffset = 6
+        elif self.segment in ['twoweek']:
+          extraWeeks = diff.days / 14 
+          dayoffset = 13
+        myDateTimeWeekStart = firstDateTime + datetime.timedelta(days=(extraWeeks*7)) # get start of week
+        myDateTimeWeekEnd   = myDateTimeWeekStart + datetime.timedelta(days=dayoffset) # get end of week
+        self.macroenv.tracenv.log.debug("diff: %s - %s --> %s / %s --> %s -- %s" % (myDateTime.date(),firstDateTime.date(),extraWeeks,extraDays, myDateTimeWeekStart, myDateTimeWeekEnd ))
+        return "%s\n- %s" % (myDateTimeWeekStart.strftime("%Y-%m-%d"), myDateTimeWeekEnd.strftime("%Y-%m-%d") )
+      elif self.segment in ['month']: 
+        return myDateTime.strftime("%Y-%m")
+      elif self.segment in ['year']: 
+        return myDateTime.strftime("%Y")
+      
     #return datetime.datetime.fromtimestamp(mytime).strftime("%Y-%m-%d %H:%M")
     if isinstance(mytime, float):
-      return datetime.datetime.fromtimestamp(mytime).strftime("%Y-%m-%d")
+      return getFormatBySegment(datetime.datetime.fromtimestamp(mytime))
     elif isinstance(mytime, datetime.date) or isinstance(mytime, datetime.datetime) :
-      return mytime.strftime("%Y-%m-%d")
+      return getFormatBySegment( mytime )
     else:
       raise Exception('Unknown date: %s' % (mytime,))
 
@@ -74,6 +105,13 @@ class ChartRenderer(RenderImpl):
     if not mylist.has_key(newkey) :
       mylist[newkey] = []
 
+  def setKeyIfNotExistsInt( self, mylist, newkey, initval ):
+    '''
+      call-by-reference
+    '''
+    if not mylist.has_key(newkey) :
+      mylist[newkey] = initval
+
   def getFirstKey( self, keys ):
     '''
       returns the first date
@@ -81,55 +119,6 @@ class ChartRenderer(RenderImpl):
     '''
     return keys[0]
 
-  def getFirstSegment( self, keys ):
-    return self.getSegmentLimit( self.firstsegment, keys[0], True )
-
-  def getLastSegment( self, keys ):
-    key = self.getSegmentLimit( self.lastsegment, keys[ len(keys) - 1], False  )
-    currentday = self.datetime2seconds( datetime.date.today() )
-    if key < currentday:
-      return currentday
-    else:
-      return key
- 
-  def getSegmentLimit( self, macroparam, availablevalue, searchfirst ):
-    '''
-      TODO: extend
-    '''
-    
-    if macroparam == '': # no parameter setted
-      return self.datetime2seconds(self.string2date(availablevalue))
-    elif macroparam.lower().strip() in weekdays: # dynamic week day setted
-      weekdaysearched = macroparam.lower().strip()
-      # self.macroenv.tracenv.log.debug(str(searchfirst)+' param: '+'('+str(weekdaysearched)+')' )
-      if searchfirst:
-        daydiff = datetime.timedelta(days=-1)
-        offset = datetime.timedelta(days=0)
-      else:
-        daydiff = datetime.timedelta(days=1)
-        offset = datetime.timedelta(days=-1) # hack: offset to move last day 
-      
-      # search for the next/last day which is such a week day
-      weekdaykey = 0
-      for i in range(len(weekdays)): # search for the key TODO: improve
-        if weekdays[i] == weekdaysearched:
-          weekdaykey = i
-      #self.macroenv.tracenv.log.debug('weekdaykey: '+str(weekdaykey)+' '+str(weekdaysearched) )
-      
-      currentday = datetime.date.today()
-      while currentday.weekday() != weekdaykey :
-        #self.macroenv.tracenv.log.warning('search: '+str(currentday)+' '+str(currentday.weekday())+' ('+str(weekdaysearched)+'  '+str(weekdaykey)+')' )
-        currentday = currentday + daydiff
-      
-      currentday = currentday + offset
-      self.macroenv.tracenv.log.debug(str(searchfirst)+' found: '+str(currentday)+' ('+str(weekdaysearched)+')' )
-      
-      return self.datetime2seconds(currentday) # the day sufficies the user parameter
-      
-    else:
-      return self.datetime2seconds(self.string2date(macroparam))
-  
-  
   
   
   def normalizeToDay(self, sec):
@@ -142,70 +131,6 @@ class ChartRenderer(RenderImpl):
     
     dt = datetime.datetime.fromtimestamp(sec)
     return( self.datetime2seconds(datetime.datetime( int(dt.year), int(dt.month), int(dt.day), 0, 0, 1)) )
-  
-  def fillUpByDates( self, datedict ):
-    '''
-      date is the key
-      call-by-reference
-    '''
-    keys = datedict.keys()
-    keys.sort()
-    daydiff = datetime.timedelta(days=1)
-    (firstday, lastday) = self.getBoundaries( datedict )
-    
-    newdatedict = {}
-    
-    # get datetime from float time
-    if firstday < keys[0] :
-      firstfloat = self.normalizeToDay(firstday) 
-    else:
-      firstfloat = self.normalizeToDay(keys[0])  # if earlier values need to be propagated
-    currentday = datetime.datetime.fromtimestamp(firstfloat)
-    lastday = datetime.datetime.fromtimestamp(lastday) 
-    
-    # add changes to each day
-    for key in keys:
-      normalizedkey = self.normalizeToDay(key)
-      self.macroenv.tracenv.log.debug('normalizedkey='+repr(self.getDayString(normalizedkey))+' '+repr(normalizedkey) )
-      if not newdatedict.has_key( normalizedkey ):
-        newdatedict[normalizedkey] = []
-      newdatedict[normalizedkey] = newdatedict[normalizedkey] + datedict[key]
-    self.macroenv.tracenv.log.debug('newdatedict='+repr(newdatedict))
-    
-    
-    
-    # remove duplicate entries, save per day
-    # get last value of each ticket
-    # precondition: entries are sorted by date
-    aggredateddict = {}
-    for key in newdatedict.keys():
-      
-      lastticketvalues = {}
-      for (ticketid,val) in newdatedict[key] :
-        #self.macroenv.tracenv.log.warning('lastticketvalues set:'+str(ticketid)+'='+str(val)) 
-        lastticketvalues[ticketid] = val
-      
-      # add all ticket values
-      valuesum = 0.0
-      for ticketid in lastticketvalues.keys():
-        self.macroenv.tracenv.log.debug('lastticketvalues:'+str(ticketid)+'='+str(lastticketvalues[ticketid])) 
-        valuesum += lastticketvalues[ticketid]
-      
-      aggredateddict[key] = valuesum
-    
-    # initialize each missing day
-    oldvalue = 0.0
-    while currentday <= lastday : # including the last day
-      #self.macroenv.tracenv.log.warning('aggredateddict: currentday='+repr(currentday)+'   '+str(self.datetime2seconds(currentday)))
-      if not aggredateddict.has_key(self.datetime2seconds(currentday)):
-        aggredateddict[self.datetime2seconds(currentday)] = oldvalue
-      else:
-        oldvalue = aggredateddict[self.datetime2seconds(currentday)]
-      currentday = currentday + daydiff
-    
-    #self.macroenv.tracenv.log.warning('aggredateddict='+repr(aggredateddict) )
-    
-    return aggredateddict
 
   def string2date( self, mystring ):
     '''
@@ -213,7 +138,7 @@ class ChartRenderer(RenderImpl):
       float timestamp can be handled to
     '''
     if isinstance(mystring, float): # fallback if float
-      mystring = self.getDayString(mystring)
+      mystring = self.getDateString(mystring)
     
     tmp = string.split( mystring, "-")
     return datetime.datetime( int(tmp[0]), int(tmp[1]), int(tmp[2]) )
@@ -245,18 +170,20 @@ class BurndownChart(ChartRenderer):
   segmentDefault = 'day'
   firstsegment = ''
   lastsegment = ''
+  allowedSegments = ['day','week','twoweek','month','year'] # implemented
+  finishStatus = ['closed','in_QA'] 
   
   def __init__(self, macroenv ):
     ChartRenderer.__init__(self, macroenv)
     # width of chart
     self.width = int(self.macroenv.macrokw.get( 'width', '800').strip())
     # height of chart
-    self.height = int(self.macroenv.macrokw.get( 'height', '250').strip())
+    self.height = int(self.macroenv.macrokw.get( 'height', '350').strip())
     # time segment of x-axis: days or week
     self.segment = self.macroenv.macrokw.get( 'segment', '').strip()
-    if not ( self.segment in ['day', 'week', 'month', 'year'] ) :
+    if not ( self.segment in self.allowedSegments ) :
       #self.segment = self.segmentDefault # default time segment style
-      raise Exception('Unknown segment configuration: '+str(self.segment))
+      raise Exception('Unknown segment configuration: %s (allowed: %s)' % (str(self.segment),self.allowedSegments))
     
     self.firstsegment = self.macroenv.macrokw.get( 'first', '').strip()
     self.lastsegment = self.macroenv.macrokw.get( 'last', '').strip()
@@ -264,6 +191,15 @@ class BurndownChart(ChartRenderer):
       self.firstsegment = None
     if self.lastsegment == '':
       self.lastsegment = None
+    
+    finishStatus = self.macroenv.macrokw.get( 'finishstatus', '').strip().split('|')
+    if len(finishStatus) > 0 and finishStatus[0] != "":
+      self.finishStatus = finishStatus
+    else:
+      pass # use default values
+      
+  def getFinishStatus( self ):
+    return self.finishStatus
 
   def getEndOfSegment( self, changeday ):
     if self.segment == 'day':
@@ -284,18 +220,18 @@ class BurndownChart(ChartRenderer):
     else:
       raise Exception('Unknown segment configuration: '+str(self.segment))
 
-  def getSegmentString( self, changeday ):
-    if self.segment == 'day':
-      return self.getDayString(changeday)
-    if self.segment == 'week':
-      dt = self.seconds2datetime(changeday)
-      return 'week '+str(dt.isocalendar()[1])+'/'+str(dt.isocalendar()[0])
-    if self.segment == 'month':
-      dt = self.seconds2datetime(changeday)
-      return str(dt.month)+' / '+str(dt.year)
-    if self.segment == 'year':
-      dt = self.seconds2datetime(changeday)
-      return str(dt.year)
+  #def getSegmentString( self, changeday ):
+    #if self.segment == 'day':
+      #return self.getDateString(changeday)
+    #if self.segment == 'week':
+      #dt = self.seconds2datetime(changeday)
+      #return 'week '+str(dt.isocalendar()[1])+'/'+str(dt.isocalendar()[0])
+    #if self.segment == 'month':
+      #dt = self.seconds2datetime(changeday)
+      #return str(dt.month)+' / '+str(dt.year)
+    #if self.segment == 'year':
+      #dt = self.seconds2datetime(changeday)
+      #return str(dt.year)
 
   def aggregateDates( self, changes ):
     '''
@@ -311,10 +247,16 @@ class BurndownChart(ChartRenderer):
       for changeday in keys:
         endofsegment = self.getEndOfSegment(changeday)
         self.setKeyIfNotExists( newchanges, endofsegment )
-        self.macroenv.tracenv.log.debug("aggregateDates: "+self.segment+": "+self.getDayString(endofsegment)+" = "+str(changes[changeday])+"  "+self.getDayString(changeday) )
+        self.macroenv.tracenv.log.debug("aggregateDates: "+self.segment+": "+self.getDateString(endofsegment)+" = "+str(changes[changeday])+"  "+self.getDateString(changeday) )
         newchanges[endofsegment] = changes[changeday]
       return newchanges
 
+  def getFirstDate( self ):
+    return self.string2date( self.firstsegment )
+
+  def getLastDate( self ):
+    return self.string2date( self.lastsegment )
+    
   def getBoundariesConf( self ):
     '''
       returns the macro parameters
@@ -332,9 +274,9 @@ class BurndownChart(ChartRenderer):
         while self.weekdays[currentday.weekday()].lower() != first:
           currentday = currentday - daydiff
         first = self.datetime2seconds(currentday)
-        self.macroenv.tracenv.log.debug("first weekday: "+self.getDayString(first)+' param:'+str(first) )
+        self.macroenv.tracenv.log.debug("first weekday: "+self.getDateString(first)+' param:'+str(first) )
       else:
-        first = self.datetime2seconds(self.string2date( first ))
+        first = self.datetime2seconds( self.getFirstDate() )
     
     if last != None:
       if last.lower() in self.weekdays:
@@ -348,9 +290,9 @@ class BurndownChart(ChartRenderer):
         while self.weekdays[currentday.weekday()].lower() != last:
           currentday = currentday + daydiff
         last = self.datetime2seconds(currentday)
-        self.macroenv.tracenv.log.debug("last weekday: "+self.getDayString(last)+' param:'+str(last) )
+        self.macroenv.tracenv.log.debug("last weekday: "+self.getDateString(last)+' param:'+str(last) )
       else:
-        last = self.datetime2seconds(self.string2date( last )) 
+        last = self.datetime2seconds( self.getLastDate() ) 
     
     return ( first, last )
   
@@ -390,13 +332,13 @@ class BurndownChart(ChartRenderer):
     firstday = self.normalizeToDay(firstday) # seconds of YYYY-MM-DD  HH:ii:01
     lastday = self.normalizeToDay(lastday) # seconds of YYYY-MM-DD  HH:ii:01
     
-    self.macroenv.tracenv.log.debug("getBoundaries: firstday=%s (%s) lastday=%s (%s)" % (firstday,self.getDayString(firstday), lastday,self.getDayString(lastday) ) )
+    self.macroenv.tracenv.log.debug("getBoundaries: firstday=%s (%s) lastday=%s (%s)" % (firstday,self.getDateString(firstday), lastday,self.getDateString(lastday) ) )
     
     return (firstday, lastday)
 
   def getLabel( self ):
     '''
-      labels of chart
+      labels of the chart
     '''
     field = self.getField() 
     if field == 'status':
@@ -404,178 +346,183 @@ class BurndownChart(ChartRenderer):
     else:
       return((''+field+': ', 'reduced by: '))
   
-  def getValue( self, field, value ):
+  def getChangeOfOpenTickets(self, oldvalue, newvalue, closeStatus):
     '''
-      translate value to float 
+      calculate the change of the number of open tickets based on the actions: oldvalue -> newvalue
     '''
-    #self.macroenv.tracenv.log.warning('field: '+str(value))
-    if field == 'status': # special evaluation at status values
-      if value in ['closed']:
-        return -1.0 # one active ticket less
-      elif value in ['reopened', 'new']:
-        return 1.0 # one active ticket more
-      else:
-        return 0.0 # not interesting
+    # decrease the number of open tickets, e.g., assigned -> closed
+    if (not oldvalue in closeStatus) and (newvalue in closeStatus):
+      return -1
+    # increase the number of open tickets, e.g., closed -> reopened
+    elif (oldvalue in closeStatus) and (not newvalue in closeStatus):
+      return +1
     else:
+      return 0
+      
+  def getTicketWeight( self, ticket, consideredField ):
+    if consideredField == 'status' : # ticket status
+      return 1
+    else: # try to use the field given by the user
       try:
-        return float(value)
+        return float(ticket.getfield(consideredField))
       except:
-        return 0.0 # fallback
+        return 1
+
+  def computeInformationAboutSegment( self, ticketset, firstday, lastday ):
+    '''
+      returns a tupel
+    '''
+    fieldconf = self.getField()
+    relevantChanges = {}    
+    ticketCount = 0
+    tickets = ticketset.getIDList()
+    
+    for tid in tickets :
+      ticket = ticketset.getTicket(tid)
+      ticketWeight = self.getTicketWeight(ticket, fieldconf) 
+      
+      # save the changes of each ticket to an array
+      changelogOfTicket = ticketset.get_changelog(tid)
+      changelogOfTicket.reverse() # initial value at last
+      thisIsTheLastTime = False
+      ticketIsRelevant = False
+      for changetime, author, field, oldvalue, newvalue, perm in changelogOfTicket: # going backwards
+	changetimeSec = self.datetime2seconds(changetime) 
+	changetimeDay = self.seconds2dayseconds(changetimeSec)
+	dateStr = self.getDateString(changetime)
+	if field == self.TICKET_STATUS_FIELD:
+	  if lastday < changetimeSec:
+	    # ignore
+	    continue
+	  elif firstday <= changetimeSec and changetimeSec <= lastday:
+	    self.setKeyIfNotExistsInt( relevantChanges, dateStr, 0)
+	    openTicketNumberChange = self.getChangeOfOpenTickets( oldvalue, newvalue, self.getFinishStatus() ) * ticketWeight
+	    relevantChanges[dateStr] = relevantChanges[dateStr] + openTicketNumberChange
+	    self.macroenv.tracenv.log.debug("ticket changes on %s (%s): #%s: ( old:%s -> new:%s ) ==> %s (%s)" % (dateStr, field, tid, oldvalue, newvalue, openTicketNumberChange,relevantChanges[dateStr])  )
+	    ticketIsRelevant = True # this ticket matters
+	  elif changetimeSec < firstday and thisIsTheLastTime == False: # do this only one time
+	    thisIsTheLastTime = True
+	    if not newvalue in self.finishStatus:
+	      ticketIsRelevant = True # this ticket matters for the time period as it is not finished
+      
+      if ticketIsRelevant == True:
+        ticketCount = ticketCount + ( 1 * ticketWeight )
+    
+    self.macroenv.tracenv.log.debug("ticketCount: %s" % (ticketCount,) )
+    return (ticketCount, relevantChanges)
+    
+  def getAllRelevantDates(self, firstday, lastday):
+    '''
+      compute a list date strings that are relevant for the configured time period
+    '''
+    alldates = {}
+    currentday = firstday
+    while currentday <= lastday: # determine all days
+      alldates[self.getDateString(currentday)] = ''
+      currentday = currentday + 86400
+    return alldates.keys()
 
   def render(self, ticketset):
     # add needed javascript and css files
     self.addJsChartFiles()
     
+    if self.firstsegment == None or self.lastsegment == None:
+      return self.divWarning('you have to set the time period via the macro parameters. Example: first=2012-02-03, last=2012-02-19 .')
     
-    frame = tag.div( class_= 'invisible ppConfBurnDown', id=self.getNameOfRenderFrame() )
     tickets = ticketset.getIDList()
     
     # stop if no tickets available
     if len(tickets) == 0:
-      return tag.div('No tickets available.')
+      return self.divWarning('No tickets available.')
     
     changes = {}    
-    fieldconf = self.getField()
     initalvalues = {}
     creationdates = {}
     
-    # initialize, so it is usable below
-    for tid in tickets :
-      ticket = ticketset.getTicket(tid)
-      changetime = ticket.getfield('time') # creation date
-      changetimestr = self.datetime2seconds(changetime) 
-      creationday = self.getDayString(changetime)
-      creationdates[tid] = changetimestr
-      self.setKeyIfNotExists( changes, changetimestr) 
-      
-      # save the changes of each ticket to an array
-      changelog = ticketset.get_changelog(tid)
-      changelog.reverse() # initial value at last
-      for changetime, author, field, oldvalue, newvalue, perm in changelog:
-        if field == fieldconf:
-          changetimestr = self.datetime2seconds(changetime) 
-          self.setKeyIfNotExists( changes, changetimestr)
-          val = self.getValue( fieldconf, newvalue )
-          #self.macroenv.tracenv.log.warning("newvalue: "+str(tid)+"="+str(val))
-          changes[changetimestr].append((tid,val))
-          # save initial values
-          val = self.getValue( fieldconf, oldvalue )
-          #self.macroenv.tracenv.log.warning("oldvalue: "+str(tid)+"="+str(val))
-          changes[creationdates[tid]].append(( tid, val ))
-          self.macroenv.tracenv.log.debug("ticket_changes: %4s %s %5s --> %5s  %s %s" % ("#"+str(tid),field,oldvalue,newvalue,changetime, author)  )
-          #inner = tag.tr() # DEBUG
-          #inner(tag.td(tid)) # DEBUG
-          #inner(tag.td(field)) # DEBUG
-          #inner(tag.td(oldvalue)) # DEBUG
-          #inner(tag.td('-->')) # DEBUG
-          #inner(tag.td(newvalue)) # DEBUG
-          #inner(tag.td(changetime)) # DEBUG
-          #inner(tag.td(author)) # DEBUG
-          #outer(inner) # DEBUG
+    (firstday,lastday) = self.getBoundaries({})
+    alldates = self.getAllRelevantDates(firstday, lastday)
+
+    lastdaySecs = lastday
+    firstday = self.normalizeToDay(firstday)
+    lastday = self.normalizeToDay(lastday)
+
+    (ticketCount, relevantChanges) = self.computeInformationAboutSegment( ticketset, firstday, lastday )
+
+
+    # count only the tickets that are relevant within the requested time period (firstday,lastday)
+    relevantTickets = ticketCount
+    closedTickets = {} # change this
+    openTickets = {} # change this
+    changeDateStrings = relevantChanges.keys()
+    changeDateStrings.sort()
+    # ticketCount = 70 # DEBUG
     
-    maxTicketnumberComplete = -1 # init
-    changes = self.fillUpByDates(changes) 
-    changes = self.aggregateDates(changes)
-    #self.macroenv.tracenv.log.debug('changes='+repr(changes)) # DEBUG
-    
-    outer2 = tag.table( class_="invisibleX data" , border = "1", style = 'width:auto;')
-    keys = changes.keys()
-    keys.sort() # sort by time
-    self.macroenv.tracenv.log.debug('aggregated keys='+repr(keys)) # DEBUG
-    self.macroenv.tracenv.log.debug('changes='+repr(changes)) # DEBUG
-    
-    (firstday, lastday) = self.getBoundaries( changes )
-    firstsegment = firstday
-    lastsegment = lastday
-    
+    for changeDateStr in changeDateStrings: # for each day
+      self.macroenv.tracenv.log.debug("changes %4s: %3s (%s)" % (changeDateStr,relevantChanges[changeDateStr], ticketCount))
+      self.setKeyIfNotExistsInt( closedTickets, changeDateStr, -1*relevantChanges[changeDateStr] )
+      ticketCount = ticketCount + relevantChanges[changeDateStr]  # reduce the number of open tickets
+      self.setKeyIfNotExistsInt( openTickets  , changeDateStr, ticketCount)
+
+    # generate HTML 
+    holderid = "%s_%s_%d_%d" % (self.getNameOfRenderFrame(),'holder',int(time.time()*1000000),random.randint(1,1024) ) # compute unique element id
+    currentday = firstday
+    frame = tag.div( class_= 'invisible ppConfBurnDown', id=self.getNameOfRenderFrame()+holderid ) 
+    tableData = tag.table( class_="invisible data" , border = "1", style = 'width:auto;')
     trDays = tag.tr()
     trDaysAxis = tag.tr()
     trOpenTickets = tag.tr()
     trClosedTickets = tag.tr()
     trReopenedTickets = tag.tr()
-    valuesum = 0.0
-    previoussum = 0.0
-    today = self.normalizeToDay( self.datetime2seconds( datetime.datetime.today() ) )
+    alldates.sort()
+    lastOpenTicket = relevantTickets # fallback: all tickets
+    lastClosedTickets = 0
+    counter = 0
+    todaySecs = self.datetime2seconds( datetime.datetime.today() )
+    todayStr = self.getDateString(todaySecs)
     todayid = 0
-    # compute the table holding the relevant values
-    firstday = self.normalizeToDay(firstday)
-    lastday = self.normalizeToDay(lastday)
-    
-    for changetime in keys :
-      
-      dayvalue = 0.0
-      closed = 0.0
-      reopened = 0.0
-      
-      #valuesum = 0.0
-      self.macroenv.tracenv.log.debug('- changes['+str(changetime)+'] '+self.getDayString(changetime)+'='+repr(changes[changetime])) # DEBUG
-      
-      dayvalue = changes[changetime]
-      # compute increasing and descreasing
-      if dayvalue > previoussum:
-        reopened = dayvalue - previoussum
+    maxValue = 0
+    if lastdaySecs <= todaySecs: # if today is later then the shown time frame then mark the last column
+      todayid = len(alldates)
+    for currentday in alldates:
+      if currentday == todayStr: # capture the column with the current date
+        todayid = counter 
+      counter = counter + 1
+      trDays(tag.th(currentday.replace("\n"," "))) # text for info box, no line breaks here, because it is limited to 3 lines
+      trDaysAxis(tag.th(currentday))
+      if openTickets.has_key(currentday) :
+        lastOpenTicket = openTickets[currentday]
+      trOpenTickets(tag.td(lastOpenTicket))
+      if closedTickets.has_key(currentday) :
+        lastClosedTickets = closedTickets[currentday]
       else:
-        closed = previoussum - dayvalue
-      
-      # simplify visualization for integer values
-      if (dayvalue % 1 == 0) and (reopened % 1 == 0) and (closed % 1 == 0):
-        dayvalue = int(dayvalue)
-        reopened = int(reopened)
-        closed = int(closed)
-      
-      previoussum = dayvalue
-      
-      if firstday <= changetime and changetime <= lastday :
-        if changetime < today:
-          todayid += 1
-        
-        if maxTicketnumberComplete < dayvalue: # save the largest number
-          maxTicketnumberComplete = dayvalue
-        self.macroenv.tracenv.log.debug('changetime: '+str(self.getDayString(firstday)  )+' <= '+str(self.getDayString(changetime)  )+' <= '+str(self.getDayString(lastday)) )
-        #trDays(tag.th(changeday))
-        changetimeprint = self.getSegmentString(changetime)
-        trDays(tag.th(changetimeprint))
-        #trDaysAxis(tag.th(str(changetime)+"\n("+self.getDayString(changetime)+")"))
-        trDaysAxis(tag.th(changetimeprint))
-        trOpenTickets(tag.td(str(dayvalue)))
-        #trOpenTickets(tag.td(ticketnumberFlexible))
-        trClosedTickets(tag.td(str(closed)))
-        trReopenedTickets(tag.td(str(reopened)))
-      
-      # bug exists in javascript rendering if all values are zeor
-    self.macroenv.tracenv.log.debug("maxTicketnumberComplete: "+str(maxTicketnumberComplete))
-    if int(maxTicketnumberComplete) == 0:
-      self.macroenv.tracenv.log.warning("nothing to show: %s" % (repr(self.macroenv.macrokw)))
-      return tag.div("nothing to show, choose select at least one ticket or a field containing at one point in time a value higher than zero.", class_='ppwarning')
-    elif int(maxTicketnumberComplete) < 3:
-      maxTicketnumberComplete = 3
-      
-      #inner(tag.td(changeday)) # TEST
-      #inner(tag.td(ticketnumberComplete))# TEST
-      #inner(tag.td(ticketnumberFlexible))# TEST
-      #inner(tag.td( 'closed at this date: ' ))# TEST
-      #inner(tag.td( str(closed) ))# TEST
-      #outer2(inner)# TEST
+        lastClosedTickets = 0
+      trClosedTickets(tag.td(lastClosedTickets))
+      maxValue = max(len(str(lastClosedTickets)),len(str(lastOpenTicket)),maxValue)
+      trReopenedTickets(tag.td('0'))
     
-    outer2(tag.thead(trDays))
-    outer2(tag.tfoot(trDaysAxis))
-    outer2(tag.tbody(trOpenTickets, trClosedTickets, trReopenedTickets ))
+    tableData(tag.thead(trDays))
+    tableData(tag.tfoot(trDaysAxis))
+    tableData(tag.tbody(trOpenTickets, trClosedTickets, trReopenedTickets ))
     
     
-    holderid = self.getNameOfRenderFrame()+'holder'
     (label1,label2) = self.getLabel()
     
+    # caculate the scale factor for the info box within the chart
+    maxGlobal = max( len(str(label1))+maxValue, len(str(label2))+maxValue )
+    if self.segment in ['week','twoweek']: # they use long descriptions in the info box
+      maxGlobal = max(maxGlobal, 27)
     
     # configuration of renderer
-    frame(tag.div( maxTicketnumberComplete, class_ = 'maxTasks' ))
+    frame(tag.div( str(relevantTickets), class_ = 'maxTasks' ))
     frame(tag.div( self.width, class_ = 'width' ))
     frame(tag.div( self.height, class_ = 'height' ))
+    frame(tag.div( str(maxGlobal), class_ = 'maxlength' ))
     frame(tag.div( label1, class_ = 'label1' ))
     frame(tag.div( label2, class_ = 'label2' ))
-    frame(tag.div( todayid, class_ = 'today' )) # number of column with the current date
+    frame(tag.div( str(todayid), class_ = 'today' )) # number of column with the current date
     frame(tag.div( holderid, class_ = 'holder' )) # where to put the chart in
     
-    frame(outer2)
+    frame(tableData)
     outerframe = tag.div() # div as global container
     #outerframe(outer) # DEBUG
     outerframe(frame)

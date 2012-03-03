@@ -187,7 +187,11 @@ class ppTicketSet():
 
   def get_changelog( self , ticketid):
     t = Ticket(self.macroenv.tracenv, ticketid)
-    return( t.get_changelog() )
+    try: 
+      return( t.get_changelog() )
+    except:
+      self.macroenv.tracenv.log.warn("get_changelog failed on ticket %s", ticketid)
+      return [] # no changelogs
 
 
 class ppTicketSetExtension():
