@@ -1,0 +1,5 @@
+[[ProjectPlan(renderer=groupstatsbar, width=600, height=25, filterlike_owner=jone.doe)]]
+
+[[ProjectPlan(renderer=groupstatsbar, width=600, height=15, filterlike_milestone=MS11, order=new;closed)]]
+
+[[ProjectPlan(renderer=groupstatsbar, width=600, order=assigned;new;*;closed)]]

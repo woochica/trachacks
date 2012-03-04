@@ -31,7 +31,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.89.0',
+  version = u'0.90.0',
   description = u'ProjectPlanPlugin for Trac',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and

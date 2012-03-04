@@ -1143,6 +1143,7 @@ RenderRegister.add( GVCollapsedHRenderer, 'gvhierarchical' )
 #RenderRegister.add( GVCollapsedHRenderer, 'default' )
 RenderRegister.add( BurndownChartTickets, 'burndowntickets' )
 #RenderRegister.add( HierarchicalRenderer2, 'hiera')
+RenderRegister.add( GroupStatsBar, 'groupstatsbar')
 
 class ppRender():
   '''

@@ -3,6 +3,7 @@
 import re
 import os
 from datetime import *
+import time
 import random
 
 from genshi.builder import tag
@@ -180,6 +181,12 @@ class RenderImpl():
     '''
     return tag.div( mystr, class_='ppwarning' )
 
+  def getStrongKey( self ):
+    '''
+      creates a unique element id 
+    '''
+    return "%s_%d_%d" % ('ppelement',int(time.time()*1000000),random.randint(1,1000000) ) 
+    
   def render(self, ticketset):
     '''
       Generate Output and Return XML/HTML Code/Tags suited for Genshi
