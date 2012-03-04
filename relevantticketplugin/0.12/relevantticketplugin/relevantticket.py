@@ -98,7 +98,7 @@ class RelevantTicketPlugin(Component):
             
             try:
                 tticket = Ticket(self.env, int(tid[1:]), db)
-            except:
+            except Exception, ex:
                 self.log.warning('Ticket(%s) does not exist.' % tid)
                 continue
             
@@ -213,3 +213,5 @@ class RelevantTicketPlugin(Component):
         if commit:
             db.commit()
             
+   def ticket_deleted(self, ticket):
+       pass
