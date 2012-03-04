@@ -87,7 +87,7 @@ class TextBox(Component):
         else:
             pass
         # link hash
-        if filename in ['browser.html', 'ticket.html']:
+        if filename in ['browser.html', 'ticket.html', 'agilo_ticket_view.html']:
             add_script(req, 'traclinks/js/onhashchange.js')
         #
         if resource:
