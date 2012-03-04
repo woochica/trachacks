@@ -35,7 +35,7 @@ class TextBox(Component):
 #        self.list_namespaces()
         # generate TracLink string
         resource = None
-        if filename in ['ticket.html', 'wiki_view.html', 'report_view.html', 'milestone_view.html'] \
+        if filename in ['ticket.html', 'wiki_view.html', 'report_view.html', 'milestone_view.html', 'agilo_ticket_view.html'] \
                 and 'context' in data:
             resource = data['context'].resource
         elif filename in ['search.html']: # search:
