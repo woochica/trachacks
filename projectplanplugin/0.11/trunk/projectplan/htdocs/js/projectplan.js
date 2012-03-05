@@ -1102,8 +1102,8 @@ function ppAddTicketListChecks(field_id){
   }
 }
 
-
-
+/* might be used as hash table */
+var ppStore = new Array();
 
 
 

@@ -1,3 +1,8 @@
+/* CLEARFIX: clearing div without more markup, see http://j.mp/bestclearfix */
+.clearFix:before, .clearFix:after {content: "\0020"; display: block; height: 0; visibility: hidden}
+.clearFix:after {clear: both}
+.clearFix {zoom: 1}
+
 .invisible {
   display:none;
 }

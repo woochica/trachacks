@@ -339,6 +339,9 @@ class ProjectPlanMacro(WikiMacroBase):
           moretitle = macroenv.macrokw.get('label', '')
         else:
           moretitle = renderer.getHeadline() # get the pre-defined headline
+          
+        
+	  
         
         return tag.div(
                  tag.h5( tag.a( name=macroenv.macroid )( '%s' % (moretitle,)  ) ),
@@ -349,7 +352,8 @@ class ProjectPlanMacro(WikiMacroBase):
 			    noteForceReload,
 			    tag.span(tag.a('Force recreation of the visualization.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
 			    )
-                         )
+                         ),
+                 style=macroenv.macrokw.get('style', '') # CSS style
                  )
                  #tag.div( id = 'ppstat' ) )
 

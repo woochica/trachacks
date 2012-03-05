@@ -149,14 +149,20 @@ class GroupStatsBar(GroupStats):
       Generate HTML List
     '''
     (counttickets,ticketgrouping) = self.getTicketGrouping( ticketset )
+    
+    if counttickets == 0:
+      return self.divWarning('No tickets available.')
    
     maxTicketsToShow = 20
+    maxWidth = 400
     statuskeys = ticketgrouping.keys()
     (width,height) = self.getDimensions()
-    framebar = tag.div(style="background-color:#333;float:left;width:%spx;white-space:nowrap; box-shadow:4px 4px 4px #999;height:%spx" % ((width+1+(2*len(statuskeys))),height) )
+    
+    framewrapper = tag.div(style="width:%spx;" % (width+10+(2*len(statuskeys)),) ) # ensures the width if the browser window is to small
+    framebar = tag.div(class_="clearfix",style="height:%spx; background-color: #333; box-shadow: 4px 4px 4px #999; display: inline-block; white-space:nowrap; border: 1px solid #333; float: left;" % (height,) )
+    js = tag.script()
     framebox = tag.div()
-    js = tag.script("var ppClicked = new Array();")
-    currentPosition = 20
+    currentPosition = 0 # offset
     myId = self.getStrongKey()
     orderedStatusKeys = self.getOrderedStatusKeys(self.orderOrg, statuskeys)
     
@@ -169,12 +175,13 @@ class GroupStatsBar(GroupStats):
       barId = myId+'_bar_'+statuskey
       boxId = myId+'_box_'+statuskey
       
-      statusTickets = tag.div(id=boxId, style='border:1px solid %s;display:none;position:absolute;left:%spx;background-color:#FFF;padding:0.5ex;margin:0.5ex;box-shadow:4px 4px 4px #AAA;' % (groupingColor,currentPosition))
+      statusTicketsWidth = max(groupingWidth,maxWidth)-10
+      statusTickets = tag.div(id=boxId, style='width:%spx; border:1px solid %s;display:none;position:absolute;left:%spx;background-color:#FFF;padding:0.5ex;margin:0.5ex;box-shadow:4px 4px 4px #AAA;' % (statusTicketsWidth,groupingColor,currentPosition))
       ticketids = ticketgrouping[statuskey].keys()
       ticketids.sort(reverse=True)
       ticketTable = tag.table()
       for tid in ticketids[0:maxTicketsToShow]:
-        ticketTable(tag.tr(tag.td(self.createTicketLink(ticketset.getTicket(tid))), tag.td(ticketgrouping[statuskey][tid], style="max-width:%spx"%(max(400,groupingWidth),)) ))
+        ticketTable(tag.tr(tag.td(self.createTicketLink(ticketset.getTicket(tid))), tag.td(ticketgrouping[statuskey][tid], style="max-width:%spx"%(min(max(maxWidth,groupingWidth),width),)) ))
       # show the number of left out tickets
       if len(ticketids) > maxTicketsToShow :
         ticketTable(tag.tr(tag.td('...'),tag.td('%s more tickets' % (len(ticketids)-maxTicketsToShow,))))
@@ -187,23 +194,23 @@ class GroupStatsBar(GroupStats):
       statusTickets(tag.b('%s %s: %s' % (groupingCount,ticketString,statuskey)),ticketTable)
 
       framebar( tag.div( '', id=barId, style="float:left;border:1px solid #333;width:%spx; height:%spx; %s;" % (groupingWidth,height,self.getCSSgradient(groupingColor)) ) )
-      framebox( statusTickets )
-      # if clicked, show permanently; until clicked again; ppClicked stores the current click state
+      framebox( statusTickets, style="position:absolute;" )
+      # if clicked, show permanently; until clicked again; ppStore stores the current click state
       js('''$("#%s").mouseover(function() {
 	  $("#%s").slideDown(200, function() {});  
 	  });''' % (barId,boxId))
       js('''$("#%s").mouseout(function() { 
-	  if(ppClicked["%s"] == 0 || isNaN(ppClicked["%s"])){ $("#%s").slideUp(400, function() {});  } 
+	  if(ppStore["%s"] == 0 || isNaN(ppStore["%s"])){ $("#%s").slideUp(400, function() {});  } 
 	  }); ''' % (barId,barId,barId,boxId))
       js('''$("#%s").mouseup(function() { 
-	  if ( isNaN(ppClicked["%s"]) ) { ppClicked["%s"]=0; }
-	  ppClicked["%s"] = (ppClicked["%s"]+1) %% 2
-	  if( ppClicked["%s"] ==  1 ){ $("#%s").slideDown(100, function() {});  }
+	  if ( isNaN(ppStore["%s"]) ) { ppStore["%s"]=0; }
+	  ppStore["%s"] = (ppStore["%s"]+1) %% 2
+	  if( ppStore["%s"] ==  1 ){ $("#%s").slideDown(100, function() {});  }
 	  else { $("#%s").slideUp(100, function() {});  }
 	  });''' % (barId,barId,barId,barId,barId,barId,boxId,boxId))
       #js('$("#%s").mouseenter().mouseleave(function() {$("#%s").hide();  });' % (boxId,boxId))
       
       currentPosition += groupingWidth + 2 # offset is 2px
      
-    return tag.div(framebar,tag.div(style="clear:both;"),framebox,js)
+    return tag.div(framewrapper(framebar),tag.div(style="clear:both;"),framebox,js)
 
