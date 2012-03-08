@@ -28,6 +28,7 @@ import tempfile
 import shutil
 import time
 import xlwt
+from xlwt.Utils import rowcol_to_cell
 import xlrd
 
 # ticket #8805 : unavailable for python 2.4 or 2.5
@@ -66,6 +67,7 @@ class ImportExportAdminPanel(Component):
         self.formats['datetime'] = DateTimeFormat(self.config)
         self.formats['date'] = DateFormat(self.config)
         self.formats['text'] = TextFormat(self.config)
+        self.formats['longtext'] = TextFormat(self.config, True)
         self.formats['boolean'] = BooleanFormat(self.config)
         
         self.exportForced = ['id', 'summary']
@@ -95,6 +97,7 @@ class ImportExportAdminPanel(Component):
         fieldsFormat = self._get_fields_format(allfields)
         fieldsExport = self._get_fields_export(allfields)
         fieldsImport = self._get_fields_import(allfields)
+        fieldsWeight = self._get_fields_weight(allfields)
         
         settings = {}
         
@@ -113,12 +116,19 @@ class ImportExportAdminPanel(Component):
                 for cf in allfields:
                     fexport = bool( req.args.get(cf['name']+'.export', False) )
                     fimport = bool( req.args.get(cf['name']+'.import', False) )
+                    fweight = 0
+                    try:
+                        fweight = int( req.args.get(cf['name']+'.weight', 0) )
+                    except:
+                        fweight = fieldsWeight[cf['name']]
                     if not fexport:
                         self.config.set('import-export-xls', cf['name']+'.export', fexport )
                     if not fimport:
                         self.config.set('import-export-xls', cf['name']+'.import', fimport )
+                    self.config.set('import-export-xls', cf['name']+'.weight', fweight )
                     fieldsExport[cf['name']] = fexport
                     fieldsImport[cf['name']] = fimport
+                    fieldsWeight[cf['name']] = fweight
                 self.config.save()
             if req.args.get('export'):
                 self._send_export(req)
@@ -136,7 +146,10 @@ class ImportExportAdminPanel(Component):
             settings['milestones'] = [m.name for m in model.Milestone.select(self.env, True)]
             settings['components'] = [m.name for m in model.Component.select(self.env)]
             settings['status'] = [m.name for m in model.Status.select(self.env)]
+            settings['priorities'] = [m.name for m in model.Priority.select(self.env)]
+            settings['severities'] = [m.name for m in model.Severity.select(self.env)]
             settings['resolutions'] = [m.name for m in model.Resolution.select(self.env)]
+            settings['fieldsWeight'] = fieldsWeight
         settings['defaultfields'] = defaultfields
         settings['customfields'] = customfields
         settings['formats'] = self.formats
@@ -182,6 +195,8 @@ class ImportExportAdminPanel(Component):
                     ftype = 'number'
                 elif fd['name'] in ['time', 'changetime']:
                     ftype = 'datetime'
+                elif fd['name'] in ['summary', 'description']:
+                    ftype = 'longtext'
                 fieldsFormat[fd['name']] = ftype
         
         return fieldsFormat
@@ -246,6 +261,31 @@ class ImportExportAdminPanel(Component):
         
         return fieldsImport
 
+    def _get_fields_weight(self, fields = None):
+        fieldsWeight = {}
+        
+        allfields = [ {'name':'id', 'label':'id'} ]
+        allfields.extend( TicketSystem(self.env).get_ticket_fields() )
+        customfields = TicketSystem(self.env).get_custom_fields()
+        
+        customfieldnames = [c['name'] for c in customfields]
+        defaultfields = [c for c in allfields if c['name'] not in customfieldnames]
+        
+        defaultfieldnames = [c['name'] for c in defaultfields]
+        
+        fields = fields or allfields
+        fieldnames = [f['name'] for f in fields]
+        
+        for cf in customfields:
+            if cf['name'] in fieldnames:
+                fieldsWeight[cf['name']] = self.config.getint('import-export-xls', cf['name']+'.weight', 0)
+        
+        for fd in defaultfields:
+            if fd['name'] in fieldnames:
+                fieldsWeight[fd['name']] = self.config.getint('import-export-xls', fd['name']+'.weight', 0)
+        
+        return fieldsWeight
+
     def _send_export(self, req):
         from trac.web import RequestDone 
         content, output_type = self._process_export(req)
@@ -263,9 +303,14 @@ class ImportExportAdminPanel(Component):
         fields.extend( TicketSystem(self.env).get_ticket_fields() )
         fieldsFormat = self._get_fields_format(fields)
         fieldsExport = self._get_fields_export(fields)
+        fieldsWeight = self._get_fields_weight(fields)
+        
+        comment_changeset = req.args.get('export.changeset') and req.args.get('export.changeset') == 'True'
         
         fields = [c for c in fields if fieldsExport[ c['name'] ] ]
         fieldnames = [c['name'] for c in fields]
+        
+        fields.sort( lambda a, b : fieldsWeight[a['name']]-fieldsWeight[b['name']] )
         
         # ticket #8805 : unavailable for python 2.4 or 2.5
         #content = BytesIO()
@@ -274,11 +319,13 @@ class ImportExportAdminPanel(Component):
         headerStyle = xlwt.easyxf('font: bold on; pattern: pattern solid, fore-colour grey25; borders: top thin, bottom thin, left thin, right thin')
         
         wb = xlwt.Workbook()
+        sheetName = ( 'Tickets - %s' % self.config.get('project','name', '') );
         try:
-          ws = wb.add_sheet('Tickets - %s' % self.config.get('project','name', '') )
+          ws = wb.add_sheet( sheetName )
         except:
           # Project name incompatible with sheet name constraints.
-          ws = wb.add_sheet('Tickets')
+          sheetName = 'Tickets'
+          ws = wb.add_sheet( sheetName )
         
         colIndex = {}
         c = 0
@@ -286,6 +333,8 @@ class ImportExportAdminPanel(Component):
             ws.write(0, c, unicode(f['label']),headerStyle)
             colIndex[f['name']] = c
             c += 1
+        if comment_changeset:
+            ws.write(0, c, unicode('Comments in change log'),headerStyle)
         
         constraints = {}
         if req.args.get('filter.type') and len(req.args['filter.type']) > 0 :
@@ -318,6 +367,18 @@ class ImportExportAdminPanel(Component):
             else:
                 constraints['status'] = [ req.args['filter.status'] ]
         
+        if req.args.get('filter.priority') and len(req.args['filter.priority']) > 0 :
+            if type( req.args['filter.priority'] ) == list :
+                constraints['priority'] = req.args['filter.priority']
+            else:
+                constraints['priority'] = [ req.args['filter.priority'] ]
+        
+        if req.args.get('filter.severity') and len(req.args['filter.severity']) > 0 :
+            if type( req.args['filter.severity'] ) == list :
+                constraints['severity'] = req.args['filter.severity']
+            else:
+                constraints['severity'] = [ req.args['filter.severity'] ]
+        
         if req.args.get('filter.resolution') and len(req.args['filter.resolution']) > 0 :
             if type( req.args['filter.resolution'] ) == list :
                 constraints['resolution'] = req.args['filter.resolution']
@@ -329,7 +390,6 @@ class ImportExportAdminPanel(Component):
         r = 0
         cols = query.get_columns()
         for result in results:
-            c = 0
             r += 1
             for col in cols:
                 value = result[col]
@@ -337,10 +397,84 @@ class ImportExportAdminPanel(Component):
                 value = format.convert(value)
                 style = format.get_style(value)
                 ws.write(r, colIndex[col], value, style)
-                c += 1
+            if comment_changeset:
+                format = self.formats[ 'longtext' ]
+                value = format.convert( self._get_changelog_comments(result['id']) )
+                style = format.get_style(value)
+                ws.write(r, len(cols), value, style)
+        
+        if req.args.get('export.statistics') and req.args.get('export.statistics') == 'True':
+            wb = self._add_statistics_sheet(req, sheetName, wb, fields, colIndex, constraints)
+        
         wb.save(content)
         return (content.getvalue(), 'application/excel')
     
+    def _get_changelog_comments(self, tid):
+        changelog = Ticket(self.env, tkt_id=tid).get_changelog()
+        changelog_str = ''
+        
+        for date, author, field, old, new, permanent in changelog:
+            if field == 'comment' and new != None and new != '' and old != None and old != '' :
+                changelog_str = changelog_str + ( 'comment:%s %s %s\n' % ( old, author or '', self.formats['datetime'].restore(date) ) )
+                changelog_str = changelog_str + new + '\n\n'
+        
+        return changelog_str
+    
+    
+    def _add_statistics_sheet(self, req, sheetName, wb, fields, fieldsIndex, constraints):
+        
+        neededFields = ['milestone','status','type']
+        neededFieldsInfo = [f['name'] for f in fields if f['name'] in neededFields]
+        
+        if len(neededFieldsInfo) != 3 :
+            return wb
+        
+        milestoneLbl = [f['label'] for f in fields if f['name']=='milestone'][0]
+        
+        types = [m.name for m in model.Type.select(self.env)]
+        milestones = [m.name for m in model.Milestone.select(self.env, True)]
+        
+        if 'type' in constraints.keys() :
+            types = [t for t in types if t in constraints['type']]
+        if 'milestone' in constraints.keys() :
+            milestones = [m for m in milestones if m in constraints['milestone']]
+        
+        headerStyle = xlwt.easyxf('font: bold on; pattern: pattern solid, fore-colour grey25; borders: top thin, bottom thin, left thin, right thin')
+        
+        ws = wb.add_sheet('Statistics')
+        
+        r = 0
+        c = 0
+        ws.write(r, c, milestoneLbl, headerStyle)
+        
+        for m in milestones:
+            c += 1
+            ws.write(r, c, m, headerStyle)
+        
+        c = 0
+        for t in types:
+            r += 1
+            ws.write(r, c, t, headerStyle)
+        
+        r += 1
+        ws.write(r, c, 'closed', headerStyle)
+        
+        template = ( "SUMPRODUCT(0+('%s'!%s:%s=%%s);0+('%s'!%s:%s=%%s))" % ( sheetName, rowcol_to_cell(1, fieldsIndex['milestone'], True, True ), rowcol_to_cell( 65364, fieldsIndex['milestone'], True, True ), sheetName, rowcol_to_cell( 1, fieldsIndex['type'], True, True ), rowcol_to_cell( 65364, fieldsIndex['type'], True, True ) ) )
+        
+        closedTemplate = ( ( "IF(SUM(%%s:%%s)=0;"+'""'+";SUMPRODUCT(0+('%s'!%s:%s=%%s);0+('%s'!%s:%s="+'"closed"))*100/SUM(%%s:%%s))' ) % \
+                         ( sheetName, rowcol_to_cell(1, fieldsIndex['milestone'], True, True), rowcol_to_cell(65364, fieldsIndex['milestone'], True, True), sheetName, rowcol_to_cell(1, fieldsIndex['status'], True, True), rowcol_to_cell( 65364, fieldsIndex['status'], True, True ) ) )
+        
+        borders = xlwt.easyxf('borders: top thin, bottom thin, left thin, right thin')
+        percent = xlwt.easyxf('borders: top thin, bottom thin, left thin, right thin')
+        percent.num_format_str = '0.00 \\%'
+        
+        for m in range(1, len(milestones)+1):
+            formula = ( closedTemplate % ( rowcol_to_cell( 1, m ), rowcol_to_cell(len(types), m), rowcol_to_cell( 0, m ), rowcol_to_cell( 1, m ), rowcol_to_cell(len(types), m) ) )
+            ws.write( len(types)+1, m, xlwt.Formula( formula ), percent )
+            for t in range(1, len(types)+1):
+                formula = ( template % ( rowcol_to_cell( 0, m ), rowcol_to_cell( t, 0, True, True) ) )
+                ws.write( t, m, xlwt.Formula( formula ), borders )
+        return wb
     
     def _get_import_preview(self, req):
         req.perm.assert_permission('TICKET_ADMIN')

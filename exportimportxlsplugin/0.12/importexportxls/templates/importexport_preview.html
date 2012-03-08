@@ -9,6 +9,7 @@
     <title>Import Preview</title>
     
     <style type="text/css">
+        .warning { color:#990000 }
         .modified { background-color:#FF9999 }
         .added { background-color:#99FF99 }
     </style>
@@ -33,20 +34,20 @@
       <py:if test="len(warnings)>0">
         <fieldset>
             <legend>Warnings</legend>
-            <div>
+            <div class="warning">
                 <py:for each="warn in warnings">
                     ${warn}<br/>
                 </py:for>
             </div>
         </fieldset>
       </py:if>
+      <fieldset>
+        <legend>Legend</legend>
+        <div>Unmodified ticket</div>
+        <div class='modified'>Modified ticket</div>
+        <div class='added'>Added ticket</div>
+      </fieldset>
       <form method="POST">
-        <fieldset>
-            <legend>Legend</legend>
-            <div>Unmodified ticket</div>
-            <div class='modified'>Modified ticket</div>
-            <div class='added'>Added ticket</div>
-        </fieldset>
         <table class="listing" id="cflist">
           <thead>
             <tr>

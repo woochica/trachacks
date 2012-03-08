@@ -192,17 +192,18 @@ class TextFormat:
     
     implements(IExportFormat)
     
-    def __init__(self, config):
+    def __init__(self, config, force_long=False):
         self.config = config
         self.style1 = copy.copy(_default_style)
         self.style2 = copy.copy(_default_style)
         self.style2.alignment = Alignment()
         self.style2.alignment.wrap = self.style2.alignment.WRAP_AT_RIGHT
         self.style2.alignment.shri = self.style2.alignment.SHRINK_TO_FIT
+        self.force_style2 = force_long
     
     def get_style(self, value = None):
         style = self.style1
-        if value != None and value.find('\n') != -1 :
+        if self.force_style2 or ( value != None and value.find('\n') != -1 ) :
             style = self.style2
         return style
     
