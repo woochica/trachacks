@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-  ALPHA
+  beta
   TODO: starttime, endtime
 '''
 
@@ -386,6 +386,11 @@ class BurndownChart(ChartRenderer):
       changelogOfTicket.reverse() # initial value at last
       thisIsTheLastTime = False
       ticketIsRelevant = False
+      
+      # if no change was done, the ticket is still important
+      if len(changelogOfTicket) == 0:
+        ticketIsRelevant = True
+      
       for changetime, author, field, oldvalue, newvalue, perm in changelogOfTicket: # going backwards
 	changetimeSec = self.datetime2seconds(changetime) 
 	changetimeDay = self.seconds2dayseconds(changetimeSec)

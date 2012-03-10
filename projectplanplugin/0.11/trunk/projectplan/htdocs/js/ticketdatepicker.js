@@ -1,6 +1,6 @@
 /**
  * AnBo
- * experimental
+ * beta
  * adds java script date picker to tickets
  */
 
@@ -125,6 +125,15 @@ function ppInitDatePicker(datePickerDiv, monat, fieldid)
 	tmp += '<tfoot><tr><td colspan="7">'+prevbutton+' &nbsp; '+resetbutton+' &nbsp; '+closebutton+' &nbsp; '+nextbutton+'</td></tr></tfoot>';
 
 	tmp  += '</table>';
+	/*
+	$('#textbox').live('keydown', function(e) { 
+	  var keyCode = e.keyCode || e.which; 
+	  if (keyCode == 9) { 
+	    e.preventDefault(); 
+	    // call custom function here
+	  } 
+	});
+	*/
 //  	alert('x3 '+tmp);
 	datePickerDiv.innerHTML = tmp;
 }
@@ -146,6 +155,21 @@ function saveDate( fieldid, date )
 {
 }
 
+
+function ppCreateDatePickerInitActions(inputFieldId, ppDatePickerDiv )
+{
+	    $('#'+inputFieldId).focus(function(){
+	      $('#'+ppDatePickerDiv).fadeIn(200,function(){});
+	      positionDivByElement( document.getElementById(inputFieldId), document.getElementById(ppDatePickerDiv), 1 ); // TODO: replace with jquery
+	    });
+	    
+	    $('#'+inputFieldId).keydown( function(event){
+	      if (event.which == 9 || event.which == 27) { // TAB or ESC
+		$('#'+ppDatePickerDiv).fadeOut(200,function(){});
+	      }
+	    });
+}
+
 function ppCreateDatePicker()
 {
 	if( document.getElementById('ppShowDatePicker') ) {
@@ -161,17 +185,8 @@ function ppCreateDatePicker()
 		    return;
 	    }
 
-	    document.getElementById('field-due_assign').addEventListener("focus", function(){
-		    document.getElementById('ppDatePickerDivfield-due_assign').style.display = 'block';
-		    positionDivByElement( document.getElementById('field-due_assign'), document.getElementById('ppDatePickerDivfield-due_assign'), 1 );	
-		    return true;
-	    }, false );
-	    document.getElementById('field-due_close').addEventListener("focus", function(){
-		    document.getElementById('ppDatePickerDivfield-due_close').style.display = 'block';
-		    positionDivByElement( document.getElementById('field-due_close'), document.getElementById('ppDatePickerDivfield-due_close'), 1 );	
-		    return true;
-	    }, false );
-    // 	positionDivByElement( document.getElementById('field-due_assign'), document.getElementById('datePickerDiv') );
+	    ppCreateDatePickerInitActions('field-due_assign', 'ppDatePickerDivfield-due_assign');
+	    ppCreateDatePickerInitActions('field-due_close', 'ppDatePickerDivfield-due_close');
 	} else {
 // 	  alert('not loaded');
 	}
@@ -209,26 +224,9 @@ function positionDivByElement(/* base */ el , /* move this */ div, mode)
 };
 
 
-/*
-function ppCreateNewDependingTicket()
-{
-  $('.buttons').append('<input type="button" name="ppCreateNewDependingTicket" value="Create new depending ticket" onclick="ppCreateNewDependingTicketAction()">');
-}
-
-function ppCreateNewDependingTicketAction() {
-  window.location.href = window.location.href.replace(/\/ticket\//, '/newticket?dep=' );
-}
-*/
-
-
-
-
-
-
 
 $(document).ready(function () {
 	ppCreateDatePicker();
-// 	ppCreateNewDependingTicket();
 });
 
 

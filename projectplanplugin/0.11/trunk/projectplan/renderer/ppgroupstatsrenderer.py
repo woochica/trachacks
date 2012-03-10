@@ -191,7 +191,7 @@ class GroupStatsBar(GroupStats):
       else:
         ticketString = 'tickets'
 
-      statusTickets(tag.b('%s %s: %s' % (groupingCount,ticketString,statuskey)),ticketTable)
+      statusTickets(tag.div(tag.div('%s %s: %s' % (groupingCount,ticketString,statuskey),style="float:left;font-weight:bold;"),tag.div(tag.a('X',href="javascript: return false;"),id="%s%s" % (boxId,"close"),style="float:right",class_="ppinsetshadow"),class_="clearFix"),ticketTable)
 
       framebar( tag.div( '', id=barId, style="float:left;border:1px solid #333;width:%spx; height:%spx; %s;" % (groupingWidth,height,self.getCSSgradient(groupingColor)) ) )
       framebox( statusTickets, style="position:absolute;" )
@@ -208,6 +208,9 @@ class GroupStatsBar(GroupStats):
 	  if( ppStore["%s"] ==  1 ){ $("#%s").slideDown(100, function() {});  }
 	  else { $("#%s").slideUp(100, function() {});  }
 	  });''' % (barId,barId,barId,barId,barId,barId,boxId,boxId))
+      js('''$("#%sclose").click(function() {
+	  $("#%s").slideUp(100, function() {});  
+	  });''' % (boxId,boxId))
       #js('$("#%s").mouseenter().mouseleave(function() {$("#%s").hide();  });' % (boxId,boxId))
       
       currentPosition += groupingWidth + 2 # offset is 2px
