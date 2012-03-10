@@ -187,10 +187,13 @@ class PPTicketViewTweak(Component):
   
   def splitStringToTicketList( self, tickets, current_ticket_id = -1 ):
     r = re.compile('[;, ]')
-    tickets = r.split(tickets)
-    tickets = [ t.replace('#', '')  for t in tickets ]
-    tickets = [ t for t in tickets if str(t).strip() != "" and t != current_ticket_id ]
-    return list(set(tickets))
+    if tickets == None:
+      return []
+    else:
+      tickets = r.split(tickets)
+      tickets = [ t.replace('#', '')  for t in tickets ]
+      tickets = [ t for t in tickets if str(t).strip() != "" and t != current_ticket_id ]
+      return list(set(tickets))
 
   def getDependsOn( self, ticket_id ):
     self.env.log.debug('getDependsOn of #'+str(ticket_id)+': '+ repr(Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")))
