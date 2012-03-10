@@ -1,0 +1,28 @@
+Trac Viewer for Microsoft Excel XLST files
+**** ****** *** ********* ***** **** *****
+
+Copyright (C) 2012 Daniel Rolls, Maxeler Technologies Inc <drolls@maxeler.com>  
+Derived from Christopher Lenz's ExcelViewerPlugin 
+  Copyright (C) 2006 Christopher Lenz <cmlenz@gmx.de>
+  All rights reserved.
+
+This software is licensed as described in the file COPYING, which
+you should have received as part of this distribution.
+
+
+This hack allows uploaded Excel files on the Wiki or in tickets to be viewed in
+the web browser as a simple HTML table. It allows everybody to easily view the
+files without Downlading and saving the Excel files and without even requiring
+Microsoft Excel. It is derived from the ExcelViewerPlugin hack but depends upon
+the openpyxl library (easy_install xlrd). After installing add
+
+   application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:xlsx,application/vnd.ms-excel.sheet.macroEnabled.12:xlsm
+
+to the mime_map property in trac.ini to tell Trac which types of file work with the plugin. 
+
+Upload an Excel document from an up-to-date version of Microsoft Excel as an
+attachment. As long as it is in the new xlst format the plugin will work. For
+older files use ExcelViewerPlugin. If it doesn't work confirm xlrd is installed
+correctly by running python and entering "import xlrd". You should see no error.
+Also ensure that mime_map is set properly as documented above. 
+
