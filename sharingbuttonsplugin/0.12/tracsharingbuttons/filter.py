@@ -167,5 +167,5 @@ class SharingButtonsFilterModule(Component):
                   data_hatena_bookmark_layout=self._hatena_bookmark_layout,
                   title=u'このエントリーをはてなブックマークに追加'),
             tag.script(type='text/javascript', charset='utf-8', async='async',
-                       src='//b.st-hatena.com/js/bookmark_button.js'),
+                       src='//b.st-hatena.com/js/bookmark_button_wo_al.js'),
         ]
