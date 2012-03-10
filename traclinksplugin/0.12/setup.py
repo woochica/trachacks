@@ -3,9 +3,11 @@
 
 from setuptools import setup, find_packages
 
+version='0.4'
+
 setup(
     name='TracLinks',
-    version='0.3',
+    version=version,
     license='Modified BSD',
     author='MATOBA Akihiro',
     author_email='matobaa+trac-hacks@gmail.com',

@@ -1,5 +1,5 @@
 $(document).ready(function() {
-	window.onhashchange = function(event) {
+	jQuery(window).hashchange(function(event) {
 		traclinks = $("#proj-search").attr('value');
 		if(location.hash.indexOf('#comment:') == 0 && ( i = traclinks.indexOf('ticket:')) >= 0) {
 			traclinks = location.hash.slice(1) + ':' + traclinks.slice(i);
@@ -10,7 +10,7 @@ $(document).ready(function() {
 			traclinks = traclinks + '#' + location.hash.slice(1)
 			$("#proj-search").attr('value', traclinks);
 		}
-	};
-	if(location.hash.length > 0)// invoke it if necessary
-		window.onhashchange(null);
+	});
+	if(location.hash.length > 0) // invoke it if necessary after load
+		jQuery(window).hashchange();
 });
