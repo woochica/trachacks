@@ -1,8 +1,9 @@
-"""
-AutocompleteUsers:
-complete the owner field for the ticket text input for known users
-"""
-
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2008-2009 Jeff Hammel
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 import fnmatch
 
 from pkg_resources import resource_filename
