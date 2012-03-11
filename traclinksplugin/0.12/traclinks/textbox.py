@@ -92,14 +92,15 @@ class TextBox(Component):
             add_script(req, 'traclinks/js/onhashchange.js')
         #
         if resource:
-            traclinks = '%s:%s' % (resource.realm, resource.id)
+            traclinks = '%s' % (resource.id)
             if resource.version != None:
                 traclinks += '@%s' % resource.version
             if resource.parent and resource.parent.id:
-                resource = resource.parent
-                traclinks += ':%s:%s' % (resource.realm, resource.id)
-                if resource.version != None:
-                    traclinks += '@%s' % resource.version
+                traclinks += ':%s:%s' % (resource.parent.realm, resource.parent.id)
+                if resource.parent.version != None:
+                    traclinks += '@%s' % resource.parent.version
+            if ' ' in traclinks: traclinks = '"%s"' % traclinks # surround quote if needed
+            traclinks = '%s:%s' % (resource.realm, traclinks)
             return stream | Transformer('//input[@id="proj-search"]').attr('value', traclinks).attr('size', '50')
         return stream
 
@@ -112,6 +113,7 @@ class TextBox(Component):
  - query:owner=admin
  - attachment:test.txt:ticket:1
  - attachment:image.png:wiki:WikiStart # linked but not searchable
+ - attachment:"file name with spaces.txt:wiki:日本語 と 空白"
  - log:@1:2
  - log:/trunk@1
  - log:anotherrepo/trunk@1
@@ -127,8 +129,8 @@ class TextBox(Component):
  - source:/trunk/file.txt@2
  - source:anotherrepo/trunk/file.txt
  - source:anotherrepo/trunk/file.txt@3
- - comment:1:ticket:1             # works only browser that window.onhashchange implemented
- - source:/trunk/file.txt#L20     # works only browser that window.onhashchange implemented
+ - comment:1:ticket:1
+ - source:/trunk/file.txt#L20
 """
 
 # Not Implemented Yet
