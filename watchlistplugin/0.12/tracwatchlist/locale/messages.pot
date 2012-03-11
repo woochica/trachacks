@@ -1,22 +1,22 @@
 # Translations template for TracWatchlistPlugin.
-# Copyright (C) 2010 ORGANIZATION
+# Copyright (C) 2012 ORGANIZATION
 # This file is distributed under the same license as the
 # TracWatchlistPlugin project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2010.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracWatchlistPlugin 0.6\n"
+"Project-Id-Version: TracWatchlistPlugin 1.0\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-09-23 18:48+0100\n"
+"POT-Creation-Date: 2012-03-11 11:37+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.5\n"
+"Generated-By: Babel 0.9.6\n"
 
 #: tracwatchlist/nav.py:54 tracwatchlist/templates/watchlist.html:10
 #: tracwatchlist/templates/watchlist.html:126
@@ -29,6 +29,7 @@ msgid "Take attachment changes into account"
 msgstr ""
 
 #: tracwatchlist/plugin.py:67
+#: tracwatchlist/templates/watchlist_prefs.html:40
 msgid "Notifications"
 msgstr ""
 
@@ -90,11 +91,11 @@ msgstr ""
 
 #. TRANSLATOR: Link part of
 #. "Please %(log_in)s to view or change your watchlist"
-#: tracwatchlist/plugin.py:370
+#: tracwatchlist/plugin.py:374
 msgid "log in"
 msgstr ""
 
-#: tracwatchlist/plugin.py:378
+#: tracwatchlist/plugin.py:382
 #, python-format
 msgid "Please %(log_in)s to view or change your watchlist"
 msgstr ""
@@ -119,59 +120,59 @@ msgstr ""
 msgid "You are now watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:567
+#: tracwatchlist/plugin.py:571
 msgid "You are no longer watching this resource."
 msgstr ""
 
-#: tracwatchlist/plugin.py:576
+#: tracwatchlist/plugin.py:580
 #, python-format
 msgid "Invalid watchlist action '%(action)s'!"
 msgstr ""
 
-#. TRANSLATOR: Link to manual page of the plug-in
-#: tracwatchlist/plugin.py:628
+#. TRANSLATOR: Link to help/manual page of the plug-in
+#: tracwatchlist/plugin.py:625
 msgid "Help"
 msgstr ""
 
 #. TRANSLATOR: Navigation link to point to watchlist section of this realm
 #. (e.g. 'Wikis', 'Tickets').
-#: tracwatchlist/plugin.py:636
+#: tracwatchlist/plugin.py:635
 #, python-format
 msgid "Watched %(realm_plural)s"
 msgstr ""
 
-#: tracwatchlist/plugin.py:696 tracwatchlist/templates/watchlist.html:111
+#: tracwatchlist/plugin.py:695 tracwatchlist/templates/watchlist.html:111
 msgid "Unwatch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:699
+#: tracwatchlist/plugin.py:698
 #, python-format
 msgid "Remove %(document)s from watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:703
+#: tracwatchlist/plugin.py:702
 msgid "Watch"
 msgstr ""
 
-#: tracwatchlist/plugin.py:706
+#: tracwatchlist/plugin.py:705
 #, python-format
 msgid "Add %(document)s to watchlist"
 msgstr ""
 
-#: tracwatchlist/plugin.py:709
+#: tracwatchlist/plugin.py:708
 msgid "Do not Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:712
+#: tracwatchlist/plugin.py:711
 #, python-format
 msgid "Do not notify me if %(document)s changes"
 msgstr ""
 
-#: tracwatchlist/plugin.py:715
+#: tracwatchlist/plugin.py:714
 msgid "Notify me"
 msgstr ""
 
-#: tracwatchlist/plugin.py:718
+#: tracwatchlist/plugin.py:717
 #, python-format
 msgid "Notify me if %(document)s changes"
 msgstr ""
@@ -218,7 +219,7 @@ msgid_plural "tickets"
 msgstr[0] ""
 msgstr[1] ""
 
-#: tracwatchlist/ticket.py:310
+#: tracwatchlist/ticket.py:352
 #, python-format
 msgid "%(value)s added"
 msgstr ""
@@ -241,7 +242,7 @@ msgid_plural "wiki pages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: tracwatchlist/wiki.py:182
+#: tracwatchlist/wiki.py:225
 #, python-format
 msgid "Attachment %(attachment)s added"
 msgstr ""
@@ -411,7 +412,19 @@ msgstr ""
 msgid "Delete cookies"
 msgstr ""
 
-#: tracwatchlist/templates/watchlist_prefs.html:19
+#: tracwatchlist/templates/watchlist_manual.html:10
+msgid "Watchlist Plugin Manual"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist_prefs.html:20
+msgid "User Interface"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist_prefs.html:30
+msgid "Messages"
+msgstr ""
+
+#: tracwatchlist/templates/watchlist_prefs.html:50
 msgid "Watchlist sections"
 msgstr ""
 
