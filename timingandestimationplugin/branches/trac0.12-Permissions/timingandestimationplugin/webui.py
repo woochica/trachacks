@@ -18,7 +18,8 @@ import datetime
 import trac.util.datefmt
 import reports
 
-
+def strptime(date_string, format):
+    return datetime.datetime(*(time.strptime(date_string, format)[0:6]))
 
 #get_statuses = api.get_statuses
 validTimeFormats=[
@@ -47,7 +48,7 @@ def parsetime(val, tzinfo=trac.util.datefmt.to_datetime(None).tzinfo):
     it = None
     for f in validTimeFormats:
         #print f, datetime.datetime.strptime(val, f)
-        try: return datetime.datetime.strptime(val, f).replace(tzinfo=tzinfo)
+        try: return strptime(val, f).replace(tzinfo=tzinfo)
         except ValueError: pass
     raise TracError('Unable to convert bill date %s to a time, please provide a date in yyyy-mm-dd hh:mm:ss format' % val)
 
