@@ -20,7 +20,8 @@ class TimingEstimationAndBillingPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     def __init__(self):
-        pass
+        self.BILLING_PERMISSION = self.env.config.get('timingandestimation', 'billing_permission') or 'REPORT_VIEW'
+        self.log.debug('TimingAndEstimation billing_permission: %s' % self.BILLING_PERMISSION)
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=0):
         now = time.time()
@@ -74,10 +75,14 @@ class TimingEstimationAndBillingPage(Component):
         data['billing_info']["billdates"] = billing_dates
 
     def match_request(self, req):
-        val = re.search('/Billing$', req.path_info)
-        return val and val.start() == 0
+        matches = re.search('^/Billing$', req.path_info)
+        self.log.debug('T&E matched: %s  %s' % (req.path_info, matches))
+        #if matches: req.perm.require(self.BILLING_PERMISSION)
+        return matches
+
 
     def process_request(self, req):
+        req.perm.require(self.BILLING_PERMISSION)
         messages = []
 
         def addMessage(s):
