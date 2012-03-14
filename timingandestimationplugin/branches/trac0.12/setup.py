@@ -2,20 +2,12 @@
 import sys
 from setuptools import setup
 
-min_python = (2, 5)
-if sys.version_info < min_python:
-    print "TimingAndEstimation requires Python %d.%d or later" % min_python
-    sys.exit(1)
-if sys.version_info >= (3,):
-    print "TimingAndEstimation doesn't support Python 3 (yet)"
-    sys.exit(1)
-
 PACKAGE = 'timingandestimationplugin'
 
 setup(name=PACKAGE,
       description='Plugin to make Trac support time estimation and tracking',
       keywords='trac plugin estimation timetracking',
-      version='1.2.6',
+      version='1.2.7',
       url='http://www.trac-hacks.org/wiki/TimingAndEstimationPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',
       author='Russ Tyndall at Acceleration.net',

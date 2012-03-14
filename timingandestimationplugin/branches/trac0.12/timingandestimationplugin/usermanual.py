@@ -1,5 +1,5 @@
 user_manual_title = "Timing and Estimation Plugin User Manual"
-user_manual_version = 11
+user_manual_version = 12
 user_manual_wiki_title = "TimingAndEstimationPluginUserManual"
 user_manual_content = """
 [[PageOutline]]
@@ -29,7 +29,7 @@ providing it the correct set of input parameters
 
 The 'Management' button should be in the main title bar.  It is possible that if you are viewing at a low resolution, it was pushed off the edge of the screen.  Also if you are not logged in with report_view permissions, it will not show that button.
 
-The direct url is '/Billing'.
+The direct url is '/billing'.
 
 
 === Set Bill Date ===
@@ -39,6 +39,16 @@ easier to select the last time you billed.  This would allow you to
 set a ticket as having been billed at a given time while others have
 not, and accurately get the correct billing information for all
 tickets.
+
+=== Configuration ===
+==== TimingAndEstimation ====
+{{{
+#!ini
+[timingandestimation]
+#change what permission is required to view the billing/management screen
+# default is REPORT_VIEW
+billing_permission=TRAC_ADMIN
+}}}
 
 == Reports ==
 === Report Types ===
@@ -76,9 +86,5 @@ Remember to fill in the @reportID of the report you want to modify.
 
 == Future Improvements ==
  * [http://trac-hacks.org/wiki/TimingAndEstimationPlugin See tickets] at the [http://trac-hacks.org/wiki/TimingAndEstimationPlugin project trac]
- * Would like to suggest a couple of interfaces to Trac project, and perhaps write an implementation for them.
-   * ''' ICustomTicketFieldProvider ''' This should allow a plugin to provide a custom field with the ability to add html attributes and specify at least the tag name. (hopefully with a full template) This should hopefully also allow these provided custom controls to set permissions causing them to not render or to not editable.
-   * ''' ICustomReportProvider ''' This allows custom reports to be provided in a way that permissions can be enforced on them. 
- * work with advise and feedback from the user community to make this Plugin do this job adequately
 
 """

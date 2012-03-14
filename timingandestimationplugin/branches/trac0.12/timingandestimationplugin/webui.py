@@ -17,6 +17,9 @@ from statuses import get_statuses
 import trac.util.datefmt
 import reports
 
+def strptime(date_string, format):
+    return datetime.datetime(*(time.strptime(date_string, format)[0:6]))
+
 #get_statuses = api.get_statuses
 
 
@@ -39,6 +42,7 @@ validTimeFormats=[
     '%Y.%m.%d %H', '%Y.%m.%d %I %p',
     '%Y.%m.%d',
     ]
+
 def parsetime(val, tzinfo=trac.util.datefmt.to_datetime(None).tzinfo):
     if not val: return None
     val = val.strip()
@@ -46,7 +50,7 @@ def parsetime(val, tzinfo=trac.util.datefmt.to_datetime(None).tzinfo):
     it = None
     for f in validTimeFormats:
         #print f, datetime.datetime.strptime(val, f)
-        try: return datetime.datetime.strptime(val, f).replace(tzinfo=tzinfo)
+        try: return strptime(val, f).replace(tzinfo=tzinfo)
         except ValueError: pass
     raise TracError('Unable to convert bill date %s to a time, please provide a date in yyyy-mm-dd hh:mm:ss format' % val)
 
@@ -55,7 +59,8 @@ class TimingEstimationAndBillingPage(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
     def __init__(self):
-        pass
+        self.BILLING_PERMISSION = self.env.config.get('timingandestimation', 'billing_permission') or 'REPORT_VIEW'
+        self.log.debug('TimingAndEstimation billing_permission: %s' % self.BILLING_PERMISSION)
 
     def set_bill_date(self, username="Timing and Estimation Plugin",  when=None):
         now = trac.util.datefmt.to_datetime(None)#get now
@@ -83,7 +88,7 @@ class TimingEstimationAndBillingPage(Component):
 
     def get_navigation_items(self, req):
         url = req.href.billing()
-        if req.perm.has_permission("REPORT_VIEW"):
+        if req.perm.has_permission(self.BILLING_PERMISSION):
             yield 'mainnav', "billing", \
                   Markup('<a href="%s">%s</a>' % \
                          (url , "Management"))
@@ -104,11 +109,15 @@ class TimingEstimationAndBillingPage(Component):
         #self.log.debug("bill-dates: %s"%billing_dates)
         data['billing_info']["billdates"] = billing_dates
 
+
     def match_request(self, req):
-        val = re.search('/billing$', req.path_info)
-        return val and val.start() == 0
+        matches = re.search('^/billing$', req.path_info)
+        self.log.debug('T&E matched: %s  %s' % (req.path_info, matches))
+        #if matches: req.perm.require(self.BILLING_PERMISSION)
+        return matches
 
     def process_request(self, req):
+        req.perm.require(self.BILLING_PERMISSION)
         messages = []
 
         def addMessage(s):

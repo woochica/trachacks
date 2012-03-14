@@ -93,7 +93,9 @@ def current_schema (env):
         return get_scalar(env, 'SHOW search_path;')
 
 def _prep_schema(s):
-    return ','.join(("'"+i.replace("'","''")+"'"
+    #remove double quotes, escape single quotes
+    if not s: return "'<NOT VALID>'"
+    return ','.join(("'"+i.replace('"','').replace("'","''")+"'"
                      for i in s.split(',')))
 
 def db_table_exists(env,  table):
