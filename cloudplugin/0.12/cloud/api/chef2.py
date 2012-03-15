@@ -130,7 +130,7 @@ class Chef(object):
         self.log.debug("Timeout on data bag item %s/%s" % (bag.name,id))
         return None
     
-    def bootstrap(self, id, hostname, run_list, timeout=360):
+    def bootstrap(self, id, hostname, run_list, timeout=900):
         """Bootstraps an ec2 instance by calling out to "knife bootstrap".
         The result should be that the ec2 instance connects with the
         chefserver.
