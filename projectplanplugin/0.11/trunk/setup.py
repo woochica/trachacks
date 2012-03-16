@@ -31,7 +31,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.91.2',
+  version = u'0.91.3',
   description = u'ProjectPlanPlugin for Trac',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
@@ -53,6 +53,6 @@ setup(
   keywords = u'project plan visualization',
   #package_dir={ pppackage: pppackagedir , },
   package_data = { pppackage: pppackagedataglobs },
-  install_requires = ( u'Trac >=0.11, <=0.12' ),
+  install_requires = ( u'Trac >=0.11, <0.13' ),
   entry_points = { u'trac.plugins': u'projectplan = projectplan.projectplan' }
 )
