@@ -14,15 +14,24 @@ from trac.wiki.api import parse_args
 from trac.wiki.formatter import format_to_html, system_message
 from trac.wiki.macros import WikiMacroBase
 
-__all__ = ["PlantUMLMacro", "PlantUMLRenderer"]
+__all__ = ["PlantUMLMacro"]
 
 img_dir = 'cache/plantuml'
 
 class PlantUMLMacro(WikiMacroBase):
     """
     A macro to include a PlantUML Diagrams
+    {{{
+    #!PlantUML
+    @startuml
+    Alice -> Bob: Authentication Request
+    Bob --> Alice: Authentication Response
+    Alice -> Bob: Another authentication Request
+    Alice <-- Bob: another authentication Response
+    @enduml
+    }}}
     """
-    
+
     implements(IRequestHandler)
 
     plantuml_jar = Option('plantuml', 'plantuml_jar', '', 'Path to PlantUML .jar file')
@@ -37,9 +46,9 @@ class PlantUMLMacro(WikiMacroBase):
         if content is None:
             return system_message("No UML text defined!")
         if not self.plantuml_jar:
-            return system_message("plantuml_jar option not defined in .ini")
+            return system_message("Installation error: plantuml_jar option not defined in .ini")
         if not os.path.exists(self.plantuml_jar):
-            return system_message("plantuml.jar not found: %s" % self.plantuml_jar)
+            return system_message("Installation error: plantuml.jar not found: %s" % self.plantuml_jar)
 
         args, _ = parse_args(content)
         markup = args[0].encode('utf-8').strip()

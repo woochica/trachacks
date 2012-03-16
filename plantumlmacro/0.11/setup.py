@@ -18,7 +18,7 @@ setup(
     description = "A macro to include diagrams from PlantUML",
     license = "GPL",
     keywords = "trac macro uml plantuml embed include",
-    url = "http://trac-hacks.org/wiki/TracPlantUmlPlugin",
+    url = "http://trac-hacks.org/wiki/PlantUmlMacro",
     entry_points = {
         "trac.plugins": [
             "plantuml.macro = plantuml.macro"
