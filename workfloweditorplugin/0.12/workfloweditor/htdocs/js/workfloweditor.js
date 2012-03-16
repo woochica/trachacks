@@ -63,7 +63,7 @@ jQuery(document).ready(function(){
     var currentTab = "gridTab";
     
     tabsElem.tabs("select", 0);
-    $("#workflowTabs").bind("tabsselect", function(event, ui) {
+    tabsElem.bind("tabsselect", function(event, origEvent, ui) {
         currentTab = ui.panel.id;
         
         if (!ui.panel.id) {
@@ -133,7 +133,7 @@ workfloweditor.WorkflowContext = function() {
     this.IMAGE_PATH     = "../../chrome/workfloweditor/images";
     this.EDIT_URL       = document.location + "/edit";
     
-    this.model     = [];
+    this.model     = {};
     this.status    = [].concat(this.DEFAULT_STATUS);
     
     this.textId;
@@ -155,7 +155,7 @@ workfloweditor.WorkflowContext.prototype.updateModelByText = function(textId) {
     }
     
     var lines = text.split("\n");
-    var model = [];
+    var model = {};
     var status = this.status;
     for (var index = 0; index < lines.length; index++) {
         var line = lines[index];
@@ -222,7 +222,7 @@ workfloweditor.WorkflowContext.prototype.updateModelByGrid = function(gridId) {
         return;
     }
     
-    var model = [];
+    var model = {};
     var status = this.status;
     var rowNum = dataIds.length;
     for (var index = 0; index < rowNum; index++) {

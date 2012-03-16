@@ -245,7 +245,7 @@ $.fn.jqGrid = function( p ) {
 				var $t = this,nm,ind;
 				ind = $($t).getInd($t.rows,rowid);
 				if (!ind) {return res;}
-				$('td:nth-child',$t.rows[ind]).each( function(i) {
+				$('td',$t.rows[ind]).each( function(i) {
 					nm = $t.p.colModel[i].name; 
 					if ( nm !== 'cb' && nm !== 'subgrid') {
 						res[nm] = $(this).html().replace(/\&nbsp\;/ig,'').replace(/&amp;/g, "&").replace(/&gt;/g, ">").replace(/&lt;/g, "<").replace(/&quot;/g, '"');
