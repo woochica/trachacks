@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010 Polar Technologies - www.polartech.es
+# Copyright (C) 2010 Alvaro J Iradier
+# Copyright (C) 2012 Ryan J Ollos
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 import hashlib
 import os
