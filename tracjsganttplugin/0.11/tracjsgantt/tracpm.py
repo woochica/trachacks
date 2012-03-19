@@ -640,7 +640,7 @@ class TracPM(Component):
                 fieldName = self.fields[self.sources['parent']]
                 parent = t[fieldName]
                 if len(parent) > 0 and parent[0] == '#':
-                    t[fieldname] = parent[1:]
+                    t[fieldName] = parent[1:]
 
                 # An empty parent default to 0 (no such ticket)
                 if t[fieldName] == '':
