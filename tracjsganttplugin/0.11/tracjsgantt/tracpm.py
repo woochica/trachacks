@@ -1174,32 +1174,32 @@ class CalendarScheduler(Component):
                     else:
                         rev = self.pm.predecessors
 
-                    # For each related ticket, if any
-                    for tid in fieldFunc(parent):
-                        # If the other ticket is in the list we're
+                    # For each child, if any
+                    for cid in self.pm.children(parent):
+                        # If the child is in the list we're
                         # working on
-                        if tid in ticketsByID:
-                            # For each child, if any
-                            for cid in self.pm.children(parent):
-                                # If the child is in the list we're
-                                # working on
-                                if cid in ticketsByID:
-                                    # Does child depend on any "cousins"
-                                    # (other descendants)?
-                                    child = ticketsByID[cid]
-                                    cousins = [did for did in fieldFunc(child) \
-                                                   if did in desc[pid]]
-                                    # If not, this is the end of the
-                                    # line and we have to copy the
-                                    # parent's dependencies down.
-                                    if cousins == []:
+                        if cid in ticketsByID:
+                            # Does child depend on any "cousins"
+                            # (other descendants)?
+                            child = ticketsByID[cid]
+                            cousins = [did for did in fieldFunc(child) \
+                                           if did in desc[pid]]
+                            # If not, this is the end of the
+                            # line and we have to copy the
+                            # parent's dependencies down.
+                            if cousins == []:
+                                # For each related ticket, if any
+                                for tid in fieldFunc(parent):
+                                    # If the other ticket is in the list we're
+                                    # working on
+                                    if tid in ticketsByID:
                                         # Add parent's dependency to this
                                         # child
                                         fwd(ticketsByID[cid]).append(tid)
                                         rev(ticketsByID[tid]).append(cid)
 
-                                    # Recurse to lower-level descendants
-                                    propagateDependencies(cid)
+                            # Recurse to lower-level descendants
+                            propagateDependencies(cid)
 
 
             # For each ticket to schedule
