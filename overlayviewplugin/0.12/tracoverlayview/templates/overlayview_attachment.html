@@ -1,0 +1,14 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      py:strip="True">
+  <script type="text/javascript" py:if="chrome.links">
+    <py:for each="link in chrome.links.get('stylesheet')">
+      overlayview.loadStyleSheet("${link.href}", "${link.type}");
+    </py:for>
+  </script>
+  <xi:include href="preview_file.html" py:with="preview = preview"/>
+</html>
