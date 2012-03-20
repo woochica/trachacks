@@ -54,7 +54,6 @@ jQuery(document).ready(function($) {
             title.children('em').contents().appendTo(title);
             title.remove('em');
             options.title = $('<span/>').append(title)
-                                        .append(' ')
                                         .append(self.clone())
                                         .html();
             anchor.attr('data-colorbox-title', options.title);
@@ -76,9 +75,14 @@ jQuery(document).ready(function($) {
             options.href = baseurl + 'overlayview/' +
                            href.substring(baseurl.length)
                                .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
+            var rawlink = baseurl + 'raw-attachment/' +
+                          href.substring(attachment_url.length);
+            var rawlink = $('<a/>').addClass('trac-rawlink')
+                                   .attr('href', rawlink);
             options.title = $('<span/>').append(parent)
                                         .append(': ')
                                         .append(filename)
+                                        .append(rawlink)
                                         .html();
             anchor.attr('data-colorbox-title', options.title);
             anchor.colorbox(options);
