@@ -66,8 +66,8 @@ jQuery(document).ready(function($) {
         if (href.indexOf(attachment_url) === 0) {
             var options = $.extend({}, basic_options);
             var em = anchor.children('em');
-            var parent_href = href.substring(attachment_url.length)
-                                  .replace(/\/[^\/]*$/, '');
+            var parent_href = baseurl + href.substring(attachment_url.length)
+                                            .replace(/\/[^\/]*$/, '');
             var parent = $('<a/>').attr('href', parent_href)
                                   .text($(em.get(1)).text());
             var filename = $('<a/>').attr('href', href)
@@ -77,8 +77,9 @@ jQuery(document).ready(function($) {
                                .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
             var rawlink = baseurl + 'raw-attachment/' +
                           href.substring(attachment_url.length);
-            var rawlink = $('<a/>').addClass('trac-rawlink')
-                                   .attr('href', rawlink);
+            rawlink = $('<a/>').addClass('overlayview-rawlink')
+                               .attr('href', rawlink)
+                               .text('\u200b');
             options.title = $('<span/>').append(parent)
                                         .append(': ')
                                         .append(filename)
