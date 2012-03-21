@@ -13,26 +13,50 @@ jQuery(document).ready(function($) {
     };
 
     function onComplete() {
-        var image = $('#cboxLoadedContent div.image-file img');
-        if (image.size() !== 1) {
+        var element = $.colorbox.element();
+        var loaded = $('#cboxLoadedContent');
+        var target;
+        target = loaded.children('div.image-file').children('img');
+        if (target.size() === 1) {
+            target.each(function() {
+                var url = target.attr('src');
+                var options = $.extend({}, basic_options, {
+                    title: element.attr('data-colorbox-title'),
+                    width: false,
+                    href: url,
+                    photo: true,
+                    open: true
+                });
+                element.colorbox(options);
+            });
             return;
         }
-        var url = image.attr('src');
-        var element = $.colorbox.element();
-        var options = $.extend({}, basic_options, {
-            title: element.attr('data-colorbox-title'),
-            width: false,
-            href: url,
-            photo: true,
-            open: true
-        });
-        element.colorbox(options);
+        target = loaded.find('table.code thead tr th.lineno');
+        if (target.size() === 1) {
+            target.each(function() {
+                var url = element.attr('href');
+                var change = function() {
+                    var anchor = $(this).attr('href');
+                    if (anchor.substring(0, 2) === '#L') {
+                        $(this).attr('href', url + anchor);
+                    }
+                };
+                loaded.find('table.code tbody tr th[id]').each(function() {
+                    this.removeAttribute('id');
+                    var anchor = $(this).children('a[href]');
+                    if (anchor.size() === 1) {
+                        anchor.each(change);
+                    }
+                });
+            });
+            return;
+        }
     };
     var baseurl = window.overlayview.baseurl;
     var attachment_url = baseurl + 'attachment/';
     var basic_options = {
-        opacity: 0.9, transition: 'none', width: '92%', maxHeight: '92%',
-        onComplete: onComplete};
+        opacity: 0.9, transition: 'none', width: '92%', maxWidth: '92%',
+        maxHeight: '92%', onComplete: onComplete};
     var attachments = $('#attachments').get(0);
     function rawlink() {
         var self = $(this);
