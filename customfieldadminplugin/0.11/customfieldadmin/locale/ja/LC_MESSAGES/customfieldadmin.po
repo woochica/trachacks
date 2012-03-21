@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: TracCustomFieldAdmin 0.2.8\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2012-01-24 13:47+0100\n"
-"PO-Revision-Date: 2012-01-21 16:19+0900\n"
+"PO-Revision-Date: 2012-03-21 16:53+0900\n"
 "Last-Translator: Jun Omae <jun66j5@gmail.com>\n"
 "Language-Team: ja <LL@li.org>\n"
 "Plural-Forms: nplurals=1; plural=0\n"
@@ -40,10 +40,12 @@ msgid ""
 "Custom Fields are not correctly sorted. This may affect appearance when "
 "viewing tickets."
 msgstr ""
+"カスタムフィールドの順序が正しくないため、チケット参照時の見た目に影響があ"
+"る可能性があります。"
 
 #: customfieldadmin/api.py:87
 msgid "Custom field requires attributes 'name' and 'type'."
-msgstr ""
+msgstr "カスタムフィールドには'名前'と'タイプ'の属性が必要になります。"
 
 #: customfieldadmin/api.py:92
 msgid ""
@@ -65,9 +67,9 @@ msgid "Can not create as field already exists."
 msgstr "既に存在する項目は作成出来ません。"
 
 #: customfieldadmin/api.py:157
-#, fuzzy, python-format
+#, python-format
 msgid "Custom Field '%(name)s' does not exist. Cannot update."
-msgstr "カスタムフィールド %(name)s は存在しません。"
+msgstr "カスタムフィールド '%(name)s' が存在しないため、更新できません。"
 
 #: customfieldadmin/templates/customfieldadmin.html:11
 msgid "Custom Fields Admin"
@@ -96,22 +98,24 @@ msgid "Label:"
 msgstr "ラベル:"
 
 #: customfieldadmin/templates/customfieldadmin.html:44
-#, fuzzy
 msgid ""
 "Default value\n"
 "                  (regular text for Text, Textarea, Radio or Select):"
-msgstr "デフォルト値 (テキスト、テキストエリア、ラジオボタン、ドロップダウンに対する値)"
+msgstr ""
+"デフォルト値 (テキスト、テキストエリア、ラジオボタン、ドロップダウンに対す"
+"る正規の文字列):"
 
 #: customfieldadmin/templates/customfieldadmin.html:50
 msgid "Format (Text or Textarea):"
-msgstr "書式 (テキスト、テキストエリア)"
+msgstr "書式 (テキスト、テキストエリア):"
 
 #: customfieldadmin/templates/customfieldadmin.html:60
-#, fuzzy
 msgid ""
 "Options for Radio or Select\n"
 "                  (for Select, empty first line makes field optional):"
-msgstr "ラジオボタン、ドロップダウンで選択させる値 (ドロップダウンの場合、最初の行を空に出来ます)"
+msgstr ""
+"ラジオボタン、ドロップダウンで選択させる値 "
+"(ドロップダウンの場合、最初の行を空にすると任意の選択になります):"
 
 #: customfieldadmin/templates/customfieldadmin.html:71
 msgid "Size of Textarea for entry (Textarea only):"
@@ -136,7 +140,7 @@ msgstr "保存"
 
 #: customfieldadmin/templates/customfieldadmin.html:84
 msgid "Add Custom Field:"
-msgstr "カスタムフィールドの追加"
+msgstr "カスタムフィールドの追加:"
 
 #: customfieldadmin/templates/customfieldadmin.html:86
 msgid "Name:"
@@ -156,11 +160,11 @@ msgstr "選択させる値:"
 
 #: customfieldadmin/templates/customfieldadmin.html:127
 msgid "Size of Textarea:"
-msgstr "テキストエリアのサイズ"
+msgstr "テキストエリアのサイズ:"
 
 #: customfieldadmin/templates/customfieldadmin.html:127
 msgid "Cols:"
-msgstr "幅"
+msgstr "幅:"
 
 #: customfieldadmin/templates/customfieldadmin.html:133
 msgid "Add"
@@ -201,7 +205,4 @@ msgstr "選択した項目を削除"
 #: customfieldadmin/templates/customfieldadmin.html:182
 msgid "Apply changes"
 msgstr "変更を適用"
-
-#~ msgid "Custom field needs at least a name, type and label."
-#~ msgstr "カスタムフィールドには少なくとも名前とタイプ、ラベルが必要になります。"
 
