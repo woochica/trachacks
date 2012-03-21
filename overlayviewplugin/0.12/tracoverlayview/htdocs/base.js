@@ -3,7 +3,7 @@ jQuery(document).ready(function($) {
         return;
 
     window.overlayview.loadStyleSheet = function(href, type) {
-        var links = $('link[rel="stylesheet"]:not([disabled])');
+        var links = $('link[rel="stylesheet"]').filter(':not([disabled])');
         links = $.grep(links, function(link) {
             return link.getAttribute('href') === href;
         });
@@ -19,17 +19,19 @@ jQuery(document).ready(function($) {
         }
         var url = image.attr('src');
         var element = $.colorbox.element();
-        var options = $.extend({}, basic_options);
-        options.title = element.attr('data-colorbox-title');
-        options.href = url;
-        options.photo = true;
-        options.open = true;
+        var options = $.extend({}, basic_options, {
+            title: element.attr('data-colorbox-title'),
+            width: false,
+            href: url,
+            photo: true,
+            open: true
+        });
         element.colorbox(options);
     };
     var baseurl = window.overlayview.baseurl;
     var attachment_url = baseurl + 'attachment/';
     var basic_options = {
-        opacity: 0.9, transition: 'none', maxWidth: '96%', maxHeight: '92%',
+        opacity: 0.9, transition: 'none', width: '92%', maxHeight: '92%',
         onComplete: onComplete};
     var attachments = $('#attachments').get(0);
     function rawlink() {
