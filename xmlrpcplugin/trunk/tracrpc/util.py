@@ -46,7 +46,7 @@ def accepts_mimetype(req, mimetype):
 
 def prepare_docs(text, indent=4):
     r"""Remove leading whitespace"""
-    return ''.join(l[indent:] for l in text.splitlines(True))
+    return text and ''.join(l[indent:] for l in text.splitlines(True)) or ''
 
 try:
     # Micro-second support added to 0.12dev r9210

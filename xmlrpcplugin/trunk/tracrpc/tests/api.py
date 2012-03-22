@@ -37,6 +37,14 @@ class ProtocolProviderTestCase(TracRpcTestCase):
             self.assertEquals(e.fp.read(),
                 "No protocol matching Content-Type 'text/plain' at path '/rpc'.")
 
+    def test_rpc_info(self):
+        # Just try getting the docs for XML-RPC to test, it should always exist
+        from tracrpc.xml_rpc import XmlRpcProtocol
+        xmlrpc = XmlRpcProtocol(rpc_testenv.get_trac_environment())
+        name, docs = xmlrpc.rpc_info()
+        self.assertEquals(name, 'XML-RPC')
+        self.assertTrue('Content-Type: application/xml' in docs)
+
     def test_valid_provider(self):
         # Confirm the request won't work before adding plugin
         req = urllib2.Request(rpc_testenv.url_anon,
