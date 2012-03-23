@@ -424,21 +424,31 @@ class TracPM(Component):
                     raise TracError('Relation configuration error for %s' % 
                                     field)
 
-                # FIXME - is this portable across DBMSs?
-                cursor.execute("SELECT %s FROM %s WHERE %s IN (%s)" %
-                               (dst, tbl, src,
-                                "'" + "','".join(node_list) + "'"))
+                # Build up enough instances of %s to represent all the
+                # nodes.  The DB API will replace them with items from
+                # node_list, properly quoted for the DB back-end.
+                #
+                # In 0.12, we could do
+                #
+                #   ','.join([db.quote(node) for node in node_list])
+                #
+                # but 0.11 doesn't have db.quote()
+                inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
+                cursor.execute("SELECT %s FROM %s WHERE %s " % \
+                                   (dst, tbl, src) + \
+                                   inClause,
+                               node_list)
             # Query from custom field
             elif self.isField(field):
                 fieldName = self.fields[self.sources[field]]
-                # FIXME - is this portable across DBMSs?
+                # See explantion in relation handling, above.
+                inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
                 cursor.execute("SELECT t.id "
                                "FROM ticket AS t "
                                "LEFT OUTER JOIN ticket_custom AS p ON "
-                               "    (t.id=p.ticket AND p.name='%s') "
-                               "WHERE p.value IN (%s)" % 
-                               (fieldName,
-                                "'" + "','".join(node_list) + "'"))
+                               "    (t.id=p.ticket AND p.name=%s) "
+                               "WHERE p.value " + inClause,
+                               [fieldName] + node_list)
             # We really can't get here because the callers test for
             # isCfg() but it's nice form to have an else.
             else:
@@ -560,9 +570,11 @@ class TracPM(Component):
             # Get the milestones and their due dates
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            # FIXME - is this portable across DBMSs?
+            # See explanation in _expand()
+            inClause = "IN (%s)" % ','.join(('%s',) * len(milestones))
             cursor.execute("SELECT name, due FROM milestone " +
-                           "WHERE name in ('" + "','".join(milestones) + "')")
+                           "WHERE name " + inClause,
+                           milestones)
             for row in cursor:
                 id = id-1
                 milestoneTicket = self._pseudoTicket(id, 
@@ -695,13 +707,13 @@ class TracPM(Component):
         for r in self.relations:
             # Get the elements of the relationship ...
             (f1, f2, tbl, src, dst) = self.relations[r]
-            # FIXME - is this portable across DBMSs?
-            idList = "'" + "','".join(ids) + "'"
             # ... query all relations with the desired IDs on either end ...
-            cursor.execute("SELECT %s, %s FROM %s "
-                           "WHERE %s IN (%s)" 
-                           " OR %s IN (%s)" %
-                           (src, dst, tbl, src, idList, dst, idList))
+            # See explanation in _expand()
+            inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+            cursor.execute("SELECT %s, %s FROM %s " % (src, dst, tbl) + \
+                               "WHERE %s " % src + inClause + \
+                               " OR %s " % dst + inClause,
+                           ids + ids)
 
             # ... quickly build a local cache of the forward and
             # reverse links ...
