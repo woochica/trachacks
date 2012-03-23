@@ -592,6 +592,12 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # FIXME - test for success, log on failure
         options['hoursPerDay'] = float(options['hoursPerDay'])
 
+        # Make sure we get all the tickets.  (For complex Gantts,
+        # there can be a lot of tickets, easily more than the default
+        # max.)
+        if 'max' not in options:
+            options['max'] = 999
+
         return options
  
     def _this_ticket(self):
