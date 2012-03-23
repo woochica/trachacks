@@ -69,6 +69,8 @@ class TracJSGanttSupport(Component):
     # This seems to be the first floating point option.
     Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
                 """Hours worked per day""")
+    Option('trac-jsgantt', 'option.display', None,
+                """Display filter for tickets in the form 'field1:value1|field2:value2' displays tickets where field1==value1, etc.""")
      
 
     # ITemplateProvider methods
@@ -118,6 +120,7 @@ The chart display can be controlled with a number of macro arguments:
 || `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
 || `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
 ||`doResourceLeveling`||Resolve resource conflicts (1) or not (0) when scheduling tickets.||0||
+||`display`||Filter for limiting display of tickets.  `owner:fred` shows only tickets owned by fred. `status:closed` shows only closed tickets.||None||
 
 Site-wide defaults for macro arguments may be set in the `trac-jsgantt` section of `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
@@ -140,7 +143,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
-                   'schedule', 'hoursPerDay', 'doResourceLeveling')
+                   'schedule', 'hoursPerDay', 'doResourceLeveling',
+                   'display')
 
         self.options = {}
         for opt in options:
@@ -576,7 +580,40 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     t['link'] = self.req.href.milestone(t['summary'])
 
 
-            for ticket in self.tickets:
+            # If no display filter, just display all tickets
+            if not options.get('display') or options['display'] == '':
+                displayTickets = self.tickets
+            # Otherwise, process the filter
+            else:
+                # Build the list of display filters from the configured value
+                # The general form is
+                # 'display=field:value|field:value...'. Split on pipe
+                # to get each part
+                displayList = options['display'].split('|')
+
+                # Process each part into the display filter
+                displayFilter = {}
+                for f in displayList:
+                    field, value = f.split(':')
+                    displayFilter[field] = value
+                    
+                # Filter the tickets
+                displayTickets = []
+                for ticket in self.tickets:
+                    # Default to showing every ticket
+                    display = True
+                    # Process each element and disable display if any
+                    # filter fails to match.
+                    for f in displayFilter:
+                        if ticket[f] != displayFilter[f]:
+                            display = False
+                    if display:
+                        displayTickets.append(ticket)
+
+                # Sort the tickets
+                displayTickets.sort(self._compare_tickets)
+
+            for ticket in displayTickets:
                 tasks += self._format_ticket(ticket, options)
 
         return tasks
