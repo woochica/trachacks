@@ -569,6 +569,8 @@ class TracPM(Component):
                     if self.isCfg('start'):
                         milestoneTicket[self.fields['start']] = \
                               milestoneTicket[self.fields['finish']]
+                elif self.isCfg('start'):
+                    milestoneTicket[self.fields['start']] = ''
 
 
                 # Any ticket with this as a milestone and no
