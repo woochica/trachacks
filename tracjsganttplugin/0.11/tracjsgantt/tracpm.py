@@ -504,8 +504,11 @@ class TracPM(Component):
                     # Get all the predecessors
                     nodes2 = _expand(nodes, 'succ', '%s')
 
-                    # Get the children
-                    nodes = _expand(nodes2, 'parent', self.parent_format)
+                    # Get the children, if parent configured
+                    if self.isCfg('parent'):
+                        nodes = _expand(nodes2, 'parent', self.parent_format)
+                    else:
+                        nodes = nodes2
 
                 id += '|'.join(nodes)
 
