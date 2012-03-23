@@ -8,7 +8,7 @@ from trac.util.datefmt import format_date, utc
 from trac.ticket.query import Query
 
 from trac.config import IntOption, Option, ExtensionOption
-from trac.core import implements, Component, TracError, Interface
+from trac.core import implements, Component, TracError, Interface, ExtensionPoint
 
 from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 
@@ -925,11 +925,62 @@ class ResourceScheduler(Component):
 
     pm = None
 
+    # The ResourceScheduler uses the Bridge design pattern to separate
+    # the overall scheduling process from the implementation of
+    # prioritizing tasks, via an ITaskSorter implementation and
+    # determining resource availability, via an IResourceCalendar
+    # implementation.
+    #
+    # We identify all the enabled implementations via ExtensionPoint()
+    # then use _mixIn() to pick one (if more than one is enabled).
+
+    # Find any enabled sorters and calendars.  We'll pick one each in __init__
+    sorters = ExtensionPoint(ITaskSorter)
+    calendars = ExtensionPoint(IResourceCalendar)
+
+    # Pick one of N enabled implementations of interface or fall back
+    # to default if none are found.
+    #   interface - The name of the interface (e.g., 'ITaskSorter')
+    #   expt - The extension point to process
+    #   default - default implementation to use
+    def _mixIn(self, interface, extpt, default = None):
+        # Count the enabled implementations
+        i = 0
+        for e in extpt:
+            i += 1
+
+        # If none
+        if i == 0:
+            # Use default, if set
+            if default:
+                self.env.log.info(('No %s implementations enabled. ' +
+                                   'Using default, %s') % 
+                                  (interface, default))
+                e = default(self.env)
+            # Otherwise, we can't go on.
+            else:
+                raise TracError('No %s implementations enabled.' % interface)
+        # If more than one, log the one we picked.
+        elif i > 1:
+            self.env.log.info(('Found %s enabled %s implementations.  ' +
+                              'Using %s.') % 
+                              (i, interface, e))
+
+        # Return the chosen (or default) implementation.
+        return e
+
     def __init__(self):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
-        self.cal = SimpleCalendar(self.env)
-        self.cmp = ProjectSorter(self.env)
+        
+        self.cal = self._mixIn('IResourceCalendar',
+                               self.calendars,
+                               SimpleCalendar)
+
+        self.cmp = self._mixIn('ITaskSorter',
+                               self.sorters,
+                               SimpleSorter)
+
 
 
     # ITaskScheduler method
