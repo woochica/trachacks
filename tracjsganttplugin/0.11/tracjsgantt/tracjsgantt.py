@@ -64,6 +64,8 @@ class TracJSGanttSupport(Component):
               """Omit milestones""")
     Option('trac-jsgantt', 'option.schedule', 'alap',
            """Schedule algorithm: alap or asap""")
+    IntOption('trac-jsgantt', 'option.doResourceLeveling', 0,
+              """Resource level (1) or not (0)""")
     # This seems to be the first floating point option.
     Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
                 """Hours worked per day""")
@@ -115,6 +117,7 @@ The chart display can be controlled with a number of macro arguments:
 || `userMap`||Map user !IDs to full names (1) or not (0).||1||
 || `omitMilestones`||Show milestones for displayed tickets (0) or only those specified by `milestone=` (1)||0||
 || `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
+||`doResourceLeveling`||Resolve resource conflicts (1) or not (0) when scheduling tickets.||0||
 
 Site-wide defaults for macro arguments may be set in the `trac-jsgantt` section of `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
@@ -137,7 +140,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
-                   'schedule', 'hoursPerDay')
+                   'schedule', 'hoursPerDay', 'doResourceLeveling')
 
         self.options = {}
         for opt in options:

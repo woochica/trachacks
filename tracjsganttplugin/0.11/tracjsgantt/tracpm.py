@@ -97,7 +97,7 @@ class TracPM(Component):
            """Ticket type for milestone-like tickets""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
-                                ITaskScheduler, 'CalendarScheduler')
+                                ITaskScheduler, 'ResourceScheduler')
 
     def __init__(self):
         self.env.log.info('Initializing TracPM')
@@ -789,8 +789,8 @@ class SimpleCalendar(Component):
         return hours
 
 # ------------------------------------------------------------------------
-# Handles dates, duration (estimate) and dependencies but not resource
-# leveling.  
+# Handles dates, duration (estimate) dependencies, and resource
+# leveling but not priorities when leveling resources.
 #
 # Assumes a 5-day work week (Monday-Friday) and options['hoursPerDay']
 # for every resource.
@@ -807,9 +807,9 @@ class SimpleCalendar(Component):
 # work day starts at midnight (hour==0) and continues for the
 # configured number of hours per day (e.g., 00:00..08:00).
 #
-# Differs from SimpleScheduler only in using a pluggable calendar to
-# determine hours available on a date.
-class CalendarScheduler(Component):
+# Differs from CalendarScheduler only in keeping track of when
+# resources are available.
+class ResourceScheduler(Component):
     implements(ITaskScheduler)
 
     pm = None
@@ -823,6 +823,14 @@ class CalendarScheduler(Component):
     # ITaskScheduler method
     # Uses options hoursPerDay and schedule (alap or asap).
     def scheduleTasks(self, options, ticketsByID):
+        # The earliest (latest) time a resource is available for the
+        # next task in an ALAP (ASAP) schedule.  Indexed by
+        # owner/user.  Elements are a datetime.
+        #
+        # Need to clear this every time we schedule.
+        self.limits = {}
+
+        # Return a time delta hours (positive or negative) from
         # fromDate, accounting for working hours and weekends.
         def _calendarOffset(ticket, hours, fromDate):
             if hours < 0:
@@ -1008,19 +1016,26 @@ class CalendarScheduler(Component):
 
                         finish = [finish, False]
 
-                    # If we are to finish at the beginning of the work
-                    # day, our finish is really the end of the previous
-                    # work day
-                    if self.pm.isStartOfDay(finish[0]):
-                        # Start at start of day
-                        f = finish[0]
-                        # Move back one hour from start of day to make
-                        # sure finish is on a work day.
-                        f += _calendarOffset(t, -1, f)
-                        # Move forward one hour to the end of the day
-                        f += timedelta(hours=1)
+                # Check resource availability.  Can't start later than
+                # earliest available time.
+                if options.get('doResourceLeveling') == '1':
+                    limit = self.limits.get(t['owner'])
+                    if limit and limit < finish[0]:
+                        finish = [limit, True]
+                        # FIXME - This doesn't handle explicit finish
+                        # dates.  End up with negative durations.
 
-                        finish[0] = f
+                # If we are to finish at the beginning of the work
+                # day, our finish is really the end of the previous
+                # work day
+                if self.pm.isStartOfDay(finish[0]):
+                    f = finish[0]
+                    # Move back one hour from start of day to make
+                    # sure finish is on a work day.
+                    f += _calendarOffset(t, -1, f)
+                    # Move forward one hour to the end of the day
+                    f += timedelta(hours=1)
+                    finish[0] = f
 
                 # Set the field
                 t['calc_finish'] = finish
@@ -1046,6 +1061,11 @@ class CalendarScheduler(Component):
 
                 t['calc_start'] = start
 
+            # Remember the limit
+            limit = self.limits.get(t['owner'])
+            if not limit or limit > t['calc_start'][0]:
+                self.limits[t['owner']] = t['calc_start'][0]
+            
             return t['calc_start']
 
         # Schedule a task As Soon As Possible
@@ -1114,19 +1134,26 @@ class CalendarScheduler(Component):
                                            hours=options['hoursPerDay'])
                         start = [start, False]
 
-                    # If we are to start at the end of the work
-                    # day, our start is really the beginning of the next
-                    # work day
-                    if self.pm.isStartOfDay(start[0] -
-                                            timedelta(hours =
-                                                      options['hoursPerDay'])):
-                        s = start[0]
-                        # Move ahead to the start of the next day
-                        s += timedelta(hours=24-options['hoursPerDay'])
-                        # Adjust for work days as needed
-                        s += _calendarOffset(t, 1, s)
-                        s += timedelta(hours=-1)
-                        start = [s, start[1]]
+                # Check resource availability.  Can't finish earlier than
+                # latest available time.
+                if options.get('doResourceLeveling') == '1':
+                    limit = self.limits.get(t['owner'])
+                    if limit and limit > start[0]:
+                        start = [limit, True]
+
+                # If we are to start at the end of the work
+                # day, our start is really the beginning of the next
+                # work day
+                if self.pm.isStartOfDay(start[0] -
+                                        timedelta(hours =
+                                                  options['hoursPerDay'])):
+                    s = start[0]
+                    # Move ahead to the start of the next day
+                    s += timedelta(hours=24-options['hoursPerDay'])
+                    # Adjust for work days as needed
+                    s += _calendarOffset(t, 1, s)
+                    s += timedelta(hours=-1)
+                    start = [s, start[1]]
                 
                 # Set the field
                 t['calc_start'] = start
@@ -1152,6 +1179,11 @@ class CalendarScheduler(Component):
                                         t['calc_start'][0])
                     finish = [finish, start[1]]
                 t['calc_finish'] = finish
+
+            # Remember the limit
+            limit = self.limits.get(t['owner'])
+            if not limit or limit < t['calc_finish'][0]:
+                self.limits[t['owner']] = t['calc_finish'][0]
 
             return t['calc_finish']
 
