@@ -10,7 +10,7 @@ from trac.ticket.query import Query
 from trac.config import IntOption, Option, ExtensionOption
 from trac.core import implements, Component, TracError, Interface
 
-from pmapi import IResourceCalendar, ITaskScheduler
+from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 
 
 # TracPM masks implementation details of how various plugins implement
@@ -767,6 +767,65 @@ class SimpleCalendar(Component):
         else:
             hours = 8.0
         return hours
+
+# ------------------------------------------------------------------------
+class SimpleSorter(Component):
+    implements(ITaskSorter)
+
+    def __init__(self):
+        self.prioMap = self._buildEnumMap('priority')
+
+    # Need to sort priority on 1, 2, 3, not critical, blocker, major, etc.
+    def _buildEnumMap(self, field):
+        classMap = {}
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("SELECT name," + 
+                       db.cast('value', 'int') + 
+                       " FROM enum WHERE type=%s", (field,))
+        for name, value in cursor:
+            classMap[name] = value
+
+        return classMap
+
+    # Make sure all tickets hav a valid priority that we can map to
+    # sortable integer.
+    def prepareTasks(self, ticketsByID):
+        # Use average priority for tickets with bad priority
+        # FIXME - or would I be better allowing this to be configured?
+        # Priorities are continuous 0..n so half the length is average value
+        n = len(self.prioMap) / 2
+        # Search for the priority string that has that value
+        avgPriority = None
+        for prio in self.prioMap:
+            if self.prioMap[prio] == n:
+                avgPriority = prio
+        # If we didn't find one (unlikely), just use the first.
+        if avgPriority == None:
+            avgPriority = self.prioMap.keys()[0]
+
+        # Process all the tickets
+        for tid in ticketsByID:
+            ticket = ticketsByID[tid]
+            if self.prioMap.get(ticket['priority']) == None:
+                ticket['priority'] = avgPriority
+
+    # Compare two tickets by their priority value.
+    def compareTasks(self, t1, t2):
+        p1 = t1['priority']
+        p2 = t2['priority']
+        # Better priority (lower number) earlier
+        if p1 < p2:
+            result = -1
+        elif p1 > p2:
+            result = 1
+        else:
+            result = 0
+        self.env.log.debug('Comparing %d (%s) to %d (%s).  Result: %d' % 
+                           (t1['id'], p1,
+                            t2['id'], p2,
+                            result))
+        return result
 
 # ------------------------------------------------------------------------
 # Handles dates, duration (estimate) dependencies, and resource
