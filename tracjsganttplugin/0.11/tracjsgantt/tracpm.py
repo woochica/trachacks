@@ -446,7 +446,10 @@ class TracPM(Component):
                                 'Not configured as a field or relation.' %
                                 field)
                 
+            # Get tickets IDs of related tickets as strings
             nodes = ['%s' % row[0] for row in cursor] 
+            # Filter out ticket IDs we already know about
+            nodes = [tid for tid in nodes if tid not in origins]
 
             return origins + _expand(nodes, field, format)
 
@@ -482,7 +485,19 @@ class TracPM(Component):
                 else:
                     nodes = options['goal'].split('|')
 
-                id += '|'.join(_expand(nodes, 'succ', '%s'))
+                # Loop getting all the predecessors of the tickets
+                # gathered so far then the children of the tickets
+                # gathered so far until the list doesn't change with a
+                # new query.
+                nodes2 = []
+                while nodes != nodes2:
+                    # Get all the predecessors
+                    nodes2 = _expand(nodes, 'succ', '%s')
+
+                    # Get the children
+                    nodes = _expand(nodes2, 'parent', self.parent_format)
+
+                id += '|'.join(nodes)
 
         return id
 
@@ -1145,7 +1160,9 @@ class CalendarScheduler(Component):
             roots = []
             for tid in ticketsByID:
                 if self.pm.parent(ticketsByID[tid]) == 0:
-                    roots.append(tid)
+                    pid = self.pm.parent(ticketsByID[tid])
+                    if pid == 0 or pid not in ticketsByID:
+                        roots.append(tid)
 
             # Build the descendant tree for each root (and its descendants)
             for tid in roots:
