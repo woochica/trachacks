@@ -785,13 +785,10 @@ class SimpleCalendar(Component):
         return hours
 
 # ------------------------------------------------------------------------
-class SimpleSorter(Component):
-    implements(ITaskSorter)
-
-    def __init__(self):
-        self.prioMap = self._buildEnumMap('priority')
-
-    # Need to sort priority on 1, 2, 3, not critical, blocker, major, etc.
+# Some common behaviors for task sorters.
+class BaseSorter:
+    # When sorting on an enum like priority or severity, we need to
+    # sort on 1, 2, 3, not 'critical', 'blocker', 'major', etc.
     def _buildEnumMap(self, field):
         classMap = {}
         db = self.env.get_db_cnx()
@@ -804,21 +801,46 @@ class SimpleSorter(Component):
 
         return classMap
 
+    # Priorities are continuous, 0..n, so half the length is average
+    # value Search for the priority string that has that value.
+    def averageEnum(self, enumMap):
+        n = len(enumMap) / 2
+        # Search for the priority string that has that value
+        avgValue = None
+        for value in enumMap:
+            if enumMap[value] == n:
+                avgValue = value
+        # If we didn't find one (unlikely), just use the first.
+        if avgValue == None:
+            avgValue = enumMap.keys()[0]
+
+        return avgValue
+
+    # Compare two tasks by a single field.
+    def compareOneField(self, field, t1, t2):
+        p1 = t1[field]
+        p2 = t2[field]
+        # Better priority (lower number) earlier
+        if p1 < p2:
+            result = -1
+        elif p1 > p2:
+            result = 1
+        else:
+            result = 0
+        return result
+
+# ------------------------------------------------------------------------
+class SimpleSorter(BaseSorter, Component):
+    implements(ITaskSorter)
+
+    def __init__(self):
+        self.prioMap = self._buildEnumMap('priority')
+
     # Make sure all tickets hav a valid priority that we can map to
     # sortable integer.
     def prepareTasks(self, ticketsByID):
         # Use average priority for tickets with bad priority
-        # FIXME - or would I be better allowing this to be configured?
-        # Priorities are continuous 0..n so half the length is average value
-        n = len(self.prioMap) / 2
-        # Search for the priority string that has that value
-        avgPriority = None
-        for prio in self.prioMap:
-            if self.prioMap[prio] == n:
-                avgPriority = prio
-        # If we didn't find one (unlikely), just use the first.
-        if avgPriority == None:
-            avgPriority = self.prioMap.keys()[0]
+        avgPriority = self.averageEnum(self.prioMap)
 
         # Process all the tickets
         for tid in ticketsByID:
@@ -828,20 +850,54 @@ class SimpleSorter(Component):
 
     # Compare two tickets by their priority value.
     def compareTasks(self, t1, t2):
-        p1 = t1['priority']
-        p2 = t2['priority']
-        # Better priority (lower number) earlier
-        if p1 < p2:
-            result = -1
-        elif p1 > p2:
-            result = 1
-        else:
-            result = 0
-        self.env.log.debug('Comparing %d (%s) to %d (%s).  Result: %d' % 
-                           (t1['id'], p1,
-                            t2['id'], p2,
-                            result))
-        return result
+        return self.compareOneField('priority', t1, t2)
+
+# ------------------------------------------------------------------------
+# Sort tasks within a "project".  That is, using some grouping type
+# ticket using Subtickets or ChildTickets plugin to create a tree of
+# projects made of deliverables which have tasks which have subtasks,
+# etc. and being able to adjust leaf-node task priority by changing
+# the project priority and having it carry through the tree.
+class ProjectSorter(BaseSorter, Component):
+    implements(ITaskSorter)
+
+    def __init__(self):
+        self.prioMap = self._buildEnumMap('priority')
+        # FIXME - would I be better off having the PM pass itself in
+        # when creating the sorter?
+        self.pm = TracPM(self.env)
+
+    # Make sure all tickets hav a valid priority that we can map to
+    # sortable integer and compute effective priority of children
+    # based on parent priority.
+    def prepareTasks(self, ticketsByID):
+        # Make sure every ticket has a valid priority.
+
+        # Use average priority for tickets with bad priority
+        avgPriority = self.averageEnum(self.prioMap)
+
+        # Process all the tickets
+        for tid in ticketsByID:
+            ticket = ticketsByID[tid]
+            if self.prioMap.get(ticket['priority']) == None:
+                ticket['priority'] = avgPriority
+
+        def setEffectivePriority(tid, parentPriority):
+            ticket = ticketsByID[tid]
+            effectivePriority = parentPriority + \
+                [ self.prioMap[ticket['priority']] ]
+            ticket['effectivePriority'] = copy.copy(effectivePriority)
+            for cid in self.pm.children(ticket):
+                setEffectivePriority(cid, effectivePriority)
+
+        # Build up "effective priority" by prepending parent priority
+        # to task priority.
+        for pid in self.pm.roots(ticketsByID):
+            setEffectivePriority(pid, [])
+
+    # Compare two tickets by their priority value.
+    def compareTasks(self, t1, t2):
+        return self.compareOneField('effectivePriority', t1, t2)
 
 # ------------------------------------------------------------------------
 # Handles dates, duration (estimate) dependencies, and resource
@@ -873,7 +929,7 @@ class ResourceScheduler(Component):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
         self.cal = SimpleCalendar(self.env)
-        self.cmp = SimpleSorter(self.env)
+        self.cmp = ProjectSorter(self.env)
 
 
     # ITaskScheduler method
@@ -986,11 +1042,6 @@ class ResourceScheduler(Component):
             else:
                 better = False
 
-            if (better):
-                self.env.log.debug('%s is better than %s' % (d1, d2))
-            else:
-                self.env.log.debug('%s is NOT better than %s' % (d1, d2))
-                
             return better
                 
         # TODO: If we have start and estimate, we can figure out
@@ -1043,7 +1094,6 @@ class ResourceScheduler(Component):
                                            'but %s is not in the chart. ' +
                                            'Dependency deadlines ignored.') %
                                           (t['id'], id, id))
-                self.env.log.debug('earliest successor is %s' % start)
                 return copy.copy(start)
 
             # If we haven't scheduled this yet, do it now.
