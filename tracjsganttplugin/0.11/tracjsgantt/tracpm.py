@@ -465,7 +465,7 @@ class TracPM(Component):
 
         id = ''
 
-        if options['root']:
+        if options.get('root'):
             if not self.isCfg('parent'):
                 self.env.log.info('Cannot get tickets under root ' +
                                   'without "parent" field configured')
@@ -482,7 +482,7 @@ class TracPM(Component):
                                        'parent',
                                        self.parent_format))
 
-        if options['goal']:
+        if options.get('goal'):
             if not self.isCfg('succ'):
                 self.env.log.info('Cannot get tickets for goal ' +
                                   'without "succ" field configured')
