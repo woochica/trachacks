@@ -1,5 +1,17 @@
 from trac.core import Interface
 
+class ITaskSorter(Interface):
+    # Process task list to precompute keys or otherwise make
+    # compareTasks() more efficient.
+    def prepareTasks(self, ticketsByID):
+        """Called to prepare tasks for sorting."""
+
+    # Provide a compare function for sorting tasks.
+    # Maybe be used as cmp argument for sorted(), and list.sort().
+    # Returns -1 if t1 < t2, 0 if they are equal, 1 if t1 > t2.
+    def compareTasks(self, t1, t2):
+        """Called to compare two tasks"""
+
 class IResourceCalendar(Interface):
     # Return the number of hours available for the resource on the
     # specified date.
