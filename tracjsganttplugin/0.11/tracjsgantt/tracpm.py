@@ -513,9 +513,7 @@ class TracPM(Component):
         # A milestone has no children or parent
         if self.isCfg('parent'):
             ticket[self.fields['parent']] = 0
-            ticket['children'] = []
-        else:
-            ticket['children'] = None
+        ticket['children'] = []
 
         # Place holder.
         ticket['link'] = ''
@@ -652,7 +650,7 @@ class TracPM(Component):
         # Build child lists
         for t in tickets:
             if not self.isCfg('parent'):
-                t['children'] = None
+                t['children'] = []
             elif self.isField('parent'):
                 t['children'] = [c['id'] for c in tickets \
                                      if c[fieldName] == t['id']]
