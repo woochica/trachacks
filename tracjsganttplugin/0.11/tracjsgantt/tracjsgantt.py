@@ -329,18 +329,14 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     # WBS is a list like [ 2, 4, 1] (the first child of the fourth
     # child of the second top-level element).
     def _compute_wbs(self):
-        self.env.log.debug('Computing WBS')
         # Set the ticket's level and wbs then recurse to children.
         def _setLevel(id, wbs, level):
-            self.env.log.debug('Computing WBS for (%s, %s, %s)' %
-                               (id, wbs, level))
             # Update this node
             self.ticketsByID[id]['level'] = level
             self.ticketsByID[id]['wbs'] = copy.copy(wbs)
 
             # Recurse to children
             childIDs = self.pm.children(self.ticketsByID[id])
-            self.env.log.debug('%s has children %s' % (id, childIDs))
             if childIDs:
                 childTickets = [self.ticketsByID[id] for id in childIDs]
                 childTickets.sort(self._compare_tickets)
@@ -364,13 +360,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # top-level
         wbs = [ 1 ]
         for t in self.tickets:
-            self.env.log.debug('Computing for %s' % t['id'])
-            pid = self.pm.parent(t)
-            self.env.log.debug('  parent is %s' % pid)
             if self.pm.parent(t) == None \
                     or self.pm.parent(t) == 0 \
                     or self.pm.parent(t) not in self.ticketsByID.keys():
-                self.env.log.debug('  setting level')
                 wbs = _setLevel(t['id'], wbs, 1)
 
 
