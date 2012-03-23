@@ -939,8 +939,9 @@ class ResourceScheduler(Component):
         # next task in an ALAP (ASAP) schedule.  Indexed by
         # owner/user.  Elements are a datetime.
         #
-        # Need to clear this every time we schedule.
+        # Need to clear these every time we schedule.
         self.limits = {}
+        self.taskStack = []
 
         # Return a time delta hours (positive or negative) from
         # fromDate, accounting for working hours and weekends.
@@ -1096,6 +1097,19 @@ class ResourceScheduler(Component):
                                           (t['id'], id, id))
                 return copy.copy(start)
 
+            # If we found a loop, tell the user and give up.
+            if t['id'] in self.taskStack:
+                # We want to show the whole loop so add the current ID
+                # to the list
+                self.taskStack.append(t['id'])
+                # Not much we can do at this point so show the user
+                # the data error
+                raise TracError('Ticket %s is part of a loop: %s' %
+                                (t['id'], 
+                                 '->'.join([str(t) for t in self.taskStack])))
+
+            self.taskStack.append(t['id'])
+
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_finish') == None:
                 # If there is a finish set, use it
@@ -1171,6 +1185,8 @@ class ResourceScheduler(Component):
             limit = self.limits.get(t['owner'])
             if not limit or limit > t['calc_start'][0]:
                 self.limits[t['owner']] = t['calc_start'][0]
+
+            self.taskStack.pop()
             
             return t['calc_start']
 
@@ -1215,6 +1231,19 @@ class ResourceScheduler(Component):
                                            'Dependency deadlines ignored.') %
                                           (t['id'], id, id))
                 return copy.copy(finish)
+
+            # If we found a loop, tell the user and give up.
+            if t['id'] in self.taskStack:
+                # We want to show the whole loop so add the current ID
+                # to the list
+                self.taskStack.append(t['id'])
+                # Not much we can do at this point so show the user
+                # the data error
+                raise TracError('Ticket %s is part of a loop: %s' %
+                                (t['id'], 
+                                 '->'.join([str(t) for t in self.taskStack])))
+
+            self.taskStack.append(t['id'])
 
             # If we haven't scheduled this yet, do it now.
             if t.get('calc_start') == None:
@@ -1291,6 +1320,8 @@ class ResourceScheduler(Component):
             if not limit or limit < t['calc_finish'][0]:
                 self.limits[t['owner']] = t['calc_finish'][0]
 
+            self.taskStack.pop()
+
             return t['calc_finish']
 
         # Augment tickets in a scheduler-specific way to make
@@ -1347,14 +1378,16 @@ class ResourceScheduler(Component):
                             # parent's dependencies down.
                             if cousins == []:
                                 # For each related ticket, if any
-                                for tid in fieldFunc(parent):
+                                for tid in fwd(parent):
                                     # If the other ticket is in the list we're
                                     # working on
                                     if tid in ticketsByID:
-                                        # Add parent's dependency to this
-                                        # child
-                                        fwd(ticketsByID[cid]).append(tid)
-                                        rev(ticketsByID[tid]).append(cid)
+                                        # And not already linked
+                                        if tid not in fwd(ticketsByID[cid]):
+                                            # Add parent's dependency to this
+                                            # child
+                                            fwd(ticketsByID[cid]).append(tid)
+                                            rev(ticketsByID[tid]).append(cid)
 
                             # Recurse to lower-level descendants
                             propagateDependencies(cid)
