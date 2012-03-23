@@ -857,6 +857,7 @@ class ResourceScheduler(Component):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
         self.cal = SimpleCalendar(self.env)
+        self.cmp = SimpleSorter(self.env)
 
 
     # ITaskScheduler method
@@ -1242,18 +1243,6 @@ class ResourceScheduler(Component):
                     desc[tid] += buildDesc(cid)
                 return desc[tid]
             
-            # Find the roots of the trees
-            roots = []
-            for tid in ticketsByID:
-                if self.pm.parent(ticketsByID[tid]) == 0:
-                    pid = self.pm.parent(ticketsByID[tid])
-                    if pid == 0 or pid not in ticketsByID:
-                        roots.append(tid)
-
-            # Build the descendant tree for each root (and its descendants)
-            for tid in roots:
-                buildDesc(tid)
-                
             # Propagate dependencies from parent to descendants (first
             # children, then recurse).
             # 
@@ -1305,23 +1294,127 @@ class ResourceScheduler(Component):
                             propagateDependencies(cid)
 
 
+            roots = []
+            if self.pm.isCfg('parent'):
+                # Find the roots of the trees
+                for tid in ticketsByID:
+                    if self.pm.parent(ticketsByID[tid]) == 0:
+                        roots.append(tid)
+
+                # Build the descendant tree for each root (and its descendants)
+                for tid in roots:
+                    buildDesc(tid)
+                
             # For each ticket to schedule
             for tid in ticketsByID:
-                # If it has no parent
-                if self.pm.parent(ticketsByID[tid]) == 0:
+                ticket = ticketsByID[tid]
+                # If it is the root of a tree
+                if tid in roots:
                     # Propagate depedencies down to its children
                     # (which recurses to update other descendants)
                     propagateDependencies(tid)
 
+                # Count predecessors and successors in tickets being
+                # scheduled.
+                if self.pm.isCfg('pred'):
+                    pred = self.pm.predecessors(ticket)
+                    pred = [p for p in pred if p in ticketsByID]
+                    ticket['npred'] = len(pred)
+                else:
+                    ticket['npred'] = 0
+
+                if self.pm.isCfg('succ'):
+                    succ = self.pm.successors(ticket)
+                    succ = [s for s in succ if s in ticketsByID]
+                    ticket['nsucc'] = len(succ)
+                else:
+                    ticket['nsucc'] = 0
+
+        # This function implements a simple serial-SGS (Solution
+        # Generation Scheme) as suggested by Briand and Bezanger in
+        # "An any-order SGS for project scheduling with scarce
+        # resources and precedence constraints":
+        # 
+        #   A serial-SGS consists of n interations: In each iteration,
+        #   an activity is selected according to its priority and
+        #   inserted inside a partial schedule at the earliest
+        #   ... Only an eligible activity can be selected at each
+        #   iteration.  An activity is eligible if all its
+        #   predecessors have already been scheduled.  The priorities
+        #   are determined according to [a] rule [outside the SGS].
+        #
+        # Our ASAP schedule follows their description.  ALAP reverses
+        # it (scheduling the last task, then any task with all of its
+        # successors already scheduled, etc.
+        #
+        # One difference from their algorithm description is they step
+        # through time, chosing tasks that might be done then.  We
+        # step through tasks and let time fall where it may.
+        #
+        #  scheduleFunction - schedule one task
+        #  eligibleField - when ticket[eligibleField] is 0, the ticket
+        #      is eligible
+        #  nextIndex - index of best ticket in elibigle list
+        #  dependentFunction - Get list of dependents to update
+        #      eligibleField in
+        def serialSGS(scheduleFunction,
+                      eligibleField, 
+                      nextIndex, 
+                      dependentFunction):
+            unscheduled = ticketsByID.keys()
+
+            # FIXME - Sometimes, eligible includes a group which has
+            # children which have predecessors or successors.  Do I
+            # need to propagate dependencies up, too?  This seems to
+            # work but I guess needs more testing.
+            eligible = [ticketsByID[tid] for tid in unscheduled \
+                            if ticketsByID[tid][eligibleField] == 0]
+
+            while unscheduled and eligible:
+                # FIXME - Maybe sort after adding some. I may not need
+                # to sort every loop.)
+                eligible.sort(self.cmp.compareTasks)
+
+                # Schedule the best eligible task
+                ticket = eligible.pop(nextIndex)
+                tid = ticket['id']
+                unscheduled.remove(tid)
+                scheduleFunction(ticket)
+
+                # Decrement number of unscheduled successors for each
+                # predecessor (or vice versa).  Any ticket that ends
+                # up with no unscheduled dependents is now eligible to
+                # schedule.
+                for tid in dependentFunction(ticket):
+                    if tid in ticketsByID:
+                        other = ticketsByID[tid]
+                        other[eligibleField] -= 1
+                        if other[eligibleField] == 0:
+                            eligible.append(other)
+
+            if len(unscheduled):
+                self.env.log.error('Not all tickets scheduled')
+
+
         # Main schedule processing
 
-        # If there is a parent/child relationship configured
-        if self.pm.isCfg('parent'):
-            _augmentTickets(ticketsByID)
+        # Add data to tickets to facilitate scheduling.Propagate
+        _augmentTickets(ticketsByID)
 
-        for id in ticketsByID:
-            if options['schedule'] == 'alap':
-                _schedule_task_alap(ticketsByID[id])
-            else:
-                _schedule_task_asap(ticketsByID[id])
+        # Make sure sorting (compareTasks, below) works.
+        self.cmp.prepareTasks(ticketsByID)
+
+        if options['schedule'] == 'alap':
+            # Schedule ALAP.
+            # Eligible tasks are those with nsucc==0.
+            # The best eligible task is last (-1) after sorting.
+            # Update predecessors after scheduling a task
+            serialSGS(_schedule_task_alap, 'nsucc', -1, self.pm.predecessors)
+        # ASAP (FIXME - should I allow for no scheduling?)
+        else:
+            # Schedule ASAP.
+            # Eligible tasks are those with npred==0.
+            # The best eligible task is first (0) after sorting.
+            # Update successors after scheduling a task
+            serialSGS(_schedule_task_asap, 'npred', 0, self.pm.successors)
 
