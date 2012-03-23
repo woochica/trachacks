@@ -264,6 +264,22 @@ class TracPM(Component):
     def children(self, ticket):
         return ticket['children']
 
+    # Return a list of integer IDs of the roots (tickets without
+    # parents) in ticketsByID.
+    def roots(self, ticketsByID):
+        if self.isCfg('parent'):
+            roots = []
+            # Find the roots of the trees
+            for tid in ticketsByID:
+                pid = self.parent(ticketsByID[tid])
+                if pid == 0 or pid not in ticketsByID:
+                    roots.append(tid)
+        # If there is no parent field, all tickets are roots.
+        else:
+            roots = ticketsByID.keys()
+
+        return roots
+
     # Return a list of integer ticket IDs for immediate precedessors
     # for ticket or an empty list if there are none.
     def predecessors(self, ticket):
@@ -1294,13 +1310,8 @@ class ResourceScheduler(Component):
                             propagateDependencies(cid)
 
 
-            roots = []
+            roots = self.pm.roots(ticketsByID)
             if self.pm.isCfg('parent'):
-                # Find the roots of the trees
-                for tid in ticketsByID:
-                    if self.pm.parent(ticketsByID[tid]) == 0:
-                        roots.append(tid)
-
                 # Build the descendant tree for each root (and its descendants)
                 for tid in roots:
                     buildDesc(tid)
