@@ -4,34 +4,14 @@ import math
 import copy
 from datetime import timedelta, datetime
 
-
 from trac.util.datefmt import format_date, utc
 from trac.ticket.query import Query
 
 from trac.config import IntOption, Option, ExtensionOption
 from trac.core import implements, Component, TracError, Interface
 
-class IResourceCalendar(Interface):
-    # Return the number of hours available for the resource on the
-    # specified date.
-    # FIXME - should this be pm_hoursAvailable or something so other
-    # plugins can implement it without potential conflict?
-    def hoursAvailable(self, date, resource = None):
-        """Called to see how many hours are available on date"""
+from pmapi import IResourceCalendar, ITaskScheduler
 
-class ITaskScheduler(Interface):
-    # Schedule each the ticket in tickets with consideration for
-    # dependencies, estimated work, hours per day, etc.
-    # 
-    # ticketsByID is a dictionary, indexed by numeric ticket ID, each
-    # ticket contains at least the fields returned by queryFields()
-    # and the whole list was processed by postQuery().
-    #
-    # On exit, each ticket has t['calc_start'] and t['calc_finish']
-    # set (FIXME - we should probably be able to configure those field
-    # names.) and can be accessed with TracPM.start() and finish().
-    def scheduleTasks(self, options, ticketsByID):
-        """Called to schedule tasks"""
 
 # TracPM masks implementation details of how various plugins implement
 # dates and ticket relationships and business rules about what the
