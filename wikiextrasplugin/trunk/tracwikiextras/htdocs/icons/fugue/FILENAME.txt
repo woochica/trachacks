@@ -243,6 +243,8 @@ balloon--exclamation.png
 balloon--minus.png
 balloon--pencil.png
 balloon--plus.png
+balloon-box.png
+balloon-box-left.png
 balloon-buzz.png
 balloon-buzz-left.png
 balloon-ellipsis.png
@@ -518,6 +520,8 @@ blueprint-horizontal.png
 blueprint-medium.png
 blueprints.png
 bluetooth.png
+board-game.png
+board-game-go.png
 bomb.png
 book.png
 book--arrow.png
@@ -704,6 +708,7 @@ camera-small.png
 camera-small-black.png
 candle.png
 candle-white.png
+candy-cane.png
 car.png
 car--arrow.png
 car--exclamation.png
@@ -737,6 +742,11 @@ cassette--plus.png
 cassette-label.png
 cassette-small.png
 category.png
+category-group.png
+category-group-select.png
+category-item.png
+category-item-select.png
+categories.png
 caution-board.png
 caution-board-prohibition.png
 certificate.png
@@ -754,6 +764,8 @@ chair--exclamation.png
 chair--minus.png
 chair--pencil.png
 chair--plus.png
+chalkboard.png
+chalkboard-text.png
 chart.png
 chart--arrow.png
 chart--exclamation.png
@@ -767,6 +779,8 @@ chart-pie-separate.png
 chart-up.png
 chart-up-color.png
 checkerboard.png
+cheese.png
+cheese-hole.png
 cheque.png
 cheque--arrow.png
 cheque--exclamation.png
@@ -778,6 +792,9 @@ chevron.png
 chevron-expand.png
 chevron-small.png
 chevron-small-expand.png
+chocolate.png
+chocolate-bite.png
+chocolate-milk.png
 church.png
 cigarette.png
 cigarette-prohibition.png
@@ -1003,6 +1020,7 @@ database-medium.png
 database-network.png
 database-share.png
 database-small.png
+database-sql.png
 databases.png
 databases-relation.png
 desktop.png
@@ -1230,6 +1248,7 @@ edit-alignment-right.png
 edit-all-caps.png
 edit-bold.png
 edit-code.png
+edit-code-division.png
 edit-color.png
 edit-column.png
 edit-comma.png
@@ -1251,6 +1270,7 @@ edit-image.png
 edit-image-center.png
 edit-image-right.png
 edit-indent.png
+edit-indent-rtl.png
 edit-italic.png
 edit-kerning.png
 edit-language.png
@@ -1258,10 +1278,13 @@ edit-letter-spacing.png
 edit-line-spacing.png
 edit-list.png
 edit-list-order.png
+edit-list-order-rtl.png
+edit-list-rtl.png
 edit-lowercase.png
 edit-mathematics.png
 edit-number.png
 edit-outdent.png
+edit-outdent-rtl.png
 edit-outline.png
 edit-overline.png
 edit-padding.png
@@ -1376,6 +1399,7 @@ film-cast.png
 film-medium.png
 film-small.png
 film-timeline.png
+film-youtube.png
 films.png
 fingerprint.png
 fingerprint-recognition.png
@@ -1490,6 +1514,8 @@ geotag-document.png
 geotag-small.png
 ghost.png
 ghost-small.png
+git.png
+git-small.png
 glass.png
 glass--arrow.png
 glass--exclamation.png
@@ -1680,6 +1706,7 @@ information.png
 information-balloon.png
 information-button.png
 information-frame.png
+information-italic.png
 information-octagon.png
 information-octagon-frame.png
 information-shield.png
@@ -1711,6 +1738,7 @@ keyboard--minus.png
 keyboard--pencil.png
 keyboard--plus.png
 keyboard-command.png
+keyboard-enter.png
 keyboard-full.png
 keyboard-full-wireless.png
 keyboard-space.png
@@ -1834,6 +1862,7 @@ lock--minus.png
 lock--pencil.png
 lock--plus.png
 lock-small.png
+lock-ssl.png
 lock-unlock.png
 lollipop.png
 luggage.png
@@ -1883,9 +1912,10 @@ mail--exclamation.png
 mail--minus.png
 mail--pencil.png
 mail--plus.png
+mail-air.png
+mail-at-sign.png
 mail-forward.png
 mail-forward-all.png
-mail-at-sign.png
 mail-medium.png
 mail-open.png
 mail-open-document.png
@@ -1989,6 +2019,8 @@ microphone--pencil.png
 microphone--plus.png
 milestone.png
 milestone-calendar.png
+milk.png
+milk-label.png
 minus.png
 minus-button.png
 minus-circle.png
@@ -2751,6 +2783,8 @@ status.png
 status-away.png
 status-busy.png
 status-offline.png
+stickman.png
+stickman-smiley.png
 sticky-note.png
 sticky-note--arrow.png
 sticky-note--exclamation.png
@@ -2887,6 +2921,9 @@ telephone--minus.png
 telephone--pencil.png
 telephone--plus.png
 telephone-fax.png
+telephone-handset.png
+telephone-handset-prohibition.png
+telephone-handset-wire.png
 telephone-medium.png
 telephone-network.png
 telephone-off.png
@@ -2898,6 +2935,7 @@ television--minus.png
 television--pencil.png
 television--plus.png
 television-image.png
+television-medium.png
 television-off.png
 television-protector.png
 television-test.png
@@ -2919,6 +2957,8 @@ thermometer--plus.png
 thermometer-high.png
 thermometer-low.png
 thumb.png
+thumb-small.png
+thumb-small-up.png
 thumb-up.png
 tick.png
 tick-button.png
@@ -3000,11 +3040,16 @@ truck-empty.png
 ui-accordion.png
 ui-address-bar.png
 ui-address-bar-green.png
+ui-address-bar-lock.png
 ui-address-bar-red.png
 ui-address-bar-yellow.png
 ui-breadcrumb.png
+ui-breadcrumb-select.png
+ui-breadcrumb-select-current.png
+ui-breadcrumb-select-parent.png
 ui-button.png
 ui-button-default.png
+ui-button-image.png
 ui-button-navigation.png
 ui-button-navigation-back.png
 ui-button-toggle.png
@@ -3058,6 +3103,9 @@ ui-scroll-pane-text.png
 ui-scroll-pane-text-image.png
 ui-scroll-pane-tree.png
 ui-search-field.png
+ui-seek-bar.png
+ui-seek-bar-050.png
+ui-seek-bar-100.png
 ui-separator.png
 ui-separator-label.png
 ui-slider.png
@@ -3082,16 +3130,23 @@ ui-tab--pencil.png
 ui-tab--plus.png
 ui-tab-bottom.png
 ui-tab-content.png
+ui-tab-content-vertical.png
 ui-tab-side.png
 ui-text-area.png
 ui-text-field.png
+ui-text-field-clear.png
+ui-text-field-clear-button.png
 ui-text-field-format.png
 ui-text-field-hidden.png
+ui-text-field-medium.png
+ui-text-field-medium-select.png
 ui-text-field-password.png
 ui-text-field-password-green.png
 ui-text-field-password-red.png
 ui-text-field-password-yellow.png
 ui-text-field-select.png
+ui-text-field-small.png
+ui-text-field-small-select.png
 ui-text-field-suggestion.png
 ui-toolbar.png
 ui-toolbar--arrow.png
@@ -3210,6 +3265,7 @@ water--pencil.png
 water--plus.png
 weather.png
 weather-cloud.png
+weather-cloud-small.png
 weather-clouds.png
 weather-cloudy.png
 weather-fog.png
@@ -3219,7 +3275,9 @@ weather-moon-clouds.png
 weather-moon-fog.png
 weather-moon-half.png
 weather-rain.png
+weather-rain-little.png
 weather-snow.png
+weather-snow-little.png
 weather-tornado.png
 weather-wind.png
 web-slice.png
@@ -3242,6 +3300,8 @@ weight--minus.png
 weight--pencil.png
 weight--plus.png
 wheel.png
+wi-fi.png
+wi-fi-zone.png
 windows.png
 wooden-box.png
 wooden-box--arrow.png
@@ -3266,6 +3326,7 @@ wrench--minus.png
 wrench--pencil.png
 wrench--plus.png
 wrench-screwdriver.png
+x-ray.png
 xfn.png
 xfn-colleague.png
 xfn-colleague-met.png

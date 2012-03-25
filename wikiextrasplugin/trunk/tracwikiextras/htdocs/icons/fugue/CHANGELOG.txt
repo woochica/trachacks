@@ -1,3 +1,50 @@
+Version 3.3.4 (March 15, 2012)
+- Add <edit-code-division>, <edit-indent-rtl>,
+  <edit-list-order-rtl>, <edit-list-rtl> and
+  <edit-outdent-rtl>.
+- Add <git*>.
+- Add <milk*>.
+- Add <television-medium>.
+- Add <ui-button-image>.
+- Add <ui-text-field-clear*>.
+- Add <weather-*-little>.
+------------------------------------------------------------
+Version 3.3.3 (February 14, 2012)
+- Add <candy-cane>.
+- Add <chalkboard*>.
+- Add <chocolate*>.
+- Add <information-italic>.
+- Add <keyboard-enter>.
+- Add <mail-air>.
+- Add <telephone-handset*>.
+- Add <weather-cloud-small>.
+- Add <wi-fi*>.
+- Add <x-ray>.
+- Add <24/gear>.
+- Add <24/keyboard-enter>.
+- Add <24/prohibition>.
+- Add <32/keyboard-enter>.
+------------------------------------------------------------
+Version 3.3.2 (February 9, 2012)
+- Add <category-group*>, <category-item*> and <categories>.
+- Add <cheese*>.
+- Add <database-sql>.
+- Add <stickman*>.
+------------------------------------------------------------
+Version 3.3.1 (January 16, 2012)
+- Add <balloon-box*>.
+- Add <board-game*>.
+- Add <film-youtube>.
+- Add <lock-ssl>.
+- Add <thumb-small*>.
+- Add <ui-address-bar-lock>.
+- Add <ui-breadcrumb-select*>
+- Add <ui-seek-bar*>.
+- Add <ui-tab-content-vertical>.
+- Add <ui-text-field-medium*> and <ui-text-field-small*>.
+- Add <24/lock-ssl>.
+- Add <32/lock-ssl>.
+------------------------------------------------------------
 Version 3.3 (November 19, 2011)
 - Add <application-icon-large> and <application-plus-red>.
 - Add <fruit-apple-half>.
