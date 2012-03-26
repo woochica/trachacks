@@ -53,7 +53,14 @@ class HudsonTracPlugin(Component):
     username = Option('hudson', 'username', '',
                       'The username to use to access hudson')
     password = Option('hudson', 'password', '',
-                      'The password to use to access hudson')
+                      'The password to use to access hudson - but see also '
+                      'the api_token field.')
+    api_token = Option('hudson', 'api_token', '',
+                       'The API Token to use to access hudson. This takes '
+                       'precendence over any password and is the preferred '
+                       'mechanism if you are running Jenkins 1.426 or later '
+                       'and Jenkins is enforcing authentication (as opposed '
+                       'to, for example, a proxy in front of Jenkins).')
     nav_url  = Option('hudson', 'main_page', '/hudson/',
                       'The url of the hudson main page to which the trac nav '
                       'entry should link; if empty, no entry is created in '
@@ -99,17 +106,26 @@ class HudsonTracPlugin(Component):
         api_url += 'api/python'
 
         # set up http authentication
-        pwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
-        pwd_mgr.add_password(None, api_url, self.username, self.password)
+        if self.username and self.api_token:
+            handlers = [
+                self.HTTPOpenHandlerBasicAuthNoChallenge(self.username,
+                                                         self.api_token)
+            ]
+        elif self.username and self.password:
+            pwd_mgr = urllib2.HTTPPasswordMgrWithDefaultRealm()
+            pwd_mgr.add_password(None, api_url, self.username, self.password)
 
-        b_auth = urllib2.HTTPBasicAuthHandler(pwd_mgr)
-        d_auth = urllib2.HTTPDigestAuthHandler(pwd_mgr)
+            b_auth = urllib2.HTTPBasicAuthHandler(pwd_mgr)
+            d_auth = urllib2.HTTPDigestAuthHandler(pwd_mgr)
 
-        self.url_opener = urllib2.build_opener(b_auth, d_auth,
-                                            self.HudsonFormLoginHandler(self))
+            handlers = [ b_auth, d_auth, self.HudsonFormLoginHandler(self) ]
+        else:
+            handlers = []
 
-        self.env.log.debug("registered auth-handler for '%s', username='%s'",
-                           api_url, self.username)
+        self.url_opener = urllib2.build_opener(*handlers)
+        if handlers:
+            self.env.log.debug("registered auth-handlers for '%s', " \
+                               "username='%s'", api_url, self.username)
 
         # construct tree=... parameter to query for the desired items
         tree = '%(b)s'
