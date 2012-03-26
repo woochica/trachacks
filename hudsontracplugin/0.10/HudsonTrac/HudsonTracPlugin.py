@@ -58,6 +58,8 @@ class HudsonTracPlugin(Component):
                       'The url of the hudson main page to which the trac nav '
                       'entry should link; if empty, no entry is created in '
                       'the nav bar. This may be a relative url.')
+    tl_label = Option('hudson', 'timeline_opt_label', 'Hudson Builds',
+                      'The label for the timeline option to display builds')
     disp_tab = BoolOption('hudson', 'display_in_new_tab', 'false',
                           'Open hudson page in new tab/window')
     alt_succ = BoolOption('hudson', 'alternate_success_icon', 'false',
@@ -245,7 +247,7 @@ class HudsonTracPlugin(Component):
 
     def get_timeline_filters(self, req):
         if req.perm.has_permission('BUILD_VIEW'):
-            yield ('build', 'Hudson Builds')
+            yield ('build', self.tl_label)
 
     def __fmt_changeset(self, rev, req):
         # use format_to_oneliner and drop num_args hack when we drop Trac 0.10
