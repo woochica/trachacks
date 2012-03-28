@@ -94,7 +94,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         args += [None, None, None]
         path, limit, rev = args[:3]
         limit = kwargs.pop('limit', limit)
-        rev = kwargs.pop('rev', rev)
+        rev = kwargs.pop('rev', None)
 
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
@@ -114,10 +114,18 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         releases = self.get_releases(repo, path, rev)
 
         # limit the releases after they have been sorted
-        releases = releases[:1+limit]
+        releases = releases[:1 + limit]
         items = []
         releases = [None] + releases + [None]
-        path = reponame.rstrip('/') + path.lstrip('/')
+
+        # some extra checks to avoid using double-slashes
+        if reponame == '' and path == '/':
+            path = ''
+        elif path == '/':
+            path = '/' + reponame.rstrip('/')
+        else:
+            path = '/' + reponame.rstrip('/') + '/' + path.lstrip('/')
+
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
 
@@ -125,10 +133,10 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # no releases yet, just show trunk
                 items.append(
                     " * "
-                    " [/browser/%(path)s/trunk trunk]"
+                    " [/browser%(path)s/trunk trunk]"
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " ("
-                    "[/log/%(path)s/trunk changes]"
+                    "[/log%(path)s/trunk changes]"
                     " [/changeset?new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
@@ -140,10 +148,10 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # first entry = trunk
                 items.append(
                     " * "
-                    " [/browser/%(path)s/trunk trunk]"
+                    " [/browser%(path)s/trunk trunk]"
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " ("
-                    "[/log/%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
+                    "[/log%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
@@ -157,11 +165,11 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # regular releases
                 items.append(
                     " * '''%(date)s'''"
-                    " [/log/%(path)s/tags/%(new_tag)s %(new_tag)s]"
+                    " [/log%(path)s/tags/%(new_tag)s %(new_tag)s] x"
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                     " ("
-                    "[/log/%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
+                    "[/log%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s diffs]"
                     ")"
                 % {
@@ -188,7 +196,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # last release
                 items.append(
                     " * '''%(date)s'''"
-                    " [/log/%(path)s/tags/%(new_tag)s?rev=%(rev)s&mode=follow_copy %(new_tag)s]"
+                    " [/log%(path)s/tags/%(new_tag)s?rev=%(rev)s&mode=follow_copy %(new_tag)s]"
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                 % {
