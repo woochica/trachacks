@@ -119,8 +119,11 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         releases = [None] + releases + [None]
 
         # some extra checks to avoid using double-slashes
-        if reponame == '' and path == '/':
-            path = ''
+        if reponame == '':
+            if path == '/':
+                path = ''
+            else:
+                path = '/' + path
         elif path == '/':
             path = '/' + reponame.rstrip('/')
         else:
@@ -165,7 +168,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 # regular releases
                 items.append(
                     " * '''%(date)s'''"
-                    " [/log%(path)s/tags/%(new_tag)s %(new_tag)s] x"
+                    " [/log%(path)s/tags/%(new_tag)s %(new_tag)s] "
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                     " ("
