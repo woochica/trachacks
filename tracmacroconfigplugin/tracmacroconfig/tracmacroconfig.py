@@ -104,7 +104,7 @@ class TracMacroConfig(object):
             raise ValueError("TracMacroConfig.options(result='%s') invalid;"
                              " use one of %s, or None." % (
                 result, ','.join([ "%s" % x for x in good_result ])))
-        _, options = parse_args(content, strict=False)
+        self.results_list, options = parse_args(content, strict=False)
         self._log('parse incoming %s' % options)
         self._parse(options)
         if result is None or result == 'nothing':
@@ -117,6 +117,12 @@ class TracMacroConfig(object):
                results[key] = ent[0]
         self._log('parse results %s' % results)
         return results
+
+    def list(self):
+        """
+        Returns the list of non-keyword arguments to the macro.
+        """
+        return self.results_list
 
     def extras(self, options=None, remove=False):
         """
@@ -352,7 +358,7 @@ class MacroOption(object):
         return self._access(self.mc.results[self.name][0])
 
     def __set__(self, instance, value):
-        raise AttributeError, 'can\'t set attribute'
+        raise AttributeError, 'can\'t set attribute \'%s\'' % value
 
     def __repr__(self):
         return '<%s [%s] "%s">' % (
