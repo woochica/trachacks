@@ -298,13 +298,13 @@ class ProjectQueueAnalysis(QueueDependencyAnalysis):
     
      [analyze]
      project_type = epic
-     refresh_report = 2
+     project_refresh_report = 2
     
-    Tickets listed in project_reports should all be of this type.  If an
-    'refresh_report' option is provided, then if there are fixes made,
+    Tickets listed in project_reports should all be of this type.  If a
+    'project_refresh_report' option is provided, then if there are fixes made,
     instead of refreshing the current report, it will load the impacted
     report.  You can also add parameters to that report if desired such as
-    'impacted_report = 2?max=1000'.
+    'project_refresh_report = 2?max=1000'.
     """
     
     implements(IAnalysis)

@@ -126,8 +126,6 @@ def get_project_solutions(db, args):
         children = [(cid,[b.strip() for b in blocking.split(',')]) \
                     for (cid,blocking) in cursor]
         for cid,blocking in children:
-            if len(blocking) < 2:
-                continue # optimization
             # for each child, determine if it has multiple parents
             sql  = "SELECT p.id FROM ticket p WHERE p.id IN"
             sql += " (SELECT dest FROM mastertickets WHERE source=%s)" % cid
@@ -247,17 +245,16 @@ def _get_query_field_violators(db, args, standard, custom, id):
     from_ += _get_join(custom)
         
     # get this ticket's queue field values 
-    sql = "SELECT m.due, " + ', '.join(fields) + from_ + "WHERE t.id = %s" % id
+    sql = "SELECT " + ', '.join(fields) + from_ + "WHERE t.id = %s" % id
     cursor.execute(sql)
     result = cursor.fetchone()
     if not result:
         return {},[]
-    due = result[0] # for comparing milestone due date below
     ticket = {}
     for i in range(len(keys)):
         name = keys[i]
         if (not _is_filter_field(name, standard, custom, args)):
-            ticket[name] = result[i+1]
+            ticket[name] = result[i]
     
     # find open dependent tickets that don't match queue fields
     sql = "SELECT t.id " + from_
@@ -271,10 +268,7 @@ def _get_query_field_violators(db, args, standard, custom, id):
     for name in standard:
         if args['standard_fields'][name]:
             continue
-        if name == 'milestone': # special case: allow prior milestones
-            or_ += ["t.milestone='' OR m.due=0 OR m.due > %s " % (due or 0)]
-        else:
-            or_ += ["t.%s != '%s' " % (name,ticket[name])]
+        or_ += ["t.%s != '%s' " % (name,ticket[name])]
     for i in range(len(custom)):
         name = custom[i]
         if args['custom_fields'][name]:
