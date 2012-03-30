@@ -1541,6 +1541,7 @@ class ResourceScheduler(Component):
                     self.env.log.error('Not all tickets scheduled')
                     self.env.log.error('%s remain ineligible.  Scheduling.' %
                                        unscheduled)
+                    eligible = [ticketsByID[tid] for tid in unscheduled]
 
         # Main schedule processing
 
