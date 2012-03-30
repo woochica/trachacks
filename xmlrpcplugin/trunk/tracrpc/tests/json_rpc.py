@@ -194,8 +194,8 @@ else:
             self.assertEquals(None, result['result'])
             self.assertEquals(2332, result['id'])
             self.assertEquals(403, result['error']['code'])
-            self.assertEquals(result['error']['message'],
-                'TICKET_ADMIN privileges are required to perform this operation')
+            self.assertTrue('TICKET_ADMIN privileges are required to '
+                'perform this operation' in result['error']['message'])
 
         def test_resource_not_found(self):
             # A Ticket resource
