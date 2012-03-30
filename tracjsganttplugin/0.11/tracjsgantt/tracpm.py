@@ -1537,9 +1537,10 @@ class ResourceScheduler(Component):
                         if other[eligibleField] == 0:
                             eligible.append(other)
 
-            if len(unscheduled):
-                self.env.log.error('Not all tickets scheduled')
-
+                if not eligible and len(unscheduled):
+                    self.env.log.error('Not all tickets scheduled')
+                    self.env.log.error('%s remain ineligible.  Scheduling.' %
+                                       unscheduled)
 
         # Main schedule processing
 
