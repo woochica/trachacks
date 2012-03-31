@@ -89,6 +89,16 @@ class ScrippetRenderer(Component):
                     else:
                         content.append(block["text"])
                 theoutput += tag.p(content,class_=ptype+mode)
+        for fd_titlepage in fd_doc.findall("TitlePage"):
+            for fd_content in fd_titlepage.findall("Content"):
+                for fd_paragraph in fd_content.findall("Paragraph"):
+                    ptype = fd_paragraph.get('Type')
+                    for fd_text in fd_paragraph.findall("Text"):
+                        text_style = fd_text.get('Style')
+                        if fd_text.text != None:
+                            self.log.debug("SCRIPPET: " + fd_text.text)
+                    
+        
         return "%s" % theoutput
     
     ## ITemplateProvider

@@ -16,6 +16,10 @@ div.scrippet {
 	margin-left: 20px !important;
 }
 
+span.underline {
+	text-decoration:underline;
+}
+
 .scrippet p {
 	font: 12px/14px Courier, "Courier New", monospace !important;
     text-align: left !important;
@@ -41,6 +45,7 @@ div.scrippet {
 
 .character {
 	padding-left: 40% !important;
+	text-transform:uppercase;
 }
 
 .dialogue {

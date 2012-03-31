@@ -5,7 +5,7 @@ from StringIO import StringIO
 from genshi.builder import tag
 
 from trac.core import *
-from trac.wiki.formatter import format_to_html
+from trac.wiki.formatter import format_to_html, format_to_oneliner
 from trac.util import TracError
 from trac.util.text import to_unicode
 from trac.web.chrome import add_stylesheet, ITemplateProvider
@@ -22,15 +22,16 @@ class ScrippetMacro(WikiMacroBase):
     """
     implements(IWikiMacroProvider, ITemplateProvider)
 
-    def render_inline_content(self, _content,mode):
+    def render_inline_content(self, _env, _context, _content,mode):
         #Sceneheaders must start with INT, EXT, or EST
         sceneheader_re = re.compile('\n(INT|EXT|[^a-zA-Z0-9]EST)([\.\-\s]+?)(.+?)([A-Za-z0-9\)\s\.])\n')
         #Transitions
         transitions_re = re.compile('\n([^<>\na-z]*?:|FADE TO BLACK\.|FADE OUT\.|CUT TO BLACK\.)[\s]??\n')
         #action blocks
         actions_re = re.compile('\n{2}(([^a-z\n\:]+?[\.\?\,\s\!]*?)\n{2}){1,2}')
-        #character cues
-        characters_re = re.compile('\n([^<>a-z\s][^a-z:\!\?]*?[^a-z\(\!\?:,][\s]??)\n{1}')
+        #character cues    
+        characters_re = re.compile('\n{1}(\w+[\.-]*[\s]*\w+?[^\!\)\?\.\s])\n{1}')
+#        characters_re = re.compile('\n([^<>a-z\s][^a-z:\!\?]*?[^a-z\(\!\?:,][\s]??)\n{1}')
         #parentheticals
         parentheticals_re = re.compile('(\([^<>]*?\)[\s]??)\n')
         #dialog
@@ -40,9 +41,9 @@ class ScrippetMacro(WikiMacroBase):
         #clean up
         cleanup_re = re.compile('<p class="action">[\n\s]*?<\/p>')
         #styling
-        bold_re = re.compile('(\*{2}|\[b\])(.*?)(\*{2}|\[\/b\])')
-        italic_re = re.compile('(\*{1}|\[i\])(.*?)(\*{1}|\[\/i\])')
-        underline_re = re.compile('(_|\[u\])(.*?)(_|\[\/u\])')
+#        bold_re = re.compile('(\*{2}|\[b\])(.*?)(\*{2}|\[\/b\])')
+#        italic_re = re.compile('(\*{1}|\[i\])(.*?)(\*{1}|\[\/i\])')
+#        underline_re = re.compile('(_|\[u\])(.*?)(_|\[\/u\])')
         
         theoutput = tag.div(class_="scrippet"+mode)        
 #        self.log.debug("BEFORE SCENE: %s" % _content)
@@ -52,14 +53,16 @@ class ScrippetMacro(WikiMacroBase):
 #        self.log.debug("BEFORE ACTIONS: %s" % _content)
         _content = actions_re.sub("\n" + r'<p class="action">\2</p>' + "\n",_content)
 #        self.log.debug("BEFORE CHARACTERS: %s" % _content)
+#        self.log.debug(_content);
         _content = characters_re.sub(r'<p class="character">\1</p>',_content)
-        _content = parentheticals_re.sub(r'<p class="parenthetical">\1</p>',_content)
-        _content = dialog_re.sub(r'\1' + "\n" + r'<p class="dialogue">\2</p>' + "\n",_content)
+#        self.log.debug(characters_re.sub(r'<p class="character">\1</p>',_content));
+        _content = parentheticals_re.sub(r'<p class="parenthetical">\1</p>',_content); #format_to_oneliner(_env, _context, _content))
+        _content = dialog_re.sub(r'\1' + "\n" + r'<p class="dialogue">\2</p>' + "\n",_content); #format_to_oneliner(_env, _context, _content))
         _content = default_re.sub(r'<p class="action">\1</p>' + "\n",_content)
         _content = cleanup_re.sub("",_content)
-        _content = bold_re.sub(r'<b>\2</b>',_content)
-        _content = italic_re.sub(r'<i>\2</i>',_content)
-        _content = underline_re.sub(r'<u>\2</u>',_content)
+#        _content = bold_re.sub(r'<b>\2</b>',_content)
+#        _content = italic_re.sub(r'<i>\2</i>',_content)
+#        _content = underline_re.sub(r'<u>\2</u>',_content)
         para_re = re.compile(r'<p class="(?P<_class>.*?)">(?P<_body>.*?)</p>')
         for line in _content.splitlines():
 #            self.log.debug("LINE: %s" % line)
@@ -68,9 +71,9 @@ class ScrippetMacro(WikiMacroBase):
 #                self.log.debug("BODY: %s" % m.group('_body'))
 #                self.log.debug("CLASS: %s" % m.group('_class'))
                 if "FADE IN" in m.group('_body') and m.group('_class') == "transition":
-                    theoutput.append(tag.p(m.group('_body'),class_="action"+mode))
+                    theoutput.append(tag.p(format_to_oneliner(_env, _context,m.group('_body')),class_="action"+mode))
                 else:
-                    theoutput.append(tag.p(m.group('_body'),class_=m.group('_class')+mode))
+                    theoutput.append(tag.p(format_to_oneliner(_env, _context,m.group('_body')),class_=m.group('_class')+mode))
         return theoutput
     
     def render_fdx_subset(self,fdx,start_with_scene,end_with_scene,mode,formatter):
@@ -169,7 +172,7 @@ class ScrippetMacro(WikiMacroBase):
         else:
             add_stylesheet(req, 'scrippets/css/scrippets.css')
             mode = ""
-            return self.render_inline_content(content,mode)
+            return self.render_inline_content(self.env, formatter.context, content,mode)
     
     ## ITemplateProvider
             
