@@ -78,8 +78,12 @@ class ImportProcessor(object):
 
     def process_cell(self, column, cell):
         cell = unicode(cell)
+        column = column.lower()
+        # if status of new ticket is empty, force to use 'new'
+        if not self.ticket.exists and column == 'status' and not cell:
+            cell = 'new'
         # this will ensure that the changes are logged, see model.py Ticket.__setitem__
-        self.ticket[column.lower()] = cell
+        self.ticket[column] = cell
 
     def process_comment(self, comment):
         self.comment = comment
@@ -242,6 +246,9 @@ class PreviewProcessor(object):
             self.cells.append( { 'col': column, 'value': cell, 'style': 'modified-' + column })
             self.modified = True
         else:
+            # if status of new ticket is empty, force to use 'new'
+            if not self.ticket and column.lower() == 'status' and not cell:
+                cell = 'new'
             self.cells.append( { 'col': column, 'value': cell, 'style': column })
 
     def process_comment(self, comment):
