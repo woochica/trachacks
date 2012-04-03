@@ -90,9 +90,9 @@ class ImporterTestCase(unittest.TestCase):
         #req.hdf = HDFWrapper([]) # replace by this if you want to generate HTML: req.hdf = HDFWrapper(loadpaths=chrome.get_all_templates_dirs())
         db = env.get_db_cnx()
         cursor = db.cursor()
-        _exec(cursor, "select * from enum")
+        _exec(cursor, "SELECT * FROM enum ORDER BY type, value, name")
         enums_before = cursor.fetchall()
-        _exec(cursor, "select * from component")
+        _exec(cursor, "SELECT * FROM component ORDER BY name")
         components_before = cursor.fetchall()
         #print enums_before
         # when testing, always use the same time so that the results are comparable
@@ -102,15 +102,15 @@ class ImporterTestCase(unittest.TestCase):
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
-        _exec(cursor, "select * from ticket")
+        _exec(cursor, "SELECT * FROM ticket ORDER BY id")
         tickets = cursor.fetchall()
-        _exec(cursor, "select * from ticket_custom")
+        _exec(cursor, "SELECT * FROM ticket_custom ORDER BY ticket, name")
         tickets_custom = cursor.fetchall()
-        _exec(cursor, "select * from ticket_change")
+        _exec(cursor, "SELECT * FROM ticket_change")
         tickets_change = cursor.fetchall()
-        _exec(cursor, "select * from enum")
+        _exec(cursor, "SELECT * FROM enum ORDER BY type, value, name")
         enums = [f for f in set(cursor.fetchall()) - set(enums_before)]
-        _exec(cursor, "select * from component")
+        _exec(cursor, "SELECT * FROM component ORDER BY name")
         components = [f for f in set(cursor.fetchall()) - set(components_before)]
         return self._pformat([ tickets, tickets_custom, tickets_change, enums, components ])
 
@@ -144,10 +144,17 @@ class ImporterTestCase(unittest.TestCase):
             self.assertEquals(ctldata, outdata)
         except AssertionError, e:
             ctlprint = self._pformat(ctldata)
-            diffs = difflib.ndiff(ctlprint.splitlines(), outprint.splitlines())
+            diffs = list(difflib.ndiff(ctlprint.splitlines(),
+                                       outprint.splitlines()))
+            def contains_diff(diffs, idx, line):
+                for diff in diffs[idx - line:idx + line]:
+                    if not diff.startswith(' '):
+                        return True
+                return False
             raise AssertionError('Two objects do not match\n' +
-                                 '\n'.join(diff.strip() for diff in list(diffs)
-                                           if not diff.startswith(' ')))
+                                 '\n'.join(diff.rstrip()
+                                           for idx, diff in enumerate(diffs)
+                                           if contains_diff(diffs, idx, 2)))
 
     def _do_test_diffs(self, env, filename, testfun):
         self._do_test(env, filename, testfun)
