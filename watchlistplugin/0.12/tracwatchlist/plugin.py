@@ -410,6 +410,7 @@ class WatchlistPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
+        wldict = dict()
         for k,v in req.args.iteritems():
             try:
                 wldict[str(k)] = v
