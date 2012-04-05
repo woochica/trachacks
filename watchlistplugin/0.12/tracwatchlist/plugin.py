@@ -410,7 +410,12 @@ class WatchlistPlugin(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        wldict = req.args.copy()
+        for k,v in req.args.iteritems():
+            try:
+                wldict[str(k)] = v
+            except:
+                pass
+
         wldict['action'] = action
 
         onwatchlistpage = req.environ.get('HTTP_REFERER','').find(
@@ -628,7 +633,7 @@ class WatchlistPlugin(Component):
         for xrealm in wldict['realms']:
             xhandler = self.realm_handler[xrealm]
             if xhandler.has_perm(xrealm, req.perm):
-                wldict[xrealm + 'list'], wldict[xrealm + 'data'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
+                wldict[str(xrealm) + 'list'], wldict[str(xrealm) + 'data'] = xhandler.get_list(xrealm, self, req, wldict['active_fields'][xrealm])
                 name = xhandler.get_realm_label(xrealm, n_plural=1000, astitle=True)
                 # TRANSLATOR: Navigation link to point to watchlist section of this realm
                 # (e.g. 'Wikis', 'Tickets').
