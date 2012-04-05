@@ -392,6 +392,11 @@ datetime_format=%Y-%m-%d %H:%M
         self._do_test_diffs(env, 'newticket_empty_status.csv', self._test_preview) 
         self._do_test_diffs(env, 'newticket_empty_status.csv', self._test_import)
 
+    def test_empty_columns(self):
+        env = self._setup()
+        self._do_test_diffs(env, 'empty_columns.csv', self._test_preview) 
+        self._do_test_diffs(env, 'empty_columns.csv', self._test_import)
+
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')

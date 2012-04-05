@@ -294,18 +294,22 @@ class ImportModule(Component):
             newvalues[name] = []
             
 
-        def add_sql_result(db, sql, aset):
+        def add_sql_result(db, aset, queries):
             cursor = db.cursor()
-            cursor.execute(sql)
-            for result in cursor:
-                aset.add(result[0])
+            for query in queries:
+                cursor.execute(query)
+                aset.update([val for val, in cursor])
 
-            
         existingusers = set()
         db = self.env.get_db_cnx()
-        add_sql_result(db, "SELECT DISTINCT reporter FROM ticket", existingusers)
-        add_sql_result(db, "SELECT DISTINCT owner FROM ticket", existingusers)
-        add_sql_result(db, "SELECT DISTINCT owner FROM component", existingusers)
+        add_sql_result(
+            db, existingusers,
+            [("SELECT DISTINCT reporter FROM ticket"
+              " WHERE reporter IS NOT NULL AND reporter != ''"),
+             ("SELECT DISTINCT owner FROM ticket"
+              " WHERE owner IS NOT NULL AND owner != ''"),
+             ("SELECT DISTINCT owner FROM component"
+              " WHERE owner IS NOT NULL AND owner != ''")])
         for username, name, email in self.env.get_known_users(db):
             existingusers.add(username)
         newusers = []
@@ -343,20 +347,28 @@ class ImportModule(Component):
 
             for column in importedfields:
                 cell = row[column]
+                if cell is None:
+                    cell = ''
+                column_lower = column.lower()
                 
                 # collect the new lookup values
-                if column.lower() in existingvalues.keys():
-                    cell = cell.strip()
-                    if cell != '' and cell not in existingvalues[column.lower()] and cell not in newvalues[column.lower()]:
-                        newvalues[column.lower()] += [ cell ]
+                if column_lower in existingvalues:
+                    if isinstance(cell, basestring):
+                        cell = cell.strip()
+                    if cell != '' and \
+                            cell not in existingvalues[column_lower] and \
+                            cell not in newvalues[column_lower]:
+                        newvalues[column_lower].append(cell)
 
                 # also collect the new user names
-                if (column.lower() == 'owner' or column.lower() == 'reporter'):
-                    if cell != '' and cell not in newusers and cell not in existingusers:
-                        newusers += [ cell ]
+                if column_lower in ('owner', 'reporter'):
+                    if cell != '' and \
+                            cell not in newusers and \
+                            cell not in existingusers:
+                        newusers.append(cell)
 
                 # and proces the value.
-                if column.lower() != 'ticket' and column.lower() != 'id':
+                if column_lower not in ('ticket', 'id'):
                     processor.process_cell(column, cell)
                 
             if commentfield:
