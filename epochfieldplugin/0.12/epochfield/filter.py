@@ -41,7 +41,7 @@ class EpochField(Component):
             dt = datetime.strptime(data, self._format).replace(tzinfo=req.tz)
             dt.astimezone(req.tz)
             return str(to_timestamp(dt) * 1000 * 1000)
-        except Exception as e:
+        except Exception, e:
             self.log.debug(e)
             pass
         return data
