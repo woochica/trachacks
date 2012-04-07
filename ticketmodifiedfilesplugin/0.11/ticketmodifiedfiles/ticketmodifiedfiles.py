@@ -79,10 +79,10 @@ class TicketModifiedFilesPlugin(Component):
                     text = " There is one ticket in conflict!"
                 else:
                     text = " There are %s tickets in conflict!" % str(numconflictingtickets)
-                stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
+                stream |= Transformer("//div[@id='changelog']").before(tag.p(tag.strong("Warning:"), text, style='background: #def; border: 2px solid #00d; padding: 3px;'))
             
             #Display the link to this ticket's modifiedfiles page
-            stream |= Transformer("//div[@id='content']/div[@id='changelog']").before(
+            stream |= Transformer("//div[@id='changelog']").before(
                        tag.p(
                              'Have a look at the ',
                              tag.a("list of modified files", href="../modifiedfiles/" + str(data["modifiedfiles"])),
