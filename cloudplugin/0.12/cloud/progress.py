@@ -46,6 +46,7 @@ class Progress(object):
                  description=None, status=None, id=None, started_by=None,
                  command=None):
         self.file = file
+        self.lockfile = '%s.lock' % self.file
         progress = {'pidfile': pidfile or '',
                     'title': title or '',
                     'description': description or '',
@@ -143,14 +144,45 @@ class Progress(object):
         if subprocess.call(cmd):
             raise Exception("Error restarting command: %s" % cmd)
     
+    def lock(self, attempt=1):
+        # does lock file exist and contain an active pid?
+        if os.path.exists(self.lockfile):
+            f = open(self.lockfile,'r')
+            pid = int(f.read().rstrip())
+            f.close()
+            try:
+                os.kill(pid, 0) # just tests existence
+            except OSError:
+                pass # process doesn't exist
+            else:
+                if attempt <= 5:
+                    time.sleep(0.2 * attempt)
+                    return self.lock(attempt+1)
+                raise Exception("File still locked after %d attempts" % attempt)
+        
+        # write pid to lock file
+        pid = str(os.getpid())
+        open(self.lockfile,'w').write("%s\n" % pid)
+        return self.lockfile
+    
+    def unlock(self):
+        if os.path.exists(self.lockfile):
+            os.remove(self.lockfile)
+    
     def set(self, progress):
-        f = open(self.file, 'w')
-        f.write(json.dumps(progress))
-        f.flush()
-        f.close()
-        os.chmod(self.file, stat.S_IRUSR | stat.S_IWUSR |
-                            stat.S_IRGRP | stat.S_IWGRP |
-                            stat.S_IROTH | stat.S_IWOTH )
+        # lock out other concurrent writes
+        self.lock()
+        try:
+            f = open(self.file, 'w')
+            f.write(json.dumps(progress))
+            f.flush()
+            f.close()
+            os.chmod(self.file, stat.S_IRUSR | stat.S_IWUSR |
+                                stat.S_IRGRP | stat.S_IWGRP |
+                                stat.S_IROTH | stat.S_IWOTH )
+        except:
+            raise
+        self.unlock()
         
     def get(self, attempt=1):
         try:
@@ -160,6 +192,6 @@ class Progress(object):
             return progress
         except:
             if attempt < 3:
-                time.sleep(0.1)
+                time.sleep(0.2 * attempt)
                 return self.get(attempt+1)
             raise

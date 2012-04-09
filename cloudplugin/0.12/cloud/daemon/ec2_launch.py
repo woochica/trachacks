@@ -142,9 +142,9 @@ if __name__ == "__main__":
         else:
             daemon.run()
     except Exception, e:
-            import traceback
-            msg = "Oops.. " + traceback.format_exc()+"\n"
-            daemon.progress.error(msg)
-            daemon.log.error(msg)
-            daemon.handler.flush()
-            sys.exit(1)
+        import traceback
+        msg = "Oops.. " + traceback.format_exc()+"\n"
+        daemon.progress.error(msg)
+        daemon.log.error(msg)
+        daemon.handler.flush()
+        sys.exit(1)

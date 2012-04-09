@@ -119,7 +119,7 @@ class BooleanHandler(DefaultHandler):
     implements(IFieldHandler)
     
     def convert_item(self, field, item, req):
-        if get(field, item) in ('1','true'):
+        if get(field, item) in (1,'1',True,'true','True'):
             return 'true'
         return 'false'
     

@@ -1,8 +1,12 @@
 import unittest
 import os
+import sys
 import json
 import tempfile
 
+dir = os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
+if dir not in sys.path:
+    sys.path.append(dir)
 from progress import Progress
 
 class ProgressTest(unittest.TestCase):
