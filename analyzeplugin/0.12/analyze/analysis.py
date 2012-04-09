@@ -369,9 +369,9 @@ class ProjectRollupAnalysis(Component, Analysis):
      * effort field sums all of its children numeric values
      * severity field gets set to the minimum (index) value of its children
      * captain field gets set to the most frequent captain of its children
-     * phase pivots on the 'implementation' select option value value
+     * phase pivots on the 'implementation' select option value
     
-    In brief, The pivot algorithm is as follows (using the option's index):
+    In brief, the pivot algorithm is as follows (using the option's index):
     
      * if all values are < the pivot value, then select their max value
      * else if all are > the pivot value, then select their min value
