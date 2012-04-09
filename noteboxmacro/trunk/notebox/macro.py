@@ -7,7 +7,6 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from pkg_resources import resource_filename
 from genshi.builder import tag
 from trac.core import implements
 from trac.web.chrome import ITemplateProvider, add_stylesheet
@@ -57,6 +56,7 @@ class NoteBox(WikiMacroBase):
 
     # ITemplateProvider
     def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
         return [('notebox', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
