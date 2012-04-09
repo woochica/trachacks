@@ -18,9 +18,9 @@ setup(
     author_email = 'trac@gruenewaldt.net',
     maintainer = 'Ryan J Ollos',
     maintainer_email = 'ryan.j.ollos@gmail.com',
-    url = 'http://trac-hacks.org/wiki/NoteBoxPlugin',
-    description = 'The NoteBox Plugin for Trac',
-    entry_points={'trac.plugins': ['NoteBox = notebox.notebox']},
-    keywords = 'trac toc',
+    url = 'http://trac-hacks.org/wiki/NoteBoxMacro',
+    description = 'NoteBox macro for Trac',
+    entry_points={'trac.plugins': ['NoteBox = notebox.macro']},
+    keywords = 'trac macro notebox',
     license = 'GPLv2+',
 )
