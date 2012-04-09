@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2008 Bernhard Gruenewaldt <trac@gruenewaldt.net>
+# Copyright (C) 2008-2009 Bernhard Gruenewaldt
+# Copyright (C) 2011-2012 Ryan J Ollos
+# All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
