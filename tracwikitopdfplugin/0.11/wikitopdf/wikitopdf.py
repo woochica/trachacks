@@ -7,6 +7,7 @@ import random
 import re
 import xml.sax.saxutils
 from urllib import urlretrieve
+from subprocess import STDOUT, check_output
 from tempfile import NamedTemporaryFile, mkstemp
 from trac.core import *
 from trac.mimeview.api import Context, IContentConverter
@@ -180,6 +181,15 @@ def html_to_pdf(env, htmldoc_args, files, codepage):
 
     env.log.debug('WikiToPdf => Start function html_to_pdf')
 
+    # Check existence and version of HTMLDOC.
+    try:
+        rc = check_output(('htmldoc', '--version'), stderr=STDOUT)
+        env.log.debug("Using HTMLDOC version %s" % (rc,))
+    except OSError:   
+        raise TracError("HTMLDOC is not installed.")
+    except:
+        raise TracError("Unexpected error while checking version of HTMLDOC.")
+
     global IMG_CACHE
     os.environ["HTMLDOC_NOCGI"] = 'yes'
     
@@ -189,7 +199,7 @@ def html_to_pdf(env, htmldoc_args, files, codepage):
     pfile, pfilename = mkstemp('wikitopdf')
     os.close(pfile)
     
-    cmd_string = 'htmldoc %s %s -f %s'%(args_string, ' '.join(files), pfilename)
+    cmd_string = 'htmldoc %s %s -f %s' % (args_string, ' '.join(files), pfilename)
     env.log.debug('WikiToPdf => Htmldoc command line: %s' % cmd_string)
     os.system(cmd_string.encode(codepage))
 
