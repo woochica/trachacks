@@ -3,24 +3,11 @@ Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
 Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 """
 
-from trac.core import *
-from trac.config import BoolOption
-from trac.web.api import RequestDone
-from trac.wiki.api import WikiSystem
-from trac.wiki.formatter import wiki_to_html, Formatter, WikiProcessor
-from trac.wiki.model import WikiPage
-from trac.mimeview.api import Mimeview
-from trac.util.text import shorten_line, to_unicode
-from trac.util.html import Markup, escape
-
 from tempfile import mkstemp
-from StringIO import StringIO
-import os
-import re
-import time
-import urllib2
-import base64
-
+from trac.core import Component, implements
+from trac.config import BoolOption
+from trac.mimeview.api import Mimeview
+from trac.web.api import RequestDone
 from api import IWikiToPdfFormat
 from wikitopdf import wiki_to_pdf, html_to_pdf
 
@@ -93,11 +80,11 @@ class WikiToPdfOutput(Component):
     
     
     def get_titlepage(self, template_path, title, subject, version, date):
-
+        
         hfile, hfilename = mkstemp('wikitopdf')
         #codepage = Mimeview(self.env).default_charset
-	string_page = ''
-
+        string_page = ''
+        
         try:
             file_page = open(template_path, 'r')
             string_page = file_page.read()
@@ -105,17 +92,17 @@ class WikiToPdfOutput(Component):
             string_page = string_page.replace('#SUBJECT#', subject)
             string_page = string_page.replace('#VERSION#', version)
             string_page = string_page.replace('#DATE#', date)
-
+            
             title_template = self.env.config.get('wikitopdf', 'pathtocover')
             if title_template == '':
                 title_template = self.env.config.get('wikitopdf', 'titlefile')
-	    string_page = string_page.replace('#PATHTOCOVER#',  title_template)
+            string_page = string_page.replace('#PATHTOCOVER#',  title_template)
         except:
             os.close(hfile)
             return None
         
         os.write(hfile, string_page)
         os.close(hfile)
-        
+                
         return hfilename
     

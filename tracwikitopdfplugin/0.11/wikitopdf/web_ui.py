@@ -5,14 +5,13 @@ Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 
 from genshi.core import Markup
 from trac.admin.web_ui import IAdminPanelProvider
-from trac.core import *
+from trac.core import Component, ExtensionPoint, implements
 from trac.perm import IPermissionRequestor
 from trac.util.translation import _
 from trac.web.api import IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.api import WikiSystem
 from api import IWikiToPdfFormat
-import re
 
 class WikiToPdfAdmin(Component):
     """A plugin allowing the export of multiple wiki pages in a single file."""
@@ -72,11 +71,11 @@ class WikiToPdfAdmin(Component):
             if not format or format not in formats:
                 raise TracError('Bad format given for WikiToPdf output.')
 
-            pdfbookname = title 
- 	    pdfbookname = pdfbookname.replace(' ', '') 
-	    pdfbookname = pdfbookname.replace(':', '') 
-	    pdfbookname = pdfbookname.replace(',', '') 
-
+            pdfbookname = title
+            pdfbookname = pdfbookname.replace(' ', '')
+            pdfbookname = pdfbookname.replace(':', '')
+            pdfbookname = pdfbookname.replace(',', '') 
+            
             return formats[format]['provider'].process_wikitopdf(req, format, title, subject, rightpages, date, version, pdfbookname)
             
         req.hdf['wikitopdf.allpages'] = allpages
