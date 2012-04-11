@@ -48,8 +48,8 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
         text = r.sub('', text)
     
     env.log.debug('WikiToPdf => Wiki intput for WikiToPdf: %r' % text)
-        
-    context = Context.from_request(req)
+    
+    context = Context.from_request(req, resource='wiki', id=req.args['page'])
     page = format_to_html(env, context, text)
     
     page = page.replace('<img', '<img border="0"')
