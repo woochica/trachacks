@@ -18,7 +18,6 @@ from trac.config import Option
 from trac.core import implements
 from trac.util.translation import _
 from trac.web import IRequestHandler
-from trac.wiki.api import parse_args
 from trac.wiki.formatter import format_to_html, system_message
 from trac.wiki.macros import WikiMacroBase
 
@@ -58,8 +57,7 @@ class PlantUMLMacro(WikiMacroBase):
         if not os.path.exists(self.plantuml_jar):
             return system_message("Installation error: plantuml.jar not found: %s" % self.plantuml_jar)
 
-        args, _ = parse_args(content)
-        markup = args[0].encode('utf-8').strip()
+        markup = content.encode('utf-8').strip()
         img_id = hashlib.sha1(markup).hexdigest()
 
         if not self._is_img_existing(img_id):
