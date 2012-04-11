@@ -56,8 +56,12 @@ class PlantUMLMacro(WikiMacroBase):
 
     implements(IRequestHandler)
 
-    plantuml_jar = Option('plantuml', 'plantuml_jar', '', 'Path to PlantUML .jar file')
-    java_bin = Option('plantuml', 'java_bin', 'java', 'Path to the Java binary file')
+    plantuml_jar = Option('plantuml', 'plantuml_jar', '',
+        """Path to PlantUML jar file. The jar file can be downloaded from the
+          [http://plantuml.sourceforge.net/download.html PlantUML] site.""")
+    java_bin = Option('plantuml', 'java_bin', 'java',
+        """Path to the Java binary file. The default is `java`, which and
+           assumes that the Java binary is on the search path.""")
     
     def __init__(self):
         self.abs_img_dir = os.path.join(os.path.abspath(self.env.path), img_dir)
