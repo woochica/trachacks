@@ -2,6 +2,7 @@
 Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
 Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 """
+
 import os
 import random
 import re
@@ -29,14 +30,13 @@ def tagattrfind(page, tag, attr, pos):
     while tb_pos != -1:
         te_pos = page.find('>', tb_pos)
         tc_pos = page.find(attr, tb_pos, te_pos)
-
-	if tc_pos != -1:
-	    return tb_pos, te_pos+1
-
+        
+        if tc_pos != -1:
+            return tb_pos, te_pos+1
+        
         tb_pos = page.find('<%s' % tag, te_pos+1)
 
     return -1, -1
-
 
 def wiki_to_pdf(text, env, req, base_dir, codepage):
     global IMG_CACHE
@@ -66,6 +66,7 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
     tracuri = env.config.get('wikitopdf', 'trac_uri')
     tmp_dir = env.config.get('wikitopdf', 'tmp_dir')
     
+    imgpos = page.find('<img')    
     if tracuri != '' and tmp_dir != '':
         # Download images so that dynamic images also work right
         # Create a random prefix
@@ -75,41 +76,34 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
         os.system('mkdir %s 2>/dev/null' % (tmp_dir))
 
         imgcounter = 0
-        imgpos = page.find('<img')
 
         while imgpos != -1:
-            addrpos = page.find('src="',imgpos)
+            addrpos = page.find('src="', imgpos)
             theimg = page[addrpos+5:]
             thepos = theimg.find('"')
             theimg = theimg[:thepos]
             if theimg[:1] == '/':
                 theimg = tracuri + theimg
-        try:
-            newimg = IMG_CACHE[theimg]
-        except:    
-            #newimg = tmp_dir + '%(#)d_' %{"#":imgcounter} + theimg[theimg.rfind('/')+1:]
-            file = NamedTemporaryFile(mode='w', prefix='%(#)d_' %{"#":imgcounter}, dir=tmp_dir)
-            newimg = file.name
-            file.close()
-            #download
-            theimg = xml.sax.saxutils.unescape(theimg)
-            theimg = theimg.replace(" ","%20")
-            urlretrieve(theimg, newimg)
-            IMG_CACHE[theimg] = newimg
-            env.log.debug("ISLAM the image is %s new image is %s" % ( theimg, newimg))
-            imgcounter += 1
-
-            page = page[:addrpos+5] + newimg + page[addrpos+5+thepos:]
-            imgpos = page.find('<img', addrpos)
-
+            try:
+                newimg = IMG_CACHE[theimg]
+            except:    
+                #newimg = tmp_dir + '%(#)d_' %{"#":imgcounter} + theimg[theimg.rfind('/')+1:]
+                file = NamedTemporaryFile(mode='w', prefix='%(#)d_' %{"#":imgcounter}, dir=tmp_dir)
+                newimg = file.name
+                file.close()
+                theimg = xml.sax.saxutils.unescape(theimg)
+                theimg = theimg.replace(" ","%20")
+                urlretrieve(theimg, newimg)
+                IMG_CACHE[theimg] = newimg
+                env.log.debug("ISLAM the image is %s new image is %s" % ( theimg, newimg))
+                imgcounter += 1
+                page = page[:addrpos+5] + newimg + page[addrpos+5+thepos:]
+                simgpos = page.find('<img', addrpos)
     else:
         # Use old search for images in path
         page = page.replace('raw-attachment', 'attachments')
-        
-        imgpos = page.find('<img')
-
         while imgpos != -1:
-            addrpos = page.find('src=', imgpos)
+            addrpos = page.find('src="', imgpos)
 #            base_dir = base_dir.encode('ascii')
             page = page[:addrpos+5] + base_dir + page[addrpos+5:]
             imgpos = page.find('<img', addrpos)
@@ -118,10 +112,10 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
     (tablepos,tableend) = tagattrfind(page, 'table', 'align="center"', 0)
     while tablepos != -1:
         endpos = page.find('</table>',tablepos)
-	page = page[:endpos+8] + '</center>' + page[endpos+8:]
+        page = page[:endpos+8] + '</center>' + page[endpos+8:]
         page = page[:tablepos] + '<center>' + page[tablepos:];
-
-	endpos = page.find('</table>',tablepos)
+        
+        endpos = page.find('</table>',tablepos)
         (tablepos,tableend) = tagattrfind(page, 'table', 'align="center"', endpos)
 
     # Add table around '<div class="code">'
@@ -140,9 +134,9 @@ def wiki_to_pdf(text, env, req, base_dir, codepage):
         endpos = page.find('</div>',tablepos)
         page = page[:endpos+6] + '</td></tr></table>' + page[endpos+6:]
         page = page[:tableend] + '<table width="100%" border="2" bordercolor="#dd0000" bgcolor="#ffddcc"><tr><td>' + page[tableend:]
-
+        
         endpos = page.find('</div>',tablepos)
-	(tablepos,tableend) = tagattrfind(page, 'div', 'class="system-message"', endpos)
+        (tablepos,tableend) = tagattrfind(page, 'div', 'class="system-message"', endpos)
 
     # Add table around '<div class="error">'
     (tablepos,tableend) = tagattrfind(page, 'div', 'class="error"', 0)
