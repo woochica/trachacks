@@ -7,6 +7,7 @@ from trac.util.translation import _
 from trac.web.chrome import Chrome, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider
 import sys
+from trac.wiki.formatter import format_to_html
 
 class QueryResults(Component):
     """ Show following static data in query table format. """
@@ -86,7 +87,9 @@ Example:
             data = chrome.populate_data(formatter.req, data)
             template = chrome.load_template('query_results.html')
             content = template.generate(**data)
-            return tag.div(content)
+            # ticket id list as static
+            tickets = '([ticket:' + ','.join([ticket.get('id') for group in groups for ticket in group[1]]) + ' query by ticket id])'
+            return tag.div(content, format_to_html(self.env, formatter.context, tickets))
         except StopIteration:
             errorinfo = _('Not Enough fields in ticket: %s') % line
         except Exception:
