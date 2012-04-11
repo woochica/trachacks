@@ -6,9 +6,9 @@ Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 import os
 import random
 import re
+import subprocess
 import xml.sax.saxutils
 from urllib import urlretrieve
-from subprocess import STDOUT, check_output
 from tempfile import NamedTemporaryFile, mkstemp
 from trac.core import *
 from trac.mimeview.api import Context, IContentConverter
@@ -177,8 +177,8 @@ def html_to_pdf(env, htmldoc_args, files, codepage):
 
     # Check existence and version of HTMLDOC.
     try:
-        rc = check_output(('htmldoc', '--version'), stderr=STDOUT)
-        env.log.debug("Using HTMLDOC version %s" % (rc,))
+        version = subprocess.Popen(('htmldoc', '--version'), stdout=subprocess.PIPE).communicate()[0]
+        env.log.debug("Using HTMLDOC version %s" % version)
     except OSError:   
         raise TracError("HTMLDOC is not installed.")
     except:
