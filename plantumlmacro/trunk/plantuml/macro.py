@@ -51,10 +51,10 @@ class PlantUMLMacro(WikiMacroBase):
             os.makedirs(self.abs_img_dir)
 
     def expand_macro(self, formatter, name, content):
-        if content is None:
+        if not content:
             return system_message("No UML text defined!")
         if not self.plantuml_jar:
-            return system_message("Installation error: plantuml_jar option not defined in .ini")
+            return system_message("Installation error: plantuml_jar option not defined in trac.ini")
         if not os.path.exists(self.plantuml_jar):
             return system_message("Installation error: plantuml.jar not found: %s" % self.plantuml_jar)
 
