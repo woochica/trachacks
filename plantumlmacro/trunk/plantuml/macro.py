@@ -27,7 +27,22 @@ img_dir = 'cache/plantuml'
 
 class PlantUMLMacro(WikiMacroBase):
     """
-    A macro to include a PlantUML Diagrams
+    A wiki processor that renders PlantUML diagrams in wiki text.
+    
+    Example:
+    {{{
+    {{{
+    #!PlantUML
+    @startuml
+    Alice -> Bob: Authentication Request
+    Bob --> Alice: Authentication Response
+    Alice -> Bob: Another authentication Request
+    Alice <-- Bob: another authentication Response
+    @enduml
+    }}}
+    }}}
+    
+    Results in:
     {{{
     #!PlantUML
     @startuml
