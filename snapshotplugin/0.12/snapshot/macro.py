@@ -88,7 +88,11 @@ Example:
             template = chrome.load_template('query_results.html')
             content = template.generate(**data)
             # ticket id list as static
-            tickets = '([ticket:' + ','.join([ticket.get('id') for group in groups for ticket in group[1]]) + ' query by ticket id])'
+            tickets = ''
+            if 'id' in cols:
+                ticket_id_list = [ticket.get('id') for group in groups for ticket in group[1]]
+                if len(ticket_id_list) > 0:
+                    tickets = '([ticket:' + ','.join(ticket_id_list) + ' query by ticket id])'
             return tag.div(content, format_to_html(self.env, formatter.context, tickets))
         except StopIteration:
             errorinfo = _('Not Enough fields in ticket: %s') % line

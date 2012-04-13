@@ -79,7 +79,9 @@ class Report(Component):
         text = '= Snapshot of [%s %s]: =\n' % (page_name, page_label)
         text += '{{{#!QueryResults\n'
         cols = [header['col'] for header in data['header_groups'][0] if not header['hidden']]
-        text += '||= href =||= %s\n' % ' =||= '.join(cols)
+        cols_work = [t for t in cols] # copy
+        if 'ticket' in cols_work: cols_work[cols_work.index('ticket')] = 'id' # replace 'ticket' to 'id'
+        text += '||= href =||= %s\n' % ' =||= '.join(cols_work)
         for  groupindex, row_group in data['row_groups']:
             text += '|| group: %s\n' % groupindex
             for row in row_group:
