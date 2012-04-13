@@ -239,7 +239,9 @@ class QueueDependencyAnalysis(Component, Analysis):
             if k == 'ticket':
                 continue
             field = k
-            if self.audit == 'ticket' or any(len(c) != 2 for c in data) or \
+            if self.audit == 'ticket' or \
+               field in ('blocking','blockedby') or \
+               any(len(c) != 2 for c in data) or \
                not self._isint(v): # heuristic for position field
                 return Analysis.fix_issue(self, db, data, author)
         

@@ -119,7 +119,7 @@ def get_project_solutions(db, args):
         sql += " JOIN ticket_custom b ON t.id=b.ticket AND b.name='blocking'"
         sql += _get_join(custom)
         sql += " WHERE t.id IN"
-        sql += " (SELECT source FROM mastertickets WHERE dest=%s)" % tid
+        sql += "     (SELECT source FROM mastertickets WHERE dest=%s)" % tid
         sql += " AND t.status != 'closed'"
         sql += _get_filter_and(standard, custom, args) + ";"
         cursor.execute(sql)
