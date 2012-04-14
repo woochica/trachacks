@@ -128,7 +128,7 @@ class ShellExample(WikiMacroBase):
 		"""Return a list of directories containing the provided ClearSilver
 		templates.
 		"""
-		return None
+		return []
 
 	def get_htdocs_dirs(self):
 		"""
