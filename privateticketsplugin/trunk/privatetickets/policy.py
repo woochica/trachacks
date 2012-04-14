@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+#
 # Created by Noah Kantrowitz on 2008-04-04.
 # Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
 
+from trac.config import IntOption, ListOption
 from trac.core import *
 from trac.perm import IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
 from trac.ticket.model import Ticket
-from trac.config import IntOption, ListOption
 from trac.util.compat import set
 
 class PrivateTicketsPolicy(Component):
