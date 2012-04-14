@@ -40,7 +40,7 @@ class PrivateTicketsPolicy(Component):
             if resource.realm == 'ticket':
                 break
             resource = resource.parent
-        if resource and resource.realm == 'ticket' and resource.id is not None:
+        if resource and resource.realm == 'ticket' and resource.id:
             return self.check_ticket_access(perm, resource)
         return None
     
