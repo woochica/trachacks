@@ -8,6 +8,7 @@ from trac.core import *
 from trac.perm import IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
 from trac.ticket.model import Ticket
 from trac.util.compat import set
+from trac.web.chrome import Chrome
 
 class PrivateTicketsPolicy(Component):
     """Central tasks for the PrivateTickets plugin."""
@@ -70,7 +71,8 @@ class PrivateTicketsPolicy(Component):
         
         if perm.has_permission('TICKET_VIEW_CC'):
             had_any = True
-            if perm.username in [x.strip() for x in tkt['cc'].split(',')]:
+            cc_list = Chrome(self.env).cc_list(tkt['cc'])
+            if perm.username in cc_list:
                 return None
         
         if perm.has_permission('TICKET_VIEW_OWNER'):
@@ -90,9 +92,10 @@ class PrivateTicketsPolicy(Component):
         
         if perm.has_permission('TICKET_VIEW_CC_GROUP'):
             had_any = True
-            for user in tkt['cc'].split(','):
+            cc_list = Chrome(self.env).cc_list(tkt['cc'])
+            for user in cc_list:
                 #self.log.debug('Private: CC check: %s, %s', req.authname, user.strip())
-                if self._check_group(perm.username, user.strip()):
+                if self._check_group(perm.username, user):
                     return None
         
         # No permissions assigned, punt
