@@ -1,0 +1,110 @@
+<!DOCTYPE html
+PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:py="http://genshi.edgewall.org/"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="admin.html" />
+
+    <head>
+        <title>Child Tickets Plugin</title>
+    </head>
+
+
+    <body>
+
+        <py:choose test="view">
+        <py:when test="'detail'">
+        <h2>Parent Type: $parenttype.name</h2>
+        <form id="modparenttype" method="post" action="">
+
+            <table class="childtickets_listing" id="parenttype">
+
+                <thead>
+                    <tr><th>Option</th><th>Value</th></tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <!-- Allow Child Option -->
+                        <td><label>Allow Child Tickets</label></td>
+                        <td><input type="checkbox" name="allow_child_tickets" value="True" checked="${parenttype.allow_child_tickets or None}"/></td>
+                    </tr>
+                    <tr>
+                        <!-- Table Headers Option -->
+                        <td>Table Headers</td>
+                        <td>
+                            <py:for each="header,checked in table_headers.items()">
+                            <div>
+                                <input type="checkbox" name="headers" value="$header" checked="$checked"/>
+                                <label for="$header">$header</label>
+                            </div>
+                            </py:for>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- Restricted Children Option -->
+                        <td>Restricted Child Types</td>
+                        <td>
+                            <py:for each="ptype,checked in parent_types.items()">
+                            <div>
+                                <input type="checkbox" name="restricted" value="$ptype" checked="$checked"/>
+                                <label for="$ptype">$ptype</label>
+                            </div>
+                            </py:for>
+                        </td>
+                    </tr>
+                    <tr>
+                        <!-- Inherited Fields Option -->
+                        <td>Inherited Fields</td>
+                        <td>
+                            <py:for each="field,checked in inherited_fields.items()">
+                            <div>
+                                <input type="checkbox" name="inherited" value="$field" checked="$checked"/>
+                                <label for="$field">$field</label>
+                            </div>
+                            </py:for>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <input type="submit" name="save" value="${_('Apply changes')}" />
+        </form>
+        </py:when>
+
+        <py:otherwise>
+        <h2>Child Tickets Plugin</h2>
+        <form id="childtickets_table" method="post" action="">
+            <table class="childtickets_listing" id="parenttypelist">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Allow Child Tickets?</th>
+                        <th>Table Headers</th>
+                        <th>Restrited Child Types</th>
+                        <th>Inherited Fields</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <py:for each="type in ticket_types">
+                    <tr class="${type.table_row_class}">
+                        <td class="name"> <a href="/trac/tit/admin/childticketsplugin/types/${type.name}">${type.name}</a> </td>
+                        <td>${type.allow_child_tickets}</td>
+                        <td>${', '.join(type.table_headers)}</td>
+                        <td>${', '.join(type.restrict_to_child_types)}</td>
+                        <td>${', '.join(type.inherited_fields)}</td>
+                    </tr>
+                    </py:for>
+                </tbody>
+            </table>
+
+            <p class="help">
+            Select a parent ticket type to modify its default behaviour when/if child tickets are generated.
+            </p>
+
+        </form>
+        </py:otherwise>
+        </py:choose>
+    </body>
+</html>
