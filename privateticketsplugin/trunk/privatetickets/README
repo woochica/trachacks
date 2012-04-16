@@ -1,0 +1,57 @@
+Notes
+=====
+Allow users to only see tickets they are associated with.
+
+There are three main permissions for this plugin: ``TICKET_VIEW_REPORTER``,
+``TICKET_VIEW_CC``, and ``TICKET_VIEW_OWNER``. ``TICKET_VIEW_SELF`` is an
+alias for all three of these.
+
+With each permission, users will only be able to see tickets where they are
+the person mentioned in the permission. So if a user has
+``TICKET_VIEW_REPORTER``, they can only see tickets they reported. For
+``TICKET_VIEW_CC``, they just have to be included in the CC list.
+
+There are also group-based permissions: ``TICKET_VIEW_REPORTER_GROUP``,
+``TICKET_VIEW_CC_GROUP``, and ``TICKET_VIEW_OWNER_GROUP``. These work in a
+similar way to their non-group counterparts, except that you are granted
+access if you share a group with the target user. For example, if ticket 1 was
+reported by Allan, and Allan and Bob are both in the group company_foo, and
+Bob has ``TICKET_VIEW_REPORTER_GROUP``, then Bob will be able to see ticket 1
+since he shares a group with the reporter. Each group-based permission is also
+an alias for the normal one, so you do not have to grant both.
+``TICKET_VIEW_GROUP`` is an alias for all the group-based permissions (and
+therefore all the normal ones as well).
+
+These extra permissions can only deny access, not allow it. This means the
+user must still have ``TICKET_VIEW`` granted as normal.
+
+Finally, users with ``TRAC_ADMIN`` will not be restricted by this plugin.
+The meta-user "anonymous" also cannot be restricted by this plugin, as their
+identity isn't known to be checked. Be sure to not grant ``TICKET_VIEW`` to
+anonymous, or unauthenticated users will be able to see all tickets.
+
+Configuration
+=============
+All configuration options go in the ``[privatetickets]`` section.
+
+``group_blacklist``
+    Groups to ignore for the purposes of the ``*_GROUP`` permissions.
+    
+    Defaults to "``anonymous, authenticated``"
+
+You must also add ``PrivateTicketsPolicy`` to your ``permission_policies``
+setting in trac.ini. It must be before the ``DefaultPermissionPolicy``. See
+below for an example if you don't have any other policies.
+    
+Example
+=======
+An example configuration::
+
+    [privatetickets]
+    group_blacklist = anonymous, authenticated, labusers
+    
+    [components]
+    privatetickets.* = enabled
+    
+    [trac]
+    permission_policies = PrivateTicketsPolicy, DefaultPermissionPolicy, LegacyAttachmentPolicy
