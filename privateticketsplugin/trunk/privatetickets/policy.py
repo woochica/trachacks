@@ -1,7 +1,12 @@
 # -*- coding: utf-8 -*-
 #
-# Created by Noah Kantrowitz on 2008-04-04.
-# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+# Copyright (C) 2008 Noah Kantrowitz
+# Copyright (C) 2012 Ryan J Ollos
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 
 from trac.config import IntOption, ListOption
 from trac.core import *
