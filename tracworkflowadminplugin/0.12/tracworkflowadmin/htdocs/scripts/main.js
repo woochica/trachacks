@@ -5,6 +5,10 @@ jQuery(document).ready(function(){
     var imagePath = $('#image-area img').attr('src');
     var inputBackup = '';
     var uiOpened = false;
+    var ajaxNow = false;
+    var lastUpdateTime = new Date().getTime();
+    var lastUpdateText = '';
+    var backup = '';
 
 /* functions */
     var escape = (function(){
@@ -62,7 +66,7 @@ jQuery(document).ready(function(){
 
     function setupOperations(tr) {
         restoreDropDown($('td.col-operations', tr), true);
-        $('td.col-operations select', tr).multiselect({'header': false, 'selectedList': 1, 'minWidth': 180});
+        $('td.col-operations select', tr).multiselect({'header': false, 'selectedList': 1, 'minWidth': 180, 'close': updateChart});
         $('td.col-operations select + button + div.ui-multiselect-menu ul li label', tr).prepend(sorterHtml);
         $('td.col-operations select + button + div:first', tr).css('width', calcListWidth($('td.col-operations', tr)));
     }
@@ -170,9 +174,16 @@ jQuery(document).ready(function(){
         $('div:first', td).css('width', calcListWidth(td));
     }
 
+    function isDarty() {
+        return backup != $.toJSON(createParams({mode: 'backup'}));
+    }
+
     function createParams(out) {
         out['status'] = [];
         out['actions'] = [];
+        if ($('#editor-mode').val() == 'text') {
+            out['text'] = $('#text-data').val();
+        }
         $('#status-editor-1 th input').each(function(){
             out.status.push($(this).val());
         });
@@ -219,12 +230,13 @@ jQuery(document).ready(function(){
 
         var jsonstr = $.toJSON(createParams({mode: 'update-chart'}));
         uiDisabled();
+        ajaxNow = true;
         $.ajax({
             url      : location.href,
             type     : "POST",
             cache    : false,
             dataType : 'json',
-            data     : {'params': jsonstr, '__FORM_TOKEN': $('#main-form [name="__FORM_TOKEN"]').val()},
+            data     : {'editor_mode': $('#editor-mode').val(), 'params': jsonstr, '__FORM_TOKEN': $('#main-form [name="__FORM_TOKEN"]').val()},
             success  : (
                 function(result) {
                     if (!result['result']) {
@@ -239,7 +251,7 @@ jQuery(document).ready(function(){
                         $('#tabcontent .system-message').remove();
                         var msg = $('<div>')
                             .addClass('system-message')
-                            .append($('<p>').text(_("There was an internal error.")))
+                            .append($('<p>').text(_("There was an error.")))
                             .append($('<ul>'));
                         for (var i = 0; i < result['errors'].length; i++) {
                             $('ul', msg).append($('<li>').text(result['errors'][i]));
@@ -248,18 +260,34 @@ jQuery(document).ready(function(){
                     }
                 }
             ),
-            error    : (
-                function(result) {
-                    alert(_("There was an internal error."));
-                }
-            )
+            error    : ajaxErrorFunc,
+            complete : function(XMLHttpRequest, textStatus){
+                ajaxNow = false;
+                lastUpdateTime = new Date().getTime();
+            }
         });
+        if ($('#editor-mode').val() == 'text') {
+            lastUpdateText = $('#text-data').val();
+        }
         return false;
     }
 
     function changeStatus(input) {
         var oldText = $('span:first', $(input).parent()).text();
         var newText = $(input).val();
+
+        var others = {'*': true};
+        $('#status-editor-1 th input').each(function(){
+            if (this != input) {
+                others[$(this).val()] = true;
+            }
+        });
+        if (others[newText]) {
+            $(input).val(oldText);
+            alert(_('The status name overlaps. \nPlease specify the name not overlapping.'));
+            return;
+        }
+
         $('span:first', $(input).parent()).text(newText);
         $('#elements tbody tr').each(function() {
             curValue = $('.col-next-status select', this).multiselect('getChecked').val();
@@ -273,6 +301,28 @@ jQuery(document).ready(function(){
             $('.col-next-status select').val(curValue);
             setupNextStatus(this);
         });
+    }
+
+    function saveSucceeded(result) {
+        if (!result['result']) {
+            alert(_("Your changes has been saved."));
+            $('#tabcontent .system-message').remove();
+        } else {
+            $('#tabcontent .system-message').remove();
+            var msg = $('<div>')
+                .addClass('system-message')
+                .append($('<p>').text(_("There was an error.")))
+                .append($('<ul>'));
+            for (var i = 0; i < result['errors'].length; i++) {
+                $('ul', msg).append($('<li>').text(result['errors'][i]));
+            }
+            $('#tabcontent #dummy-form').after(msg);
+            alert(_("There was an error."));
+        }
+    }
+
+    function ajaxErrorFunc(xmlHttpRequest, textStatus, errorThrown) {
+        alert(_("There was an internal error.\nresult status code=") + xmlHttpRequest.status + _("\n\n Please check log file of server."));
     }
 
 /* start setting */
@@ -353,9 +403,10 @@ jQuery(document).ready(function(){
         }
     });
     $('th.editable a').click(function() {
+        var resetText = $('input', $(this).closest('th')).val();
         $('input', $(this).closest('th')).val(inputBackup);
-        $('span', $(this).closest('th')).text(inputBackup);
-        changeStatus($('input', $(this).closest('th')));
+        $('span', $(this).closest('th')).text(resetText);
+        changeStatus($('input', $(this).closest('th'))[0]);
         closeUi();
         updateChart();
         return false;
@@ -372,10 +423,16 @@ jQuery(document).ready(function(){
             $(this).trigger('change');
             return false;
         } else if (ev.keyCode == 27) {
-            $('a', $(this).closest('td')).focus(); // firefoxでは、フォーカスを移動しないと設定した値が反映されない
-            $(this).val(inputBackup);
-            closeUi();
-            updateChart();
+            var el = this;
+            // firefoxの場合、一度イベントの外に出ないと $(this).val() で値を設定できなかったので以下のようにした
+            setTimeout(function(){
+                var resetText = $(el).val();
+                $(el).val(inputBackup);
+                $('span', $(el).closest('th')).text(resetText);
+                changeStatus(el);
+                closeUi();
+                updateChart();
+            }, 1);
             return false;
         }
     });
@@ -548,6 +605,11 @@ jQuery(document).ready(function(){
             if (this == thisEl) rowNo = c;
             c++;
         });
+        if (c == 1) {
+            alert(_("Could not delete this status. One status at least is required."));
+            return false;
+        }
+
         var force = false;
         var delName = $($('#status-editor-1 th input')[rowNo]).val();
         $('#elements tbody tr td.col-next-status select').each(function() {
@@ -704,30 +766,16 @@ jQuery(document).ready(function(){
     // 「保存して完了」
     $('#submit-button').click(function(){
         var jsonstr = $.toJSON(createParams({mode: 'update'}));
+        ajaxNow = true;
         $.ajax({
             url      : location.href,
             type     : "POST",
             cache    : false,
             dataType : 'json',
-            data     : {'params': jsonstr, '__FORM_TOKEN': $('#main-form [name="__FORM_TOKEN"]').val()},
-            success  : function(result) {
-                        if (!result['result']) {
-                            alert(_("Your changes has been saved."));
-                            $('#tabcontent .system-message').remove();
-                        } else {
-                            $('#tabcontent .system-message').remove();
-                            var msg = $('<div>')
-                                .addClass('system-message')
-                                .append($('<p>').text(_("There was an internal error.")))
-                                .append($('<ul>'));
-                            for (var i = 0; i < result['errors'].length; i++) {
-                                $('ul', msg).append($('<li>').text(result['errors'][i]));
-                            }
-                            $('#tabcontent #dummy-form').after(msg);
-                            alert(_("There was an internal error."));
-                        }
-                       },
-            error    : function(result) { alert(_("There was an internal error.")) }
+            data     : {'editor_mode': $('#editor-mode').val(), 'params': jsonstr, '__FORM_TOKEN': $('#main-form [name="__FORM_TOKEN"]').val()},
+            success  : saveSucceeded,
+            error    : ajaxErrorFunc,
+            complete : function(XMLHttpRequest, textStatus){ ajaxNow = false; }
         });
         return false;
     });
@@ -752,10 +800,58 @@ jQuery(document).ready(function(){
         return false;
     });
 
-    // チャートの更新
+    // 「テキストモードに切り替え」
+    $('#textmode-button').click(function(){
+        if (isDarty() && !confirm(_(
+                "Your changes have not been saved and will be discarded if " +
+                "you continue. Are you sure that you want to switch to " +
+                "text mode?")))
+            return false;
+        var jsonstr = $.toJSON({mode: 'change-textmode'});
+        $('#main-form textarea').text(jsonstr);
+        $('#main-form').submit();
+        return false;
+    });
+
+    // 「GUIモードに切り替え」
+    $('#guimode-button').click(function(){
+        if (isDarty() && !confirm(_(
+                "Your changes have not been saved and will be discarded if " +
+                "you continue. Are you sure that you want to switch to " +
+                "GUI mode?")))
+            return false;
+        var jsonstr = $.toJSON({mode: 'change-guimode'});
+        $('#main-form textarea').text(jsonstr);
+        $('#main-form').submit();
+        return false;
+    });
+
+    // ダイアグラムの更新
     $('#chart-update-button').click(updateChart);
 
     // 画面初期化
     $('#table-wrapper').css('display', 'block'); // IEでは初期化に時間が掛かるので初期化後に表示するようにしている
-    updateChart();
+    if ($('#image-area').size() > 0)
+        updateChart();
+
+    // 開始時のデータを保存しておく
+    backup = $.toJSON(createParams({mode: 'backup'}));
+
+    // テキストモードでは一定時間で自動更新する
+    if ($('#editor-mode').val() == 'text' && auto_update_interval != 0) {
+
+        // テキスト編集時にタイマリセット
+        $('#text-data').keydown(function(){
+            lastUpdateTime = new Date().getTime();
+        });
+
+        setInterval(function(){
+            var now = new Date().getTime();
+            // 最終更新から一定時間(auto_update_interval)経過していて、テキストに変更があり、ajaxの実行中でないならダイアグラムを更新する
+            if (now - lastUpdateTime > auto_update_interval && lastUpdateText != $('#text-data').val() && !ajaxNow) {
+                lastUpdateTime = new Date().getTime();
+                updateChart();
+            }
+        }, 1000);
+    }
 });

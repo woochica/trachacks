@@ -15,7 +15,9 @@
 
   <body>
     <h2>Workflow Admin</h2>
-    <form method="post" id="dummy-form">
+    <p i18n:msg="">Please refer to <a href="${req.href.wiki('TracWorkflow')}">TracWorkflow</a> for the setting method of a workflow. </p>
+    <form method="post" id="dummy-form" action="${panel_href()}">
+    <py:if test="editor_mode == 'gui'">
     <fieldset>
       <legend>Actions</legend>
       <p>
@@ -58,9 +60,8 @@
               src="${href.chrome('tracworkflowadmin/transparent.gif')}" /></th>
           </tr>
           <tr id="status-editor-1">
-          <py:for each="stat in status">
-            <th class="editable"><span>${stat}</span><input type="text" value="${stat}" /><a href="#top">×</a></th>
-          </py:for>
+            <th py:for="stat in status"
+                class="editable"><span>${stat}</span><input type="text" value="${stat}" /><a href="#top">×</a></th>
           </tr>
           <tr id="status-editor-2">
             <th py:for="stat in status">&#8203;<!--!
@@ -104,20 +105,18 @@
           </tr>
         </tfoot>
         <tbody>
-          <py:for each="action in actions">
-          <tr>
+          <tr py:for="action in actions">
             <td class="col-line-select">&#8203;<!--!
               --><img class="ui-icon ui-icon-play"
                       src="${href.chrome('tracworkflowadmin/transparent.gif')}"
               /></td>
-            <td class="editable col-action"><span>${action['actionName']}</span><input value="${action['actionName']}" /><a href="#top">×</a></td>
+            <td class="editable col-action"><span>${action['action']}</span><input value="${action['action']}" /><a href="#top">×</a></td>
             <td class="editable col-logname"><span>${action['name']}</span><input value="${action['name']}" /><a href="#top">×</a></td>
             <td class="col-operations selectable">
               <select multiple="multiple">
                 <option py:for="op in action['operations']" selected="selected">${op}</option>
-                <py:for each="op in operations">
-                <option py:if="not op in action['operations']">${op}</option>
-                </py:for>
+                <option py:for="op in operations"
+                        py:if="not op in action['operations']">${op}</option>
               </select>
             </td>
             <td class="col-permissions selectable">
@@ -130,33 +129,48 @@
               <select>
                 <option>*</option>
                 <option py:for="stat in status"
-                        selected="${action['status']['next'] == stat or None}">${stat}</option>
+                        selected="${action['next'] == stat or None}">${stat}</option>
               </select>
             </td>
-            <td py:for="stat in status" class="${(
-              (action['status']['before'][stat] or action['status']['before']['*'])
-                and 'col-before-status status-checked'
-                or 'col-before-status')}">&#8203;<!--!
+            <td py:for="stat in status"
+                class="${(stat in action['before'] or '*' in action['before'])
+                         and 'col-before-status status-checked'
+                         or 'col-before-status'
+                        }">&#8203;<!--!
               --><img class="ui-icon ui-icon-check"
                       src="${href.chrome('tracworkflowadmin/transparent.gif')}"
             /></td>
           </tr>
-          </py:for>
         </tbody>
       </table>
       </div>
+      </py:if>
+      <p py:if="editor_mode == 'text'">
+        <textarea id="text-data" name="text-data" cols="80" rows="15">${text}</textarea>
+      </p>
     <p>
       <input id="submit-button" type="submit" value="${dgettext('tracworkflowadmin', 'Save changes')}" />
       <input id="reset-button" type="submit" value="${dgettext('tracworkflowadmin', 'Cancel')}" />
       <input id="init-button" type="submit" value="${dgettext('tracworkflowadmin', 'Restore initial state')}" />
+      <py:choose test="editor_mode">
+        <input py:when="'gui'"
+               id="textmode-button" type="submit"
+               value="${dgettext('tracworkflowadmin', 'Text mode')}" />
+        <input py:when="'text'"
+               id="guimode-button" type="submit"
+               value="${dgettext('tracworkflowadmin', 'GUI mode')}" />
+      </py:choose>
     </p>
     </form>
     <fieldset id="chart-area">
       <legend>Workflow diagram</legend>
       <p><button id="chart-update-button">Update</button><span id="chart-update-status">Updating...</span></p>
-      <p id="image-area"><img src="${imagePath}" /></p>
+      <p id="image-area"><img alt="diagram" /></p>
     </fieldset>
-    <form id="main-form" method="post"><p><textarea name="params"></textarea></p></form>
+    <form id="main-form" method="post" action="${panel_href()}"><p>
+      <input id="editor-mode" name='editor_mode' type="hidden" value="${editor_mode}" />
+      <textarea name="params" rows="4" cols="4"></textarea>
+    </p></form>
     <div id="new-action-input-dialog" class="dialog">
      <input />
     </div>

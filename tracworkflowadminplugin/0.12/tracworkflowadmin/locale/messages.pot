@@ -1,15 +1,15 @@
 # Translations template for TracWorkflowAdmin.
-# Copyright (C) 2011 ORGANIZATION
+# Copyright (C) 2012 ORGANIZATION
 # This file is distributed under the same license as the
 # TracWorkflowAdmin project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracWorkflowAdmin 0.12.0.1\n"
+"Project-Id-Version: TracWorkflowAdmin 0.12.0.2\n"
 "Report-Msgid-Bugs-To: ciklone@opengroove.com\n"
-"POT-Creation-Date: 2011-05-30 11:15+0900\n"
+"POT-Creation-Date: 2012-04-16 01:07+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,197 +18,277 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.5\n"
 
-#: tracworkflowadmin/web_ui.py:75
+#: tracworkflowadmin/web_ui.py:101
 #: tracworkflowadmin/templates/tracworkflowadmin.html:13
 #: tracworkflowadmin/templates/tracworkflowadmin.html:17
 msgid "Workflow Admin"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:264
+#: tracworkflowadmin/web_ui.py:234
+#, python-format
+msgid "Line %(num)d: Could not use section."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:238
+#, python-format
+msgid "Line %(num)d: This line is not pair of key and value."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:246
+#, python-format
+msgid "Line %(num)d: There is a same key in line %(num2)d."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:255
+#, python-format
+msgid ""
+"Line %(num)d: Must be \"<action> = <status-list> -> <new-status>\" "
+"format."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:263
+#, python-format
+msgid "Line %(num)d: #%(n)d status is empty."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:269
+#, python-format
+msgid "Line %(num)d: Must be \"<action>.<attribute> = <value>\" format."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:274
+#, python-format
+msgid "Line %(num)d: Unknown attribute '%(attr)s' exists."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:279
+msgid "There is no valid description."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:284
+#, python-format
+msgid ""
+"Line %(num)d: Require \"%(action)s = <status-list> -> <new-status>\" "
+"line."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:427
+#, python-format
+msgid "The dot command '%(path)s' is not available: %(e)s"
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:449
 msgid "Leave"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:268
+#: tracworkflowadmin/web_ui.py:453
 msgid "Accept"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:273
+#: tracworkflowadmin/web_ui.py:458
 msgid "Reassign"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:278
+#: tracworkflowadmin/web_ui.py:463
 msgid "Reopen"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:283
+#: tracworkflowadmin/web_ui.py:468
 msgid "Resolve"
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:306
+#: tracworkflowadmin/web_ui.py:495
 msgid ""
 "Invalid request without actions. Please restart your browser and "
 "retry."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:308
+#: tracworkflowadmin/web_ui.py:498
 msgid "Need at least one action."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:310
+#: tracworkflowadmin/web_ui.py:500
 msgid ""
 "Invalid request without statuses. Please restart your browser and "
 "retry."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:312
+#: tracworkflowadmin/web_ui.py:503
 msgid "Need at least one status."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:323
-#, python-format
-msgid "Line %(num)d: No action name"
+#: tracworkflowadmin/web_ui.py:514
+msgid ""
+"The action with operation 'leave_status' and next status '*' is "
+"certainly required."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:325
+#: tracworkflowadmin/web_ui.py:528
+#, python-format
+msgid "Line %(num)d:  The definition of '%(aname)s' is not found."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:533
+#, python-format
+msgid "Line %(num)d: Action cannot be emptied."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:536
 #, python-format
 msgid ""
-"Line %(num)d: Action names can contain only alphabetic and numeric "
-"characters."
+"Line %(num)d: Use alphanumeric, dash, and underscore characters in "
+"the action name."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:328
+#: tracworkflowadmin/web_ui.py:541
 #, python-format
 msgid "Line %(num)d: Action name is duplicated. The name must be unique."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:332
-#, python-format
-msgid "Line %(num)d: No display name."
-msgstr ""
-
-#: tracworkflowadmin/web_ui.py:335
-#, python-format
-msgid "Line %(num)d: Unknown operator."
-msgstr ""
-
-#: tracworkflowadmin/web_ui.py:338
-#, python-format
-msgid "Line %(num)d: Unknown permission."
-msgstr ""
-
-#: tracworkflowadmin/web_ui.py:340
+#: tracworkflowadmin/web_ui.py:546
 #, python-format
 msgid "Line %(num)d: No next status."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:342
+#: tracworkflowadmin/web_ui.py:549
 #, python-format
 msgid "Line %(num)d: '%(status)s' is invalid next status."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:345
+#: tracworkflowadmin/web_ui.py:553
 #, python-format
 msgid "Line %(num)d: Statuses is empty."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:349
+#: tracworkflowadmin/web_ui.py:558
 #, python-format
 msgid "Line %(num)d: Status '%(status)s' is invalid."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:371
+#: tracworkflowadmin/web_ui.py:563
+#, python-format
+msgid "Line %(num)d: Unknown operator."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:568
+#, python-format
+msgid "Line %(num)d: Unknown permission."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:573
+#, python-format
+msgid "Line %(num)d: specify a numerical value to 'default'."
+msgstr ""
+
+#: tracworkflowadmin/web_ui.py:602
 #, python-format
 msgid "Status column %(num)d: Status name is empty."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:373
+#: tracworkflowadmin/web_ui.py:605
 #, python-format
 msgid ""
 "Status column %(num)d: The characters '#' and ';' cannot be used for "
 "status name."
 msgstr ""
 
-#: tracworkflowadmin/web_ui.py:376
+#: tracworkflowadmin/web_ui.py:609
 #, python-format
 msgid ""
 "Status column %(num)d: Status name is duplicated. The name must be "
 "unique."
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:20
-#: tracworkflowadmin/templates/tracworkflowadmin.html:50
-msgid "Actions"
+#: tracworkflowadmin/templates/tracworkflowadmin.html:18
+msgid "Please refer to [1:TracWorkflow] for the setting method of a workflow."
 msgstr ""
 
 #: tracworkflowadmin/templates/tracworkflowadmin.html:22
-msgid "Move up"
-msgstr ""
-
-#: tracworkflowadmin/templates/tracworkflowadmin.html:23
-msgid "Move down"
+#: tracworkflowadmin/templates/tracworkflowadmin.html:52
+msgid "Actions"
 msgstr ""
 
 #: tracworkflowadmin/templates/tracworkflowadmin.html:24
+msgid "Move up"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:25
+msgid "Move down"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:26
 msgid "Remove"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:28
+#: tracworkflowadmin/templates/tracworkflowadmin.html:30
 msgid "Columns"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:31
-#: tracworkflowadmin/templates/tracworkflowadmin.html:52
+#: tracworkflowadmin/templates/tracworkflowadmin.html:33
+#: tracworkflowadmin/templates/tracworkflowadmin.html:54
 msgid "Display name"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:34
-#: tracworkflowadmin/templates/tracworkflowadmin.html:53
+#: tracworkflowadmin/templates/tracworkflowadmin.html:36
+#: tracworkflowadmin/templates/tracworkflowadmin.html:55
 msgid "Operations"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:37
-#: tracworkflowadmin/templates/tracworkflowadmin.html:54
+#: tracworkflowadmin/templates/tracworkflowadmin.html:39
+#: tracworkflowadmin/templates/tracworkflowadmin.html:56
 msgid "Permissions"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:40
-#: tracworkflowadmin/templates/tracworkflowadmin.html:55
+#: tracworkflowadmin/templates/tracworkflowadmin.html:42
+#: tracworkflowadmin/templates/tracworkflowadmin.html:57
 msgid "Next status"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:57
+#: tracworkflowadmin/templates/tracworkflowadmin.html:59
 msgid "Statuses"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:82
+#: tracworkflowadmin/templates/tracworkflowadmin.html:84
 msgid "action"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:83
+#: tracworkflowadmin/templates/tracworkflowadmin.html:85
 msgid "Action name"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:149
+#: tracworkflowadmin/templates/tracworkflowadmin.html:155
 msgid "Save changes"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:150
+#: tracworkflowadmin/templates/tracworkflowadmin.html:156
 msgid "Cancel"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:151
+#: tracworkflowadmin/templates/tracworkflowadmin.html:157
 msgid "Restore initial state"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:155
+#: tracworkflowadmin/templates/tracworkflowadmin.html:159
+msgid "Text mode"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:162
+msgid "GUI mode"
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:167
 msgid "Workflow diagram"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+#: tracworkflowadmin/templates/tracworkflowadmin.html:168
 msgid "Update"
 msgstr ""
 
-#: tracworkflowadmin/templates/tracworkflowadmin.html:156
+#: tracworkflowadmin/templates/tracworkflowadmin.html:168
 msgid "Updating..."
+msgstr ""
+
+#: tracworkflowadmin/templates/tracworkflowadmin.html:169
+msgid "diagram"
 msgstr ""
 

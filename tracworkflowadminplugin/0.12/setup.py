@@ -16,7 +16,7 @@ except ImportError:
 
 setup(
     name = 'TracWorkflowAdmin', 
-    version = '0.12.0.1',
+    version = '0.12.0.2',
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
         'tracworkflowadmin': [

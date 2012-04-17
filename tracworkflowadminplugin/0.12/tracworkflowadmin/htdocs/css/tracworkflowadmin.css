@@ -234,6 +234,10 @@ table#elements tbody tr:hover button {
  background-color: #ffc;
 }
 
+#dummy-form {
+ padding: 0;
+}
+
 #dummy-form fieldset {
  float: left;
  height: 4em;
@@ -252,6 +256,7 @@ table#elements tbody tr:hover button {
 fieldset#chart-area {
  width: 620px;
  height: 640px;
+ padding: 10px;
  float:left;
 }
 
@@ -264,4 +269,8 @@ p#image-area {
 
 #chart-update-button {
  display:none;
+}
+
+#text-data {
+ width: 640px;
 }
