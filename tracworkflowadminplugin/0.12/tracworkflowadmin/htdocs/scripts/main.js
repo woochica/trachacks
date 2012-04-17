@@ -174,8 +174,12 @@ jQuery(document).ready(function(){
         $('div:first', td).css('width', calcListWidth(td));
     }
 
-    function isDarty() {
+    function isDirty() {
         return backup != $.toJSON(createParams({mode: 'backup'}));
+    }
+
+    function resetDirtyFlag() {
+        backup = $.toJSON(createParams({mode: 'backup'}));
     }
 
     function createParams(out) {
@@ -305,6 +309,7 @@ jQuery(document).ready(function(){
 
     function saveSucceeded(result) {
         if (!result['result']) {
+            resetDirtyFlag();
             alert(_("Your changes has been saved."));
             $('#tabcontent .system-message').remove();
         } else {
@@ -802,7 +807,7 @@ jQuery(document).ready(function(){
 
     // 「テキストモードに切り替え」
     $('#textmode-button').click(function(){
-        if (isDarty() && !confirm(_(
+        if (isDirty() && !confirm(_(
                 "Your changes have not been saved and will be discarded if " +
                 "you continue. Are you sure that you want to switch to " +
                 "text mode?")))
@@ -815,7 +820,7 @@ jQuery(document).ready(function(){
 
     // 「GUIモードに切り替え」
     $('#guimode-button').click(function(){
-        if (isDarty() && !confirm(_(
+        if (isDirty() && !confirm(_(
                 "Your changes have not been saved and will be discarded if " +
                 "you continue. Are you sure that you want to switch to " +
                 "GUI mode?")))
@@ -835,7 +840,7 @@ jQuery(document).ready(function(){
         updateChart();
 
     // 開始時のデータを保存しておく
-    backup = $.toJSON(createParams({mode: 'backup'}));
+    resetDirtyFlag();
 
     // テキストモードでは一定時間で自動更新する
     if ($('#editor-mode').val() == 'text' && auto_update_interval != 0) {
