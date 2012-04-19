@@ -1,3 +1,12 @@
+#/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2008-2009 Jeff Hammel
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from setuptools import find_packages, setup
 
 version='0.4.2'
