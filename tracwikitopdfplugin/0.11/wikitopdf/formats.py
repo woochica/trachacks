@@ -3,11 +3,13 @@ Copyright (C) 2008 Prognus Software Livre - www.prognus.com.br
 Author: Diorgenes Felipe Grzesiuk <diorgenes@prognus.com.br>
 """
 
+import os
 from tempfile import mkstemp
 from trac.core import Component, implements
 from trac.config import BoolOption
 from trac.mimeview.api import Mimeview
 from trac.web.api import RequestDone
+from trac.wiki.model import WikiPage
 from api import IWikiToPdfFormat
 from wikitopdf import wiki_to_pdf, html_to_pdf
 
