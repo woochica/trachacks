@@ -130,7 +130,7 @@ class ChildTicketsAdminPanel(Component):
         # For trac 0.13 : self.env.db_query('SELECT name FROM enum WHERE type="ticket_type"')
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('select name from enum where type="ticket_type"')
+        cursor.execute("select name from enum where type='ticket_type'")
         if not ptype:
             # No parent type supplied, return simple list.
             return [ x for (x,) in cursor.fetchall() ]
