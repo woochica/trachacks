@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import cgi
 import os
 import re
-import shutil
 from pkg_resources import resource_filename
 from tempfile import TemporaryFile
 
@@ -15,13 +13,10 @@ from trac.ticket.model import Ticket, Milestone
 from trac.web.api import IRequestHandler, IRequestFilter
 from trac.web.chrome import ITemplateProvider, add_link, add_stylesheet, add_script
 from trac.wiki.model import WikiPage
-from trac.util.text import unicode_quote
+from trac.util.text import to_unicode
 
 
 __all__ = ['TracDragDropModule']
-
-
-_HEADER = 'X-TracDragDrop'
 
 
 def _list_message_files(dir):
@@ -158,8 +153,7 @@ class TracDragDropModule(Component):
 
     def _send_message_on_except(self, req, message, status):
         if not isinstance(message, basestring):
-            message = str(message).decode('utf-8')
-        req.send_header(_HEADER, unicode_quote(message))
+            message = to_unicode(message)
         req.send(message.encode('utf-8'), status=status)
 
     def _redirect_listener(self, req, url, permanent):
@@ -168,20 +162,26 @@ class TracDragDropModule(Component):
 
 class PseudoAttachmentObject(object):
     def __init__(self, req):
-        ctype = req.get_header('Content-Type')
-        if ctype:
-            ctype, options = cgi.parse_header(ctype)
+        size = req.get_header('Content-Length')
+        if size is None:
+            size = -1
+        else:
+            size = int(size)
 
         tempfile = TemporaryFile()
-        shutil.copyfileobj(req.environ['wsgi.input'], tempfile)
+        input = req.environ['wsgi.input']
+        while True:
+            buf = input.read(min(4096, size))
+            if not buf:
+                break
+            tempfile.write(buf)
+            size -= len(buf)
         tempfile.flush()
         tempfile.seek(0)
 
         self.file = tempfile
-        self.filename = options.get('filename')
+        self.filename = req.get_header('X-TracDragDrop-Filename')
 
 
 class RedirectListened(Exception):
     pass
-
-

@@ -1,82 +1,32 @@
 jQuery(document).ready(function($) {
     var methodsHTML5 = {
         setup: function() {
-            new FileReader();
             var xhr = new XMLHttpRequest();
-            return xhr.upload && xhr.sendAsBinary ? true : false;
+            return !!xhr.upload;
         },
         createXMLHttpRequest: function(options) {
-            var uploadProgress = options.uploadProgress || emptyFunction;
-            var success = options.success || emptyFunction;
-            var error = options.error || emptyFunction;
-
-            var xhr = new XMLHttpRequest();
-            xhr.upload.addEventListener("progress", uploadProgress, false);
-            xhr.onreadystatechange = function() {
-                switch (xhr.readyState) {
-                case 4:
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        success(xhr.responseText, xhr.statusText, xhr);
-                    }
-                    else if (xhr.status >= 400 && xhr.status < 600) {
-                        error(xhr, xhr.statusText);
-                    }
-                    xhr.upload.removeEventListener("progress", uploadProgress, false);
-                    xhr.onreadystatechange = null;
-                    break;
+            var uploadProgress = options.uploadProgress;
+            var headers = options.headers || {};
+            var opts = $.extend({}, options);
+            var complete = function() {
+                xhr.upload.removeEventListener("progress", uploadProgress, false);
+            };
+            opts.type = 'POST';
+            opts.dataType = 'text';
+            opts.processData = false;
+            opts.contentType = 'application/octet-stream';
+            opts.beforeSend = function(xhr, settings) {
+                xhr.upload.addEventListener("progress", uploadProgress, false);
+                for (var name in headers) {
+                    xhr.setRequestHeader(name, headers[name]);
                 }
             };
-            xhr.open(options.method || 'POST', options.url, options.async || true);
-            for (var name in options.headers) {
-                xhr.setRequestHeader(name, options.headers[name]);
-            }
-            xhr.sendAsBinary(options.data);
-            return xhr;
+            delete opts.headers;
+            delete opts.uploadProgress;
+            $.ajax(opts);
         },
         getDataTransfer: function(event) {
             return event.originalEvent.dataTransfer;
-        }
-    };
-    var methodsGears = {
-        setup: function() {
-            var xhr = google.gears.factory.create('beta.httprequest');
-            if (!xhr.upload) {
-                return false;
-            }
-            this.gearsDesktop = google.gears.factory.create('beta.desktop');
-            return true;
-        },
-        gearsDesktop: null,
-        createXMLHttpRequest: function(options) {
-            var uploadProgress = options.uploadProgress || emptyFunction;
-            var success = options.success || emptyFunction;
-            var error = options.error || emptyFunction;
-
-            var xhr = google.gears.factory.create('beta.httprequest');
-            xhr.upload.onprogress = uploadProgress;
-            xhr.onreadystatechange = function() {
-                switch (xhr.readyState) {
-                case 4:
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        success(xhr.responseText, xhr.statusText, xhr);
-                    }
-                    else if (xhr.status >= 400 && xhr.status < 600) {
-                        error(xhr, xhr.statusText);
-                    }
-                    xhr.upload.onprogress = null;
-                    xhr.onreadystatechange = null;
-                    break;
-                }
-            };
-            xhr.open(options.method || 'POST', options.url, options.async || true);
-            for (var name in options.headers) {
-                xhr.setRequestHeader(name, options.headers[name]);
-            }
-            xhr.send(options.data);
-            return xhr;
-        },
-        getDataTransfer: function(event) {
-            return this.gearsDesktop.getDragData(event.originalEvent, 'application/x-gears-files');
         }
     };
 
@@ -158,8 +108,6 @@ jQuery(document).ready(function($) {
         return false;
     }
     function startUpload() {
-        var reader = null;
-        var xhr = null;
         var file = null;
         var filename = null;
         notice = $('<div id="tracdragdrop_notice" />')
@@ -172,35 +120,10 @@ jQuery(document).ready(function($) {
 
         function startReader() {
             file = queueFiles.shift();
-            filename = (file.name || '').replace(/"/g, '');
-            if (typeof file.blob != 'undefined') {
-                startSendContents(file.blob);
-                return;
-            }
-            reader = new FileReader();
-            reader.addEventListener('loadend', readerLoadend, false);
-            reader.addEventListener('error', readerError, false);
-            reader.addEventListener('abort', readerAbort, false);
-            try {
-                reader.readAsBinaryString(file);
-            }
-            catch (e) {
-                var file_ = file;
-                setTimeout(function() { showReaderError(file_, e) }, 10);
-                cleanReader();
-                nextFile();
-            }
-        }
-        function cleanReader() {
-            if (reader !== null) {
-                reader.removeEventListener('loadend', readerLoadend, false);
-                reader.removeEventListener('error', readerError, false);
-                reader.removeEventListener('abort', readerAbort, false);
-                reader = null;
-            }
+            filename = $.trim((file.name || '').replace(/[\x00-\x1f]/g, ''));
+            startSendContents(file);
         }
         function nextFile() {
-            xhr = null;
             if (queueFiles.length === 0) {
                 endUpload();
             }
@@ -208,34 +131,12 @@ jQuery(document).ready(function($) {
                 startReader();
             }
         }
-        function readerLoadend(event) {
-            var error = reader.error;
-            if (!error) {
-                startSendContents(reader.result);
-            }
-            cleanReader();
-            if (error) {
-                nextFile();
-            }
-        }
         function startSendContents(contents) {
-            xhr = methods.createXMLHttpRequest({
+            methods.createXMLHttpRequest({
                 url: urls['tracdragdrop.new'],
                 data: contents,
-                headers: {
-                    'Content-Type': 'application/octet-stream; filename="' + filename + '"',
-                    'X-Requested-With': 'XMLHttpRequest' },
+                headers: {'X-TracDragDrop-Filename': filename},
                 uploadProgress: uploadProgress, success: uploadSuccess, error: uploadError });
-        }
-        function readerError(event) {
-            setTimeout(function() { showReaderError(file, e) }, 0);
-            cleanReader();
-            nextFile();
-        }
-        function readerAbort(event) {
-            setTimeout(function() { showReaderError(file, e) }, 0);
-            cleanReader();
-            nextFile();
         }
         function showProgress(percentage) {
             var value = percentage + '%';
@@ -257,9 +158,7 @@ jQuery(document).ready(function($) {
         }
         function uploadError(xhr, textStatus, errorThrown) {
             var filename = file.name;
-            var message = xhr.responseText
-                        || decodeURIComponent(xhr.getResponseHeader('X-TracDragDrop') || '')
-                        || textStatus;
+            var message = xhr.responseText;
             setTimeout(function() { alert(filename + ': ' + message) }, 0);
             nextFile();
         }
@@ -357,7 +256,7 @@ jQuery(document).ready(function($) {
     function initialize() {
         urls = getUrls();
         if (urls) {
-            var list = [ methodsHTML5, methodsGears ];
+            var list = [ methodsHTML5 ];
             var length = list.length;
             for (var i = 0; i < length; i++) {
                 try {
@@ -372,5 +271,4 @@ jQuery(document).ready(function($) {
         }
         return false;   // not available
     }
-    function emptyFunction() { }
 });
