@@ -1,6 +1,11 @@
-# Created by Norman Rasmussen on 2008-08-19.
-# Copyright (c) 2008 Norman Rasmussen. All rights reserved.
-# Based on the PrivateTicketsPlugin by Noah Kantrowitz
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2008 Noah Kantrowitz
+# Copyright (C) 2008 Norman Rasmussen
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 from trac.core import *
 from trac.perm import IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
