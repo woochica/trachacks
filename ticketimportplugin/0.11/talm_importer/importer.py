@@ -23,6 +23,7 @@ from trac.ticket import model
 from trac.util import get_reporter_id
 from trac.util.compat import set, sorted
 from trac.util.html import html
+from trac.util.text import to_unicode
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
 
@@ -320,7 +321,9 @@ class ImportModule(Component):
 
         for row in rows:
             if idcolumn:
-                ticket_id = int(row[idcolumn] or 0)
+                ticket_id = row[idcolumn].strip()
+                if ticket_id:
+                    ticket_id = ticket_id.lstrip('#')
                 if ticket_id:
                     self._check_ticket(db, ticket_id)
                 else:
@@ -477,12 +480,12 @@ class ImportModule(Component):
             return 0
 
     def _check_ticket(self, db, ticket_id):
+        ticket_id = to_unicode(ticket_id)
         cursor = db.cursor()
-
-        cursor.execute('SELECT summary FROM ticket WHERE id = %s', (str(ticket_id),))
+        cursor.execute('SELECT summary FROM ticket WHERE id = %s', (ticket_id,))
         row = cursor.fetchone()
         if not row:
-            raise TracError('Ticket %s found in file, but not present in Trac: cannot import.' % str(ticket_id))
+            raise TracError('Ticket %s found in file, but not present in Trac: cannot import.' % ticket_id)
         return row[0]
 
     def _get_encodings(self):
