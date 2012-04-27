@@ -89,6 +89,7 @@ class ChildTicketsAdminPanel(Component):
         else:
             data =  {
                     'view': 'list',
+                    'base_href': req.href.admin(cat, page),
                     'ticket_types': [ ParentType(self.config, p) for p in self._types() ],
                     }
 

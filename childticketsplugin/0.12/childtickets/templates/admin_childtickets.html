@@ -89,7 +89,7 @@ PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
                 <tbody>
                     <py:for each="type in ticket_types">
                     <tr class="${type.table_row_class}">
-                        <td class="name"> <a href="/trac/tit/admin/childticketsplugin/types/${type.name}">${type.name}</a> </td>
+                        <td class="name"> <a href="${'/'.join([base_href,type.name])}">${type.name}</a> </td>
                         <td>${type.allow_child_tickets}</td>
                         <td>${', '.join(type.table_headers)}</td>
                         <td>${', '.join(type.restrict_to_child_types)}</td>
