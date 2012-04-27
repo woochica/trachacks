@@ -1,8 +1,29 @@
 
+/*General*/
 .references .author .last{
-font-variant:small-caps;
+    font-variant:small-caps;
+}
+.references .editor .last{
+    font-variant:small-caps;
+}
+.references .etal{
+    font-style:italic;
 }
 
-.references .title {
-font-style:italic;
+/*Article*/
+.references .article .journal {
+    font-style:italic;
 }
+
+/*Book*/
+.references .book .title {
+    font-style:italic;
+}
+
+.references .book .series, .references .book .volume, .references .book
+.editor, .references .book .edition{
+    font-style:normal;
+}
+
+
+

@@ -22,8 +22,6 @@
  along with tracbib.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-
-
 from api import IBibRefFormatter
 from trac.core import implements, Component
 from trac.web.chrome import add_stylesheet, ITemplateProvider
@@ -43,37 +41,301 @@ except ImportError: # for trac 0.10:
 BIBTEX_PERSON = [
     'author',
     'editor',
-    'publisher',
 ]
 
-BIBTEX_KEYS = [
-    'author',
-    'editor',
-    'title',
-    'intype',
-    'booktitle',
-    'edition',
-    'doi',
-    'series',
-    'journal',
-    'volume',
-    'number',
-    'organization',
-    'institution',
-    'publisher',
-    'school',
-    'howpublished',
-    'day',
-    'month',
-    'year',
-    'chapter',
-    'volume',
-    'paper',
-    'revision',
-    'isbn',
-    'pages',
-    'url',
-]
+types = {
+        'article': {
+            'required': {
+                'author':{'pre' : '', 'post' : ', '},
+                'title':{'pre' : '\"', 'post' : ',\" '},
+                'journal':{'pre' : '', 'post' : ', ', 'postsub' : ['volume','number','pages']},
+                'year':{'presub': ['month'] ,'pre' : '', 'post' : '.'}
+                },
+
+            'optional': {
+                'volume':{'pre' : ', vol. ', 'post' : ''},
+                'number':{'pre' : ', (', 'post' : ')'},
+                'pages':{'pre' : ', pp.', 'post' : ''},
+                'month':{'pre' : '', 'post' : ' '},
+                'note':{'pre' : '', 'post' : ''},
+                'key':{'pre' : '', 'post' : ''}
+                },
+            'order': 
+                ['author','title','journal','year']
+                ,
+            },
+
+        'book': {
+            'required':{
+                'author':{'pre' : '', 'post' : ', ' },
+                'title':{'pre' : '', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
+                'publisher':{'pre' : '','presub':['address'] , 'post' : ', '},
+                'year':{'pre' : '', 'presub':['month'], 'post' : '.'}},
+
+            'optional': {
+                'editor':{'pre' : ', ', 'post' : ''},
+                'volume':{'pre' : ', vol. ', 'post' : ''},
+                'number':{'pre' : ', no. ', 'post' : ''},
+                'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                'address':{'pre' : '', 'post' : ': '},
+                'edition':{'pre' : ' ', 'post' : ' ed'},
+                'month':{'pre' : '', 'post' : ' '},
+                'note':{'pre' : '', 'post' : ''},
+                'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title', 'publisher','year']
+                ,
+            },
+
+        'booklet' : {
+            'required': {
+                'title':{'pre' : '', 'post' : '. '}},
+
+            'optional': {
+                'author':{'pre' : '', 'post' : ', '},
+                'howpublished':{'pre' : '', 'post' : ', '},
+                'address':{'pre' : '', 'post' : ': '},
+                'month':{'pre' : '', 'post' : ' '},
+                'year':{'pre' : '', 'presub':['month'], 'post' : '.'},
+                'note':{'pre' : '', 'post' : ''},
+                'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','address','howpublished','year']
+                ,
+            },
+
+        'inproceedings' : {
+                'required': {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '\"', 'post' : ',\" '},
+                'booktitle':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor' ] },
+                'year':{'pre' : '', 'presub':['month'],'postsub':['pages']  , 'post' : '.'}},
+
+                'optional': {
+                    'editor':{'pre' : ', ', 'post' : ''},
+                    'volume':{'pre' : ', vol. ', 'post' : ''},
+                    'number':{'pre' : ', no. ', 'post' : ''},
+                    'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                    'pages':{'pre' : ', pp. ', 'post' : ''},
+                    'address':{'pre' : ', ', 'post' : ': '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'organization':{'pre' : '', 'post' : ''},
+                    'publisher':{'pre' : '', 'post' : ', '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','booktitle','address','publisher','year']
+                ,
+
+                },
+
+        'conference': {
+                'required': {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '\"', 'post' : ',\" '},
+                'booktitle':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor' ] },
+                'year':{'pre' : '', 'presub':['month'],'postsub':['pages']  , 'post' : '.'}},
+
+                'optional': {
+                    'editor':{'pre' : ', ', 'post' : ''},
+                    'volume':{'pre' : ', vol. ', 'post' : ''},
+                    'number':{'pre' : ', no. ', 'post' : ''},
+                    'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                    'pages':{'pre' : ', pp. ', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ': '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'organization':{'pre' : '', 'post' : ''},
+                    'publisher':{'pre' : '', 'post' : ', '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','booktitle','address','publisher','year']
+                ,
+            },
+
+        'inbook': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'editor':{'pre' : ', ', 'post' : ''},
+                    'title':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
+                    'chapter':{'pre' : 'ch. ', 'post' : ''},
+                    'pages':{'pre' : ', pp. ', 'post' : ''},
+                    'publisher':{'pre' : '', 'post' : ', '},
+                    'year':{'pre' : '', 'presub':['month'], 'postsub':['chapter','pages'], 'post' : '.'}},
+
+                'optional': {
+                    'volume':{'pre' : ', vol. ', 'post' : ''},
+                    'number':{'pre' : ', no. ', 'post' : ''},
+                    'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                    'type':{'pre' : '', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ': '},
+                    'edition':{'pre' : '', 'post' : ' ed'},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','address','publisher','year']
+                ,
+
+                },
+
+        'incollection': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ''},
+                    'booktitle':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
+                    'title':{'pre' : '\"', 'post' : ',\" '},
+                    'publisher':{'pre' : '', 'post' : ', '},
+                    'year':{'pre' : '', 'presub':['month'], 'postsub':['chapter','pages'], 'post' : '.'}},
+
+                'optional' : {
+                    'editor':{'pre' : ', ', 'post' : ''},
+                    'volume':{'pre' : ', vol. ', 'post' : ''},
+                    'number':{'pre' : '', 'post' : ''},
+                    'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                    'type':{'pre' : '', 'post' : ''},
+                    'chapter':{'pre' : ', ch. ', 'post' : ''},
+                    'pages':{'pre' : ', pp. ', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ': '},
+                    'edition':{'pre' : ', ', 'post' : ' ed'},  
+                    'month':{'pre' : '', 'post' : ''},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','booktitle','address','publisher','year']
+                ,
+                },
+
+        'proceedings': {
+            'required':{
+                'author':{'pre' : '', 'post' : ', ' },
+                'title':{'pre' : '', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
+                'publisher':{'pre' : '','presub':['address'] , 'post' : ', '},
+                'year':{'pre' : '', 'presub':['month'], 'post' : '.'}},
+
+            'optional': {
+                'editor':{'pre' : ', ', 'post' : ''},
+                'volume':{'pre' : ', vol. ', 'post' : ''},
+                'number':{'pre' : ', no. ', 'post' : ''},
+                'series':{'pre' : ' (', 'post' : ')','postsub': ['number'] },
+                'address':{'pre' : '', 'post' : ': '},
+                'edition':{'pre' : ' ', 'post' : ' ed'},
+                'month':{'pre' : '', 'post' : ' '},
+                'note':{'pre' : '', 'post' : ''},
+                'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title', 'publisher','year']
+                ,
+                },
+
+        'manual': {
+                'required' : {
+                    'title':{'pre' : '', 'post' : ', ', 'postsub':['edition']}},
+
+                'optional' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'organization':{'pre' : '', 'post' : ', '},
+                    'address':{'pre' : '', 'post' : ', '},
+                    'edition':{'pre' : '', 'post' : ' ed.'},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'year':{'pre' : '', 'post' : '.', 'presub':['month'],
+                        'postsub':['pages']},
+                    'pages':{'pre' : ', pp. ', 'post' : ''},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','organization', 'address','year']
+                ,
+
+                },
+
+        'mastersthesis': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '\"', 'post' : ',\" M.S. thesis, '},
+                    'school':{'pre' : '', 'post' : ', '},
+                    'year':{'pre' : '', 'post' : '.', 'presub':['month']}},
+
+                'optional' : {
+                    'type':{'pre' : '', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ', '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','school', 'address','year']
+                ,
+
+                },
+
+        'misc': {
+                'required' : {},
+
+                'optional' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '', 'post' : ', '},
+                    'howpublished':{'pre' : '', 'post' : ', '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'year':{'pre' : '','presub':['month'], 'post' : '.'},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','howpublished', 'year']
+                ,
+                },
+
+        'phdthesis': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '\"', 'post' : ',\" Ph.D. dissertation, '},
+                    'school':{'pre' : '', 'post' : ', '},
+                    'year':{'pre' : '', 'post' : '.', 'presub':['month']}},
+
+                'optional' : {
+                    'type':{'pre' : '', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ', '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','school', 'address','year']
+                ,
+                },
+
+        'techreport': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '\"', 'post' : ',\" '},
+                    'institution':{'pre' : '', 'post' : ''},
+                    'year':{'pre' : '', 'post' : '.', 'presub':['month']}},
+
+                'optional' : {
+                    'type':{'pre' : '', 'post' : ''},
+                    'number':{'pre' : 'Rep. ', 'post' : ''},
+                    'address':{'pre' : '', 'post' : ': '},
+                    'month':{'pre' : '', 'post' : ' '},
+                    'note':{'pre' : '', 'post' : ''},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','institution', 'address','year']
+                ,
+
+                },
+
+        'unpublished': {
+                'required' : {
+                    'author':{'pre' : '', 'post' : ', '},
+                    'title':{'pre' : '', 'post' : '. '},
+                    'note':{'pre' : '', 'post' : ''}},
+
+                'optional' : {
+                    'month':{'pre' : '', 'post' : ' '},
+                    'year':{'pre' : '', 'post' : ', ', 'presub':['month']},
+                    'key':{'pre' : '', 'post' : ''}},
+            'order': 
+                ['author','title','year', 'note']
+                ,
+                },
+        }
 
 class BibRefFormatterBasic(Component):
     implements(IBibRefFormatter)
@@ -81,41 +343,79 @@ class BibRefFormatterBasic(Component):
     def formatter_type(self):
         return "basic"
 
+    def format_value(self,bibkey,value,style):
+        required = style['required']
+        optional = style['optional']
+        if value.has_key(bibkey):
+            if required.has_key(bibkey):
+                pre = required[bibkey]['pre']
+                post = required[bibkey]['post']
+                entry = required[bibkey]
+            else:
+                pre = optional[bibkey]['pre']
+                post = optional[bibkey]['post']
+                entry = optional[bibkey]
+
+            span = tag.span(class_=bibkey)
+            span.append(pre)
+            if entry.has_key('presub'):
+                for sub in entry['presub']:
+                    span.append(self.format_value(sub,value,style))
+
+            if bibkey in BIBTEX_PERSON:
+                a = authors(value[bibkey])
+                for person in a:
+                    partindex = 0
+                    for part in ['first','von','last']:
+                        if person.has_key(part):
+                            partindex = partindex+1
+                            partspan = tag.span(class_=part)
+                            partspan.append(person[part])
+                            span.append(partspan)
+                            if part != 'last':
+                                span.append(" ")
+                    if person != a[-1] and len(a) <= 3:
+                        span.append(" and ")
+                    else:
+                        if len(a) > 3:
+                            etal = tag.span(class_='etal')
+                            etal.append("et al.")
+                            span.append(etal)
+                        if bibkey == 'editor':
+                            if len(a) > 1:
+                                span.append(", Eds.")
+                            else:
+                                span.append(", Ed.")
+                        break
+
+            elif bibkey == 'url':
+                url = value['url']
+                span.append(tag.a(href=url)(unicode_unquote(url)))
+            elif bibkey == 'doi':
+                url = 'http://dx.doi.org/' + value['doi'].strip()
+                span.append(tag.a(href=url)(value['doi']))
+            else:
+                span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
+            if entry.has_key('postsub'):
+                for sub in entry['postsub']:
+                    span.append(self.format_value(sub,value,style))
+            span.append(post)
+            return span
+        else:
+            return tag()
+
+
     def format_entry(self,key,value):
         content = tag()
         content.append(tag.a(name='ref_%s' % key))
-        for bibkey in BIBTEX_KEYS:
-            if value.has_key(bibkey):
-                if bibkey in BIBTEX_PERSON:
-                    #TODO
-                    #content += authors(value[bibkey])+', '
-                    a = authors(value[bibkey])
-                    for person in a:
-                        span = tag.span(class_=bibkey)
-                        partindex = 0
-                        for part in ['last','first','von']:
-                            if person.has_key(part):
-                                partindex = partindex+1
-                                partspan = tag.span(class_=part)
-                                partspan.append(person[part])
-                                if len(person) >= partindex+1:
-                                    partspan.append(", ")
-                                span.append(partspan)
-                        if person != a[-1]:
-                                span.append("; ")
-                    content.append(tag(span,": "))
-                elif bibkey == 'url':
-                    url = value['url']
-                    span = tag.span(class_='url')
-                    span.append(tag.a(href=url)(unicode_unquote(url)))
-                    content.append(tag(tag.br(),span))
-                else:
-                    span = tag.span(class_=bibkey)
-                    span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
-                    content.append(span)
-                    #TODO:
-                    content.append(', ')
-       
+        style = types['misc']
+
+        if types.has_key(value['type']):
+            style = types[value['type']]
+        keys = style['order']
+
+        for bibkey in keys:
+            content.append(self.format_value(bibkey,value,style))
         #return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content)
         return content
 
@@ -154,7 +454,7 @@ class BibRefFormatterBasic(Component):
         for key,value in entries:
             count = count + 1
             sortkey = tag.span(class_="key")
-            sortkey.append(str(count) + ". ")
+            sortkey.append("[" + str(count) + "] ")
             element = tag.div(class_=value["type"])
             element.append(sortkey)
             element.append(self.format_entry(key,value))

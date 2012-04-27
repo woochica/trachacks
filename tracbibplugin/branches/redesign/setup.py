@@ -7,7 +7,7 @@ setup(
     version = 'Snapshot',
     packages = ['tracbib'],
     author = 'Roman Fenkhuber',
-    author_email = 'a0401241@unet.univie.ac.at',
+    author_email = 'roman@fenkhuber.at',
     description = "Macro to allow the usage of bibtex files in the versioncontrol system to cite ressources in the wiki pages",
     url = 'http://www.trac-hacks.org/wiki/TracBib',
     license = 'gpl',
