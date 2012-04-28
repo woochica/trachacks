@@ -30,6 +30,7 @@ from helper import replace_tags
 from trac.util.text import unicode_unquote
 from bibtexparse import capitalizetitle, authors
 from pkg_resources import resource_filename
+import re
 try:
   from genshi.builder import tag
   from genshi.core import Markup
@@ -122,9 +123,11 @@ types = {
                     'organization':{'pre' : '', 'post' : ''},
                     'publisher':{'pre' : '', 'post' : ', '},
                     'note':{'pre' : '', 'post' : ''},
-                    'key':{'pre' : '', 'post' : ''}},
+                    'key':{'pre' : '', 'post' : ''},
+                    'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'}},
             'order': 
-                ['author','title','booktitle','address','publisher','year']
+                ['author','title','booktitle','address','publisher','year','doi','url']
                 ,
 
                 },
@@ -356,11 +359,12 @@ class BibRefFormatterBasic(Component):
                 post = optional[bibkey]['post']
                 entry = optional[bibkey]
 
+            meta = tag.span()
             span = tag.span(class_=bibkey)
-            span.append(pre)
+            meta.append(pre)
             if entry.has_key('presub'):
                 for sub in entry['presub']:
-                    span.append(self.format_value(sub,value,style))
+                    meta.append(self.format_value(sub,value,style))
 
             if bibkey in BIBTEX_PERSON:
                 a = authors(value[bibkey])
@@ -395,12 +399,16 @@ class BibRefFormatterBasic(Component):
                 url = 'http://dx.doi.org/' + value['doi'].strip()
                 span.append(tag.a(href=url)(value['doi']))
             else:
+                if bibkey == 'pages':
+                   value[bibkey] =  re.sub('---','--',value[bibkey])
+                   value[bibkey] =  re.sub(r'([^-])-([^-])',r'\1--\2',value[bibkey])
                 span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
+            meta.append(span)
             if entry.has_key('postsub'):
                 for sub in entry['postsub']:
-                    span.append(self.format_value(sub,value,style))
-            span.append(post)
-            return span
+                    meta.append(self.format_value(sub,value,style))
+            meta.append(post)
+            return meta
         else:
             return tag()
 
@@ -454,7 +462,7 @@ class BibRefFormatterBasic(Component):
         for key,value in entries:
             count = count + 1
             sortkey = tag.span(class_="key")
-            sortkey.append("[" + str(count) + "] ")
+            sortkey.append("[" + str(count) + "]")
             element = tag.div(class_=value["type"])
             element.append(sortkey)
             element.append(self.format_entry(key,value))

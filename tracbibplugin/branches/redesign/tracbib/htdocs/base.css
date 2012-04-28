@@ -10,6 +10,21 @@
     font-style:italic;
 }
 
+.references .booktitle{
+    font-style:italic;
+}
+
+.references > div {
+    margin-top:5px;
+    text-indent:-10px;
+    margin-left:30px;
+}
+
+.references .key {
+    min-width:10px;
+    display: inline-block;
+}
+
 /*Article*/
 .references .article .journal {
     font-style:italic;
@@ -19,11 +34,5 @@
 .references .book .title {
     font-style:italic;
 }
-
-.references .book .series, .references .book .volume, .references .book
-.editor, .references .book .edition{
-    font-style:normal;
-}
-
 
 
