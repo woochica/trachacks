@@ -1,5 +1,6 @@
 import re
 from trac.core import *
+from trac.perm import IPermissionGroupProvider, PermissionSystem
 
 class IRule(Interface):
     """An extension point interface for adding rules.  Rule processing
@@ -14,7 +15,7 @@ class IRule(Interface):
       var hiderule = new Rule('HideRule');
     """
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         """Return the field name that triggers the rule, or None if not found
         for the given target field and ticket-custom options key and dict.
         For example, if the 'version' field is to be hidden based on the
@@ -104,7 +105,7 @@ class ClearRule(Component, Rule):
     
     implements(IRule)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         if key == '%s.clear_on_change_of' % target:
             return opts[key]
         return None
@@ -138,7 +139,7 @@ class CopyRule(Component, Rule):
     
     implements(IRule)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         if key == '%s.copy_from' % target:
             return self._extract_overwrite(target, key, opts)[0]
         return None
@@ -168,7 +169,7 @@ class DefaultRule(Component, Rule):
     
     implements(IRule)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         if key == '%s.default_value' % target:
             return target
         return None
@@ -188,26 +189,40 @@ class DefaultRule(Component, Rule):
 
 
 class HideRule(Component, Rule):
-    """Hides a field based on another field's value (or always).
+    """Hides a field based on another's value, group membership, or always.
     
     Example trac.ini specs:
     
       [ticket-custom]
       version.show_when_type = enhancement
       milestone.hide_when_type = defect
+      duedate.show_if_group = production
+      milestone.hide_if_group = production
       alwayshide.hide_always = True
       alwayshide.clear_on_hide = False
     """
     
     implements(IRule)
+    group_providers = ExtensionPoint(IPermissionGroupProvider)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         rule_re = re.compile(r"%s.(?P<op>(show|hide))_when_(?P<trigger>.*)" \
                              % target)
         match = rule_re.match(key)
         if match:
             return match.groupdict()['trigger']
-            
+        
+        # group rule
+        rule_re = re.compile(r"%s.(?P<op>(show|hide))_if_group" % target)
+        match = rule_re.match(key)
+        if match:
+            groups1 = set(opts[key].split('|'))
+            groups2 = set(self._get_groups(req.authname))
+            if match.groupdict()['op'] == 'hide':
+                return 'type' if groups1.intersection(groups2) else None
+            else:
+                return None if groups1.intersection(groups2) else 'type'
+        
         # try finding hide_always rule
         if key == "%s.hide_always" % target:
             return 'type' # requires that 'type' field is enabled
@@ -225,7 +240,7 @@ class HideRule(Component, Rule):
             spec['trigger_value'] = opts[key]
             spec['hide_always'] = \
                 str(self._is_always_hidden(req, key, opts, spec)).lower()
-        else: # assume 'hide_always' rule
+        else: # assume 'hide_always' or group rule
             spec['op'] = 'show'
             spec['trigger_value'] = 'invalid_value'
             spec['hide_always'] = 'true'
@@ -245,10 +260,7 @@ class HideRule(Component, Rule):
         value = spec['trigger_value']
         if options and value and value not in options and '|' not in value:
             # "Always hide/show target"
-            if spec['op'] == 'hide':
-                opp = 'show'
-            else:
-                opp = 'hide'
+            opp = 'show' if spec['op'] == 'hide' else 'hide'
             pref['label'] = "Always %s %s" % (opp, target)
     
     def _is_always_hidden(self, req, key, opts, spec):
@@ -258,6 +270,25 @@ class HideRule(Component, Rule):
         if options and value and value not in options and '|' not in value:
             return spec['op'] == 'show'
         return False
+    
+    def _get_groups(self, user):
+        # thanks to PrivateTicketsPlugin for code!
+        groups = set([user])
+        for provider in self.group_providers:
+            for group in provider.get_permission_groups(user):
+                groups.add(group)
+        
+        perms = PermissionSystem(self.env).get_all_permissions()
+        repeat = True
+        while repeat:
+            repeat = False
+            for subject, action in perms:
+                if subject in groups and action.islower() \
+                   and action not in groups:
+                    groups.add(action)
+                    repeat = True
+        
+        return groups
 
 
 class ValidateRule(Component, Rule):
@@ -271,7 +302,7 @@ class ValidateRule(Component, Rule):
     
     implements(IRule)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         if key == '%s.invalid_if' % target:
             return target
         return None
@@ -304,7 +335,7 @@ class SetRule(Component, Rule):
     
     implements(IRule)
     
-    def get_trigger(self, target, key, opts):
+    def get_trigger(self, req, target, key, opts):
         rule_re = re.compile(r"%s.set_to_(.*)_when_(?P<trigger>.+)" % target)
         match = rule_re.match(key)
         if match:
@@ -328,10 +359,7 @@ class SetRule(Component, Rule):
         trigval = spec['trigger_value'].replace('|',' or ')
         if spec['set_to'] == '?':
             set_to = ''
-            if opts.get(target) == 'select':
-                pref['type'] = 'select'
-            else:
-                pref['type'] = 'text'
+            pref['type'] = 'select' if opts.get(target) == 'select' else 'text'
         elif spec['set_to'] == '!':
             set_to = 'the first non-empty option'
         elif spec['set_to'] == '':

@@ -62,7 +62,7 @@ class DynamicFieldsModule(Component):
             
             # extract rule specifications from configs
             for rule in self.rules:
-                trigger = rule.get_trigger(target, key, opts)
+                trigger = rule.get_trigger(req, target, key, opts)
                 if not trigger:
                     continue
                 if not opts.is_enabled(req, key):
@@ -107,7 +107,7 @@ class DynamicFieldsModule(Component):
                    continue
                 target_re = re.compile(r"(?P<target>[^.]+).*")
                 target = target_re.match(key).groupdict()['target']
-                trigger = rule.get_trigger(target, key, opts)
+                trigger = rule.get_trigger(req, target, key, opts)
                 if not trigger:
                     continue
                 
