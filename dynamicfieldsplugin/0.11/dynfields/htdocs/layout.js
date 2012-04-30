@@ -172,7 +172,7 @@ header_layout.get_tx = function(field){
 
 // get_field
 header_layout.get_field = function(th){
-    return th.attr('id').slice(2);
+    return (th.attr('id') ? th.attr('id').slice(2) : '');
 };
 
 // move_field
