@@ -157,7 +157,10 @@ hiderule.apply = function(input, spec){
     var target = spec.target;
     
     // process hide rule
-    var v = input.val();
+    if (input.attr('type') == 'checkbox')
+        var v = (input.is(':checked')) ? "1" : "0";
+    else
+        var v = input.val();
     var l = spec.trigger_value.split('|'); // supports list of trigger values
     if ((jQuery.inArray(v,l) != -1 && spec.op == 'hide') ||
         (jQuery.inArray(v,l) == -1 && spec.op == 'show')){
