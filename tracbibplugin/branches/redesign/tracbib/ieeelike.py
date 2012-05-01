@@ -56,7 +56,7 @@ types = {
             'optional': {
                 'volume':{'pre' : ', vol. ', 'post' : ''},
                 'number':{'pre' : ', (', 'post' : ')'},
-                'pages':{'pre' : ', pp.', 'post' : ''},
+                'pages':{'pre' : ', pp. ', 'post' : ''},
                 'month':{'pre' : '', 'post' : ' '},
                 'note':{'pre' : '', 'post' : ''},
                 'key':{'pre' : '', 'post' : ''}
@@ -340,11 +340,11 @@ types = {
                 },
         }
 
-class BibRefFormatterBasic(Component):
+class BibRefFormatterIEEELike(Component):
     implements(IBibRefFormatter)
     implements(IRequestFilter,ITemplateProvider)
     def formatter_type(self):
-        return "basic"
+        return "ieeelike"
 
     def format_value(self,bibkey,value,style):
         required = style['required']
