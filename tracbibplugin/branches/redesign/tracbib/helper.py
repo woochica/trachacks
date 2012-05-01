@@ -290,6 +290,8 @@ def match_pair(expr, pair=(r'{',r'}')):
 
   return None
 
+def remove_braces(value):
+    return value.replace("{","").replace("}","")
 
 
 

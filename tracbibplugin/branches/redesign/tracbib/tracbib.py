@@ -26,7 +26,6 @@
 from trac.core import *
 from api import *
 from source import *
-from formatter import *
 import re
 from trac.wiki.api import IWikiMacroProvider
 

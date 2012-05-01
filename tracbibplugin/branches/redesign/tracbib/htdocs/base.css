@@ -16,12 +16,12 @@
 
 .references > div {
     margin-top:5px;
-    text-indent:-10px;
+    text-indent:-15px;
     margin-left:30px;
 }
 
 .references .key {
-    min-width:10px;
+    min-width:15px;
     display: inline-block;
 }
 

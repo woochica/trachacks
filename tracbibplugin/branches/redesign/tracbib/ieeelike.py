@@ -26,7 +26,7 @@ from api import IBibRefFormatter
 from trac.core import implements, Component
 from trac.web.chrome import add_stylesheet, ITemplateProvider
 from trac.web.api import IRequestFilter
-from helper import replace_tags
+from helper import replace_tags, remove_braces
 from trac.util.text import unicode_unquote
 from bibtexparse import capitalizetitle, authors
 from pkg_resources import resource_filename
@@ -369,12 +369,21 @@ class BibRefFormatterIEEELike(Component):
             if bibkey in BIBTEX_PERSON:
                 a = authors(value[bibkey])
                 for person in a:
-                    partindex = 0
-                    for part in ['first','von','last']:
+                    if person.has_key('first'):
+                        formatted = ""
+                        for first in person['first'].split(' '):
+                            first = remove_braces(replace_tags(first))
+                            if len(first) > 0:
+                                formatted = formatted + first[0] + "."
+                        partspan = tag.span(class_='first')
+                        partspan.append(formatted)
+                        span.append(partspan)
+                        span.append(" ")
+
+                    for part in ['von','last']:
                         if person.has_key(part):
-                            partindex = partindex+1
                             partspan = tag.span(class_=part)
-                            partspan.append(person[part])
+                            partspan.append(remove_braces(replace_tags(person[part])))
                             span.append(partspan)
                             if part != 'last':
                                 span.append(" ")
@@ -402,7 +411,7 @@ class BibRefFormatterIEEELike(Component):
                 if bibkey == 'pages':
                    value[bibkey] =  re.sub('---','--',value[bibkey])
                    value[bibkey] =  re.sub(r'([^-])-([^-])',r'\1--\2',value[bibkey])
-                span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
+                span.append(Markup(capitalizetitle(remove_braces(replace_tags(value[bibkey])))))
             meta.append(span)
             if entry.has_key('postsub'):
                 for sub in entry['postsub']:

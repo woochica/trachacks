@@ -136,7 +136,7 @@ class BibtexSourceAttachment(Component):
         elif len(path_info) == 1:
             file = path_info[0]
             page= req.args.get('page')
-            if page == None: # TODO: no clean solution
+            if page == None: # TODO: clean solution
                 page = 'WikiStart'
             bib = Attachment(self.env,realm,page,file)
         elif len(path_info) == 2:

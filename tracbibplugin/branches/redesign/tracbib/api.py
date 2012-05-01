@@ -68,5 +68,4 @@ class IBibRefFormatter(Interface):
         """returns a fully formated citation"""
 
     def pre_process_entry(key,cite):
-        """use this extension point to store formatting information if you have
-        to, e.g. for final sorting."""
+        """use this extension point to store formatting information, e.g. for final sorting."""
