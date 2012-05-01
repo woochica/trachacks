@@ -273,7 +273,7 @@ class BibFullRefMacro(WikiMacroBase):
             for format in self.formatter:
                 div = format.format_fullref(cite.items(),'References')
         finally:
-            # CLEANUP: outdated entries might survive in memory, so clear the container
+            # CLEANUP: outdated entries might survive in memory, so clear the container. Caching is still a TODO
             cite.clear()
             for source in self.sources:
                 source.clear()
