@@ -392,10 +392,10 @@ class BibRefFormatterIEEELike(Component):
                     else:
                         if len(a) > 3:
                             etal = tag.span(class_='etal')
-                            etal.append("et al.")
+                            etal.append(" et al.")
                             span.append(etal)
                         if bibkey == 'editor':
-                            if len(a) > 1:
+                            if len(a) > 1 and person == a[-1]:
                                 span.append(", Eds.")
                             else:
                                 span.append(", Ed.")
