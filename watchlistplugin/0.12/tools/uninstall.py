@@ -87,7 +87,7 @@ def delete_watchlist_tables(envpath, tables=('watchlist','watchlist_settings','s
     if 'system' in tables:
         cursor = db.cursor()
         try:
-            cursor.execute("DELETE FROM system WHERE name='watchlist_values'")
+            cursor.execute("DELETE FROM system WHERE name='watchlist_version'")
             print "Deleted watchlist version entry from system table."
         except Exception as e:
             db.rollback()
