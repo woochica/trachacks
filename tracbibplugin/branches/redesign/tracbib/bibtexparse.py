@@ -128,7 +128,7 @@ valid_name_chars = '[\w\-:]'
 #
 author_rex = re.compile('\s+and\s+')
 rembraces_rex = re.compile('[{}]')
-capitalize_rex = re.compile('({\w*})')
+capitalize_rex = re.compile('({[^}]*})')
  
 # used by bibtexkeywords(data)
 keywords_rex = re.compile('[,;]')

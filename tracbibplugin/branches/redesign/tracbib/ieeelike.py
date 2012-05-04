@@ -158,13 +158,13 @@ types = {
 
         'inbook': {
                 'required' : {
-                    'author':{'pre' : '', 'post' : ', '},
+                    'author':{'pre' : '', 'post' : ','},
                     'editor':{'pre' : ', ', 'post' : ''},
-                    'title':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
-                    'chapter':{'pre' : 'ch. ', 'post' : ''},
+                    'title':{'pre' : ' in ', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
+                    'chapter':{'pre' : ' \"', 'post' : ',"'},
                     'pages':{'pre' : ', pp. ', 'post' : ''},
                     'publisher':{'pre' : '', 'post' : ', '},
-                    'year':{'pre' : '', 'presub':['month'], 'postsub':['chapter','pages'], 'post' : '.'}},
+                    'year':{'pre' : '', 'presub':['month'], 'postsub':['pages'], 'post' : '.'}},
 
                 'optional': {
                     'volume':{'pre' : ', vol. ', 'post' : ''},
@@ -177,7 +177,7 @@ types = {
                     'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','address','publisher','year']
+                ['author','chapter','title','address','publisher','year']
                 ,
 
                 },
@@ -387,10 +387,10 @@ class BibRefFormatterIEEELike(Component):
                             span.append(partspan)
                             if part != 'last':
                                 span.append(" ")
-                    if person != a[-1] and len(a) <= 3:
+                    if person != a[-1] and len(a) < 3:
                         span.append(" and ")
                     else:
-                        if len(a) > 3:
+                        if len(a) >= 3:
                             etal = tag.span(class_='etal')
                             etal.append(" et al.")
                             span.append(etal)
@@ -411,7 +411,7 @@ class BibRefFormatterIEEELike(Component):
                 if bibkey == 'pages':
                    value[bibkey] =  re.sub('---','--',value[bibkey])
                    value[bibkey] =  re.sub(r'([^-])-([^-])',r'\1--\2',value[bibkey])
-                span.append(Markup(capitalizetitle(remove_braces(replace_tags(value[bibkey])))))
+                span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
             meta.append(span)
             if entry.has_key('postsub'):
                 for sub in entry['postsub']:
