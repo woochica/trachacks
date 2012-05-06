@@ -8,6 +8,7 @@ from genshi.input import HTMLParser, ParseError
 from trac.core import *
 from trac.mimeview.api import Mimeview, get_mimetype, Context
 from trac.perm import IPermissionRequestor
+from trac.versioncontrol.api import RepositoryManager
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
 from trac.wiki.model import WikiPage
@@ -75,17 +76,10 @@ class IncludeMacro(WikiMacroBase):
             out = page.text
             ctxt = Context.from_request(formatter.req, 'wiki', source_obj)
         elif source_format == 'source':
-            if not formatter.perm.has_permission('FILE_VIEW'):
-                return ''
-            repo = self.env.get_repository(formatter.req.authname)
-            node = repo.get_node(source_obj)
-            out = node.get_content().read()
-            if dest_format is None:
-                dest_format = node.content_type or get_mimetype(source_obj, out)
-            ctxt = Context.from_request(formatter.req, 'source', source_obj)
-        # RFE: Add ticket: and comment: sources. <NPK>
-        # RFE: Add attachment: source. <NPK>
+            out, ctxt, dest_format = self._get_source(formatter, source_obj, dest_format)
         else:
+            # RFE: Add ticket: and comment: sources. <NPK>
+            # RFE: Add attachment: source. <NPK>
             return system_message('Unsupported include source %s'%source)
         
         # If we have a preview format, use it
@@ -104,6 +98,20 @@ class IncludeMacro(WikiMacroBase):
     # IPermissionRequestor methods
     def get_permission_actions(self):
         yield 'INCLUDE_URL'
-            
+    
+    def _get_source(self, formatter, source_obj, dest_format):
+        if not formatter.perm.has_permission('FILE_VIEW'):
+            return ''
+        repos_mgr = RepositoryManager(self.env)
+        try: #0.12+
+            (repos_name,repos,source_obj) = repos_mgr.get_repository_by_path(source_obj)
+        except AttributeError, e: #0.11
+            repos = repos_mgr.get_repository(formatter.req.authname)
+        node = repos.get_node(source_obj)
+        out = node.get_content().read()
+        if dest_format is None:
+            dest_format = node.content_type or get_mimetype(source_obj, out)
+        ctxt = Context.from_request(formatter.req, 'source', source_obj)
         
-        
+        return out, ctxt, source_obj
+    

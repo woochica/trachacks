@@ -1,5 +1,28 @@
-IncludeMacro 0.2.3 (not yet released) - 0.11 branch
+IncludeMacro 3.0.0 (not yet released) - trunk
  resolved issues:
  * #2413: Replaced call to deprecated render_macro with expand_macro (0.11 compatibility).
+ * #4162: Added multirepository support (0.12 compatibility).
  
  new features:
+ * None
+ 
+ 
+IncludeMacro 2.1.0 - 0.11 branch
+ new features:
+ * Escape included text when `[wiki]` `render_unsafe_content` is false
+   (the default value).
+  
+  
+IncludeMacro 2.0.1 - 0.11 branch
+
+
+IncludeMacro 2.0.0 - 0.11 branch
+
+
+IncludeMacro 1.1.0 - 0.10 branch
+
+
+IncludeMacro 1.0.1 - 0.10 branch
+
+
+IncludeMacro 1.0.0 - 0.10 branch
