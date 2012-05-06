@@ -47,13 +47,20 @@ class BibtexSourceBase(dict):
                 strings,entries=bibtexparse.bibtexload(text.splitlines());
         except UnicodeDecodeError:
             raise TracError("A UnicodeDecodeError occured while loading the data. Try to save the file in UTF-8 encoding.")
+        crossRef = []
         for k,bib in entries.iteritems():
             bibtexparse.replace_abbrev(bib, def_strings)
             bibtexparse.replace_abbrev(bib,strings)
+            if bib.get('crossref'):
+                crossRef.append(k)
         self.update(entries)
-        print self
-
-
+        # merging the entry and its cross-reference into one dictionary
+        for k in crossRef:
+            if self.has_key(self[k]['crossref']):
+                ref = self[self[k]['crossref']].copy()
+                ref.update(self[k])
+                self[k]=ref 
+                print self[k]
 
 class BibtexSourceSource(Component): 
     """

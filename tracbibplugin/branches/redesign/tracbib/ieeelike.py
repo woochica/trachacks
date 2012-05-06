@@ -110,7 +110,7 @@ types = {
                     'author':{'pre' : '', 'post' : ', '},
                     'title':{'pre' : '\"', 'post' : ',\" '},
                 'booktitle':{'pre' : 'in ', 'post' : '. ','postsub': ['series','volume','editor' ] },
-                'year':{'pre' : '', 'presub':['month'],'postsub':['pages']  , 'post' : '.'}},
+                    'year':{'pre' : '', 'presub':['month'],'postsub':['pages']  , 'post' : '.'}},
 
                 'optional': {
                     'editor':{'pre' : ', ', 'post' : ''},
@@ -210,12 +210,11 @@ types = {
 
         'proceedings': {
             'required':{
-                'author':{'pre' : '', 'post' : ', ' },
                 'title':{'pre' : '', 'post' : '. ','postsub': ['series','volume','editor', 'edition' ] },
-                'publisher':{'pre' : '','presub':['address'] , 'post' : ', '},
                 'year':{'pre' : '', 'presub':['month'], 'post' : '.'}},
 
             'optional': {
+                'publisher':{'pre' : '','presub':['address'] , 'post' : ', '},
                 'editor':{'pre' : ', ', 'post' : ''},
                 'volume':{'pre' : ', vol. ', 'post' : ''},
                 'number':{'pre' : ', no. ', 'post' : ''},
@@ -226,7 +225,7 @@ types = {
                 'note':{'pre' : '', 'post' : ''},
                 'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title', 'publisher','year']
+                ['title', 'publisher','year']
                 ,
                 },
 
@@ -450,7 +449,7 @@ class BibRefFormatterIEEELike(Component):
                 notcited.append((key,value))
         
         cited.sort(key = lambda entry:entry[1][':index'])
-        notcited.sort(key = lambda entry:entry[1]['author'])
+        #notcited.sort(key = lambda entry:entry[1]['author'])
 
         for key,value in notcited:
             cited.append((key,value))
