@@ -87,10 +87,10 @@ class IncludeMacro(WikiMacroBase):
         # RFE: Add attachment: source. <NPK>
         else:
             return system_message('Unsupported include source %s'%source)
-            
+        
         # If we have a preview format, use it
         if dest_format:
-            out = Mimeview(self.env).render(formatter.context, dest_format, out)
+            out = Mimeview(self.env).render(ctxt, dest_format, out)
         
         # Escape if needed
         if not self.config.getbool('wiki', 'render_unsafe_content', False):

@@ -1,0 +1,5 @@
+IncludeMacro 0.2.3 (not yet released) - 0.11 branch
+ resolved issues:
+ * #2413: Replaced call to deprecated render_macro with expand_macro (0.11 compatibility).
+ 
+ new features:
