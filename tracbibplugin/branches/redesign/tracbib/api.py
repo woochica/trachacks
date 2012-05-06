@@ -64,7 +64,7 @@ class IBibRefFormatter(Interface):
     def format_fullref(entries,label):
         """returns a fully formated list of all loaded entries"""
 
-    def format_cite(key,entry):
+    def format_cite(key,entry,page):
         """returns a fully formated citation"""
 
     def pre_process_entry(key,cite):

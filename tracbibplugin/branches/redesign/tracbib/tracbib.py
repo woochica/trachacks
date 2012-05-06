@@ -159,12 +159,15 @@ class BibCiteMacro(WikiMacroBase):
 
         args, kwargs = parse_args(content, strict=False)
 
-        if len(args) > 1:
-            raise TracError('Usage: [[BibCite(BibTexKey)]]')
+        if len(args) > 2:
+            raise TracError('Usage: [[BibCite(BibTexKey)]] or [[BibCite(BibTexKey,page)]]')
         elif len(args) < 1:
             raise TracError('Usage: [[BibCite(BibTexKey)]]')
 
         key = args[0];
+        page = None
+        if len(args) == 2:
+            page = args[1]
 
         cite = Cite(self.env)
         auto = AutoLoaded(self.env)
@@ -183,7 +186,7 @@ class BibCiteMacro(WikiMacroBase):
                 raise TracError("Unknown key '"+key +"'")
 
         for format in self.formatter:
-            entry = format.format_cite(key,cite[key])
+            entry = format.format_cite(key,cite[key],page)
 
         return entry
 

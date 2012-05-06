@@ -456,8 +456,13 @@ class BibRefFormatterIEEELike(Component):
 
         return self.format(cited,label)
 
-    def format_cite(self,key,value):
-        return ''.join(['[', str(tag.a(name='cite_%s' % key)),str(tag.a(href='#ref_%s' % key)('%d' % value[":index"])), ']'])
+    def format_cite(self,key,value,page):
+        if not page:
+            return ''.join(['[', str(tag.a(name='cite_%s' % key)),str(tag.a(href='#ref_%s' % key)('%d' % value[":index"])), ']'])
+        else:
+            return ''.join(['[', str(tag.a(name='cite_%s' %
+                key)),str(tag.a(href='#ref_%s' % key)('%d' %
+                value[":index"])),', ', page ,']'])
 
     def pre_process_entry(self,key,cite):
         if not cite[key].has_key(":index"):

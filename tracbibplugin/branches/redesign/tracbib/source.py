@@ -218,5 +218,45 @@ class BibtexSourceWiki(Component):
     def items(self):
         return self.bibtex.items()
 
+import urllib
+
+class BibtexSourceAttachment(Component):
+    """
+    This class loads bibtex files from external websites.
+    """
+    bibtex = BibtexSourceBase()
+
+    implements(IBibSourceProvider)
+   
+
+    def source_type(self):
+        return 'http'
+
+    def source_init(self,req,args):
+        url = args
+        try:
+            file = urllib.urlopen(url)
+            text = file.read()
+            file.close()
+        except:
+            raise TracError('Usage BibAdd(http://url)')
+
+        self.bibtex.extract(text)
+
+    def has_key(self,key):
+        return self.bibtex.has_key(key)
+
+    def clear(self):
+        self.bibtex.clear()
+
+    def __iter__(self):
+        return self.bibtex.__iter__()
+
+    def __getitem__(self,key):
+        return self.bibtex.__getitem__(key);
+
+    def items(self):
+        return self.bibtex.items()
+
 
 
