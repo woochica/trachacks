@@ -68,11 +68,11 @@ class IncludeMacro(WikiMacroBase):
             ctxt = Context.from_request(formatter.req)
         elif source_format == 'wiki':
             # XXX: Check for recursion in page includes. <NPK>
-            if not formatter.perm.has_permission('WIKI_VIEW'):
-                return ''
             page = WikiPage(self.env, source_obj)
+            if not 'WIKI_VIEW' in formatter.perm(page.resource):
+                return ''
             if not page.exists:
-                return system_message('Wiki page %s does not exist'%source_obj)
+                return system_message('Wiki page %s does not exist' % source_obj)
             out = page.text
             ctxt = Context.from_request(formatter.req, 'wiki', source_obj)
         elif source_format == 'source':

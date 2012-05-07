@@ -2,6 +2,7 @@ IncludeMacro 3.0.0 (not yet released) - trunk
  resolved issues:
  * #2413: Replaced call to deprecated render_macro with expand_macro (0.11 compatibility).
  * #4162: Added multirepository support (0.12 compatibility).
+ * #9931: Fine-grained permissions checks were not being performed for the wiki realm.
  
  new features:
  * None
