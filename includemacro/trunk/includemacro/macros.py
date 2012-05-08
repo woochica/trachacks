@@ -113,5 +113,5 @@ class IncludeMacro(WikiMacroBase):
             dest_format = node.content_type or get_mimetype(source_obj, out)
         ctxt = Context.from_request(formatter.req, 'source', source_obj)
         
-        return out, ctxt, source_obj
+        return out, ctxt, dest_format
     
