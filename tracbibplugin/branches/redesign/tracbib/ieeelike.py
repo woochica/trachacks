@@ -59,10 +59,12 @@ types = {
                 'pages':{'pre' : ', pp. ', 'post' : ''},
                 'month':{'pre' : '', 'post' : ' '},
                 'note':{'pre' : '', 'post' : ''},
-                'key':{'pre' : '', 'post' : ''}
+                'key':{'pre' : '', 'post' : ''},
+                'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                'url':{'pre' : ' Available: ', 'post' : '.'},
                 },
             'order': 
-                ['author','title','journal','year']
+                ['author','title','journal','year','doi','url']
                 ,
             },
 
@@ -82,9 +84,12 @@ types = {
                 'edition':{'pre' : ' ', 'post' : ' ed'},
                 'month':{'pre' : '', 'post' : ' '},
                 'note':{'pre' : '', 'post' : ''},
+                'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                'url':{'pre' : ' Available: ', 'post' : '.'},
+
                 'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title', 'publisher','year']
+                ['author','title', 'publisher','year','doi','url']
                 ,
             },
 
@@ -99,9 +104,11 @@ types = {
                 'month':{'pre' : '', 'post' : ' '},
                 'year':{'pre' : '', 'presub':['month'], 'post' : '.'},
                 'note':{'pre' : '', 'post' : ''},
+                'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                'url':{'pre' : ' Available: ', 'post' : '.'},
                 'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','address','howpublished','year']
+                ['author','title','address','howpublished','year','doi','url']
                 ,
             },
 
@@ -150,9 +157,11 @@ types = {
                     'organization':{'pre' : '', 'post' : ''},
                     'publisher':{'pre' : '', 'post' : ', '},
                     'note':{'pre' : '', 'post' : ''},
+                    'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','booktitle','address','publisher','year']
+                ['author','title','booktitle','address','publisher','year','doi','url']
                 ,
             },
 
@@ -175,9 +184,11 @@ types = {
                     'edition':{'pre' : '', 'post' : ' ed'},
                     'month':{'pre' : '', 'post' : ' '},
                     'note':{'pre' : '', 'post' : ''},
+                    'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','chapter','title','address','publisher','year']
+                ['author','chapter','title','address','publisher','year','doi','url']
                 ,
 
                 },
@@ -202,9 +213,11 @@ types = {
                     'edition':{'pre' : ', ', 'post' : ' ed'},  
                     'month':{'pre' : '', 'post' : ''},
                     'note':{'pre' : '', 'post' : ''},
+                    'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','booktitle','address','publisher','year']
+                ['author','title','booktitle','address','publisher','year','doi','url']
                 ,
                 },
 
@@ -222,10 +235,12 @@ types = {
                 'address':{'pre' : '', 'post' : ': '},
                 'edition':{'pre' : ' ', 'post' : ' ed'},
                 'month':{'pre' : '', 'post' : ' '},
-                'note':{'pre' : '', 'post' : ''},
+                     'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+               'note':{'pre' : '', 'post' : ''},
                 'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['title', 'publisher','year']
+                ['title', 'publisher','year','doi','url']
                 ,
                 },
 
@@ -242,10 +257,12 @@ types = {
                     'year':{'pre' : '', 'post' : '.', 'presub':['month'],
                         'postsub':['pages']},
                     'pages':{'pre' : ', pp. ', 'post' : ''},
-                    'note':{'pre' : '', 'post' : ''},
+                      'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+                  'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','organization', 'address','year']
+                ['author','title','organization', 'address','year','doi','url']
                 ,
 
                 },
@@ -261,10 +278,12 @@ types = {
                     'type':{'pre' : '', 'post' : ''},
                     'address':{'pre' : '', 'post' : ', '},
                     'month':{'pre' : '', 'post' : ' '},
-                    'note':{'pre' : '', 'post' : ''},
+                       'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+                 'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','school', 'address','year']
+                ['author','title','school', 'address','year','doi','url']
                 ,
 
                 },
@@ -277,11 +296,13 @@ types = {
                     'title':{'pre' : '', 'post' : ', '},
                     'howpublished':{'pre' : '', 'post' : ', '},
                     'month':{'pre' : '', 'post' : ' '},
-                    'year':{'pre' : '','presub':['month'], 'post' : '.'},
+                        'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+                'year':{'pre' : '','presub':['month'], 'post' : '.'},
                     'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','howpublished', 'year']
+                ['author','title','howpublished', 'year','doi','url']
                 ,
                 },
 
@@ -295,11 +316,13 @@ types = {
                 'optional' : {
                     'type':{'pre' : '', 'post' : ''},
                     'address':{'pre' : '', 'post' : ', '},
-                    'month':{'pre' : '', 'post' : ' '},
+                         'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+               'month':{'pre' : '', 'post' : ' '},
                     'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','school', 'address','year']
+                ['author','title','school', 'address','year','doi','url']
                 ,
                 },
 
@@ -313,12 +336,14 @@ types = {
                 'optional' : {
                     'type':{'pre' : '', 'post' : ''},
                     'number':{'pre' : 'Rep. ', 'post' : ''},
-                    'address':{'pre' : '', 'post' : ': '},
+                          'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+              'address':{'pre' : '', 'post' : ': '},
                     'month':{'pre' : '', 'post' : ' '},
                     'note':{'pre' : '', 'post' : ''},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','institution', 'address','year']
+                ['author','title','institution', 'address','year','doi','url']
                 ,
 
                 },
@@ -331,10 +356,12 @@ types = {
 
                 'optional' : {
                     'month':{'pre' : '', 'post' : ' '},
-                    'year':{'pre' : '', 'post' : ', ', 'presub':['month']},
+                           'doi':{'pre' : ' DOI: ', 'post' : '.'},
+                    'url':{'pre' : ' Available: ', 'post' : '.'},
+             'year':{'pre' : '', 'post' : ', ', 'presub':['month']},
                     'key':{'pre' : '', 'post' : ''}},
             'order': 
-                ['author','title','year', 'note']
+                ['author','title','year', 'note','doi','url']
                 ,
                 },
         }
@@ -342,10 +369,13 @@ types = {
 class BibRefFormatterIEEELike(Component):
     implements(IBibRefFormatter)
     implements(IRequestFilter,ITemplateProvider)
+
+    __stack = []
+
     def formatter_type(self):
         return "ieeelike"
 
-    def format_value(self,bibkey,value,style):
+    def __format_value(self,bibkey,value,style):
         required = style['required']
         optional = style['optional']
         if value.has_key(bibkey):
@@ -358,12 +388,11 @@ class BibRefFormatterIEEELike(Component):
                 post = optional[bibkey]['post']
                 entry = optional[bibkey]
 
-            meta = tag.span()
             span = tag.span(class_=bibkey)
-            meta.append(pre)
+            self.__stack.append(pre)
             if entry.has_key('presub'):
                 for sub in entry['presub']:
-                    meta.append(self.format_value(sub,value,style))
+                    self.__stack.append(self.__format_value(sub,value,style))
 
             if bibkey in BIBTEX_PERSON:
                 a = authors(value[bibkey])
@@ -411,17 +440,14 @@ class BibRefFormatterIEEELike(Component):
                    value[bibkey] =  re.sub('---','--',value[bibkey])
                    value[bibkey] =  re.sub(r'([^-])-([^-])',r'\1--\2',value[bibkey])
                 span.append(Markup(capitalizetitle(replace_tags(value[bibkey]))))
-            meta.append(span)
+            self.__stack.append(span)
             if entry.has_key('postsub'):
                 for sub in entry['postsub']:
-                    meta.append(self.format_value(sub,value,style))
-            meta.append(post)
-            return meta
-        else:
-            return tag()
-
+                    self.__format_value(sub,value,style)
+            self.__stack.append(post)
 
     def format_entry(self,key,value):
+        self.__stack = []
         content = tag()
         content.append(tag.a(name='ref_%s' % key))
         style = types['misc']
@@ -431,8 +457,9 @@ class BibRefFormatterIEEELike(Component):
         keys = style['order']
 
         for bibkey in keys:
-            content.append(self.format_value(bibkey,value,style))
+            self.__format_value(bibkey,value,style)
         #return tag.li(tag.a(name='ref_%s' % key), tag.a(href='#cite_%s' % key)('^') ,content)
+        content.append(self.__stack)
         return content
 
     def format_ref(self,entries,label):
