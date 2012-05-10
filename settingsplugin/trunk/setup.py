@@ -5,12 +5,12 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='SettingsPlugin', 
-    version='0.5.a2',
+    version='0.6.0',
     author = 'Franz Mayer, Gefasoft AG',
     author_email = 'franz.mayer@gefasoft.de', 
     description = 'Provides commands for removing unneeded milestones, components, etc. and setting a bunch of config option from file.',
     url = 'http://www.gefasoft-muenchen.de',
-    download_url = 'TBD',
+    download_url = 'http://trac-hacks.org/wiki/SettingsPlugin',
     packages=find_packages(exclude=['*.tests*']),
     entry_points = """
         [trac.plugins]

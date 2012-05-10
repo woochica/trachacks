@@ -6,6 +6,8 @@ import sys
 import shutil
 import re
 from zipfile import ZipFile
+from trac.attachment import Attachment
+from trac.util.text import unicode_unquote
 
 class SettingsAdmin(Component):
     """Provides extension for `trac-admin` for easy removing unneeded milestones, components, etc. 
@@ -71,6 +73,130 @@ trac-admin </path/to/projenv> plugin replaceall
         yield ('plugin replaceall', None,
                'Replaces all (!) plugins (dangerous!) [settingsplugin]',
                None, self._replace_all_plugins)
+        yield ('attachment unused', '<options>',
+               'Removes unused attachments (dangerous!); options: [list | remove] [settingsplugin]',
+               None, self._do_remove_attachments)
+    
+    
+    def _do_remove_attachments(self, options):
+        """Hack for removing attachments.
+
+See Trac-ticket 10313 for detail discussion 
+(http://trac.edgewall.org/ticket/10313#comment:67).
+"""
+        if options: 
+            self._do_remove_unused_attachments(options)
+        else:
+            print "No option set!"
+            print "Please specify one of these options: [unreachable | unused]" 
+    
+        
+    def _do_remove_unused_attachments(self, options):
+        """Backups and removes unused attachments.
+        
+Attachments could be unreachable (and thus unused):
+- if file name has some special character, e.g. '~' in file2.~pdd
+- if anyone has created (sub-) directories in tickets attachments 
+(because of migration of old system, for example) 
+- if file(s) has been renamed / moved 
+"""
+        @self.env.with_transaction()
+        def do_remove(db):
+            cnt = 0
+            backup = None
+            
+            if options == 'remove':
+                if not os.access(self.env.path, os.W_OK):
+                    out.write( "cannot write into %s and therefore cannot make a backup!" % self.env.path)
+                else:
+                    backup = ZipFile(self.env.path + '/backup_unused_attachments.zip', 'w')
+                
+            att_path = os.path.join(self.env.path, 'attachments')
+            tkt_id = -1
+            
+            for dir, dirs, files in os.walk(os.path.join(att_path, 'ticket')):
+                try:
+                    head, tail = os.path.split(dir)
+                    tkt_id = int(tail)
+                except: 
+                    tkt_id = -1
+                
+                if tkt_id > 0:
+                    if len(files) > 0:
+                        for f in files:
+                            file_path = os.path.join(dir, f)
+                            if str(file_path).find("~") > -1:
+                                print "Has special char: %s" % file_path
+                                if backup:
+                                    backup.write( file_path )
+                                    os.remove(file_path)
+                                    self.__remove_db_entry(f, tkt_id)
+                                cnt += 1
+                            elif not self.__has_db_entry( dir, f, tkt_id ):
+                                print "No DB entry: %s" % file_path
+                                if backup:
+                                    backup.write( file_path )
+                                    os.remove(file_path)
+                                cnt += 1
+                    
+                    if len(dirs) > 0:
+                         for d in dirs:
+                            file_path = os.path.join(dir, d)
+#                            print "Contains sub-directory: %s" % file_path
+                            cnt += self.__backup_dir(backup, file_path, tkt_id)
+            print "SUMMARY - removed files: %s" % cnt
+    
+    def __backup_dir(self, backup, dir_path, tkt_id):
+        count = 0
+        for dir, dirs, files in os.walk(dir_path):
+            for f in files:
+                file_path = os.path.join(dir, f)
+                if backup:
+                    backup.write( file_path )
+                    os.remove( file_path )
+                    head, tail = os.path.split(dir)
+                    fn = os.path.join(tail, f)
+                    self.__remove_db_entry(fn, tkt_id)
+                print "Resides in sub-directory: %s" % file_path
+                count += 1
+        return count
+            
+    def __remove_db_entry(self, filename, tkt_id):
+        try:
+            fn = "%%%s" % unicode_unquote(filename)
+#            print "[__remove_db_entry] fn: %s" % fn
+        except:
+#            print "exception using filename: %s" % filename
+            fn = filename
+        
+        cnt = 0
+        for row in self.env.db_query("""
+                    SELECT count(id) FROM attachment 
+                    WHERE filename like '%%%s' and id='%s'""" % (fn, tkt_id) ):
+            cnt += row[0]
+        
+        if cnt == 1:
+            sql = "DELETE FROM attachment WHERE type='%s' AND id='%s' AND filename like '%s'" % ('ticket', tkt_id, fn)
+            try:
+                with self.env.db_transaction as db:
+                    db(sql)
+            except Exception, e:
+                print "SQL %s caused Exception: %s" % (sql, e)
+
+            
+    def __has_db_entry(self, dir, filename, tkt_id):
+        try:
+            fn = unicode_unquote(filename)
+        except:
+#            print "exception using filename: %s" % filename
+            fn = filename
+        
+        for row in self.env.db_query("""
+                SELECT id FROM attachment 
+                WHERE filename='%s' and id='%s' ORDER BY type, id, filename""" % (fn, tkt_id) ):
+            return True
+        return False
+            
     
     def _do_remove_all_components(self, pattern):
         @self.env.with_transaction()
