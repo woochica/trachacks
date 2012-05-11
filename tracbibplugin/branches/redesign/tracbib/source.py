@@ -220,7 +220,7 @@ class BibtexSourceWiki(Component):
 
 import urllib
 
-class BibtexSourceAttachment(Component):
+class BibtexSourceHttp(Component):
     """
     This class loads bibtex files from external websites.
     """

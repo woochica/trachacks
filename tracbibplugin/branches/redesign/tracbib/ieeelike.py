@@ -36,7 +36,7 @@ try:
   from genshi.core import Markup
 except ImportError: # for trac 0.10:
   from trac.util.html import html as tag
-  #TODO from genshi.core import Markup
+  from trac.util.html import Markup
 
 
 BIBTEX_PERSON = [
@@ -514,9 +514,12 @@ class BibRefFormatterIEEELike(Component):
     def pre_process_request(self, req, handler):
         return handler
 
-    def post_process_request(self, req, template, data, content_type):
-        add_stylesheet(req,"tracbib/base.css")
-        return (template, data, content_type)
+    def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
+        add_stylesheet(args[1],"tracbib/base.css")
+        if len(args) == 5:
+            return (args[2], args[3], args[4])
+        else:
+            return (args[2],args[3])
 
     #ITemplateProvider
     def get_htdocs_dirs(self):

@@ -1,6 +1,6 @@
 
 VERSION=$(TRAC)
-PYTHONPATH:=/opt/trac/$(VERSION)/lib/python2.6/site-packages/
+PYTHONPATH:=/opt/trac/$(VERSION)/lib/python2.7/site-packages/
 PATH:=$(PATH):/opt/trac/$(VERSION)/bin/
 ENV=/home/roman/Trac
 

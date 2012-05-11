@@ -114,14 +114,11 @@ class TracBibRequestFilter(Component):
                     auto[key] = ''
         return handler
 
-    #Trac 0.11
-    def post_process_request(self,req, template, data, content_type):
-        return (template,data,content_type)
-    
-    #Trac 0.10
-    def post_process_request(self,req, template, content_type):
-        return (template,content_type)
-
+    def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
+        if len(args) == 5:
+            return (args[2], args[3], args[4])
+        else:
+            return (args[2],args[3])
 
 class BibAddMacro(WikiMacroBase):
     sources = ExtensionPoint(IBibSourceProvider)
