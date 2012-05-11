@@ -367,6 +367,7 @@ types = {
         }
 
 class BibRefFormatterIEEELike(Component):
+    """An IEEE-like citation style"""
     implements(IBibRefFormatter)
     implements(IRequestFilter,ITemplateProvider)
 

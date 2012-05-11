@@ -91,19 +91,22 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
 class Cite(Component,dict):
+    """Storage for cited references, this class must be enabled """
     pass
 
 class AutoLoaded(Component,dict):
+    """Storage for automatically loaded references, this class must be enabled """
     pass
 
 from trac.web.api import IRequestFilter
 
 class TracBibRequestFilter(Component):
+    """ Loads entries from the special wikipage 'BibTeX'"""
     sources = ExtensionPoint(IBibSourceProvider)
     implements(IRequestFilter)
 
     def pre_process_request(self,req, handler):
-        ''' load entries from the special wiki page 'BibTex' '''
+        ''' load entries from the special wiki page 'BibTeX' '''
         match = re.match(r'(^/wiki$)|(^/wiki/*)|(^/$)',req.path_info)
         if match:
             source = BibtexSourceWiki(self.env)
@@ -121,6 +124,7 @@ class TracBibRequestFilter(Component):
             return (args[2],args[3])
 
 class BibAddMacro(WikiMacroBase):
+    """Loads the correspondig BibTeX source provider implementing IBibSourceProvider"""
     sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)
 
@@ -143,6 +147,7 @@ class BibAddMacro(WikiMacroBase):
         raise TracError("Unknown container type: '"+ type +"'")
 
 class BibCiteMacro(WikiMacroBase):
+    """Macro to cite BibTeX entries"""
     implements(IWikiMacroProvider)
     sources = ExtensionPoint(IBibSourceProvider)
     formatter = ExtensionPoint(IBibRefFormatter)
@@ -188,6 +193,7 @@ class BibCiteMacro(WikiMacroBase):
         return entry
 
 class BibNoCiteMacro(WikiMacroBase):
+    """Macro to add BibTeX entries to the references, which are not cited"""
     implements(IWikiMacroProvider)
     sources = ExtensionPoint(IBibSourceProvider)
   
@@ -223,6 +229,7 @@ class BibNoCiteMacro(WikiMacroBase):
         return
 
 class BibRefMacro(WikiMacroBase):
+    """Macro to show the plugin where to place the cited references on the page"""
     formatter = ExtensionPoint(IBibRefFormatter)
     sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)
@@ -248,6 +255,7 @@ class BibRefMacro(WikiMacroBase):
         return div
 
 class BibFullRefMacro(WikiMacroBase):
+    """Macro to show the plugin where to place all loaded references on the page"""
     formatter = ExtensionPoint(IBibRefFormatter)
     sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)
