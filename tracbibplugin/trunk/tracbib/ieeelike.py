@@ -34,7 +34,9 @@ import re
 try:
   from genshi.builder import tag
   from genshi.core import Markup
+  version = ">0.10"
 except ImportError: # for trac 0.10:
+  version = "0.10"
   from trac.util.html import html as tag
   from trac.util.html import Markup
 
@@ -516,11 +518,20 @@ class BibRefFormatterIEEELike(Component):
         return handler
 
     def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
-        add_stylesheet(args[1],"tracbib/base.css")
-        if len(args) == 5:
-            return (args[2], args[3], args[4])
+        keywords = ["self","req", "template", "data", "content_type"]
+        for i,arg in enumerate(args):
+            kwds[keywords[i]]=args[i]
+
+        print kwds
+
+        add_stylesheet(kwds.get("req"),"tracbib/base.css")
+        if version == ">0.10":
+            print "GROOOOOOOS"
+            return (kwds.get("template"), kwds.get("data"), kwds.get("content_type"))
         else:
-            return (args[2],args[3])
+            return (kwds.get("template"), kwds.get("data"))
+
+
 
     #ITemplateProvider
     def get_htdocs_dirs(self):

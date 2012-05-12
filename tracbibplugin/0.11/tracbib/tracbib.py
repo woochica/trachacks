@@ -31,7 +31,9 @@ from trac.wiki.api import IWikiMacroProvider
 
 try:
   from genshi.builder import tag
+  version = ">0.10"
 except ImportError: # for trac 0.10:
+  version = "0.10"
   from trac.util.html import html as tag
 
 try:
@@ -118,10 +120,14 @@ class TracBibRequestFilter(Component):
         return handler
 
     def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
-        if len(args) == 5:
-            return (args[2], args[3], args[4])
+        keywords = ["self","req", "template", "data", "content_type"]
+        for i,arg in enumerate(args):
+            kwds[keywords[i]]=args[i]
+
+        if version == ">0.10":
+            return (kwds.get("template"), kwds.get("data"), kwds.get("content_type"))
         else:
-            return (args[2],args[3])
+            return (kwds.get("template"), kwds.get("data"))
 
 class BibAddMacro(WikiMacroBase):
     """Loads the correspondig BibTeX source provider implementing IBibSourceProvider"""
