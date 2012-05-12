@@ -517,20 +517,14 @@ class BibRefFormatterIEEELike(Component):
     def pre_process_request(self, req, handler):
         return handler
 
-    def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
-        keywords = ["self","req", "template", "data", "content_type"]
-        for i,arg in enumerate(args):
-            kwds[keywords[i]]=args[i]
-
-        print kwds
-
-        add_stylesheet(kwds.get("req"),"tracbib/base.css")
-        if version == ">0.10":
-            print "GROOOOOOOS"
-            return (kwds.get("template"), kwds.get("data"), kwds.get("content_type"))
-        else:
-            return (kwds.get("template"), kwds.get("data"))
-
+    def post_process_request(self, req, template, data, content_type):
+        add_stylesheet(req,"tracbib/base.css")
+        return (template, data, content_type)
+    
+    #Trac 0.10
+    def post_process_request(self,req, template, content_type):
+        add_stylesheet(req,"tracbib/base.css")
+        return (template,content_type)
 
 
     #ITemplateProvider

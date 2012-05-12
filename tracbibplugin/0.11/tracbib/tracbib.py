@@ -119,15 +119,13 @@ class TracBibRequestFilter(Component):
                     auto[key] = ''
         return handler
 
-    def post_process_request(*args, **kwds): #TODO: it's not clean, to rely just on args
-        keywords = ["self","req", "template", "data", "content_type"]
-        for i,arg in enumerate(args):
-            kwds[keywords[i]]=args[i]
-
-        if version == ">0.10":
-            return (kwds.get("template"), kwds.get("data"), kwds.get("content_type"))
-        else:
-            return (kwds.get("template"), kwds.get("data"))
+    #Trac 0.11
+    def post_process_request(self,req, template, data, content_type):
+        return (template,data,content_type)
+    
+    #Trac 0.10
+    def post_process_request(self,req, template, content_type):
+        return (template,content_type)
 
 class BibAddMacro(WikiMacroBase):
     """Loads the correspondig BibTeX source provider implementing IBibSourceProvider"""
