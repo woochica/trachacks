@@ -22,3 +22,5 @@ wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
  new features
  * macro collection based on WikiTicketCalendar `trunk` branch pulled into
    wikicalendar domain, extended to replicate WikiCalendar functionality too
+ * calendar header localization according to user preferences, if supported
+   by server (Trac >= 0.12, probably fails on Windows OS due to locale issues)

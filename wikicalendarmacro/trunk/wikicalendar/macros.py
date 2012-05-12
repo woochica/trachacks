@@ -19,6 +19,7 @@
 
 import calendar
 import datetime
+import locale
 import re
 import sys
 
@@ -433,6 +434,26 @@ class WikiCalendarMacros(Component):
         last_week_prevMonth = calendar.monthcalendar(prevYear, prevMonth)[-1]
         first_week_nextMonth = calendar.monthcalendar(nextYear, nextMonth)[0]
 
+        # Switch to user's locale, if available.
+        try:
+            loc_req = str(formatter.req.locale)
+        except AttributeError:
+            # Available since in Trac 0.12 .
+            loc_req = None
+        if loc_req:
+            loc = locale.getlocale()
+            loc_prop = locale.normalize(loc_req)
+            try:
+                locale.setlocale(locale.LC_TIME, loc_prop)
+            except locale.Error:
+                try:
+                    # Re-try with UTF-8 as last resort.
+                    loc_prop = '.'.join([loc_prop.split('.')[0],'utf8'])
+                    locale.setlocale(locale.LC_TIME, loc_prop)
+                except locale.Error:
+                    loc_prop = None
+            self.env.log.debug('Locale setting for calendar: ' + str(loc_prop))
+
         # Finally building the output
         # Begin with caption and optional navigation links
         buff = tag.tr()
@@ -646,6 +667,14 @@ class WikiCalendarMacros(Component):
                         cell(class_='day adjacent_month')
                         line(cell)
             buff(line)
+
+        if loc_req and loc_prop:
+            # We may have switched to users locale, resetting now.
+            try:
+                locale.setlocale(locale.LC_ALL, loc)
+                self.env.log.debug('Locale setting restored: ' + str(loc))
+            except locale.Error:
+                pass
 
         buff = tag.div(heading(buff))
         if name == 'WikiTicketCalendar':

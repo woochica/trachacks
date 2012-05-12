@@ -99,7 +99,7 @@ a.tip {
     }
 a.tip span { display: none; }
 a.tip:hover span {
-    display: block; z-index: 1; text-decoration: none;
+    display: block; z-index: 1; font-size: 1.2em; text-decoration: none;
     /* big left move because of z-index render bug in IE<8 */
     position: absolute; top: 0.8em; left: 6em;
     border: 1px solid #000; background-color: #fff; padding: 5px;
