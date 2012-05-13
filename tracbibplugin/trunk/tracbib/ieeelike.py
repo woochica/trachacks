@@ -520,12 +520,6 @@ class BibRefFormatterIEEELike(Component):
     def post_process_request(self, req, template, data, content_type):
         add_stylesheet(req,"tracbib/base.css")
         return (template, data, content_type)
-    
-    #Trac 0.10
-    def post_process_request(self,req, template, content_type):
-        add_stylesheet(req,"tracbib/base.css")
-        return (template,content_type)
-
 
     #ITemplateProvider
     def get_htdocs_dirs(self):

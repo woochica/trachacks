@@ -122,12 +122,8 @@ class TracBibRequestFilter(Component):
     #Trac 0.11
     def post_process_request(self,req, template, data, content_type):
         return (template,data,content_type)
-    
-    #Trac 0.10
-    def post_process_request(self,req, template, content_type):
-        return (template,content_type)
 
-class BibAddMacro(WikiMacroBase):
+   class BibAddMacro(WikiMacroBase):
     """Loads the correspondig BibTeX source provider implementing IBibSourceProvider"""
     sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)

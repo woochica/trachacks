@@ -118,11 +118,7 @@ class TracBibRequestFilter(Component):
                 for key in source:
                     auto[key] = ''
         return handler
-
-    #Trac 0.11
-    def post_process_request(self,req, template, data, content_type):
-        return (template,data,content_type)
-    
+   
     #Trac 0.10
     def post_process_request(self,req, template, content_type):
         return (template,content_type)
