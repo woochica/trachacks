@@ -1,52 +1,52 @@
 # Translations template for TracForms.
-# Copyright (C) 2011 ORGANIZATION
+# Copyright (C) 2012 ORGANIZATION
 # This file is distributed under the same license as the TracForms
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2011.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2012.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracForms 0.3\n"
+"Project-Id-Version: TracForms 0.5\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2011-04-27 22:47+0200\n"
+"POT-Creation-Date: 2012-05-14 23:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 1.0dev-r482\n"
+"Generated-By: Babel 0.9.6\n"
 
-#: tracforms/api.py:180
+#: tracforms/api.py:198
 #, python-format
 msgid "Unparented form %(id)s"
 msgstr ""
 
-#: tracforms/api.py:192
+#: tracforms/api.py:210
 #, python-format
 msgid "Form %(form_id)s (%(parent)s)"
 msgstr ""
 
 #. TRANSLATOR: Most verbose title, i.e. for form history page
-#: tracforms/api.py:194
+#: tracforms/api.py:212
 #, python-format
 msgid "Form %(form_id)s (in %(parent)s)"
 msgstr ""
 
 #. TRANSLATOR: Title printed i.e. in form select page
-#: tracforms/api.py:199
+#: tracforms/api.py:217
 #, python-format
 msgid "Forms (%(parent)s)"
 msgstr ""
 
-#: tracforms/api.py:200
+#: tracforms/api.py:218
 #, python-format
 msgid "Forms in %(parent)s"
 msgstr ""
 
 #. TRANSLATOR: HTTP error message
-#: tracforms/api.py:250
+#: tracforms/api.py:263
 msgid "__context__ is required"
 msgstr ""
 
@@ -72,29 +72,21 @@ msgstr ""
 msgid "ERROR: No TracForms command '%r'"
 msgstr ""
 
-#: tracforms/formdb.py:46 tracforms/model.py:62
-#, python-format
-msgid ""
-"No data recorded for a TracForms form in\n"
-"                      %(realm)s:%(parent_id)s\n"
-"                      "
-msgstr ""
-
-#: tracforms/formdb.py:194
+#: tracforms/formdb.py:251
 msgid "Conflict"
 msgstr ""
 
-#: tracforms/macros.py:98
+#: tracforms/macros.py:109
 #, python-format
 msgid "ERROR: No TracForms command '%s'"
 msgstr ""
 
 #. TRANSLATOR: Default submit button label
-#: tracforms/macros.py:172
+#: tracforms/macros.py:186
 msgid "Update Form"
 msgstr ""
 
-#: tracforms/macros.py:481 tracforms/macros.py:487
+#: tracforms/macros.py:525 tracforms/macros.py:533
 msgid "unknown"
 msgstr ""
 
@@ -107,24 +99,48 @@ msgstr ""
 msgid "Invalid form number"
 msgstr ""
 
+#: tracforms/model.py:62
+#, python-format
+msgid ""
+"No data recorded for a TracForms form in\n"
+"                      %(realm)s:%(parent_id)s\n"
+"                      "
+msgstr ""
+
 #: tracforms/model.py:65
 #, python-format
 msgid "with subcontext %(subcontext)s"
 msgstr ""
 
-#: tracforms/web_ui.py:63
+#: tracforms/util.py:89
+#, python-format
+msgid "%(value)s reset to default value"
+msgstr ""
+
+#: tracforms/util.py:92
+#, python-format
+msgid "from default value set to %(value)s"
+msgstr ""
+
+#. TRANSLATOR: same as before, but with additional line breaks
+#: tracforms/util.py:96 tracforms/util.py:102
+#, python-format
+msgid "changed from %(old)s to %(new)s"
+msgstr ""
+
+#: tracforms/web_ui.py:61
 msgid "Form details"
 msgstr ""
 
-#: tracforms/web_ui.py:64
+#: tracforms/web_ui.py:62
 msgid "Review form data"
 msgstr ""
 
-#: tracforms/web_ui.py:71
+#: tracforms/web_ui.py:69
 msgid "Back to forms list"
 msgstr ""
 
-#: tracforms/web_ui.py:152
+#: tracforms/web_ui.py:153
 #, python-format
 msgid "Form %(form_id)s"
 msgstr ""
@@ -143,79 +159,65 @@ msgstr ""
 msgid "empty (text field)"
 msgstr ""
 
-#: tracforms/web_ui.py:191
+#: tracforms/web_ui.py:196
 #, python-format
 msgid "by %(author)s"
 msgstr ""
 
 #. TRANSLATOR: The realm name used as TracSearch filter label
-#: tracforms/web_ui.py:202
+#: tracforms/web_ui.py:206
 msgid "Forms"
 msgstr ""
 
-#: tracforms/web_ui.py:292
-#, python-format
-msgid "%(value)s reset to default value"
-msgstr ""
-
-#: tracforms/web_ui.py:295
-#, python-format
-msgid "from default value set to %(value)s"
-msgstr ""
-
-#. TRANSLATOR: same as before, but with additional line breaks
-#: tracforms/web_ui.py:299 tracforms/web_ui.py:304
-#, python-format
-msgid "changed from %(old)s to %(new)s"
-msgstr ""
-
-#: tracforms/templates/form.html:19
+#: tracforms/templates/form.html:23
 msgid "Go down to reset fields and delete history"
 msgstr ""
 
-#: tracforms/templates/form.html:20
+#: tracforms/templates/form.html:24
 msgid "Reset"
 msgstr ""
 
-#: tracforms/templates/form.html:24
+#: tracforms/templates/form.html:28
 msgid "Saved Values"
 msgstr ""
 
-#: tracforms/templates/form.html:25
+#: tracforms/templates/form.html:29
 msgid "in subcontext '"
 msgstr ""
 
-#: tracforms/templates/form.html:29
+#: tracforms/templates/form.html:33
 #, python-format
 msgid "%(name)s:"
 msgstr ""
 
-#: tracforms/templates/form.html:40 tracforms/templates/switch.html:26
+#: tracforms/templates/form.html:45 tracforms/templates/switch.html:29
 msgid "(No form data recorded)"
 msgstr ""
 
-#: tracforms/templates/form.html:43
+#: tracforms/templates/form.html:48
 msgid "Change History"
 msgstr ""
 
-#: tracforms/templates/form.html:47
+#: tracforms/templates/form.html:52
 #, python-format
-msgid "Changed on %(time)s by %(author)s:"
+msgid ""
+"Changed on %(time)s\n"
+"                by %(author)s:"
 msgstr ""
 
-#: tracforms/templates/form.html:62
+#: tracforms/templates/form.html:68
 msgid "Reset fields and delete history"
 msgstr ""
 
-#: tracforms/templates/form.html:62
+#: tracforms/templates/form.html:68
 msgid "Reset form"
 msgstr ""
 
-#: tracforms/templates/form.html:65
+#: tracforms/templates/form.html:71
 msgid "Revert latest change"
 msgstr ""
 
-#: tracforms/templates/switch.html:21
+#: tracforms/templates/switch.html:24
 msgid "Available records"
 msgstr ""
 
