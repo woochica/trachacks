@@ -19,6 +19,7 @@ tracforms-0.5 (yet unreleased):
  * prevent UnicodeEncodeError on using nested TracForm operation as form value
  * allow unexpected values in form details page to enable recovery from bad
    TracForm definitions, like duplicated field names, through web_ui alone
+ * render time stamps in form template according to user preferences
 
 
 tracforms-0.4.1 (22-Jul-2011):

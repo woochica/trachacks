@@ -34,7 +34,8 @@
               <td>${field.value}</td>
               <td py:choose="">
                 <py:when test="field.time is not None">
-                  ${field.author} &mdash; ${field.time}
+                  ${field.author} &mdash;
+                  <span class="date">${format_datetime(field.time)}</span>
                 </py:when>
                 <py:otherwise>&nbsp;</py:otherwise>
               </td>
@@ -49,7 +50,8 @@
           <py:for each="changeset in history">
             <div id="change">
               <h3 class="change" i18n:msg="time, author">
-                Changed on ${changeset.time} by ${changeset.author}:
+                Changed on ${format_datetime(changeset.time)}
+                by ${changeset.author}:
               </h3>
               <ul class="changes">
                 <li py:for="field,change in changeset.changes.iteritems()">

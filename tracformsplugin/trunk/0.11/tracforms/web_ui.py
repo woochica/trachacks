@@ -6,7 +6,6 @@ from genshi.builder import Markup, tag
 from pkg_resources import resource_filename
 
 from trac.core import implements
-from trac.util.datefmt import format_datetime
 from trac.resource import get_resource_description, \
                           get_resource_shortname, get_resource_url
 from trac.search.api import ISearchSource, shorten_result
@@ -196,8 +195,7 @@ class FormUI(FormDBUser):
                 {'name': name, 'value': value,
                  'author': tag.span(tag(_("by %(author)s", author=author)),
                                     class_='author'),
-                 'time': time is not None and tag.span(
-                         format_datetime(time), class_='date') or None})
+                 'time': time})
         return rendered
 
     # ISearchSource methods

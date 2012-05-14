@@ -10,7 +10,6 @@ from codecs          import getencoder
 from genshi.builder  import Markup, tag
 
 from trac.resource   import ResourceSystem
-from trac.util.datefmt import format_datetime
 from trac.util.text  import to_unicode
 
 from api             import _
@@ -77,7 +76,7 @@ def parse_history(changes, fieldwise=False):
                                                None, new_fields[field])
         new_fields = old_fields
         history.append({'author': last_author,
-                        'time': format_datetime(last_change),
+                        'time': last_change,
                         'changes': updated_fields})
         last_author = changeset['author']
         last_change = changeset['time']
