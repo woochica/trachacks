@@ -270,8 +270,7 @@ validaterule.setup = function(input, spec){
         field = jQuery(input);
     
     // proceed only if input field matches the spec's target field
-    if (input.attr('id') == field.attr('id') && !field.hasClass('validated')){
-        field.addClass('validated');
+    if (input.attr('id') == field.attr('id')){
         
         // listen for form submission
         form.submit(function(){
@@ -279,17 +278,27 @@ validaterule.setup = function(input, spec){
                 return true;
             if ((spec.value == "" && input.val() == "") ||
                 (spec.value != "" && RegExp(spec.value).test(input.val()))){
+                var valid = false;
+                
+                // only invalid when ..?
+                if (spec.when.length && jQuery(spec.when).length == 0)
+                    valid = true;
+                
                 // alert only once per form submission
-                if (!form.hasClass('validated')){
+                if (!valid && !form.hasClass('validated')){
                     form.addClass('validated');
-                    if (spec.value == '')
-                        var e = 'be empty';
-                    else
-                        var e = 'equal '+spec.value;
-                    alert(spec.target+" must not "+e);
+                    var msg = spec.msg;
+                    if (!msg.length) {
+                        if (spec.value == '') 
+                            var e = 'be empty';
+                        else 
+                            var e = 'equal ' + spec.value;
+                        msg = spec.target+" must not "+e;
+                    }
+                    alert(msg);
                     field.focus();
                 }
-                return false;
+                return valid;
             } else {
                 return true;
             }

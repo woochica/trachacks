@@ -298,18 +298,36 @@ class ValidateRule(Component, Rule):
     
       [ticket-custom]
       milestone.invalid_if = 
+      phase.invalid_if = releasing
+      phase.invalid_when = .codereviewstatus .pending (msg:Pending reviews.)
     """
     
     implements(IRule)
     
     def get_trigger(self, req, target, key, opts):
-        if key == '%s.invalid_if' % target:
+        if key.startswith('%s.invalid_if' % target):
             return target
         return None
     
     def update_spec(self, req, key, opts, spec):
+        target = spec['target']
         spec['op'] = 'validate'
         spec['value'] = opts[key]
+        
+        # check for suffix
+        suffix_re = re.compile(r"(?P<suffix>\.[0-9]+)$")
+        match = suffix_re.search(key)
+        suffix = match.groupdict()['suffix'] if match else ''
+        
+        # extract when spec
+        spec['when'] = opts.get("%s.invalid_when%s" % (target,suffix),'')
+        spec['msg'] = ''
+        if spec['when']:
+            when_re = re.compile(r"^(?P<selector>.+) \(msg:(?P<msg>.+)\)$")
+            match = when_re.match(spec['when'])
+            if match:
+                spec['when'] = match.groupdict()['selector']
+                spec['msg'] = match.groupdict()['msg']
     
     def update_pref(self, req, trigger, target, key, opts, pref):
         suffix = opts[key] and "= %s" % opts[key] or "is empty"
