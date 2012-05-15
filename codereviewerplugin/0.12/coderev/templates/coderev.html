@@ -1,0 +1,55 @@
+<script type="text/javascript" xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/" py:strip="">
+
+// convert python to JS objects for use outside of this template
+var get_status_choices = function(){
+    var status_choices = new Array();
+  <py:for each="choice in status_choices">
+    status_choices.push("${choice}");
+  </py:for>
+    return status_choices;
+}
+
+var get_review = function(){
+    review = new Object();
+    review.repo = "${review.repo}";
+    review.changeset = "${review.changeset}";
+    review.status = "${review.status}";
+    review.reviewer = "${review.reviewer}";
+    review.when = "${review.when}";
+    review.summaries = new Array();
+  <py:for each="summary in review.summaries">
+    summary = new Object();
+    summary.repo = "${summary.repo}";
+    summary.changeset = "${summary.changeset}";
+    summary.status = "${summary.status}";
+    summary.reviewer = "${summary.reviewer}";
+    summary.html_summary = "${summary.html_summary}";
+    summary.when = "${summary.when}";
+    summary.pretty_when = "${summary.pretty_when}";
+    review.summaries.push(summary);
+  </py:for>
+  return review;
+}
+
+var is_pending = function(){
+    return "${status_choices.index(review.status)}" == "1";
+}
+
+var get_tickets = function(){
+    var tickets = new Array();
+  <py:for each="ticket in tickets">
+    tickets.push("${ticket}");
+  </py:for>
+    return tickets;
+}
+
+var get_form_token = function(){
+    return '${form_token}';
+}
+
+jQuery(document).ready(function(){
+    setup();
+});
+</script>

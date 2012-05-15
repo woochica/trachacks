@@ -1,0 +1,44 @@
+/* changeset banner styling */
+#message.system-message {
+    background: #F7F7F7;
+    border: 1px solid #000;
+}
+#message.system-message.pending {
+    background: #FFD;
+}
+
+/* code review styling */
+#review { line-height: 130%; margin-top: 1em; padding: .5em }
+#review dt.property {
+    font-weight: bold;
+    padding-right: .25em;
+    position: absolute;
+    left: 0;
+    text-align: right;
+    width: 7.75em;
+}
+#review dd {margin-left: 8em }
+#review .message { padding: 1em 0 1px }
+#review dd.message p, #review dd.message ul, #review dd.message ol,
+#review dd.message pre { margin-bottom: 1em; margin-top: 0; }
+#review-summary {
+    margin-left: -1px;
+    margin-right: -1px;
+    padding: 0;
+    width: 100%;
+}
+
+/* ticket macro styling */
+div.codereviewstatus > .rejected {
+    background: #F7F7F7;
+    border: 1px solid #000;
+}
+div.codereviewstatus > .pending {
+    background: #FFD;
+    border: 1px solid #000;
+}
+div.codereviewstatus > .passed {
+    background: #F7F7F7;
+    border: 1px solid #000;
+}
+div.codereviewstatus span { font-weight: bold; }
