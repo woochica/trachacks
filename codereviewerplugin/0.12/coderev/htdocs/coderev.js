@@ -31,7 +31,7 @@ var setup = function(){
     var tickets = get_tickets();
     if (tickets.length){
         var s = tickets.length == 1 ? '' : 's';
-        html += '<dd><div class="system-message notice">Saved status and added comment to ticket'+s+' ';
+        html += '<dd><div class="system-message notice">Saved status - see ticket'+s+' ';
         jQuery(tickets).each(function(i,ticket){
             html += '<a href="/ticket/'+ticket+'">#'+ticket+'</a>';
             if (i < tickets.length-1)

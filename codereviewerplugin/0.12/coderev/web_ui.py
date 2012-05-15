@@ -96,8 +96,9 @@ class CodeReviewerModule(Component):
         return ''
     
     def _add_ticket_comment(self, req, review):
-        # build comment
         summary = review.summaries[-1]
+        
+        # build comment
         if summary['status']:
             comment = "Code review set to %(status)s" % summary
         else:
@@ -112,9 +113,12 @@ class CodeReviewerModule(Component):
         changeset = repo.get_changeset(review.changeset)
         ticket_re = CommitTicketUpdater.ticket_re
         tickets = ticket_re.findall(changeset.message)
-        for ticket in tickets:
-            t = Ticket(self.env, ticket)
-            t.save_changes(author=summary['reviewer'], comment=comment)
+        
+        # skip adding a ticket comment if there's no review summary
+        if summary['summary']:
+            for ticket in tickets:
+                t = Ticket(self.env, ticket)
+                t.save_changes(author=summary['reviewer'], comment=comment)
         return tickets
 
 
