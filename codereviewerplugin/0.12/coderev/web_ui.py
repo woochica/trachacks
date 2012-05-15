@@ -52,6 +52,7 @@ class CodeReviewerModule(Component):
                 if review.save(reviewer=req.authname, **req.args):
                     tickets = self._add_ticket_comment(req, review)
                     url = req.href(req.path_info,{'ticket':tickets})
+                    req.send_header('Cache-Control', 'no-cache')
                     req.redirect(url+'#reviewbutton')
             add_stylesheet(req, 'coderev/coderev.css')
             add_script(req, 'coderev/coderev.js')
@@ -71,6 +72,7 @@ class CodeReviewerModule(Component):
                 'tickets': get_tickets(req),
                 'status_choices': self.status_choices,
                 'form_token': self._get_form_token(req)}
+        req.send_header('Cache-Control', 'no-cache')
         return 'coderev.html', data, 'text/javascript' 
     
     # private methods
