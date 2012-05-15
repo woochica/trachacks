@@ -111,6 +111,7 @@ class CodeReviewerModule(Component):
         comment += " for [%(_ref)s]:\n\n%(summary)s" % summary 
         
         # find and comment in tickets
+        # TODO: handle when there's no explicitly named repo
         repo = RepositoryManager(self.env).get_repository(review.repo)
         changeset = repo.get_changeset(review.changeset)
         ticket_re = CommitTicketUpdater.ticket_re
@@ -181,9 +182,9 @@ class CommitTicketReferenceMacro(WikiMacroBase):
 # common functions
 def get_repo_changeset(req, check_referer=False):
     """Returns the changeset and repo as a tuple."""
-    changeset_re = re.compile(r"/changeset/(?P<rev>[a-f0-9]+)(/(?P<repo>\w+))?")
-    path = req.environ.get('HTTP_REFERER','') if check_referer else req.path_info
-    match = changeset_re.search(path)
+    path=req.environ.get('HTTP_REFERER','') if check_referer else req.path_info
+    pattern = r"/changeset/(?P<rev>[a-f0-9]+)(/(?P<repo>[^/?#]+))?"
+    match = re.compile(pattern).search(path)
     if match:
         return (match.groupdict()['repo'],match.groupdict().get('rev',''))
     return None,None
