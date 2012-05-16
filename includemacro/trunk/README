@@ -46,9 +46,13 @@ Include another wiki page::
 
     [[Include(PageName)]]
 
-Include a reStructuredText__ file from the repository::
+Include the HEAD revision of a reStructuredText__ file from the repository::
 
     [[Include(source:trunk/docs/README, text/x-rst)]]
+
+Include a specific revision of a file from the repository::
+
+    [[Include(source:trunk/docs/README@5, text/x-rst)]]
 
 __ http://docutils.sf.net/rst.html
 

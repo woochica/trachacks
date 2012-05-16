@@ -104,14 +104,22 @@ class IncludeMacro(WikiMacroBase):
             return ''
         repos_mgr = RepositoryManager(self.env)
         try: #0.12+
-            (repos_name,repos,source_obj) = repos_mgr.get_repository_by_path(source_obj)
+            repos_name, repos,source_obj = repos_mgr.get_repository_by_path(source_obj)
         except AttributeError, e: #0.11
             repos = repos_mgr.get_repository(formatter.req.authname)
-        node = repos.get_node(source_obj)
+        path, rev = _split_path(source_obj)
+        node = repos.get_node(path, rev)
         out = node.get_content().read()
         if dest_format is None:
-            dest_format = node.content_type or get_mimetype(source_obj, out)
-        ctxt = Context.from_request(formatter.req, 'source', source_obj)
+            dest_format = dest_format or node.content_type or get_mimetype(path, out)
+        ctxt = Context.from_request(formatter.req, 'source', path)
         
         return out, ctxt, dest_format
+    
+def _split_path(source_obj):
+    if '@' in source_obj:
+        path, rev = source_obj.split('@', 1)
+    else:
+        path, rev = source_obj, None
+    return path, rev    
     
