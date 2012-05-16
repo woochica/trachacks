@@ -111,7 +111,7 @@ class IncludeMacro(WikiMacroBase):
         node = repos.get_node(path, rev)
         out = node.get_content().read()
         if dest_format is None:
-            dest_format = dest_format or node.content_type or get_mimetype(path, out)
+            dest_format = node.content_type or get_mimetype(path, out)
         ctxt = Context.from_request(formatter.req, 'source', path)
         
         return out, ctxt, dest_format
