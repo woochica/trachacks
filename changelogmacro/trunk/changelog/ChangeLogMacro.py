@@ -73,7 +73,6 @@ class ChangeLogMacro(WikiMacroBase):
 
         context = web_context(req)
         context.href is req.href
-        context.href is req.href
         args, kwargs = parse_args(content)
         args += [None, None]
         path, limit, rev = args[:3]
