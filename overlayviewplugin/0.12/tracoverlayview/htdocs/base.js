@@ -56,11 +56,12 @@ jQuery(document).ready(function($) {
     window.overlayview.loadStyleSheet = loadStyleSheet;
     var baseurl = window.overlayview.baseurl;
     var attachment_url = baseurl + 'attachment/';
+    var raw_attachment_url = baseurl + 'raw-attachment/';
     var basic_options = {
-        opacity: 0.9, transition: 'none', width: '92%', maxWidth: '92%',
-        maxHeight: '92%', onComplete: onComplete};
+        opacity: 0.9, transition: 'none', speed: 200, width: '92%',
+        maxWidth: '92%', maxHeight: '92%', onComplete: onComplete};
     var attachments = $('#attachments').get(0);
-    var imageRegexp = /\.(?:png|jpe?g|git|bmp)(?:[#?].*)?$/i;
+    var imageRegexp = /\.(?:png|jpe?g|gif|bmp)(?:[#?].*)?$/i;
 
     function rawlink() {
         var self = $(this);
@@ -79,8 +80,9 @@ jQuery(document).ready(function($) {
         if (href.indexOf(attachment_url) === 0) {
             var options = $.extend({}, basic_options);
             if (imageRegexp.test(href)) {
-                href = baseurl + 'raw-attachment/' +
+                href = raw_attachment_url +
                        href.substring(attachment_url.length);
+                options.transition = 'elastic';
                 options.photo = true;
                 options.width = false;
             }
@@ -113,10 +115,11 @@ jQuery(document).ready(function($) {
                                   .text($(em.get(1)).text());
             var filename = $('<a/>').attr('href', href)
                                     .text(em.first().text());
-            var rawlink = baseurl + 'raw-attachment/' +
+            var rawlink = raw_attachment_url +
                           href.substring(attachment_url.length);
             if (imageRegexp.test(href)) {
                 options.href = rawlink;
+                options.transition = 'elastic';
                 options.photo = true;
                 options.width = false;
             }
@@ -136,6 +139,33 @@ jQuery(document).ready(function($) {
         }
     }
 
+    function imageMacro() {
+        var options = $.extend({}, basic_options);
+        var image = $(this);
+        var href = image.attr('src');
+        options.href = href;
+        options.transition = 'elastic';
+        options.initialWidth = this.width;
+        options.initialHeight = this.height;
+        options.photo = true;
+        options.width = false;
+        var filename = href.substring(href.lastIndexOf('/') + 1);
+        filename = decodeURIComponent(filename);
+        var anchor = $('<a />').attr('href', image.parent().attr('href'))
+                               .text(filename);
+        if (href.substring(0, raw_attachment_url.length)
+            === raw_attachment_url)
+        {
+            anchor.append($('<a/>').addClass('overlayview-rawlink')
+                                   .attr('href', href)
+                                   .text('\u200b'));
+        }
+        options.title = $('<span />').append(anchor).html();
+        image.attr('data-colorbox-title', options.title);
+        image.colorbox(options);
+    }
+
     $('#content a.trac-rawlink').each(rawlink);
     $('.timeline#content dt.attachment a').each(timeline);
+    $('#content .searchable a > img').each(imageMacro);
 });
