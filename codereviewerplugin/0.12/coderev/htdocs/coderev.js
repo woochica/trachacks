@@ -33,7 +33,7 @@ var setup = function(){
         var s = tickets.length == 1 ? '' : 's';
         html += '<dd><div class="system-message notice">Saved status - see ticket'+s+' ';
         jQuery(tickets).each(function(i,ticket){
-            html += '<a href="/ticket/'+ticket+'">#'+ticket+'</a>';
+            html += '<a href="'+get_url()+'/ticket/'+ticket+'">#'+ticket+'</a>';
             if (i < tickets.length-1)
                 html += ', ';
         });
