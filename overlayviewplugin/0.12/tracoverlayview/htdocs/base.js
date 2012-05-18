@@ -2,7 +2,7 @@ jQuery(document).ready(function($) {
     if (!window.overlayview)
         return;
 
-    window.overlayview.loadStyleSheet = function(href, type) {
+    function loadStyleSheet(href, type) {
         var links = $('link[rel="stylesheet"]').filter(':not([disabled])');
         links = $.grep(links, function(link) {
             return link.getAttribute('href') === href;
@@ -10,7 +10,7 @@ jQuery(document).ready(function($) {
         if (links.length === 0) {
             $.loadStyleSheet(href, type);
         }
-    };
+    }
 
     function onComplete() {
         var element = $.colorbox.element();
@@ -51,15 +51,20 @@ jQuery(document).ready(function($) {
             });
             return;
         }
-    };
+    }
+
+    window.overlayview.loadStyleSheet = loadStyleSheet;
     var baseurl = window.overlayview.baseurl;
     var attachment_url = baseurl + 'attachment/';
     var basic_options = {
         opacity: 0.9, transition: 'none', width: '92%', maxWidth: '92%',
         maxHeight: '92%', onComplete: onComplete};
     var attachments = $('#attachments').get(0);
+    var imageRegexp = /\.(?:png|jpe?g|git|bmp)(?:[#?].*)?$/i;
+
     function rawlink() {
         var self = $(this);
+        var href = self.attr('href');
         var anchor = self.prev('a');
         if (anchor.size() === 0) {
             anchor = self.parent('.noprint').prev('a.attachment');
@@ -73,19 +78,29 @@ jQuery(document).ready(function($) {
         var href = anchor.attr('href');
         if (href.indexOf(attachment_url) === 0) {
             var options = $.extend({}, basic_options);
-            options.href = baseurl + 'overlayview/' +
-                           href.substring(baseurl.length)
-                               .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
+            if (imageRegexp.test(href)) {
+                href = baseurl + 'raw-attachment/' +
+                       href.substring(attachment_url.length);
+                options.photo = true;
+                options.width = false;
+            }
+            else {
+                href = baseurl + 'overlayview/' +
+                       href.substring(baseurl.length)
+                           .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
+            }
+            options.href = href;
             var title = anchor.clone();
             title.children('em').contents().appendTo(title);
             title.remove('em');
-            options.title = $('<span/>').append(title)
-                                        .append(self.clone())
-                                        .html();
+            options.title = $('<span/>')
+                            .append(title, self.clone())
+                            .html();
             anchor.attr('data-colorbox-title', options.title);
             anchor.colorbox(options);
         }
     }
+
     function timeline() {
         var anchor = $(this);
         var href = anchor.attr('href');
@@ -98,23 +113,29 @@ jQuery(document).ready(function($) {
                                   .text($(em.get(1)).text());
             var filename = $('<a/>').attr('href', href)
                                     .text(em.first().text());
-            options.href = baseurl + 'overlayview/' +
-                           href.substring(baseurl.length)
-                               .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
             var rawlink = baseurl + 'raw-attachment/' +
                           href.substring(attachment_url.length);
+            if (imageRegexp.test(href)) {
+                options.href = rawlink;
+                options.photo = true;
+                options.width = false;
+            }
+            else {
+                options.href = baseurl + 'overlayview/' +
+                               href.substring(baseurl.length)
+                                   .replace(/\.([A-Za-z0-9]+)$/, '%2e$1');
+            }
             rawlink = $('<a/>').addClass('overlayview-rawlink')
                                .attr('href', rawlink)
                                .text('\u200b');
-            options.title = $('<span/>').append(parent)
-                                        .append(': ')
-                                        .append(filename)
-                                        .append(rawlink)
-                                        .html();
+            options.title = $('<span/>')
+                            .append(parent, ': ', filename, rawlink)
+                            .html();
             anchor.attr('data-colorbox-title', options.title);
             anchor.colorbox(options);
         }
     }
+
     $('#content a.trac-rawlink').each(rawlink);
     $('.timeline#content dt.attachment a').each(timeline);
 });
