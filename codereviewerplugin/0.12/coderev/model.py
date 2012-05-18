@@ -73,9 +73,9 @@ class CodeReview(object):
         cursor.execute("""
             SELECT status, reviewer, time
             FROM codereviewer
-            WHERE repo=%s AND changeset=%s AND status != ''
+            WHERE repo='%s' AND changeset='%s' AND status != ''
             ORDER BY time DESC LIMIT 1;
-            """, (self.repo,self.changeset))
+            """ % (self.repo,self.changeset))
         row = cursor.fetchone() or (self.status_default,'',0)
         self._status,self._reviewer,self._when = row
         self._summaries = self._get_summaries()
@@ -87,9 +87,9 @@ class CodeReview(object):
         cursor.execute("""
             SELECT status, reviewer, summary, time
             FROM codereviewer
-            WHERE repo=%s AND changeset=%s
+            WHERE repo='%s' AND changeset='%s'
             ORDER BY time ASC;
-            """, (self.repo,self.changeset))
+            """ % (self.repo,self.changeset))
         for row in cursor:
             status,reviewer,summary,when = row
             pretty_when = time.strftime('%Y-%m-%d %H:%M',
