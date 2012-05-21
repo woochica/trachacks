@@ -15,7 +15,7 @@ setup(
                                'htdocs/*.css',
                                'htdocs/*.js',
                                'upgrades/*.py',
-                               'util/*','util/.*']},
+                               'util/*.py']},
     entry_points = {'trac.plugins':['coderev.api = coderev.api',
                                     'coderev.web_ui = coderev.web_ui',]}
 )
