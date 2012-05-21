@@ -1,7 +1,7 @@
 // add the codereviewer form to existing changeset page
 var setup = function(){
     var review = get_review();
-    var status_choices = get_status_choices();
+    var statuses = get_statuses();
     
     // add a "warning" to the page
     var class_ = is_pending() ? ' pending' : '';
@@ -44,7 +44,7 @@ var setup = function(){
     html += '  <dd><textarea id="review-summary" name="summary" rows="10" cols="78"/></dd>'
            +'  <dt class="property">Review status:</dt>'
            +'  <dd><select id="review-status" name="status">';
-    jQuery(status_choices).each(function(i,choice){
+    jQuery(statuses).each(function(i,choice){
         html += '<option';
         if (choice == review.status)
             html+= ' selected="selected"';

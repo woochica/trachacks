@@ -1,5 +1,8 @@
 import re
 import json
+import time
+from subprocess import Popen, STDOUT, PIPE
+
 from trac.core import *
 from trac.config import ListOption, Option
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
@@ -8,16 +11,13 @@ from trac.ticket.model import Ticket
 
 from genshi.builder import tag
 from trac.resource import Resource
-from trac.versioncontrol import RepositoryManager
+from trac.versioncontrol import IRepositoryChangeListener, RepositoryManager
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import format_to_html
 from trac.versioncontrol.web_ui.changeset import ChangesetModule
 from tracopt.ticket.commit_updater import CommitTicketUpdater
 
 from model import CodeReview
-
-# default status choices - configurable but must always be exactly three
-STATUSES = ['REJECTED','PENDING','PASSED']
 
 
 class CodeReviewerModule(Component):
@@ -26,10 +26,10 @@ class CodeReviewerModule(Component):
     implements(IRequestHandler, ITemplateProvider, IRequestFilter)
     
     # config options
-    status_choices = ListOption('codereviewer', 'status_choices',
-        default=STATUSES, doc="Review status choices.")
-    status_default = Option('codereviewer', 'status_default',
-        default='PENDING', doc="Default review status choice.")
+    statuses = ListOption('codereviewer', 'status_choices',
+        default=CodeReview.STATUSES, doc="Review status choices.")
+    post_commit = Option('codereviewer', 'post_commit',
+        default='', doc="Command to execute upon review submit.")
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -48,9 +48,10 @@ class CodeReviewerModule(Component):
         if self._valid_request(req):
             if req.method == 'POST':
                 repo,changeset = get_repo_changeset(req)
-                review = CodeReview(self.env, repo, changeset, req=req)
+                review = CodeReview(self.env, repo, changeset, req)
                 if review.save(reviewer=req.authname, **req.args):
                     tickets = self._add_ticket_comment(req, review)
+                    #self._execute_post_submit()
                     url = req.href(req.path_info,{'ticket':tickets})
                     req.send_header('Cache-Control', 'no-cache')
                     req.redirect(url+'#reviewbutton')
@@ -67,10 +68,10 @@ class CodeReviewerModule(Component):
     
     def process_request(self, req):
         repo,changeset = get_repo_changeset(req, check_referer=True)
-        review = CodeReview(self.env, repo, changeset, self.status_default, req)
+        review = CodeReview(self.env, repo, changeset, req)
         data = {'review': review,
                 'tickets': get_tickets(req),
-                'status_choices': self.status_choices,
+                'statuses': self.statuses,
                 'form_token': self._get_form_token(req)}
         req.send_header('Cache-Control', 'no-cache')
         return 'coderev.html', data, 'text/javascript' 
@@ -123,6 +124,17 @@ class CodeReviewerModule(Component):
                 t = Ticket(self.env, ticket)
                 t.save_changes(author=summary['reviewer'], comment=comment)
         return tickets
+    
+    def _execute_post_submit(self):
+        if not self.post_commit:
+            return
+        p = Popen(self.post_commit, shell=True, stderr=STDOUT, stdout=PIPE)
+        out = p.communicate()[0]
+        if p.returncode == 0:
+            self.log.info('post_commit command: %s' % self.post_commit)
+        else:
+            self.log.error('post_commit command error: %s\n%s' % \
+                           (self.post_commit,out))
 
 
 class CommitTicketReferenceMacro(WikiMacroBase):
@@ -134,11 +146,6 @@ class CommitTicketReferenceMacro(WikiMacroBase):
     tracopt.ticket.commit_updater.committicketreferencemacro = disabled
     """
     
-    status_choices = ListOption('codereviewer', 'status_choices',
-        default=STATUSES, doc="Review status choices.")
-    status_default = Option('codereviewer', 'status_default',
-        default='PENDING', doc="Default review status choice.")
-    
     def expand_macro(self, formatter, name, content, args={}):
         reponame = args.get('repository') or ''
         rev = args.get('revision')
@@ -148,11 +155,11 @@ class CommitTicketReferenceMacro(WikiMacroBase):
             message = changeset.message
             
             # add review status to commit message (
-            review = CodeReview(self.env, reponame, rev, self.status_default)
-            class_ = STATUSES[self.status_choices.index(review.status)]
+            review = CodeReview(self.env, reponame, rev)
+            status = review.encode(review.status)
             message += '\n\n{{{#!html \n'
             message += '<div class="codereviewstatus">'
-            message += '  <div class="system-message %s">' % class_.lower()
+            message += '  <div class="system-message %s">' % status.lower()
             message += '    <p>Code review status: '
             message += '      <span>%s</span>' % review.status
             message += '    </p>'
@@ -179,6 +186,47 @@ class CommitTicketReferenceMacro(WikiMacroBase):
             return tag.pre(message, class_='message')
 
 
+class ChangesetTicketMapper(Component):
+    """Maintains a mapping of changesets to tickets in a codereviewer_map
+    table.  Gets invoked for each changeset addition or modification."""
+    
+    implements(IRepositoryChangeListener)
+    
+    # IRepositoryChangeListener methods
+    
+    def changeset_added(self, repos, changeset):
+        self._map(repos.reponame, changeset.rev, changeset.message)
+    
+    def changeset_modified(self, repos, changeset, old_changeset):
+        self._map(repos.reponame, changeset.rev, changeset.message, update=True)
+    
+    def _map(self, reponame, rev, message, update=False):
+        # extract tickets from changeset message
+        ticket_re = CommitTicketUpdater.ticket_re
+        tickets = ticket_re.findall(message)
+        now = int(time.time() * CodeReview.EPOCH_MULTIPLIER)
+        
+        # insert into db
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        if update:
+            cursor.execute("""
+                DELETE FROM codereviewer_map
+                WHERE repo=%s and changeset=%s;
+                """, (reponame,rev))
+        for ticket in tickets:
+            try:
+                cursor.execute("""
+                    INSERT INTO codereviewer_map
+                           (repo,changeset,ticket,time)
+                    VALUES (%s,%s,%s,%s);
+                    """, (reponame,rev,ticket,now))
+            except Exception, e:
+                self.log.warning("Unable to insert changeset %s/%s " +\
+                    "and ticket %s into db: %s" % (rev,repo,ticket,str(e)))
+        db.commit()
+
+
 # common functions
 def get_repo_changeset(req, check_referer=False):
     """Returns the changeset and repo as a tuple."""
@@ -190,7 +238,6 @@ def get_repo_changeset(req, check_referer=False):
     return None,None
 
 def get_tickets(req):
-    """Returns the changeset and repo as a tuple."""
     ticket_re = re.compile(r"ticket=(?P<id>[0-9]+)")
     path = req.environ.get('HTTP_REFERER','')
     return ticket_re.findall(path)

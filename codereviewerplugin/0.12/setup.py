@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracCodeReviewer'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 setup(
     name=PACKAGE, version=VERSION,
@@ -14,7 +14,8 @@ setup(
     package_data = {'coderev':['templates/*.html',
                                'htdocs/*.css',
                                'htdocs/*.js',
-                               'upgrades/*.py']},
+                               'upgrades/*.py',
+                               'util/*','util/.*']},
     entry_points = {'trac.plugins':['coderev.api = coderev.api',
                                     'coderev.web_ui = coderev.web_ui',]}
 )

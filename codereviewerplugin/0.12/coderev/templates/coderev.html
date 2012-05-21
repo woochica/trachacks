@@ -3,12 +3,12 @@
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
 // convert python to JS objects for use outside of this template
-var get_status_choices = function(){
-    var status_choices = new Array();
-  <py:for each="choice in status_choices">
-    status_choices.push("${choice}");
+var get_statuses = function(){
+    var statuses = new Array();
+  <py:for each="status in statuses">
+    statuses.push("${status}");
   </py:for>
-    return status_choices;
+    return statuses;
 }
 
 var get_review = function(){
@@ -34,7 +34,7 @@ var get_review = function(){
 }
 
 var is_pending = function(){
-    return "${status_choices.index(review.status)}" == "1";
+    return "${statuses.index(review.status)}" == "1";
 }
 
 var get_tickets = function(){

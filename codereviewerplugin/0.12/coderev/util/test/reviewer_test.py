@@ -57,7 +57,7 @@ class TestReviewer(unittest.TestCase):
         
         # instatiate reviewer
         self.reviewer = Reviewer(
-            trac_db=os.path.join(testdata_dir,'trac.db'),
+            trac_env=os.path.join(testdata_dir,'trac_env'),
             repo_dir=os.path.join(testdata_dir,'myrepo'),
             target_ref="master",
             data_file=data_file)
