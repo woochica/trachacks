@@ -62,13 +62,13 @@ class Reviewer(object):
         review = None
         for review in CodeReview.get_reviews(self.env, ticket):
             # are any in pending?
-            if review.encode(status) == 'PENDING':
+            if review.encode(review.status) == 'PENDING':
                 print "\nticket #%s has a PENDING review" % ticket,
                 print "for changeset %s" % review.changeset
                 return False
             
         # has last review passed?
-        if review and review.encode(status) != "PASSED":
+        if review and review.encode(review.status) != "PASSED":
             print "\nticket #%s's last changeset %s = %s (not PASSED)" % \
                     (ticket,review.changeset,review.status)
             return False
