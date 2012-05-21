@@ -15,7 +15,7 @@ EPOCH_MULTIPLIER = 1000000.0
 
 def sync(db_path, repo_dir):
     db = sqlite3.connect(db_path)
-    reponame = os.path.basename(repo_dir.rstrip('/'))
+    reponame = os.path.basename(repo_dir.rstrip('/')).lower()
     
     # extract changesets to sync
     changeset_lines = get_changeset_lines(repo_dir)
@@ -35,11 +35,14 @@ def sync(db_path, repo_dir):
         when = long(when) * EPOCH_MULTIPLIER
         ticket_re = re.compile('#([0-9]+)')
         for ticket in ticket_re.findall(msg):
-            cursor.execute("""
-                INSERT INTO codereviewer_map
-                    (repo,changeset,ticket,time)
-                VALUES ('%s','%s','%s',%s);
-                """ % (reponame,rev,ticket,when))
+            try:
+                cursor.execute("""
+                    INSERT INTO codereviewer_map
+                        (repo,changeset,ticket,time)
+                    VALUES ('%s','%s','%s',%s);
+                    """ % (reponame,rev,ticket,when))
+            except sqlite3.IntegrityError:
+                print "\nduplicate %s, %s, #%s" % (reponame,rev,ticket)
     db.commit()
 
 def get_changeset_lines(repo_dir):

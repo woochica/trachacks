@@ -15,7 +15,7 @@ class Reviewer(object):
     def __init__(self, trac_env, repo_dir, target_ref, data_file):
         self.env = Environment(trac_env)
         self.repo_dir = repo_dir.rstrip('/')
-        self.reponame = os.path.basename(repo_dir)
+        self.reponame = os.path.basename(repo_dir).lower()
         self.target_ref = target_ref
         self.data_file = data_file
     
@@ -59,15 +59,16 @@ class Reviewer(object):
         Otherwise return False.
         """
         # analyze the review of each ticket's changesets
+        review = None
         for review in CodeReview.get_reviews(self.env, ticket):
             # are any in pending?
-            if review.status == 'PENDING':
-                print "\nticket #%s has PENDING reviews" % ticket,
+            if review.encode(status) == 'PENDING':
+                print "\nticket #%s has a PENDING review" % ticket,
                 print "for changeset %s" % review.changeset
                 return False
             
         # has last review passed?
-        if review.status != "PASSED":
+        if review and review.encode(status) != "PASSED":
             print "\nticket #%s's last changeset %s = %s (not PASSED)" % \
                     (ticket,review.changeset,review.status)
             return False
