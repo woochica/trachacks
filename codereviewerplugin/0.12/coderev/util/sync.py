@@ -30,6 +30,7 @@ def sync(db_path, repo_dir):
     
     # insert a row per ticket in commit message
     for changeset_line in changeset_lines:
+        print '.',
         rev,when,msg = changeset_line.split('|',2)
         when = long(when) * EPOCH_MULTIPLIER
         ticket_re = re.compile('#([0-9]+)')

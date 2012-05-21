@@ -4,10 +4,11 @@ var setup = function(){
     var statuses = get_statuses();
     
     // add a "warning" to the page
-    var class_ = is_pending() ? ' pending' : '';
-    var html = '<div class="system-message'+class_+'" id="message">'
+    var html = '<div class="codereviewstatus" id="message">'
+              +'<div class="system-message '+review.encoded_status.toLowerCase()+'" id="message">'
               +'Code review status is <strong>'+href(review.status)+'</strong>. '
               +'Update status and view/add a summary '+href("below")+'.'
+              +'</div>'
               +'</div>';
     jQuery('#ctxtnav').after(html);
     

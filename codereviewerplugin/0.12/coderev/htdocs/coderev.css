@@ -1,11 +1,14 @@
-/* changeset banner styling */
-#message.system-message {
+/* changeset banner styling and ticket macro styling */
+div.codereviewstatus > .failed, div.codereviewstatus > .passed {
     background: #F7F7F7;
     border: 1px solid #000;
 }
-#message.system-message.pending {
+div.codereviewstatus > .pending {
     background: #FFD;
+    border: 1px solid #000;
 }
+div.codereviewstatus span { font-weight: bold; }
+/
 
 /* code review styling */
 #review { line-height: 130%; margin-top: 1em; padding: .5em }
@@ -27,18 +30,3 @@
     padding: 0;
     width: 100%;
 }
-
-/* ticket macro styling */
-div.codereviewstatus > .rejected {
-    background: #F7F7F7;
-    border: 1px solid #000;
-}
-div.codereviewstatus > .pending {
-    background: #FFD;
-    border: 1px solid #000;
-}
-div.codereviewstatus > .passed {
-    background: #F7F7F7;
-    border: 1px solid #000;
-}
-div.codereviewstatus span { font-weight: bold; }

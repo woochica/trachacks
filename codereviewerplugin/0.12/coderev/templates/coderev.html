@@ -16,6 +16,7 @@ var get_review = function(){
     review.repo = "${review.repo}";
     review.changeset = "${review.changeset}";
     review.status = "${review.status}";
+    review.encoded_status = "${review.encode(review.status)}";
     review.reviewer = "${review.reviewer}";
     review.when = "${review.when}";
     review.summaries = new Array();
@@ -31,10 +32,6 @@ var get_review = function(){
     review.summaries.push(summary);
   </py:for>
   return review;
-}
-
-var is_pending = function(){
-    return "${statuses.index(review.status)}" == "1";
 }
 
 var get_tickets = function(){
