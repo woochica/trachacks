@@ -35,6 +35,7 @@ class CodeReview(object):
         self._when = None      # updated to when status changed last
         self._tickets = None   # updated from commit message on save
         self._summaries = None
+        self._changeset_when = None
     
     @property
     def status(self):
@@ -59,6 +60,12 @@ class CodeReview(object):
         if self._summaries is None:
             self._populate_summaries()
         return self._summaries
+    
+    @property
+    def changeset_when(self):
+        if self._changeset_when is None:
+            self._populate_tickets()
+        return self._changeset_when
     
     @property
     def tickets(self):
@@ -109,7 +116,7 @@ class CodeReview(object):
         reviews = []
         cursor = env.get_db_cnx().cursor()
         cursor.execute("""
-            SELECT repo,changeset
+            SELECT repo, changeset
             FROM codereviewer_map
             WHERE ticket='%s'
             ORDER BY time ASC;
@@ -143,8 +150,7 @@ class CodeReview(object):
             WHERE repo='%s' AND changeset='%s'
             ORDER BY time ASC;
             """ % (self.repo,self.changeset))
-        for row in cursor:
-            status,reviewer,summary,when = row
+        for status,reviewer,summary,when in cursor:
             pretty_when = time.strftime('%Y-%m-%d %H:%M',
                 time.localtime(long(when) / self.EPOCH_MULTIPLIER))
             pretty_when += ' (%s ago)' % pretty_timedelta(when)
@@ -164,11 +170,15 @@ class CodeReview(object):
         """Populate this object's tickets from the database."""
         cursor = self.db.cursor()
         cursor.execute("""
-            SELECT ticket
+            SELECT ticket, time
             FROM codereviewer_map
             WHERE repo='%s' AND changeset='%s';
             """ % (self.repo,self.changeset))
-        self._tickets = [row[0] for row in cursor]
+        self._tickets = []
+        self._changeset_when = 0
+        for ticket,when in cursor:
+            self._tickets.append(ticket)
+            self._changeset_when = when
     
     def _wiki_to_html(self, message):
         if not self.req:
