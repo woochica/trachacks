@@ -94,7 +94,7 @@ class TextBox(Component):
         if resource:
             traclinks = '%s' % (resource.id)
             if resource.version != None:
-                traclinks += '@%s' % resource.version
+                traclinks += (resource.realm == 'ticket' and '?version=%s' or '@%s') % resource.version
             if resource.parent and resource.parent.id:
                 traclinks += ':%s:%s' % (resource.parent.realm, resource.parent.id)
                 if resource.parent.version != None:
@@ -108,6 +108,7 @@ class TextBox(Component):
 """
  - wiki:WikiStart
  - ticket:1
+ - ticket:1?version=1    # NOTE: ticket:1@1 is not work
  - report:1 (SQL)
  - report:7 (Query)
  - query:owner=admin
