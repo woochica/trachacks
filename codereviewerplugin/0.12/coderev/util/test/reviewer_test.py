@@ -62,17 +62,17 @@ class TestReviewer(unittest.TestCase):
             target_ref="master",
             data_file=data_file)
     
-    def test_is_reviewed__changeset1(self):
+    def test_is_complete__changeset1(self):
         changeset1 = '8bebe6d50698dccb68586042e3e94de4aecba945'
-        self.assertTrue(self.reviewer.is_reviewed(changeset1))
+        self.assertTrue(self.reviewer.is_complete(changeset1))
 
-    def test_is_reviewed__changeset2(self):
+    def test_is_complete__changeset2(self):
         changeset2 = 'd57f050a265b303ef1748a26cecb71d9e9ab92b9'
-        self.assertTrue(self.reviewer.is_reviewed(changeset2))
+        self.assertTrue(self.reviewer.is_complete(changeset2))
 
-    def test_is_reviewed__changeset3(self):
+    def test_is_complete__changeset3(self):
         changeset3 = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
-        self.assertFalse(self.reviewer.is_reviewed(changeset3))
+        self.assertFalse(self.reviewer.is_complete(changeset3))
     
     def test_get_next_changeset__initial(self):
         # expect changeset 3 because ticket #2 is last fully reviewed ticket
@@ -101,6 +101,18 @@ class TestReviewer(unittest.TestCase):
         open(self.reviewer.data_file,'w').write(data)
         expected = self.reviewer.get_next_changeset() # changeset 4
         self.assertEqual(expected,'82555dc3c5960646e60df09fb33ab288f209a65b')
+    
+    def test_get_blocking_changeset__initial(self):
+        # expect changeset 3 because ticket #2 is last fully reviewed ticket
+        actual = self.reviewer.get_blocking_changeset() # changeset 3
+        expected = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
+        self.assertEqual(actual,expected)
+    
+    def test_get_vreview__initial(self):
+        # ensure this method doesn't go away
+        expected = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
+        review = self.reviewer.get_review(expected)
+        self.assertEqual(review.changeset,expected)
         
 
 if __name__ == '__main__':

@@ -28,8 +28,14 @@ class CodeReviewerModule(Component):
     # config options
     statuses = ListOption('codereviewer', 'status_choices',
         default=CodeReview.STATUSES, doc="Review status choices.")
-    post_commit = Option('codereviewer', 'post_commit',
-        default='', doc="Command to execute upon review submit.")
+    passed = ListOption('codereviewer', 'passed',
+        default=[], doc="Ticket field changes on a PASSED submit.")
+    failed = ListOption('codereviewer', 'failed',
+        default=[], doc="Ticket field changes on a FAILED submit.")
+    completeness = ListOption('codereviewer', 'completeness',
+        default=[], doc="Ticket field values that enable ticket completeness.")
+    command = Option('codereviewer', 'command',
+        default='', doc="Command to execute upon ticket completeness.")
     
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
@@ -50,8 +56,7 @@ class CodeReviewerModule(Component):
                 repo,changeset = get_repo_changeset(req)
                 review = CodeReview(self.env, repo, changeset, req)
                 if review.save(reviewer=req.authname, **req.args):
-                    tickets = self._add_ticket_comment(req, review)
-                    #self._execute_post_submit()
+                    tickets = self._update_tickets(req, review)
                     url = req.href(req.path_info,{'ticket':tickets})
                     req.send_header('Cache-Control', 'no-cache')
                     req.redirect(url+'#reviewbutton')
@@ -98,7 +103,12 @@ class CodeReviewerModule(Component):
                 return match.groupdict()['token']
         return ''
     
-    def _add_ticket_comment(self, req, review):
+    def _update_tickets(self, req, review):
+        """Updates the tickets referenced by the given review's changeset
+        with a comment of field changes.  Field changes and command execution
+        may occur if specified in trac.ini and the review's changeset is the
+        last one of the ticket."""
+        status = review.encode(review.status).lower()
         summary = review.summaries[-1]
         
         # build comment
@@ -109,32 +119,90 @@ class CodeReviewerModule(Component):
         summary['_ref'] = review.changeset
         if review.repo:
             summary['_ref'] += '/' + review.repo
-        comment += " for [%(_ref)s]:\n\n%(summary)s" % summary 
+        comment += " for [%(_ref)s]:\n\n%(summary)s" % summary
         
-        # find and comment in tickets
+        # find and update tickets
         # TODO: handle when there's no explicitly named repo
         repo = RepositoryManager(self.env).get_repository(review.repo)
         changeset = repo.get_changeset(review.changeset)
         ticket_re = CommitTicketUpdater.ticket_re
         tickets = ticket_re.findall(changeset.message)
         
-        # skip adding a ticket comment if there's no review summary
-        if summary['summary']:
-            for ticket in tickets:
-                t = Ticket(self.env, ticket)
-                t.save_changes(author=summary['reviewer'], comment=comment)
+        invoked = False
+        for ticket in tickets:
+            tkt = Ticket(self.env, ticket)
+            
+            # determine ticket changes
+            changes = {}
+            if self._is_complete(ticket, tkt, review, failed_ok=True):
+                changes = self._get_ticket_changes(tkt, status)
+            
+            # update ticket if there's a review summary or ticket changes
+            if summary['summary'] or changes:
+                for field,value in changes.items():
+                    tkt[field] = value
+                tkt.save_changes(author=summary['reviewer'], comment=comment)
+            
+            # check to invoke command
+            if not invoked and self._is_complete(ticket, tkt, review):
+                self._execute_command(status)
+                invoked = True
+        
         return tickets
     
-    def _execute_post_submit(self):
-        if not self.post_commit:
+    def _is_complete(self, ticket, tkt, review, failed_ok=False):
+        """Returns True if the ticket is complete (or only the last review
+        failed if ok_failed is True) and therefore actions (e.g., ticket
+        changes and executing commands) should be taken.
+        
+        A ticket is complete when its completeness criteria is met and
+        the review has PASSED and is the ticket's last review with no
+        other PENDING reviews.  Completeness criteria is defined in
+        trac.ini like this:
+        
+         completeness = phase=(codereview|verifying|releasing)
+        
+        The above means that the ticket's phase field must have a value
+        of either codereview, verifying, or releasing for the ticket to
+        be considered complete.  This helps prevent actions from being
+        taken if there's a code review of partial work before the ticket
+        is really ready to be fully tested and released.
+        """
+        # check review's completeness
+        reason = review.is_incomplete(ticket)
+        if failed_ok and reason and CodeReview.NOT_PASSED in reason:
+            return True
+        return not reason
+    
+    def _get_ticket_changes(self, tkt, status):
+        """Return a dict of field-value pairs of ticket fields to change
+        for the given ticket as defined in trac.ini.  As one workflow
+        opinion, the changes are processed in order:
+        
+         passed = phase=verifying,owner={captain}
+        
+        In the above example, if the review passed and the ticket's phase
+        already = verifying, then the owner change will not be included.
+        """
+        changes = {}
+        for group in getattr(self,status,[]):
+            field,value = group.split('=',1)
+            if value.startswith('{'):
+                value = tkt[value.strip('{}')]
+            if tkt[field] == value:
+                break # no more changes once ticket already has target value
+            changes[field] = value
+        return changes
+    
+    def _execute_command(self, status):
+        if not self.command:
             return
-        p = Popen(self.post_commit, shell=True, stderr=STDOUT, stdout=PIPE)
+        p = Popen(self.command, shell=True, stderr=STDOUT, stdout=PIPE)
         out = p.communicate()[0]
         if p.returncode == 0:
-            self.log.info('post_commit command: %s' % self.post_commit)
+            self.log.info('command: %s' % self.command)
         else:
-            self.log.error('post_commit command error: %s\n%s' % \
-                           (self.post_commit,out))
+            self.log.error('command error: %s\n%s' % (self.command,out))
 
 
 class CommitTicketReferenceMacro(WikiMacroBase):

@@ -6,6 +6,7 @@ from subprocess import Popen, STDOUT, PIPE
 
 from coderev.model import CodeReview
 from trac.env import Environment
+from trac.ticket.model import Ticket
 
 class Reviewer(object):
     """Returns the latest changeset in a given repo whose Trac tickets have
@@ -27,7 +28,7 @@ class Reviewer(object):
         for changeset in self._get_changesets():
             if self.verbose:
                 print '.',
-            if not self.is_reviewed(changeset):
+            if not self.is_complete(changeset):
                 return self.set_current_changeset(next, save)
             next = changeset
         return self.set_current_changeset(next, save)
@@ -36,7 +37,7 @@ class Reviewer(object):
         """Return the next blocking changeset."""
         # find last *not* reviewed
         for changeset in self._get_changesets():
-            if not self.is_reviewed(changeset):
+            if not self.is_complete(changeset):
                 return changeset
         return None
     
@@ -52,44 +53,20 @@ class Reviewer(object):
         return changesets
     
     def get_review(self, changeset):
-        """Return all tickets referenced directly by a changeset."""
         return CodeReview(self.env, self.reponame, changeset)
-        
-    def is_reviewed(self, changeset):
-        """Returns True if all of the given changeset's tickets are fully
-        reviewed.  Fully reviewed means that the ticket has no pending
-        reviews and the last review has passed."""
+    
+    def is_complete(self, changeset):
+        """Returns True if all of the given changeset's tickets are complete.
+        Complete means that the ticket has no pending reviews and the last
+        review has passed, -AND- the ticket's completeness criteria (if any)
+        is satisfied."""
         review = self.get_review(changeset)
         for ticket in review.tickets:
-            if not self._is_fully_reviewed(ticket):
-                return False
-        return True
-        
-    def _is_fully_reviewed(self, ticket):
-        """Returns True if:
-        
-         * none of the ticket's changesets are PENDING review, -AND-
-         * the last changeset is PASSED
-        
-        Otherwise return False.
-        """
-        # analyze the review of each ticket's changesets
-        review = None
-        for review in CodeReview.get_reviews(self.env, ticket):
-            # are any in pending?
-            if review.encode(review.status) == 'PENDING':
+            reason = review.is_incomplete(ticket)
+            if reason:
                 if self.verbose:
-                    print "\nticket #%s has a PENDING review" % ticket,
-                    print "for changeset %s" % review.changeset
+                    print '\n' + reason
                 return False
-            
-        # has last review passed?
-        if review and review.encode(review.status) != "PASSED":
-            if self.verbose:
-                print "\nticket #%s's last changeset %s = %s (not PASSED)" % \
-                        (ticket,review.changeset,review.status)
-            return False
-        
         return True
     
     def _execute(self, cmd):

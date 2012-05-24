@@ -56,7 +56,8 @@ var setup = function(){
            +'  <input type="hidden" name="__FORM_TOKEN" value="'+get_form_token()+'"/></dd>'
            +'</dl>'
            +'</form>';
-    jQuery('div.diff:last').after(html);
+    jQuery('#content').append(html);
+    jQuery('#codereviewform').after(jQuery('#help')); // move help after form
 }
 
 // utils

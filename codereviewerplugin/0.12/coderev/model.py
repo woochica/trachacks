@@ -1,8 +1,10 @@
+import re
 import time
 
 from trac.mimeview import Context
 from trac.util.datefmt import pretty_timedelta
 from trac.wiki.formatter import format_to_html
+from trac.ticket.model import Ticket
 
 
 class CodeReview(object):
@@ -11,6 +13,7 @@ class CodeReview(object):
     # default status choices - configurable but must always be exactly three
     STATUSES = ['FAILED','PENDING','PASSED']
     DEFAULT_STATUS = STATUSES[1]
+    NOT_PASSED = "(not %s)" % STATUSES[2]
     EPOCH_MULTIPLIER = 1000000.0
     
     # db schema
@@ -125,6 +128,42 @@ class CodeReview(object):
             review = CodeReview(env, repo, changeset, req)
             reviews.append(review)
         return reviews
+    
+    def is_incomplete(self, ticket):
+        """Returns False if the ticket is complete - meaning:
+        
+         * the ticket satisfies its completeness criteria
+         * no reviews are PENDING for this ticket
+         * this ticket's last review PASSED
+        
+        If the ticket is incomplete, then a string is returned that explains
+        the reason.
+        """
+        # check completeness criteria
+        tkt = Ticket(self.env, ticket)
+        completeness = self.env.config.get('codereviewer','completeness','')
+        if completeness:
+            for criteria in completeness.split(','):
+                field,rule = criteria.split('=',1)
+                value = tkt[field]
+                rule_re = re.compile(rule)
+                if not rule_re.search(value):
+                    return "Ticket field %s = %s which violates rule %s" %\
+                        (field,value,rule)
+        
+        # check review status
+        reviews = CodeReview.get_reviews(self.env, ticket)
+        if not reviews:
+            return "Ticket #%s has no reviews." % ticket
+        for review in reviews:
+            if review.encode(review.status) == 'PENDING':
+                return "Ticket #%s has a %s review for changeset %s" % \
+                       (ticket,review.status,review.changeset)
+        if review.encode(review.status) != 'PASSED':
+            return "Ticket #%s's last changeset %s = %s %s" % \
+                   (ticket,review.changeset,review.status,self.NOT_PASSED)
+                   
+        return False
     
     def _populate(self):
         """Populate this object from the database."""
