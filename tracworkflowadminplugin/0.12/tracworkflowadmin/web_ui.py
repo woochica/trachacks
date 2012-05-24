@@ -205,7 +205,7 @@ class TracWorkflowAdminModule(Component):
         return (action_elements, statuses)
 
     def _conf_to_str(self, conf):
-        tmp = ConfigParser.SafeConfigParser()
+        tmp = ConfigParser.ConfigParser()
         tmp.add_section('ticket-workflow')
         for name, value in conf.options('ticket-workflow'):
             tmp.set('ticket-workflow', name.encode('utf-8'), value.encode('utf-8'))
