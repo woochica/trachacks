@@ -102,17 +102,22 @@ class TestReviewer(unittest.TestCase):
         expected = self.reviewer.get_next_changeset() # changeset 4
         self.assertEqual(expected,'82555dc3c5960646e60df09fb33ab288f209a65b')
     
+    def test_get_review__initial(self):
+        # ensure this method doesn't go away
+        expected = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
+        review = self.reviewer.get_review(expected)
+        self.assertEqual(review.changeset,expected)
+    
     def test_get_blocking_changeset__initial(self):
         # expect changeset 3 because ticket #2 is last fully reviewed ticket
         actual = self.reviewer.get_blocking_changeset() # changeset 3
         expected = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
         self.assertEqual(actual,expected)
     
-    def test_get_vreview__initial(self):
+    def test_get_blocked_tickets__initial(self):
         # ensure this method doesn't go away
-        expected = '71cd80944c7c8cdeff9f394b493a372b2b70ebb1'
-        review = self.reviewer.get_review(expected)
-        self.assertEqual(review.changeset,expected)
+        actual = self.reviewer.get_blocked_tickets()
+        self.assertEqual([t.id for t in actual],[2,3])
         
 
 if __name__ == '__main__':

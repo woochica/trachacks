@@ -41,6 +41,26 @@ class Reviewer(object):
                 return changeset
         return None
     
+    def get_blocked_tickets(self):
+        """Return all tickets of blocking changesets in order of them
+        getting unblocked."""
+        tickets = []
+        visited = set([])
+        for changeset in self._get_changesets():
+            if self.is_complete(changeset):
+                continue
+            
+            review = self.get_review(changeset)
+            for ticket in review.tickets:
+                if ticket not in visited:
+                    visited.add(ticket)
+                    # get last review/changeset of the ticket
+                    last = CodeReview.get_reviews(self.env, ticket)[-1]
+                    tkt = Ticket(self.env, ticket)
+                    tkt.last_changeset_when = last.changeset_when
+                    tickets.append( tkt )
+        return sorted(tickets, key=lambda t: t.last_changeset_when)
+    
     def _get_changesets(self):
         """Extract changesets in order from current to target ref."""
         current_ref = self.get_current_changeset()
@@ -51,6 +71,9 @@ class Reviewer(object):
             print "\n%d changesets from current %s to target %s" % \
                     (len(changesets),current_ref,self.target_ref)
         return changesets
+    
+    def get_reviews(self, ticket):
+        return CodeReview.get_reviews(self.env, ticket)
     
     def get_review(self, changeset):
         return CodeReview(self.env, self.reponame, changeset)
