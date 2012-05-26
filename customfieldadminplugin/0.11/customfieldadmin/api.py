@@ -56,8 +56,12 @@ class CustomFields(Component):
     
     def __init__(self):
         # bind the 'customfieldadmin' catalog to the specified locale directory
-        locale_dir = resource_filename(__name__, 'locale')
-        add_domain(self.env.path, locale_dir)
+        try:
+            locale_dir = resource_filename(__name__, 'locale')
+            add_domain(self.env.path, locale_dir)
+        except KeyError:
+            # No 'locale', hence no compiled message catalogs. Ignore.
+            pass
         # TODO: Remove systeminfo compat code when only supporting Trac>=0.12
         try:
             from trac.loader import get_plugin_info
