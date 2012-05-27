@@ -1,44 +1,191 @@
-#tracdragdrop_indicator {
-    position: fixed;
-    top: 0px;
-    right: 0px;
-    font-size: 11px;
-    line-height: 1.0;
-    padding: 3px 6px;
-    background-color: #cec;
-    opacity: 0.5;
+.tracdragdrop-progress {
+ display: inline-block;
+ width: 50px;
+ height: 6px;
+ border: 1px solid #777;
+ -moz-border-radius: 2px;
+ -webkit-border-radius: 2px;
+ border-radius: 2px;
+ font-size: 5px;
+ line-height: 1.0;
+ background: #eee none;
+ cursor: pointer;
+ vertical-align: middle;
 }
-#tracdragdrop_indicator.active {
-    background-color: #d77;
-    opacity: 1.0;
+.tracdragdrop-progress > div {
+ background: #69b none;
+ width: 0;
+ height: 100%;
+ -moz-transition: width 0.2s ease 0s;
+ -webkit-transition: width 0.2s ease 0s;
+ -o-transition: width 0.2s ease 0s;
+ -ms-transition: width 0.2s ease 0s;
+ transition: width 0.2s ease 0s;
 }
-#tracdragdrop_notice {
-    position: fixed;
-    top: 0px;
-    left: 37.5%;
-    width: 25%;
-    border-width: 1px;
-    border-color: #666;
-    border-style: none solid solid solid;
-    background-color: #fff;
-    padding: 4px 6px 12px;
-    font-size: 11px;
+.tracdragdrop-cancel {
+ font-weight: bold;
+ vertical-align: middle;
 }
-#tracdragdrop_notice .message {
-    text-align: center;
+.tracdragdrop-cancel, dl.tracdragdrop-queue > dt, ul.tracdragdrop-queue > li {
+ cursor: pointer;
 }
-#tracdragdrop_notice .progress {
-    border: 1px solid #ccc;
-    height: 1.0em;
-    line-height: 1.0;
+.tracdragdrop-loading {
+ margin: 0 0 0 2px;
+ padding: 0 0 0 18px;
+ background-image: url(loading.gif);
+ background-position: 1px center;
+ background-repeat: no-repeat;
 }
-#tracdragdrop_notice .progress span {
-    display: inline-block;
-    background-color: #cec;
-    height: 1.0em;
+.tracdragdrop-paste {
+ display: inline-block;
+ overflow: hidden;
+ padding: 2px 8px;
+ vertical-align: middle;
+ border: 1px solid #777;
+ -moz-border-radius: 2px;
+ -webkit-border-radius: 2px;
+ border-radius: 2px;
+ background: #fff none;
+ color: #333;
+ font-weight: bold;
+}
+.tracdragdrop-paste:hover {
+ border-color: #333;
+}
+.tracdragdrop-paste * {
+ display: none;
+}
+div#content > div#attachments dl.attachments dt,
+div#content > div#attachments ul li {
+ position: relative;
+}
+.tracdragdrop-dropeffect {
+ position: fixed;
+ z-index: 9997;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+}
+.tracdragdrop-dropeffect div {
+ position: absolute;
+ top: 0;
+ left: 0;
+ width: 100%;
+ height: 100%;
+}
+.tracdragdrop-dropeffect div:nth-child(1) {
+ z-index: 9998;
+ background: #f8f8f8 none;
+ opacity: 0.5;
+}
+.tracdragdrop-dropeffect div:nth-child(2) {
+ pointer-events: none;
+ z-index: 9999;
+ width: 70%;
+ margin: 15% 15% 0;
+ padding: 0;
+ height: auto;
+ text-align: center;
+}
+.tracdragdrop-dropeffect div:nth-child(2) span {
+ padding: 0.6em 1.8em;
+ border: 4px solid #444;
+ -moz-border-radius: 6px;
+ -webkit-border-radius: 6px;
+ border-radius: 6px;
+ -moz-box-shadow: 0 0 12px #777;
+ -webkit-box-shadow: 0 0 12px #777;
+ box-shadow: 0 0 12px #777;
+ background: #fff none;
+ color: #222;
+ font-size: 160%;
+ font-weight: bold;
+}
+body > .tracdragdrop-dropdown {
+ display: none;
+}
+.tracdragdrop-dropdown {
+ display: block;
+ position: absolute;
+ top: -1px;
+ right: 100%;
+}
+.tracdragdrop-icon {
+ font-size: 100%;
+ width: 1.2em;
+ height: 1.2em;
+ line-height: 1.2;
+ z-index: 99;
+ border: 1px solid #999;
+ -moz-border-radius: 2px;
+ -webkit-border-radius: 2px;
+ border-radius: 2px;
+ -moz-box-shadow: 0 1px 2px #aaa;
+ -webkit-box-shadow: 0 1px 2px #aaa;
+ box-shadow: 0 1px 2px #aaa;
+ text-align: center;
+ background: #fff none;
+ color: #666;
+ font-weight: bold;
+ cursor: pointer;
+ vertical-align: middle;
+ -moz-user-select: none;
+ -webkit-user-select: none;
+ -ms-user-select: none;
+ user-select: none;
+}
+:hover > .tracdragdrop-icon {
+ color: #000;
+}
+.tracdragdrop-menu {
+ position: absolute;
+ z-index: 98;
+ background: #fff none;
+ border: 1px solid #999;
+ -moz-border-radius: 2px;
+ -webkit-border-radius: 2px;
+ border-radius: 2px;
+ -moz-box-shadow: 0 3px 6px #aaa;
+ -webkit-box-shadow: 0 3px 6px #aaa;
+ box-shadow: 0 3px 6px #aaa;
+ line-height: 1.5;
+ text-align: justify;
+ top: 112%;
+ left: 0;
+ color: #000;
+ white-space: nowrap;
+}
+.tracdragdrop-menu table {
+ font-size: 100%;
+ border-style: none;
+ border-collapse: collapse;
+ cursor: default;
+}
+.tracdragdrop-menu tr {
+ height: 2.0em;
+ line-height: 2.0;
+ padding: 0 6px;
+ margin: 0;
+ vertical-align: middle;
+}
+.tracdragdrop-menu td {
+ padding: 0 6px;
+ white-space: nowrap;
+}
+.tracdragdrop-menu td.tracdragdrop-traclink,
+.tracdragdrop-menu td.tracdragdrop-macro {
+ padding: 0;
+}
+.tracdragdrop-menuitem {
+ cursor: pointer;
+}
+.tracdragdrop-menuitem:hover {
+ background-color: #247;
+ color: #fff;
 }
 @media print {
-    #tracdragdrop_indicator, #tracdragdrop_notice {
-        display: none;
-    }
+ .tracdragdrop-dropdown, .tracdragdrop-queue, .tracdragdrop-dropeffect {
+   display: none;
+ }
 }

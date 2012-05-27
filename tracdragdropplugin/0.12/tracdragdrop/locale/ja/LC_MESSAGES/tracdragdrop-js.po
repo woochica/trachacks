@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracDragDrop 0.12.0.3\n"
 "Report-Msgid-Bugs-To: jun66j5@gmail.com\n"
-"POT-Creation-Date: 2010-06-14 08:21+0900\n"
+"POT-Creation-Date: 2012-05-27 20:40+0900\n"
 "PO-Revision-Date: 2010-06-14 08:22+0900\n"
 "Last-Translator: Jun Omae <jun66j5@gmail.com>\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -16,28 +16,73 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.5\n"
+"Generated-By: Babel 0.9.6\n"
 
-#: tracdragdrop/htdocs/tracdragdrop.js:78
-msgid "Enabled drag-and-drop attachments"
-msgstr "ドラッグアンドドロップ添付が有効です"
+#: tracdragdrop/htdocs/tracdragdrop.js:121
+msgid "Paste an image to attach"
+msgstr "添付する画像をペースト"
 
-#: tracdragdrop/htdocs/tracdragdrop.js:135
-msgid "Are you sure you want to attach files?"
-msgstr "ファイルを添付しますか？"
+#: tracdragdrop/htdocs/tracdragdrop.js:210
+#: tracdragdrop/htdocs/tracdragdrop.js:240
+#, python-format
+msgid "Cannot load an image from '%(src)s'."
+msgstr "'%(src)s' から画像を読み込むことができません。"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:277
+#, python-format
+msgid "Exceeded maximum allowed file size (%(size)s bytes)"
+msgstr "最大ファイルサイズを超えています (%(size)sバイト)"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:281
+msgid "Can't upload empty file"
+msgstr "空のファイルはアップロードできません"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:306
+msgid "Canceled"
+msgstr "キャンセルしました"
 
 #: tracdragdrop/htdocs/tracdragdrop.js:326
-#, python-format
-msgid "%(name)s is not found."
-msgstr "%(name)s が見つかりません。"
+msgid "Uploading..."
+msgstr "アップロード中…"
 
-#: tracdragdrop/htdocs/tracdragdrop.js:330
-#, python-format
-msgid "%(name)s could not be accessed for security reasons."
-msgstr "セキュリティの理由で %(name)s にアクセス出来ませんでした。"
+#: tracdragdrop/htdocs/tracdragdrop.js:359
+msgid "Timed out"
+msgstr "タイムアウトしました"
 
-#: tracdragdrop/htdocs/tracdragdrop.js:334
+#: tracdragdrop/htdocs/tracdragdrop.js:362
+msgid "Aborted"
+msgstr "中断しました"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:448
+msgid "Add Attachment"
+msgstr "添付ファイルの追加"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:479
+msgid "You may use drag and drop here."
+msgstr "ドラッグ・アンド・ドロップが使えます。"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:576
+msgid "Delete attachment"
+msgstr "添付ファイルの削除"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:582
 #, python-format
-msgid "%(name)s could not be read."
-msgstr "%(name)s の読み込みが出来ませんでした。"
+msgid "Are you sure you want to delete '%(name)s'?"
+msgstr "'%(name)s' を削除しますか?"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:616
+msgid "TracLink"
+msgstr "TracLink"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:616
+msgid "Image macro"
+msgstr "Image マクロ"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:677
+msgid "Drop files to attach"
+msgstr "添付するファイルをドロップ"
+
+#: tracdragdrop/htdocs/tracdragdrop.js:723
+msgid "Enter the description of files to attach"
+msgstr "添付するファイルの詳細を入力してください"
 

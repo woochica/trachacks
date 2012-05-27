@@ -20,24 +20,23 @@ except ImportError:
 
 setup(
     name = 'TracDragDrop',
-    version = '0.12.0.6',
+    version = '0.12.0.7',
     description = 'Add drag-and-drop attachments feature to Trac',
-    license = 'BSD',
+    license = 'BSD', # the same as Trac
     url = 'http://trac-hacks.org/wiki/TracDragDropPlugin',
     author = 'Jun Omae',
     author_email = 'jun66j5@gmail.com',
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
         'tracdragdrop' : [
-            'htdocs/*.js', 'htdocs/*.css', 'templates/*.html',
+            'htdocs/*.js', 'htdocs/*.css', 'htdocs/*.gif', 'templates/*.html',
             'htdocs/messages/*.js',
+            'locale/*/LC_MESSAGES/tracdragdrop.mo',
         ],
     },
     entry_points = {
         'trac.plugins': [
-            'tracdragdrop = tracdragdrop.web_ui',
+            'tracdragdrop.web_ui = tracdragdrop.web_ui',
         ],
     },
-    **extra
-)
-
+    **extra)
