@@ -52,14 +52,14 @@ class Reviewer(object):
             
             review = self.get_review(changeset)
             for ticket in review.tickets:
-                if ticket not in visited:
-                    visited.add(ticket)
-                    # get last review/changeset of the ticket
-                    last = CodeReview.get_reviews(self.env, ticket)[-1]
+                if ticket.id not in visited:
+                    visited.add(ticket.id)
+                    # the ticket's oldest (first) changeset determines blockage
+                    first = CodeReview.get_reviews(self.env, ticket)[0]
                     tkt = Ticket(self.env, ticket)
-                    tkt.last_changeset_when = last.changeset_when
+                    tkt.first_changeset_when = first.changeset_when
                     tickets.append( tkt )
-        return sorted(tickets, key=lambda t: t.last_changeset_when)
+        return sorted(tickets, key=lambda t: t.first_changeset_when)
     
     def _get_changesets(self):
         """Extract changesets in order from current to target ref."""
