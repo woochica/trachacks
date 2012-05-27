@@ -60,7 +60,7 @@ jQuery(document).ready(function($) {
     var basic_options = {
         opacity: 0.9, transition: 'none', speed: 200, width: '92%',
         maxWidth: '92%', maxHeight: '92%', onComplete: onComplete};
-    var attachments = $('#attachments').get(0);
+    var attachments = $('div#content > div#attachments');
     var imageRegexp = /\.(?:png|jpe?g|gif|bmp)(?:[#?].*)?$/i;
 
     function rawlink() {
@@ -73,7 +73,7 @@ jQuery(document).ready(function($) {
         if (anchor.size() === 0) {
             return;
         }
-        if (attachments && $.contains(attachments, this)) {
+        if ($.contains(attachments.get(0), this)) {
             anchor.attr('rel', 'colorbox-attachments');
         }
         var href = anchor.attr('href');
@@ -165,7 +165,26 @@ jQuery(document).ready(function($) {
         image.colorbox(options);
     }
 
-    $('#content a.trac-rawlink').each(rawlink);
-    $('.timeline#content dt.attachment a').each(timeline);
-    $('#content .searchable a > img').each(imageMacro);
+    $('div#content a.trac-rawlink').each(rawlink);
+    $('div.timeline#content dt.attachment a').each(timeline);
+    $('div#content .searchable a > img').each(imageMacro);
+
+    attachments.delegate(
+        'div > dl.attachments > dt > a, ul > li > a',
+        'click',
+        function() {
+            var self = $(this);
+            if (self.hasClass('trac-rawlink') ||
+                self.attr('data-colorbox-title'))
+            {
+                return;
+            }
+            var anchor = self.prev('a.trac-rawlink');
+            if (anchor.size() === 0) {
+                anchor = self.next('a.trac-rawlink');
+            }
+            attachments.find('a.trac-rawlink')
+                       .filter(':not([data-colorbox-title])')
+                       .each(rawlink);
+        });
 });

@@ -7,7 +7,7 @@ extra = {}
 
 setup(
     name = 'OverlayView',
-    version = '0.12.0.2',
+    version = '0.12.0.3',
     description = 'Provides an overlay view to view attachments',
     license = 'BSD', # the same as Trac
     url = 'http://trac-hacks.org/wiki/OverlayViewPlugin',
