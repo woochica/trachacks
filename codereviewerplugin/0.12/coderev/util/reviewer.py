@@ -52,8 +52,8 @@ class Reviewer(object):
             
             review = self.get_review(changeset)
             for ticket in review.tickets:
-                if ticket.id not in visited:
-                    visited.add(ticket.id)
+                if ticket not in visited:
+                    visited.add(ticket)
                     # the ticket's oldest (first) changeset determines blockage
                     first = CodeReview.get_reviews(self.env, ticket)[0]
                     tkt = Ticket(self.env, ticket)
