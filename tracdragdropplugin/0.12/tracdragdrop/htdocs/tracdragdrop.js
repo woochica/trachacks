@@ -27,6 +27,7 @@ jQuery(document).ready(function($) {
                        !!(new XMLHttpRequest()).upload;
     var hasFileReader = !!window.FileReader;
     var hasFormData = !!window.FormData;
+    var hasDragAndDrop = xhrHasUpload && hasFileReader;
     var containers = {list: null, queue: null, dropdown: null};
     var queueItems = [];
     var queueCount = 0;
@@ -374,7 +375,7 @@ jQuery(document).ready(function($) {
             }
             finishUploadItem(key, msg);
         };
-        if (hasFormData) {
+        if (entry.description && hasFormData) {
             var data = new FormData();
             data.append('__FORM_TOKEN', form_token);
             data.append('attachment', entry.data, entry.filename);
@@ -476,9 +477,9 @@ jQuery(document).ready(function($) {
             form.before(queue);
         }
         containers.queue = queue;
-        if (xhrHasUpload) {
-            var message = _("You may use drag and drop here.");
-            fieldset.append($('<span />').append(textNode(' ' + message)));
+        if (hasDragAndDrop) {
+            fieldset.append($('<span />').append(
+                textNode(' ' + _("You may use drag and drop here."))));
             createPasteArea(fieldset);
         }
         if (xhrHasUpload || file.get(0).files && hasFileReader) {
@@ -699,8 +700,9 @@ jQuery(document).ready(function($) {
         var events = {};
         events.dragenter = function(event) {
             if (dragging !== true) {
+                var types = event.originalEvent.dataTransfer.types;
                 var found = false;
-                $.each(event.originalEvent.dataTransfer.types, function() {
+                $.each(types || [] , function() {
                     if (this == 'Files') {
                         found = true;
                         return false;
@@ -729,20 +731,7 @@ jQuery(document).ready(function($) {
             if (files.length === 0) {
                 return;
             }
-            var options = {};
-            if (hasFormData && (event.shiftKey || event.ctrlKey ||
-                                event.altKey || event.metaKey))
-            {
-                var description = prompt(
-                    _("Enter the description of files to attach"), '');
-                if (description === null) {
-                    dragging = false;
-                    effect.hide();
-                    return false;
-                }
-                options.description = $.trim(description);
-            }
-            $.each(files, function() { prepareUploadItem(this, options) });
+            $.each(files, function() { prepareUploadItem(this) });
             startUpload();
             dragging = false;
             effect.hide();
@@ -772,7 +761,7 @@ jQuery(document).ready(function($) {
         }
         if (tracdragdrop.can_create) {
             prepareAttachForm();
-            if (xhrHasUpload) {
+            if (hasDragAndDrop) {
                 prepareDragEvents();
             }
         }
