@@ -7,6 +7,7 @@ from subprocess import Popen, STDOUT, PIPE
 from coderev.model import CodeReview
 from trac.env import Environment
 from trac.ticket.model import Ticket
+from trac.resource import ResourceNotFound
 
 class Reviewer(object):
     """Returns the latest changeset in a given repo whose Trac tickets have
@@ -55,10 +56,13 @@ class Reviewer(object):
                 if ticket not in visited:
                     visited.add(ticket)
                     # the ticket's oldest (first) changeset determines blockage
-                    first = CodeReview.get_reviews(self.env, ticket)[0]
-                    tkt = Ticket(self.env, ticket)
-                    tkt.first_changeset_when = first.changeset_when
-                    tickets.append( tkt )
+                    first = self.get_reviews(ticket)[0]
+                    try:
+                        tkt = Ticket(self.env, ticket)
+                        tkt.first_changeset_when = first.changeset_when
+                        tickets.append( tkt )
+                    except ResourceNotFound:
+                        pass # e.g., incorrect ticket reference
         return sorted(tickets, key=lambda t: t.first_changeset_when)
     
     def _get_changesets(self):

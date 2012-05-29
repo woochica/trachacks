@@ -2,6 +2,7 @@ import re
 import time
 
 from trac.mimeview import Context
+from trac.resource import ResourceNotFound
 from trac.util.datefmt import pretty_timedelta
 from trac.wiki.formatter import format_to_html
 from trac.ticket.model import Ticket
@@ -140,16 +141,19 @@ class CodeReview(object):
         the reason.
         """
         # check completeness criteria
-        tkt = Ticket(self.env, ticket)
-        completeness = self.env.config.get('codereviewer','completeness','')
-        if completeness:
-            for criteria in completeness.split(','):
-                field,rule = criteria.split('=',1)
-                value = tkt[field]
-                rule_re = re.compile(rule)
-                if not rule_re.search(value):
-                    return "Ticket field %s = %s which violates rule %s" %\
-                        (field,value,rule)
+        try:
+            tkt = Ticket(self.env, ticket)
+            completeness = self.env.config.get('codereviewer','completeness','')
+            if completeness:
+                for criteria in completeness.split(','):
+                    field,rule = criteria.split('=',1)
+                    value = tkt[field]
+                    rule_re = re.compile(rule)
+                    if not rule_re.search(value):
+                        return "Ticket #%s field %s=%s which violates rule %s"%\
+                            (tkt.id,field,value,rule)
+        except ResourceNotFound:
+            pass # e.g., incorrect ticket reference
         
         # check review status
         reviews = CodeReview.get_reviews(self.env, ticket)
