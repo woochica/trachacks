@@ -6,13 +6,14 @@ import re
 import urlparse
 import os
 
+from genshi.template.plugin import MarkupTemplateEnginePlugin
 from trac.config import *
 from trac.core import *
-from trac.web.api import IRequestHandler, RequestDone
+from trac.env import open_environment
 from trac.perm import PermissionCache, PermissionSystem
-from genshi.template.plugin import MarkupTemplateEnginePlugin
+from trac.web.api import IRequestHandler, RequestDone
+from trac.web.main import dispatch_request
 
-from trac.web.main import dispatch_request, _open_environment
 __all__ = ["WSGIPluginModule", "WSGITrac"]
 
 class WSGIPluginModule(Component):

@@ -2,7 +2,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'WSGITrac'
-VERSION = '0.3'
+VERSION = '0.4'
 
 setup(
     name=PACKAGE, version=VERSION,
