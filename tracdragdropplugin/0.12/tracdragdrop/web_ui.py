@@ -79,42 +79,30 @@ class TracDragDropModule(Component):
             return template, data, content_type
 
         model = None
-        name = None
-        can_create = False
-
-        if template == 'wiki_edit.html':
-            model = data['page']
-        elif template == 'milestone_edit.html':
-            model = data['milestone']
-
-        if model and model.exists:
-            context = Context.from_request(req, model.resource)
-            attachments = AttachmentModule(self.env).attachment_data(context)
-            can_create = attachments.get('can_create')
-            data.setdefault('attachments', attachments)
-        else:
-            can_create = data.get('attachments', {}).get('can_create')
+        resource = None
+        attachments = None
 
         if template in ('wiki_view.html', 'wiki_edit.html'):
-            if 'page' in data:
-                realm = 'wiki'
-                name = data['page'].name
+            model = data.get('page')
         elif template == 'ticket.html':
-            if 'ticket' in data:
-                realm = 'ticket'
-                name = data['ticket'].id
+            model = data.get('ticket')
         elif template in ('milestone_view.html', 'milestone_edit.html'):
-            if 'milestone' in data:
-                realm = 'milestone'
-                name = data['milestone'].name
+            model = data.get('milestone')
         elif template == 'attachment.html':
-            if 'attachments' in data:
-                parent = data['attachments']['parent']
-                realm = parent.realm
-                name = parent.id
+            attachments = data.get('attachments')
+            if attachments:
+                resource = attachments['parent']
 
-        if not name:
+        if not resource and model and model.exists:
+            resource = model.resource
+        if not resource:
             return template, data, content_type
+        if not attachments:
+            attachments = data.get('attachments')
+        if not attachments and model and resource:
+            context = Context.from_request(req, resource)
+            attachments = AttachmentModule(self.env).attachment_data(context)
+            data['attachments'] = attachments
 
         if template in ('wiki_edit.html', 'milestone_edit.html'):
             self._add_overlayview(req)
@@ -126,8 +114,9 @@ class TracDragDropModule(Component):
         add_script(req, 'tracdragdrop/tracdragdrop.js')
         script_data = {
             'base_url': req.href().rstrip('/') + '/',
-            'new_url': req.href.tracdragdrop('new', realm, name),
-            'can_create': can_create,
+            'new_url': req.href('tracdragdrop', 'new', resource.realm,
+                                resource.id),
+            'can_create': attachments.get('can_create') or False,
             'max_size': AttachmentModule(self.env).max_size,
         }
         add_script_data(req, {'_tracdragdrop': script_data,
@@ -155,9 +144,6 @@ class TracDragDropModule(Component):
             req.args['action'] = match.group(1)
             req.args['realm'] = match.group(2)
             req.args['path'] = match.group(3)
-            if req.args['action'] == 'new' and \
-               req.get_header('Content-Type') == 'application/octet-stream':
-                req.args['attachment'] = PseudoAttachmentObject(req)
             return True
 
     # IRequestHandler#process_request
@@ -166,10 +152,11 @@ class TracDragDropModule(Component):
             ctype = req.get_header('Content-Type')
             ctype, options = cgi.parse_header(ctype)
             if ctype not in ('application/x-www-form-urlencoded',
-                             'multipart/form-data') \
-               and not self._is_xhr(req):
-                req.send(unicode(PermissionError()).encode('utf-8'),
-                         status=403)
+                             'multipart/form-data'):
+                if not self._is_xhr(req):
+                    req.send(unicode(PermissionError()).encode('utf-8'),
+                             status=403)
+                req.args['attachment'] = PseudoAttachmentObject(req)
 
         action = req.args['action']
         if action in ('new', 'delete'):
