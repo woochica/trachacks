@@ -3,12 +3,22 @@ jQuery(document).ready(function($) {
         return;
 
     function loadStyleSheet(href, type) {
-        var links = $('link[rel="stylesheet"]').filter(':not([disabled])');
-        links = $.grep(links, function(link) {
-            return link.getAttribute('href') === href;
+        var link;
+        var re = /(?:[?#].*)?$/;
+        var tmp = href.replace(re, '');
+        $('link[rel="stylesheet"]').each(function() {
+            var val = this.getAttribute('href');
+            val = (val || '').replace(re, '');
+            if (val === tmp) {
+                link = this;
+                return false;
+            }
         });
-        if (links.length === 0) {
+        if (!link) {
             $.loadStyleSheet(href, type);
+        }
+        else if (link.getAttribute('disabled')) {
+            link.removeAttribute('disabled');
         }
     }
 
@@ -61,7 +71,7 @@ jQuery(document).ready(function($) {
         opacity: 0.9, transition: 'none', speed: 200, width: '92%',
         maxWidth: '92%', maxHeight: '92%', onComplete: onComplete};
     var attachments = $('div#content > div#attachments');
-    var imageRegexp = /\.(?:png|jpe?g|gif|bmp)(?:[#?].*)?$/i;
+    var imageRegexp = /\.(?:gif|png|jpe?g|bmp|ico)(?:[#?].*)?$/i;
 
     function rawlink() {
         var self = $(this);
@@ -73,7 +83,7 @@ jQuery(document).ready(function($) {
         if (anchor.size() === 0) {
             return;
         }
-        if ($.contains(attachments.get(0), this)) {
+        if (attachments.size() !== 0 && $.contains(attachments.get(0), this)) {
             anchor.attr('rel', 'colorbox-attachments');
         }
         var href = anchor.attr('href');

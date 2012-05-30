@@ -13,6 +13,7 @@ setup(
     url = 'http://trac-hacks.org/wiki/OverlayViewPlugin',
     author = 'Jun Omae',
     author_email = 'jun66j5@gmail.com',
+    install_requires = ['Trac >= 0.12'],
     packages = find_packages(exclude=['*.tests*']),
     package_data = {
         'tracoverlayview': ['htdocs/*.*', 'templates/*.html'],
