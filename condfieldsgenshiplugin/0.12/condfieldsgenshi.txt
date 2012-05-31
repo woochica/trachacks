@@ -1,0 +1,108 @@
+@(#) May 31 2012, 17:51:12
+
+(C) Reinhard Wobst, r.wobst@gmx.de
+
+What is CondFieldsGenshi for?
+-----------------------------
+
+With the help of this Trac plugin you can hide or show fields when
+creating or viewing a ticket, depending on the ticket type. Only the
+presentation changes, not the contents of the ticket.
+
+CondFieldsGenshi is derived from the "Dynamic fields by ticket type" Plugin
+[1], but it is completely based on Genshi now instead of using
+Javascript. Moreover, you can select whether selected fields are hidden
+or shown by default.
+
+This plugin is "standalone"; the patch
+"blackmagic-conditionalfields.patch" in [1] did not match with newer
+releases of Trac 0.11.
+
+
+Example
+-------
+
+First, configure trac.ini as in this example:
+
+  [components]
+  condfieldsgenshi.* = enabled
+
+  ...
+
+  [condfieldsgenshi]
+  tweaks = field1, field2
+  default = disable
+  field1.type_cond = defect
+  field2.type_cond = task
+
+
+Effect:
+
+Now field1 will be shown only if the ticket type is "defect", field2
+only if the ticket type is "task".
+
+The entry "default = disable" means that the field listed under "tweaks"
+are NOT shown by default.
+The default value is "default = enable".
+
+To disable/enable a field independent of the ticket type, simply write a line
+like
+
+  field1.type_cond = None
+
+(supposed there is no "None" type :-).
+
+When you change the ticket type, you must type "submit" before you can
+see the effect of of CondFieldsGenshi (some times, also "preview" works).
+
+
+Bug fix done for "type" field
+-----------------------------
+
+When the ticket type is given as an URL parameter only:
+
+.../newticket?type=task
+
+and the ticket type field is disabled, this plugin works nevertheless
+(in contrast to the Dynamic fields by ticket type plugin, cf. [1]).
+
+The type field label is extended by "(Fixed)" in this case now.
+
+
+Extensions
+----------
+
+It should be easy to implement showing or hiding fields based on further
+parameters as wanted in
+
+http://groups.google.de/group/trac-users/browse_thread/thread/b86424d8a8d10fcb/9bc4abebc72736f6?lnk=gst&q=condfield#9bc4abebc72736f6
+
+
+Comparison with DynamicFieldsPlugin
+-----------------------------------
+
+The DynamicFieldsPlugin [2] has similar and more powerful
+features than CondFieldsGenshi but it can change the field contents: When the
+user changes the type and some fields vanish, the values in these fields
+are lost and will not appear again even if the former type is restored.
+A rule "(fieldname).clear_on_hide = false" avoids this but then the
+field is shown anyway.
+
+There are other problems reported about the DynamicFieldsPlugin:
+
+- Very slow performance for a larger number of custom fields [3] are
+  obviously caused by javascript in the DynamicFieldsPlugin.
+  CondFieldsGenshi is based on Genshi and thus does filtering on the server
+  side with much higher performance.
+
+- Problems when sorting the fields as reported in [4] are also due to
+  some bug in the javascript and should not happen for CondFieldsGenshi.
+
+
+References
+----------
+
+[1] https://trac-hacks.org/ticket/2486
+[2] http://trac-hacks.org/wiki/DynamicFieldsPlugin
+[3] http://trac-hacks.org/ticket/9606
+[4] https://groups.google.com/group/trac-users/browse_thread/thread/6613719b8f751fa3/0928beac9c0947d7?hl=de&lnk=gst&q=DynamicFields#0928beac9c0947d7
