@@ -86,7 +86,7 @@ class WSGITrac:
         for env_name in os.listdir(self.path):
             env_path = os.path.join(self.path, env_name)
             try:
-              env = _open_environment(env_path)
+              env = open_environment(env_path)
               env_perm = PermissionCache(PermissionSystem(env).get_user_permissions(environ.get("REMOTE_USER", "anonymous")))
                       
               if env_perm.has_permission('WIKI_VIEW'):
