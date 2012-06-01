@@ -49,7 +49,7 @@ class Reviewer(object):
             for review in self.get_reviews(ticket):
                 if review.changeset in changesets:
                     return review # changeset exists on path to target
-            raise ResourceNotFound("No remaining changeset found for ticket %s" % ticket)
+            raise ResourceNotFound("No remaining changesets found for ticket %s" % ticket)
         
         tickets = []
         visited = set([])
@@ -136,6 +136,7 @@ class Reviewer(object):
                     'git log -1 --pretty="format:%H"']
             changeset = self._execute(' && '.join(cmds))
             data = {'current': changeset}
+            self._set_data(data)
         return data
     
     def _set_data(self, data):
