@@ -151,6 +151,9 @@ jQuery(document).ready(function($) {
             this.blur();
         };
         events.change = events.keyup = revert;
+        events.keypress = function(event) {
+            return event.ctrlKey === true || event.metaKey === true;
+        };
         events.cut = function() { return false };
         events.paste = function(event) {
             var editable = $(this);
@@ -718,10 +721,14 @@ jQuery(document).ready(function($) {
         var events = {};
         events.dragenter = function(event) {
             if (dragging !== true) {
-                var types = event.originalEvent.dataTransfer.types;
-                var found = false;
-                $.each(types || [] , function() {
-                    if (this == 'Files') {
+                var transfer = event.originalEvent.dataTransfer;
+                var found;
+                $.each(transfer.types, function() {
+                    var type = '' + this;
+                    if (type === 'text/html' || type === 'text/plain') {
+                        return false;
+                    }
+                    if (type === 'Files') {
                         found = true;
                         return false;
                     }
