@@ -45,9 +45,16 @@ class Reviewer(object):
     def get_blocked_tickets(self):
         """Return all tickets of blocking changesets in order of them
         getting unblocked."""
+        def get_first_remaining_changeset(ticket, changesets):
+            for review in self.get_reviews(ticket):
+                if review.changeset in changesets:
+                    return review # changeset exists on path to target
+            raise ResourceNotFound("No remaining changeset found for ticket %s" % ticket)
+        
         tickets = []
         visited = set([])
-        for changeset in self._get_changesets():
+        changesets = self._get_changesets()
+        for changeset in changesets:
             if self.is_complete(changeset):
                 continue
             
@@ -55,9 +62,10 @@ class Reviewer(object):
             for ticket in review.tickets:
                 if ticket not in visited:
                     visited.add(ticket)
-                    # the ticket's oldest (first) changeset determines blockage
-                    first = self.get_reviews(ticket)[0]
+                    # the ticket's oldest *remaining* changeset determines blockage
+                    # i.e., if current is already past a changeset, do not consider it
                     try:
+                        first = get_first_remaining_changeset(ticket, changesets)
                         tkt = Ticket(self.env, ticket)
                         tkt.first_changeset_when = first.changeset_when
                         tickets.append( tkt )

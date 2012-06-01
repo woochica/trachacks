@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import time
 import unittest
 
 dir = os.path.abspath(os.path.join(os.path.dirname(__file__),'..'))
@@ -115,9 +116,17 @@ class TestReviewer(unittest.TestCase):
         self.assertEqual(actual,expected)
     
     def test_get_blocked_tickets__initial(self):
-        # ensure this method doesn't go away
         actual = self.reviewer.get_blocked_tickets()
         self.assertEqual([t.id for t in actual],[2,3])
+    
+    def test_get_blocked_tickets__at_second_changeset(self):
+        data = '{"current": "71cd80944c7c8cdeff9f394b493a372b2b70ebb1"}'
+        open(self.reviewer.data_file,'w').write(data)
+        actual = self.reviewer.get_blocked_tickets()
+        self.assertEqual(len(actual),1)
+        self.assertEqual(actual[0].id,3)
+        expected = time.mktime(time.strptime("Wed May 16 11:13:48 2012","%a %B %d %H:%M:%S %Y"))
+        self.assertEqual(actual[0].first_changeset_when,long(expected*1000000)) # changeset 4
         
 
 if __name__ == '__main__':
