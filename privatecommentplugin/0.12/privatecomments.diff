@@ -1,0 +1,182 @@
+Index: privatecomments.py
+===================================================================
+--- privatecomments.py	(revision 11607)
++++ privatecomments.py	(working copy)
+@@ -17,19 +17,19 @@
+ 		'privatecomments', 
+ 		'permission',
+ 		default='PRIVATE_COMMENT_PERMISSION',
+-        doc='The name of the permission which allows to see private comments')
++		doc='The name of the permission which allows to see private comments')
+ 	
+ 	css_class_checkbox = Option(
+ 		'privatecomments',
+ 		'css_class_checkbox', 
+ 		default='private_comment_checkbox',
+-        doc='The name of the css class for the label of the checkbox')
++		doc='The name of the css class for the label of the checkbox')
+ 	
+ 	css_class_private_comment_marker = Option(
+ 		'privatecomments',
+ 		'css_class_private_comment_marker', 
+ 		default='private_comment_marker',
+-        doc='The name of the css class for the \"this is a private comment\" -label')
++		doc='The name of the css class for the \"this is a private comment\" -label')
+ 	
+ 	# IPermissionRequestor methods
+ 	def get_permission_actions(self):
+@@ -121,7 +121,7 @@
+ 	
+ 	# ITemplateStreamFilter methods
+ 	def filter_stream(self, req, method, filename, stream, data):
+-		if filename != 'ticket.html':
++		if filename not in ['ticket.html', 'ticket.rss']:
+ 			return stream
+ 		
+ 		ticket_id = self._get_ticketid_from_url(req.path_info)
+@@ -135,63 +135,74 @@
+ 		perms = PermissionSystem(self.env)
+ 		hasprivatepermission = self.private_comment_permission in perms.get_user_permissions(user)
+ 		
+-		buffer = StreamBuffer()
+-		
+-		def check_comments():
+-			delimiter = '<div xmlns="http://www.w3.org/1999/xhtml" class="change" id="trac-change-'
+-		
+-			commentstream = str(buffer)
+-			# split the commentstream to get single comments
+-			comments_raw = commentstream.split(delimiter)
+-			commentstream = ''
++		# Remove private comments from Ticket Page
++		if filename == 'ticket.html':
++			buffer = StreamBuffer()
+ 			
+-			for comment in comments_raw:
+-				if comment == None or len(comment) < 1:
+-					continue
++			def check_comments():
++				delimiter = '<div xmlns="http://www.w3.org/1999/xhtml" class="change" id="trac-change-'
++			
++				commentstream = str(buffer)
++				# split the commentstream to get single comments
++				comments_raw = commentstream.split(delimiter)
++				commentstream = ''
++				
++				for comment in comments_raw:
++					if comment == None or len(comment) < 1:
++						continue
++						
++					# determine comment id
++					find = comment.find('">')
++					if find == -1:
++						continue
++					comment_id = comment[:find]
+ 					
+-				# determine comment id
+-				find = comment.find('">')
+-				if find == -1:
+-					continue
+-				comment_id = comment[:find]
++					# concat the delimiter and the comment again
++					comment_code = delimiter+comment
++					
++					# if the user has the permission to see the comment 
++					# the commentcode will be appended to the commentstream
++					comment_private = self._is_comment_private(ticket_id,comment_id)
++					
++					if comment_private:
++						comment_code = comment_code.replace(
++							'<span class="threading">',
++							'<span class="threading"> <span class="%s">this comment is private</span>' % \
++								(str(self.css_class_private_comment_marker))
++						)
++
++					if hasprivatepermission or not comment_private:
++						commentstream = commentstream + comment_code	
+ 				
+-				# concat the delimiter and the comment again
+-				comment_code = delimiter+comment
++				return HTML(commentstream)
+ 				
+-				# if the user has the permission to see the comment 
+-				# the commentcode will be appended to the commentstream
+-				comment_private = self._is_comment_private(ticket_id,comment_id)
+-				
+-				if comment_private:
+-					comment_code = comment_code.replace(
+-						'<span class="threading">',
+-						'<span class="threading"> <span class="%s">this comment is private</span>' % \
+-							(str(self.css_class_private_comment_marker))
+-					)
+-
+-				if hasprivatepermission or not comment_private:
+-					commentstream = commentstream + comment_code	
++			def checkbox_for_privatecomments():
++				return tag(
++							tag.span('Private Comment ', class_=self.css_class_checkbox),
++							tag.input(type='checkbox', name='private_comment')
++						)
+ 			
+-			return HTML(commentstream)
++			# filter all comments
++			stream |= Transformer('//div[@class="change" and @id]') \
++			.copy(buffer) \
++			.replace(check_comments)
+ 			
+-		def checkbox_for_privatecomments():
+-			return tag(
+-						tag.span('Private Comment ', class_=self.css_class_checkbox),
+-						tag.input(type='checkbox', name='private_comment')
+-					)
++			# if the user has the private comment permission the checkboxes to change the private value will be added
++			if hasprivatepermission:
++				stream |= Transformer('//textarea[@name="edited_comment" and @class="wikitext trac-resizable" and @rows and @cols]') \
++				.after(checkbox_for_privatecomments).end() \
++				.select('//fieldset[@class="iefix"]') \
++				.before(checkbox_for_privatecomments)
+ 		
+-		# filter all comments
+-		stream |= Transformer('//div[@class="change" and @id]') \
+-		.copy(buffer) \
+-		.replace(check_comments)
++		# Remove private comments from ticket RSS feed
++		if filename == 'ticket.rss':
++			comments = self._get_all_private_comments(ticket_id)
++			
++			self.log.debug("Private Comments for Ticket %d: %s" % (ticket_id, comments))
++			
++			for comment_id in comments:
++				stream |= Transformer('//item[%d]' % comment_id).remove()
+ 		
+-		# if the user has the private comment permission the checkboxes to change the private value will be added
+-		if hasprivatepermission:
+-			stream |= Transformer('//textarea[@name="edited_comment" and @class="wikitext trac-resizable" and @rows and @cols]') \
+-			.after(checkbox_for_privatecomments).end() \
+-			.select('//fieldset[@class="iefix"]') \
+-			.before(checkbox_for_privatecomments)
+-		
+ 		return stream
+ 	
+ 	# internal methods
+@@ -222,3 +233,21 @@
+ 		cursor.close ()
+ 		
+ 		return private == 1
++		
++	def _get_all_private_comments(self, ticket_id):
++		db = self.env.get_db_cnx()
++		cursor = db.cursor()
++		
++		sql = 'SELECT comment_id FROM private_comment WHERE ticket_id=%d AND private=1' % \
++		(int(ticket_id))
++		self.log.debug(sql)
++		
++		cursor.execute(sql)
++		
++		comments = []
++		for comment_id in cursor:
++			comments += [comment_id]
++			
++		cursor.close ()
++		
++		return comments
