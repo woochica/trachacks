@@ -131,22 +131,29 @@ jQuery(document).ready(function($) {
             range.selectNodeContents(this);
             selection.addRange(range);
         }
-        var editable = $('<div />')
-            .addClass('tracdragdrop-paste')
-            .attr('contenteditable', 'true')
-            .append(textNode(message))
-            .bind({mouseenter: function() { this.focus() },
-                   focus: revert, change: revert, keyup: revert,
-                   cut: function() { return false }});
-        editable.bind('paste', function(event) {
-            function pad0(val, size) {
-                var pad;
-                switch (size) {
-                    case 2: pad = '00'; break;
-                    case 4: pad = '0000'; break;
-                }
-                return (pad + val).slice(-size);
+        function pad0(val, size) {
+            var pad;
+            switch (size) {
+                case 2: pad = '00'; break;
+                case 4: pad = '0000'; break;
             }
+            return (pad + val).slice(-size);
+        }
+        var events = {};
+        events.mouseenter = function() { $(this).focus() };
+        events.focus = function() {
+            this.setAttribute('contenteditable', 'true');
+            revert.apply(this, arguments);
+        };
+        events.blur = function() {
+            revert.apply(this, arguments);
+            this.removeAttribute('contenteditable');
+            this.blur();
+        };
+        events.change = events.keyup = revert;
+        events.cut = function() { return false };
+        events.paste = function(event) {
+            var editable = $(this);
             var now = new Date();
             now = {year: now.getFullYear(), month: now.getMonth() + 1,
                    date: now.getDate(), hours: now.getHours(),
@@ -169,6 +176,7 @@ jQuery(document).ready(function($) {
                 });
                 switch (images.length) {
                 case 0:
+                    alert(_("No available image on your clipboard"));
                     return false;
                 case 1:
                     prepareUploadItem(images[0], {filename: prefix + '.png'});
@@ -188,8 +196,9 @@ jQuery(document).ready(function($) {
                 var element = editable.children().filter(':not(br)');
                 editable.each(revert);
                 if (element.size() !== 1 ||
-                    element.attr('tagName').toLowerCase() !== 'img')
+                    element.get(0).nodeName.toLowerCase() !== 'img')
                 {
+                    alert(_("No available image on your clipboard"));
                     return;
                 }
                 var filename = prefix + '.png';
@@ -203,17 +212,26 @@ jQuery(document).ready(function($) {
                 var events = {};
                 events.load = function() {
                     element.unbind();
+                    element = image = undefined;
                     prepareUploadImageUsingCanvas(this, filename);
                 };
                 events.error = function(e) {
                     element.unbind();
+                    element = image = undefined;
                     alert(babel.format(
                         _("Cannot load an image from '%(src)s'."),
                         {src: this.src}));
                 };
                 element.bind(events);
             }, 1);
-        });
+        };
+        var editable = $('<div />')
+            .addClass('tracdragdrop-paste beautytips')
+            .attr('title',
+                  _("You can attach an image from your clipboard directly " +
+                    "with CTRL-V or \"Paste\" on the context menu."))
+            .append(textNode(message))
+            .bind(events);
         form.append($('<div />').append(editable));
         editable.css({width: editable.width() + 'px',
                       height: editable.height() + 'px'});
@@ -478,8 +496,8 @@ jQuery(document).ready(function($) {
         }
         containers.queue = queue;
         if (hasDragAndDrop) {
-            fieldset.append($('<span />').append(
-                textNode(' ' + _("You may use drag and drop here."))));
+            fieldset.append(textNode(
+                ' ' + _("You may use drag and drop here.")));
             createPasteArea(fieldset);
         }
         if (xhrHasUpload || file.get(0).files && hasFileReader) {
