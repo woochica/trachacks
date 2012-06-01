@@ -49,11 +49,16 @@
  color: #333;
  font-weight: bold;
 }
-.tracdragdrop-paste:hover {
+.tracdragdrop-paste::before {
+ content: attr(data);
+}
+.tracdragdrop-paste:focus {
+ outline: 0;
  border-color: #333;
 }
-.tracdragdrop-paste * {
- display: none;
+.tracdragdrop-paste:focus::before {
+ color: HighlightText;
+ background: Highlight none;
 }
 div#content > div#attachments dl.attachments dt,
 div#content > div#attachments ul li {

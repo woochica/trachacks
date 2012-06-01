@@ -120,17 +120,6 @@ jQuery(document).ready(function($) {
 
     function createPasteArea(form) {
         var message = _("Paste an image to attach");
-        function revert() {
-            var element = $(this);
-            if (element.text() !== message) {
-                element.text(message);
-            }
-            var selection = window.getSelection();
-            selection.removeAllRanges();
-            var range = document.createRange();
-            range.selectNodeContents(this);
-            selection.addRange(range);
-        }
         function pad0(val, size) {
             var pad;
             switch (size) {
@@ -143,18 +132,17 @@ jQuery(document).ready(function($) {
         events.mouseenter = function() { $(this).focus() };
         events.focus = function() {
             this.setAttribute('contenteditable', 'true');
-            revert.apply(this, arguments);
+            $(this).empty();
         };
         events.blur = function() {
-            revert.apply(this, arguments);
+            $(this).empty();
             this.removeAttribute('contenteditable');
             this.blur();
         };
-        events.change = events.keyup = revert;
+        events.keyup = function() { $(this).empty() };
         events.keypress = function(event) {
             return event.ctrlKey === true || event.metaKey === true;
         };
-        events.cut = function() { return false };
         events.paste = function(event) {
             var editable = $(this);
             var now = new Date();
@@ -197,7 +185,7 @@ jQuery(document).ready(function($) {
 
             setTimeout(function() {
                 var element = editable.children().filter(':not(br)');
-                editable.each(revert);
+                editable.empty();
                 if (element.size() !== 1 ||
                     element.get(0).nodeName.toLowerCase() !== 'img')
                 {
@@ -233,7 +221,7 @@ jQuery(document).ready(function($) {
             .attr('title',
                   _("You can attach an image from your clipboard directly " +
                     "with CTRL-V or \"Paste\" on the context menu."))
-            .append(textNode(message))
+            .attr('data', message)
             .bind(events);
         form.append($('<div />').append(editable));
         editable.css({width: editable.width() + 'px',
