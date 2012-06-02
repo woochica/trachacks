@@ -157,6 +157,7 @@ class TracDragDropModule(Component):
                     req.send(unicode(PermissionError()).encode('utf-8'),
                              status=403)
                 req.args['attachment'] = PseudoAttachmentObject(req)
+                req.args['compact'] = req.get_header('X-TracDragDrop-Compact')
 
         action = req.args['action']
         if action in ('new', 'delete'):
@@ -228,7 +229,10 @@ class TracDragDropModule(Component):
             'can_create': False,
             'attachments': attachments,
         }
-        data['compact'] = realm != 'ticket'
+        if 'compact' in req.args:
+            data['compact'] = req.args['compact'] != '0'
+        else:
+            data['compact'] = realm != 'ticket'
         data['foldable'] = True
         return 'tracdragdrop.html', data, None
 

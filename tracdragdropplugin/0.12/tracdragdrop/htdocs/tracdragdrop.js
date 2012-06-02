@@ -31,7 +31,8 @@ jQuery(document).ready(function($) {
     var containers = {list: null, queue: null, dropdown: null};
     var queueItems = [];
     var queueCount = 0;
-    var compact = attachfile.parents('div#attachments').size() === 0;
+    var compact = attachments.find('form#attachfile').size() === 0 &&
+                  attachments.find('div > dl.attachments').size() === 0;
 
     function ajaxUpload(options) {
         var opts = $.extend({}, options);
@@ -39,13 +40,18 @@ jQuery(document).ready(function($) {
         var headers = opts.headers || {};
         var data = opts.data;
         var isFormData = hasFormData && data instanceof FormData;
+        var xhr;
+        opts.xhr = function() {
+            xhr = $.ajaxSettings.xhr();
+            for (var type in upload) {
+                xhr.upload.addEventListener(type, upload[type], false);
+            }
+            return xhr;
+        };
         opts.type = 'POST';
         opts.dataType = 'text';
         opts.processData = false;
         opts.beforeSend = function(xhr, settings) {
-            for (var type in upload) {
-                xhr.upload.addEventListener(type, upload[type], false);
-            }
             for (var name in headers) {
                 xhr.setRequestHeader(name, headers[name]);
             }
@@ -53,10 +59,11 @@ jQuery(document).ready(function($) {
                 settings.data = data;
             }
         };
-        opts.complete = function(xhr, status) {
+        opts.complete = function(jqxhr, status) {
             for (var type in upload) {
                 xhr.upload.removeEventListener(type, upload[type], false);
             }
+            xhr = undefined;
         };
         if (isFormData) {
             delete opts.data;
@@ -348,7 +355,8 @@ jQuery(document).ready(function($) {
         var options = {};
         options.url = tracdragdrop['new_url'];
         options.headers = {
-            'X-TracDragDrop-Filename': encodeURIComponent(entry.filename)};
+            'X-TracDragDrop-Filename': encodeURIComponent(entry.filename),
+            'X-TracDragDrop-Compact': compact ? '1' : '0'};
         if (xhrHasUpload) {
             var upload = {};
             options.upload = upload;
@@ -399,6 +407,7 @@ jQuery(document).ready(function($) {
             var data = new FormData();
             data.append('__FORM_TOKEN', form_token);
             data.append('attachment', entry.data, entry.filename);
+            data.append('compact', compact ? '1' : '0');
             data.append('description', entry.description);
             options.data = data;
         }
@@ -777,13 +786,15 @@ jQuery(document).ready(function($) {
                 }
             }, 10);
         }
-        var list = attachments.children('div').children('dl.attachments');
-        if (list.size() === 0) {
-            list = attachments.children('ul');
-        }
-        if (list.size() !== 0) {
-            setContainerList(list);
-        }
+        $.each(compact ? ['div > ul', 'ul'] : ['div > dl.attachments'],
+               function(idx, val)
+        {
+            var list = attachments.find(val);
+            if (list.size() !== 0) {
+                setContainerList($(list.get(0)));
+                return false;
+            }
+        });
         if (tracdragdrop.can_create) {
             prepareAttachForm();
             if (hasDragAndDrop) {
