@@ -12,7 +12,6 @@ from genshi.filters.transform import Transformer
 from trac.attachment import AttachmentModule, Attachment
 from trac.core import Component, implements, TracError
 from trac.env import IEnvironmentSetupParticipant
-from trac.mimeview.api import Context
 from trac.perm import PermissionError
 from trac.web.api import IRequestHandler, IRequestFilter, \
                          ITemplateStreamFilter, RequestDone
@@ -20,6 +19,13 @@ from trac.web.chrome import Chrome, ITemplateProvider, add_stylesheet, \
                             add_script, add_script_data
 from trac.util.text import to_unicode, unicode_unquote
 from trac.util.translation import domain_functions
+
+try:
+    from trac.web.chrome import web_context
+except ImportError:
+    from trac.mimeview.api import Context
+    def web_context(*args, **kwargs):
+        return Context.from_request(*args, **kwargs)
 
 
 __all__ = ['TracDragDropModule']
@@ -100,7 +106,7 @@ class TracDragDropModule(Component):
         if not attachments:
             attachments = data.get('attachments')
         if not attachments and model and resource:
-            context = Context.from_request(req, resource)
+            context = web_context(req, resource)
             attachments = AttachmentModule(self.env).attachment_data(context)
             data['attachments'] = attachments
 
