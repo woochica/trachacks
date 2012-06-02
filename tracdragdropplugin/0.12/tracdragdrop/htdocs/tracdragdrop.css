@@ -30,7 +30,7 @@
  cursor: pointer;
 }
 .tracdragdrop-loading {
- margin: 0 0 0 2px;
+ margin: 0 0 0 6px;
  padding: 0 0 0 18px;
  background-image: url(loading.gif);
  background-position: 1px center;

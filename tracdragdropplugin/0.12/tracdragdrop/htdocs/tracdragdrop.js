@@ -35,7 +35,7 @@ jQuery(document).ready(function($) {
 
     function ajaxUpload(options) {
         var opts = $.extend({}, options);
-        var progress = opts.progress;
+        var upload = xhrHasUpload ? opts.upload : {};
         var headers = opts.headers || {};
         var data = opts.data;
         var isFormData = hasFormData && data instanceof FormData;
@@ -43,8 +43,8 @@ jQuery(document).ready(function($) {
         opts.dataType = 'text';
         opts.processData = false;
         opts.beforeSend = function(xhr, settings) {
-            if (xhrHasUpload && progress) {
-                xhr.upload.addEventListener('progress', progress, false);
+            for (var type in upload) {
+                xhr.upload.addEventListener(type, upload[type], false);
             }
             for (var name in headers) {
                 xhr.setRequestHeader(name, headers[name]);
@@ -54,8 +54,8 @@ jQuery(document).ready(function($) {
             }
         };
         opts.complete = function(xhr, status) {
-            if (xhrHasUpload) {
-                xhr.upload.removeEventListener('progress', progress, false);
+            for (var type in upload) {
+                xhr.upload.addEventListener(type, upload[type], false);
             }
         };
         if (isFormData) {
@@ -331,31 +331,42 @@ jQuery(document).ready(function($) {
     }
 
     function uploadItem(entry) {
-        entry.message.empty().append(
-            $('<span />').addClass('tracdragdrop-loading')
-                         .text(_("Uploading...")));
+        function setProgress(rate) {
+            var val = rate !== null
+                    ? Math.min(rate, 1) * 100
+                    : (parseFloat(bar.css('width')) + 10) % 100;
+            bar.css('width', val + '%');
+            if (rate !== null) {
+                loading.text(babel.format(_("Uploaded %(percent)s%%"),
+                                          {percent: val.toPrecision(3)}));
+            }
+        }
+        var loading = $('<span />').addClass('tracdragdrop-loading');
         var bar = entry.element.find('.tracdragdrop-progress > div');
         var key = entry.key;
-        var setProgress = function(rate) {
-            var percent;
-            if (rate !== null) {
-                percent = Math.floor(rate * 100);
-            }
-            else {
-                percent = parseInt(bar.css('width'), 10) + 10;
-            }
-            bar.css('width', Math.min(percent, 100) + '%');
-        };
+        entry.message.empty().append(loading);
         var options = {};
         options.url = tracdragdrop['new_url'];
         options.headers = {
             'X-TracDragDrop-Filename': encodeURIComponent(entry.filename)};
-        options.progress = function(event) {
-            setProgress(event.lengthComputable ? event.loaded / event.total
-                                               : null);
-        };
+        if (xhrHasUpload) {
+            var upload = {};
+            options.upload = upload;
+            upload.progress = function(event) {
+                setProgress(event.lengthComputable ? event.loaded / event.total
+                                                   : null);
+            };
+            upload.loadstart = function() { setProgress(0) };
+            upload.loadend = function() {
+                if (entry.xhr) {
+                    setProgress(1);
+                }
+            };
+        }
+        else {
+            loading.text(_("Uploading..."));
+        }
         options.success = function(data, status, xhr) {
-            setProgress(1);
             finishUploadItem(key);
             if (data) {
                 refreshAttachmentsList(data);
@@ -712,11 +723,12 @@ jQuery(document).ready(function($) {
                 var transfer = event.originalEvent.dataTransfer;
                 var found;
                 $.each(transfer.types, function() {
-                    var type = '' + this;
-                    if (type === 'text/html' || type === 'text/plain') {
+                    switch ('' + this) {
+                    case 'text/html':
+                    case 'text/plain':
                         return false;
-                    }
-                    if (type === 'Files') {
+                    case 'Files':
+                    case 'application/x-moz-file':
                         found = true;
                         return false;
                     }
@@ -740,14 +752,14 @@ jQuery(document).ready(function($) {
             if (dragging !== true) {
                 return;
             }
+            dragging = false;
+            effect.hide();
             var files = event.originalEvent.dataTransfer.files;
             if (files.length === 0) {
                 return;
             }
             $.each(files, function() { prepareUploadItem(this) });
             startUpload();
-            dragging = false;
-            effect.hide();
             return false;
         };
         elements.bind(events);
