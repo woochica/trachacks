@@ -55,7 +55,7 @@ jQuery(document).ready(function($) {
         };
         opts.complete = function(xhr, status) {
             for (var type in upload) {
-                xhr.upload.addEventListener(type, upload[type], false);
+                xhr.upload.removeEventListener(type, upload[type], false);
             }
         };
         if (isFormData) {
