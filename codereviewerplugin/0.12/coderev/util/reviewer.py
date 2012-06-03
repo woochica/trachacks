@@ -26,7 +26,7 @@ class Reviewer(object):
         """Return the next reviewed changeset and save it as the current
         changeset when save is True."""
         next = self.get_current_changeset()
-        for changeset in self._get_changesets():
+        for changeset in self.get_changesets():
             if self.verbose:
                 print '.',
             if not self.is_complete(changeset):
@@ -37,7 +37,7 @@ class Reviewer(object):
     def get_blocking_changeset(self):
         """Return the next blocking changeset."""
         # find last *not* reviewed
-        for changeset in self._get_changesets():
+        for changeset in self.get_changesets():
             if not self.is_complete(changeset):
                 return changeset
         return None
@@ -54,7 +54,7 @@ class Reviewer(object):
         tickets = []
         visited = set([])
         found = False
-        changesets = self._get_changesets()
+        changesets = self.get_changesets()
         for changeset in changesets:
             if not found and self.is_complete(changeset):
                 changesets.pop(0)
@@ -76,7 +76,7 @@ class Reviewer(object):
                         pass # e.g., incorrect ticket reference
         return sorted(tickets, key=lambda t: t.first_changeset_when)
     
-    def _get_changesets(self):
+    def get_changesets(self):
         """Extract changesets in order from current to target ref."""
         current_ref = self.get_current_changeset()
         cmds = ['cd %s' % self.repo_dir,
