@@ -263,16 +263,17 @@ class ChangesetTicketMapper(Component):
     # IRepositoryChangeListener methods
     
     def changeset_added(self, repos, changeset):
-        self._map(repos.reponame, changeset.rev, changeset.message)
+        self._map(repos.reponame, changeset)
     
     def changeset_modified(self, repos, changeset, old_changeset):
-        self._map(repos.reponame, changeset.rev, changeset.message, update=True)
+        self._map(repos.reponame, changeset, update=True)
     
-    def _map(self, reponame, rev, message, update=False):
+    def _map(self, reponame, changeset, update=False):
         # extract tickets from changeset message
         ticket_re = CommitTicketUpdater.ticket_re
-        tickets = ticket_re.findall(message)
-        now = int(time.time() * CodeReview.EPOCH_MULTIPLIER)
+        tickets = ticket_re.findall(changeset.message)
+        epoch = time.mktime(changeset.date.timetuple())
+        now = int(epoch * CodeReview.EPOCH_MULTIPLIER)
         
         # insert into db
         db = self.env.get_db_cnx()
@@ -281,17 +282,18 @@ class ChangesetTicketMapper(Component):
             cursor.execute("""
                 DELETE FROM codereviewer_map
                 WHERE repo=%s and changeset=%s;
-                """, (reponame,rev))
+                """, (reponame,changeset.rev))
         for ticket in tickets:
             try:
                 cursor.execute("""
                     INSERT INTO codereviewer_map
                            (repo,changeset,ticket,time)
                     VALUES (%s,%s,%s,%s);
-                    """, (reponame,rev,ticket,now))
+                    """, (reponame,changeset.rev,ticket,now))
             except Exception, e:
                 self.log.warning("Unable to insert changeset %s/%s " +\
-                    "and ticket %s into db: %s" % (rev,repo,ticket,str(e)))
+                    "and ticket %s into db: %s" %\
+                    (changeset.rev,repo,ticket,str(e)))
         db.commit()
 
 

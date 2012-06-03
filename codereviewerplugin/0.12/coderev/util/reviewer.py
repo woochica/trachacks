@@ -53,11 +53,14 @@ class Reviewer(object):
         
         tickets = []
         visited = set([])
+        found = False
         changesets = self._get_changesets()
         for changeset in changesets:
-            if self.is_complete(changeset):
+            if not found and self.is_complete(changeset):
+                changesets.pop(0)
                 continue
             
+            found = True
             review = self.get_review(changeset)
             for ticket in review.tickets:
                 if ticket not in visited:
