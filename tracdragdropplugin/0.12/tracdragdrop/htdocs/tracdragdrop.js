@@ -1,4 +1,32 @@
 jQuery(document).ready(function($) {
+    /* From 0.12-stable/trac/htdocs/js/babel.js */
+    var babel = window.babel;
+    if (babel.format('%(arg)d%%', {arg: 1}) !== '1%') {
+        babel = $.extend({}, babel);
+        babel.format = (function() {
+            var formatRegex = /%(?:(?:\(([^\)]+)\))?([disr])|%)/g;
+            var babel = {};
+            return function() {
+                var arg, string = arguments[0], idx = 0;
+                if (arguments.length == 1)
+                    return string;
+                if (arguments.length == 2 && typeof arguments[1] == 'object')
+                    arg = arguments[1];
+                else {
+                    arg = [];
+                    for (var i = 1, n = arguments.length; i != n; ++i)
+                        arg[i - 1] = arguments[i];
+                }
+                return string.replace(formatRegex, function(all, name, type) {
+                    if (all == '%%')
+                        return '%';
+                    var value = arg[name || idx++];
+                    return (type == 'i' || type == 'd') ? +value : value; 
+                });
+            };
+        })();
+    }
+
     if (window.Clipboard || false) {
         $('#content').delegate('a.trac-rawlink', 'dragstart', function(event) {
             var transfer = event.originalEvent.dataTransfer || false;
