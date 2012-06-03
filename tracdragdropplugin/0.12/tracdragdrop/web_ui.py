@@ -119,14 +119,16 @@ class TracDragDropModule(Component):
         add_script(req, 'common/js/folding.js')
         add_script(req, 'tracdragdrop/tracdragdrop.js')
         script_data = {
-            'base_url': req.href().rstrip('/') + '/',
-            'new_url': req.href('tracdragdrop', 'new', resource.realm,
-                                resource.id),
-            'can_create': attachments.get('can_create') or False,
-            'max_size': AttachmentModule(self.env).max_size,
+            '_tracdragdrop': {
+                'base_url': req.href().rstrip('/') + '/',
+                'new_url': req.href('tracdragdrop', 'new', resource.realm,
+                                    resource.id),
+                'can_create': attachments.get('can_create') or False,
+                'max_size': AttachmentModule(self.env).max_size,
+            },
+            'form_token': req.form_token,
         }
-        add_script_data(req, {'_tracdragdrop': script_data,
-                              'form_token': req.form_token})
+        add_script_data(req, script_data)
 
         return template, data, content_type
 
@@ -140,7 +142,8 @@ class TracDragDropModule(Component):
                 d['foldable'] = True
                 return Chrome(self.env).render_template(
                     req, 'list_of_attachments.html', d, fragment=True)
-            return stream | Transformer('//form[@id="edit"]').after(render)
+            stream |= Transformer('//form[@id="edit"]').after(render)
+
         return stream
 
     # IRequestHandler#match_request
@@ -240,7 +243,11 @@ class TracDragDropModule(Component):
         else:
             data['compact'] = realm != 'ticket'
         data['foldable'] = True
-        return 'tracdragdrop.html', data, None
+        if self._is_xhr(req):
+            template = 'list_of_attachments.html'
+        else:
+            template = 'tracdragdrop.html'
+        return template, data, None
 
     def _send_message_on_except(self, req, message, status):
         if not isinstance(message, unicode):

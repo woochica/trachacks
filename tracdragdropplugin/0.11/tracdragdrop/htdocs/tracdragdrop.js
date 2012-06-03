@@ -689,6 +689,7 @@ jQuery(document).ready(function($) {
     function setContainerList(element) {
         var dropdown, icon, menu, del;
         var fields = {traclink: null, macro: null};
+        var stripHostRegexp = new RegExp('^[^:]+://[^/:]+(?::[0-9]+)?');
 
         function getFilename(rawlink) {
             var name = $(rawlink).attr('href');
@@ -696,8 +697,7 @@ jQuery(document).ready(function($) {
             return decodeURIComponent(name);
         }
         function getUrl(rawlink, action) {
-            var url = $(rawlink).attr('href');
-            url = url.replace(new RegExp('^[^:]+://[^/:]+(?::[0-9]+)?'), '');
+            var url = $(rawlink).attr('href').replace(stripHostRegexp, '');
             var base_url = tracdragdrop.base_url
             var length = (base_url + 'raw-attachment/').length;
             return base_url + 'tracdragdrop/delete/' + url.substring(length);

@@ -540,7 +540,7 @@ jQuery(document).ready(function($) {
             createPasteArea(fieldset);
         }
         if (xhrHasUpload || file.get(0).files && hasFileReader) {
-            queue.delegate('dl dt, ul li', 'click', cancelUploadItem);
+            queue.delegate('dt, li', 'click', cancelUploadItem);
             file.bind('change', function() {
                 $.each(this.files, function() { prepareUploadItem(this) });
                 this.form.reset();
@@ -548,7 +548,7 @@ jQuery(document).ready(function($) {
             });
         }
         else {
-            queue.delegate('dl dt, ul li', 'click', function() {
+            queue.delegate('dt, li', 'click', function() {
                 var item = $(this);
                 var key = item.attr('data-tracdragdrop-key');
                 var iframe = $('#tracdragdrop-attachfile-iframe');
@@ -618,6 +618,7 @@ jQuery(document).ready(function($) {
     function setContainerList(element) {
         var dropdown, icon, menu, del;
         var fields = {traclink: null, macro: null};
+        var stripHostRegexp = new RegExp('^[^:]+://[^/:]+(?::[0-9]+)?');
 
         function getFilename(rawlink) {
             var name = $(rawlink).attr('href');
@@ -625,7 +626,7 @@ jQuery(document).ready(function($) {
             return decodeURIComponent(name);
         }
         function getUrl(rawlink, action) {
-            var url = $(rawlink).attr('href');
+            var url = $(rawlink).attr('href').replace(stripHostRegexp, '');
             var base_url = tracdragdrop.base_url
             var length = (base_url + 'raw-attachment/').length;
             return base_url + 'tracdragdrop/delete/' + url.substring(length);
@@ -638,12 +639,10 @@ jQuery(document).ready(function($) {
             $.each(vals, function(idx, val) { fields[idx].val(val) });
         }
 
-        fields.traclink = $(
-            '<input type="text" readonly="readonly" size="30" />');
-        fields.macro = fields.traclink.clone();
-        $().add(fields.traclink)
-           .add(fields.macro)
-           .click(function() { this.select() });
+        fields.traclink =
+            $('<input type="text" readonly="readonly" size="30" />')
+            .click(function() { this.select() });
+        fields.macro = fields.traclink.clone(true);
         del = $('<div  />').append($('<strong />').text('\u00d7\u00a0'),
                                    textNode(_("Delete attachment")))
                            .click(function() {
