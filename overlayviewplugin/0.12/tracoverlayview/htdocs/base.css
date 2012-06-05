@@ -2,10 +2,15 @@
  a.overlayview-rawlink {
   background: url('../common/download.png') right center no-repeat;
   padding-right: 16px;
+  background: url('../common/download.png') center center no-repeat;
+  padding-right: 18px;
   border-bottom: none;
  }
 }
 
+#cboxTopCenter {
+ display: none;
+}
 #cboxBottomLeft, #cboxMiddleLeft {
  clear: left;
 }
