@@ -6,6 +6,8 @@ IncludeMacro 3.0.0 (not yet released) - trunk
  
  new features:
  * #3204: Allow revision of the source file to be specified.
+ * #3820: Allow revision of a wiki page to be specified.
+ * #10070: Support for ticket comments.
  
  
 IncludeMacro 2.1.0 - 0.11 branch
