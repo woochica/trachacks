@@ -1,4 +1,5 @@
-# TracIncludeMacro macros
+# -*- coding: utf-8 -*-
+
 import urllib2
 from StringIO import StringIO
 
@@ -8,9 +9,11 @@ from genshi.input import HTMLParser, ParseError
 from trac.core import *
 from trac.mimeview.api import Mimeview, get_mimetype, Context
 from trac.perm import IPermissionRequestor
+from trac.resource import ResourceNotFound
+from trac.ticket.model import Ticket
 from trac.versioncontrol.api import RepositoryManager
-from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import system_message
+from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
 __all__ = ['IncludeMacro']
@@ -76,11 +79,42 @@ class IncludeMacro(WikiMacroBase):
             out = page.text
             ctxt = Context.from_request(formatter.req, 'wiki', source_obj)
         elif source_format == 'source':
+            if not formatter.perm.has_permission('FILE_VIEW'):
+                return ''
             out, ctxt, dest_format = self._get_source(formatter, source_obj, dest_format)
+        elif source_format == 'ticket':
+            if ':' in source_obj:
+                ticket_num, source_obj = source_obj.split(':', 1)
+                if not Ticket.id_is_valid(ticket_num):
+                    return system_message("%s is not a valid ticket id" % ticket_num)
+                try:
+                    ticket = Ticket(self.env, ticket_num)
+                    if not 'TICKET_VIEW' in formatter.perm(ticket.resource):
+                        return ''
+                except ResourceNotFound, e:
+                    return system_message("Ticket %s does not exist" % ticket_num)
+                if ':' in source_obj:
+                    source_format, comment_num = source_obj.split(':', 1)
+                    if source_format == 'comment':
+                        changelog = ticket.get_changelog()
+                        out = []
+                        if changelog:
+                            for (ts, author, field, oldval, newval, permanent) in changelog:
+                                if field == 'comment' and oldval == comment_num:
+                                    dest_format = 'text/x-trac-wiki'
+                                    ctxt = Context.from_request(formatter.req, 'ticket', ticket_num)
+                                    out = newval
+                                    break
+                        if not out:
+                            return system_message("Comment %s does not exist for Ticket %s" % (comment_num, ticket_num))
+                    else:
+                        system_message("Unsupported ticket field %s" % source_format)
+            else:
+                return system_message('Ticket field must be specified')
         else:
             # RFE: Add ticket: and comment: sources. <NPK>
             # RFE: Add attachment: source. <NPK>
-            return system_message('Unsupported include source %s'%source)
+            return system_message('Unsupported realm %s' % source)
         
         # If we have a preview format, use it
         if dest_format:
@@ -99,9 +133,8 @@ class IncludeMacro(WikiMacroBase):
     def get_permission_actions(self):
         yield 'INCLUDE_URL'
     
+    # Private methods
     def _get_source(self, formatter, source_obj, dest_format):
-        if not formatter.perm.has_permission('FILE_VIEW'):
-            return ''
         repos_mgr = RepositoryManager(self.env)
         try: #0.12+
             repos_name, repos,source_obj = repos_mgr.get_repository_by_path(source_obj)

@@ -9,6 +9,7 @@ Currently supported sources:
 * FTP - ``ftp:``
 * Wiki pages - ``wiki:``
 * Repository files - ``source:``
+* Ticket comments - ``ticket:N:comment:M`` (3.0dev, syntax may be changed before release)
 
 The default source is ``wiki`` if only a source path is given.
 
