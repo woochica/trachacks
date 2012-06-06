@@ -25,14 +25,26 @@ class DocRenderer(Component):
     """Renders doc, pdf files as HTML."""
     implements(IHTMLPreviewRenderer)
 
-    pdftohtml = Option('attachment', 'pdftohtml_path', 'pdftohtml',
-                       'path to pdftohtml binary')
+    socket = Option('attachment', 'ooo_socket', '',
+                       'socket url to OOo')
 
-    wvware = Option('attachment', 'wvware_path', 'wvware',
-                       'path to wvWare binary')
+    mimetypes_doc = [
+        "application/msword",
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ]
+    mimetypes_xls = [
+        "application/excel",
+        "application/vnd.ms-excel",
+    ]
+
 
     def get_quality_ratio(self, mimetype):
-        if mimetype in ["application/msword", "application/pdf"]:
+        if mimetype in self.mimetypes_doc:
+            self.mime='doc'
+            return 8
+        elif mimetype in self.mimetypes_xls:
+            self.mime='xls'
             return 8
         return 0
 
@@ -52,10 +64,7 @@ class DocRenderer(Component):
         cmd = []
         mimetype_clean = mimetype.split(';')[0].strip()
         charset = mimetype.split(';')[1].split('=')[1].strip() or 'utf-8'
-        if mimetype_clean == "application/msword":
-            cmd = [self.wvware, u"--charset=%s" % charset, u"%s" % tmp_filename]
-        elif mimetype_clean == "application/pdf":
-            cmd = [self.pdftohtml, u"-q", u"-stdout", u'-i' , u'-enc %s' % charset.upper(), u"%s" % tmp_filename]
+        cmd = ['/usr/local/bin/ooextract.py', "--connection-string=%s" % self.socket,"--format=%s" % self.mime,"--stdout", u"%s" % tmp_filename]
         if cmd:
             self.log.debug('Trying to render HTML preview for %s file %s using cmd: %s' % (mimetype, filename, " ".join(cmd)))
             content_export = Popen(cmd, stdout=PIPE).communicate()[0]
