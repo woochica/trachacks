@@ -92,6 +92,7 @@ class QuietModule(Component,QuietBase):
         if req.perm.has_permission('QUIET_MODE') and \
            (req.path_info.startswith('/ticket') or \
             req.path_info.startswith('/newticket') or \
+            req.path_info.startswith('/changeset') or \
             req.path_info.startswith('/query') or \
             req.path_info.startswith('/report')):
             href = req.href(MODE,'toggle')
