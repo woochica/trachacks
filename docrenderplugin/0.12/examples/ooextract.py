@@ -47,7 +47,7 @@ def main():
                 if a == "xls":
                     filterName = "HTML (StarCalc)"
                 if a == "doc":
-                    filtetName = "HTML (StarWriter)"
+                    filterName = "HTML (StarWriter)"
 	    if o == "--stdout":
 	    	stdout = True
                 
