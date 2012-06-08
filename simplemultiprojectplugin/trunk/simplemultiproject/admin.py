@@ -97,7 +97,8 @@ class SmpAdminPanel(Component):
         return 'simplemultiproject_adminpanel.html', data
 
     def get_htdocs_dirs(self):
-        return []
+        from pkg_resources import resource_filename
+        return [('simplemultiproject', resource_filename(__name__, 'htdocs'))]
 
     def get_admin_panels(self, req):
         return (('projects', 'Manage Projects', 'simplemultiproject', 'Projects'),)

@@ -7,6 +7,7 @@ setup(
     package_data={
         'simplemultiproject' : [
             'templates/*.html',
+            'htdocs/*.js',
             'htdocs/css/*.css'
         ]
     },

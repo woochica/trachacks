@@ -5,6 +5,7 @@ from trac.core import *
 from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.formatter import wiki_to_oneliner
+from operator import itemgetter
 
 class SmpMilestoneProject(Component):
     """Add a 'Project' attribute to milestones.
@@ -18,12 +19,12 @@ class SmpMilestoneProject(Component):
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-
         action = req.args.get('action', 'view')
 
         if req.path_info.startswith('/milestone'):
             if req.method == 'POST':
                 milestone = req.args.get('name')
+                milestone_id = req.args.get('id')
                 id_project = req.args.get('project')
 
                 if action == 'edit':
@@ -43,7 +44,7 @@ class SmpMilestoneProject(Component):
                         self.__SmpModel.insert_milestone_project(milestone, id_project)
                             
                 elif action == 'delete':
-                    self.__SmpModel.delete_milestone_project(milestone)
+                    self.__SmpModel.delete_milestone_project(milestone_id)
         
         return handler
         
@@ -58,10 +59,10 @@ class SmpMilestoneProject(Component):
         # Allow setting project for milestone
         if filename == 'milestone_edit.html':
             if action == 'new':
-                filter = Transformer('//fieldset[1]')
+                filter = Transformer('//form[@id="edit"]/div[1]')
                 return stream | filter.before(self.__new_project())
             elif action == 'edit':
-                filter = Transformer('//fieldset[1]')
+                filter = Transformer('//form[@id="edit"]/div[1]')
                 return stream | filter.before(self.__edit_project(data))
         # Display project for milestone
         elif filename == 'milestone_view.html':
@@ -98,7 +99,7 @@ class SmpMilestoneProject(Component):
                        tag.br(),
                        tag.select(
                        tag.option(),
-                       [tag.option(row[1], selected=(id_project_selected == row[0] or None), value=row[0]) for row in all_projects],
+                       [tag.option(row[1], selected=(id_project_selected == row[0] or None), value=row[0]) for row in sorted(all_projects, key=itemgetter(1))],
                        name="project")
                        ),
                        class_="field")
@@ -112,7 +113,7 @@ class SmpMilestoneProject(Component):
                        tag.br(),
                        tag.select(
                        tag.option(),
-                       [tag.option(row[1], value=row[0]) for row in all_projects],
+                       [tag.option(row[1], value=row[0]) for row in sorted(all_projects, key=itemgetter(1))],
                        name="project")
                        ),
                        class_="field")

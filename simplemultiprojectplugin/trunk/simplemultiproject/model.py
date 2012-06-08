@@ -56,6 +56,21 @@ class SmpModel(Component):
         cursor.execute(query)
         self.__start_transacction()
 
+    # Ticket Methods
+    def get_ticket_project(self, id):
+        cursor = self.__get_cursor()
+        query    = """SELECT
+                        value
+                      FROM
+                        ticket_custom
+                      WHERE
+                        name = 'project' AND ticket = %i""" % id
+        cursor.execute(query)
+        self.__start_transacction()
+
+        return cursor.fetchone()
+        
+
     # MilestoneProject Methods
     def insert_milestone_project(self, milestone, id_project):
         cursor = self.__get_cursor()
@@ -64,6 +79,34 @@ class SmpModel(Component):
                     VALUES ('%s', %s)""" % (milestone, str(id_project))
         cursor.execute(query)
         self.__start_transacction()
+
+    def get_milestones_of_project(self,project):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        m.milestone AS milestone
+                   FROM
+                        smp_project AS p,
+                        smp_milestone_project AS m
+                   WHERE
+                        p.name = '%s' AND
+                        p.id_project = m.id_project""" % (project)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def get_milestones_for_projectid(self,projectid):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        milestone
+                   FROM
+                        smp_milestone_project
+                   WHERE
+                        id_project = %i""" % (projectid)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+        
 
     def get_project_milestone(self,milestone):
         cursor = self.__get_cursor()
