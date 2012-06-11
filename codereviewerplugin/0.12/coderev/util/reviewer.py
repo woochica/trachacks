@@ -94,7 +94,7 @@ class Reviewer(object):
         if self.verbose:
             print "\n%d changesets from current %s to target %s" % \
                     (len(changesets),current_ref,self.target_ref)
-        return changesets
+        return [current_ref] + changesets
     
     def get_reviews(self, ticket):
         return CodeReview.get_reviews(self.env, ticket)
