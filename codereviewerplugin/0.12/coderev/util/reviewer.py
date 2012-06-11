@@ -45,12 +45,6 @@ class Reviewer(object):
     def get_blocked_tickets(self):
         """Return all tickets of blocking changesets in order of them
         getting unblocked."""
-        def get_first_remaining_changeset(ticket, changesets):
-            for review in self.get_reviews(ticket):
-                if review.changeset in changesets:
-                    return review # changeset exists on path to target
-            raise ResourceNotFound("No remaining changesets found for ticket %s" % ticket)
-        
         tickets = []
         visited = set([])
         found = False
@@ -60,16 +54,29 @@ class Reviewer(object):
                 changesets.pop(0)
                 continue
             
-            found = True
             review = self.get_review(changeset)
+            if not found:
+                # all changesets must come after the blocking one
+                blocking_when = review.changeset_when
+            
+            found = True
             for ticket in review.tickets:
                 if ticket not in visited:
                     visited.add(ticket)
+            
+                    def get_first_remaining_changeset():
+                        for review in self.get_reviews(ticket):
+                            if review.changeset in changesets and \
+                               review.changeset_when >= blocking_when:
+                                return review # changeset exists on path
+                        raise ResourceNotFound()
+                    
                     # the ticket's oldest *remaining* changeset determines blockage
                     # i.e., if current is already past a changeset, do not consider it
                     try:
-                        first = get_first_remaining_changeset(ticket, changesets)
+                        first = get_first_remaining_changeset()
                         tkt = Ticket(self.env, ticket)
+                        tkt.first_changeset = first.changeset
                         tkt.first_changeset_when = first.changeset_when
                         tickets.append( tkt )
                     except ResourceNotFound:
@@ -79,8 +86,10 @@ class Reviewer(object):
     def get_changesets(self):
         """Extract changesets in order from current to target ref."""
         current_ref = self.get_current_changeset()
+        review = self.get_review(current_ref)
+        when = int(review.changeset_when / CodeReview.EPOCH_MULTIPLIER)
         cmds = ['cd %s' % self.repo_dir,
-                'git rev-list --reverse %s..%s' % (current_ref,self.target_ref)]
+                'git rev-list --reverse --no-merges --since=%s HEAD' % when]
         changesets = self._execute(' && '.join(cmds)).splitlines()
         if self.verbose:
             print "\n%d changesets from current %s to target %s" % \
