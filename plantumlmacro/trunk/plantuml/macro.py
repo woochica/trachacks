@@ -17,15 +17,15 @@ from genshi.builder import tag
 from trac.config import Option
 from trac.core import implements
 from trac.util.translation import _
+from trac.versioncontrol.api import RepositoryManager
 from trac.web import IRequestHandler
 from trac.wiki.formatter import format_to_html, system_message
+from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
-
-__all__ = ["PlantUMLMacro"]
 
 img_dir = 'cache/plantuml'
 
-class PlantUMLMacro(WikiMacroBase):
+class PlantUmlMacro(WikiMacroBase):
     """
     A wiki processor that renders PlantUML diagrams in wiki text.
     
@@ -34,7 +34,8 @@ class PlantUMLMacro(WikiMacroBase):
     {{{
     #!PlantUML
     @startuml
-    Alice -> Bob: Authentication Request
+    Alice -> Bob: Authentication Reque
+    st
     Bob --> Alice: Authentication Response
     Alice -> Bob: Another authentication Request
     Alice <-- Bob: another authentication Response
@@ -69,16 +70,38 @@ class PlantUMLMacro(WikiMacroBase):
             os.makedirs(self.abs_img_dir)
 
     def expand_macro(self, formatter, name, content):
-        if not content:
-            return system_message("No UML text defined!")
         if not self.plantuml_jar:
             return system_message("Installation error: plantuml_jar option not defined in trac.ini")
         if not os.path.exists(self.plantuml_jar):
             return system_message("Installation error: plantuml.jar not found: %s" % self.plantuml_jar)
+        
+        # Trac 0.12 supports expand_macro(self, formatter, name, content, args)
+        # To support Trac 0.11, some additional work is required
+        try:
+            args = formatter.code_processor.args
+        except AttributeError:
+            args = None
+                        
+        path = None
+        if args is None: #WikiMacro
+            path = content
+            if not path:
+                return system_message("Path not specified")            
+        elif args: #WikiProcessor with args
+            path = args.get('path')
+            if not path:
+                return system_message("Path not specified")
+        
+        if path:
+            markup, exists = self._read_source_from_repos(formatter, path)
+            if not exists:
+                return markup
+        else:
+            if not content:
+                return system_message("No UML text defined!")
+            markup = content.encode('utf-8').strip()
 
-        markup = content.encode('utf-8').strip()
         img_id = hashlib.sha1(markup).hexdigest()
-
         if not self._is_img_existing(img_id):
             cmd = "%s -jar -Djava.awt.headless=true \"%s\" -charset UTF-8 -pipe" % (self.java_bin, self.plantuml_jar)
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -89,6 +112,11 @@ class PlantUMLMacro(WikiMacroBase):
         
         link = formatter.href('plantuml', id=img_id)
         return tag.img(src=link)
+
+    def get_macros(self):
+        yield 'plantuml' #WikiProcessor syntax
+        yield 'PlantUml' #WikiMacros syntax
+        yield 'PlantUML' #deprecated, retained for backward compatibility
 
     # IRequestHandler
     def match_request(self, req):
@@ -118,3 +146,28 @@ class PlantUMLMacro(WikiMacroBase):
         img_path = self._get_img_path(img_id)
         img_data = open(img_path, 'rb').read()
         return img_data
+
+    def _read_source_from_repos(self, formatter, src_path):
+        repos_mgr = RepositoryManager(self.env)
+        try: #0.12+
+            repos_name, repos,source_obj = repos_mgr.get_repository_by_path(src_path)
+        except AttributeError, e: #0.11
+            repos = repos_mgr.get_repository(formatter.req.authname)
+        path, rev = _split_path(src_path)
+        if repos.has_node(path, rev):
+            node = repos.get_node(path, rev)
+            content = node.get_content().read()
+            exists = True
+        else:
+            rev = rev or repos.get_youngest_rev()
+            content = system_message("No such node %s at revision %s" % (path, rev) )
+            exists = False
+        
+        return (content, exists)
+
+def _split_path(fqpath):
+    if '@' in fqpath:
+        path, rev = fqpath.split('@', 1)
+    else:
+        path, rev = fqpath, None
+    return path, rev
