@@ -20,7 +20,6 @@ from trac.util.translation import _
 from trac.versioncontrol.api import RepositoryManager
 from trac.web import IRequestHandler
 from trac.wiki.formatter import format_to_html, system_message
-from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 
 img_dir = 'cache/plantuml'
@@ -71,9 +70,9 @@ class PlantUmlMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, content):
         if not self.plantuml_jar:
-            return system_message("Installation error: plantuml_jar option not defined in trac.ini")
+            return system_message(_("Installation error: plantuml_jar option not defined in trac.ini"))
         if not os.path.exists(self.plantuml_jar):
-            return system_message("Installation error: plantuml.jar not found: %s" % self.plantuml_jar)
+            return system_message(_("Installation error: plantuml.jar not found at '%s'") % self.plantuml_jar)
         
         # Trac 0.12 supports expand_macro(self, formatter, name, content, args)
         # To support Trac 0.11, some additional work is required
@@ -86,11 +85,11 @@ class PlantUmlMacro(WikiMacroBase):
         if args is None: #WikiMacro
             path = content
             if not path:
-                return system_message("Path not specified")            
+                return system_message(_("Path not specified"))            
         elif args: #WikiProcessor with args
             path = args.get('path')
             if not path:
-                return system_message("Path not specified")
+                return system_message(_("Path not specified"))
         
         if path:
             markup, exists = self._read_source_from_repos(formatter, path)
@@ -98,16 +97,16 @@ class PlantUmlMacro(WikiMacroBase):
                 return markup
         else:
             if not content:
-                return system_message("No UML text defined!")
+                return system_message(_("No UML text defined"))
             markup = content.encode('utf-8').strip()
 
         img_id = hashlib.sha1(markup).hexdigest()
         if not self._is_img_existing(img_id):
-            cmd = "%s -jar -Djava.awt.headless=true \"%s\" -charset UTF-8 -pipe" % (self.java_bin, self.plantuml_jar)
+            cmd = '%s -jar -Djava.awt.headless=true "%s" -charset UTF-8 -pipe' % (self.java_bin, self.plantuml_jar)
             p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             (img_data, stderr) = p.communicate(input=markup)
             if p.returncode != 0:
-                return system_message("Error running plantuml: %s" % stderr)            
+                return system_message(_("Error running plantuml: '%s'") % stderr)            
             self._write_img_to_file(img_id, img_data)
         
         link = formatter.href('plantuml', id=img_id)
@@ -160,7 +159,7 @@ class PlantUmlMacro(WikiMacroBase):
             exists = True
         else:
             rev = rev or repos.get_youngest_rev()
-            content = system_message("No such node %s at revision %s" % (path, rev) )
+            content = system_message(_("No such node '%s' at revision '%s'") % (path, rev) )
             exists = False
         
         return (content, exists)
