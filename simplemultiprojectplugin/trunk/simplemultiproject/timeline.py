@@ -11,6 +11,7 @@ from trac.util.text import to_unicode
 from trac.core import *
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from operator import itemgetter
+from simplemultiproject.model import smp_filter_settings
 
 class SmpTimelineProjectFilter(Component):
     """Allows for filtering by 'Project'
@@ -37,8 +38,9 @@ class SmpTimelineProjectFilter(Component):
                     if event['kind'] in tickettypes:
                         resource = event['kind'] == "attachment" and event['data'][0].parent or event['data'][0]
                         if resource.realm == "ticket":
-                            ticket = Ticket( self.env, resource.id )               
-                            if ticket.get_value_or_default('project') in filter_projects:
+                            ticket = Ticket( self.env, resource.id )   
+                            project = ticket.get_value_or_default('project')
+                            if project and project in filter_projects:
                                 filtered_events.append(event)
                         
                     else:
@@ -76,17 +78,6 @@ class SmpTimelineProjectFilter(Component):
         return select
         
     def _filtered_projects(self, req):
-        filtered_projects = req.args.get('filter-projects')
-        filtered_projects = type(filtered_projects) is unicode and (filtered_projects,) or filtered_projects
-
-        # check session attribtes
-        if not filtered_projects:
-            if req.session.has_key('timeline.filter.projects'):
-                filtered_projects = to_unicode(req.session['timeline.filter.projects'])
-        else:
-            req.session['timeline.filter.projects'] = filtered_projects
-
-        if filtered_projects and u'All' in filtered_projects:
-            filtered_projects = None
+        filtered_projects = smp_filter_settings(req, 'timeline', 'projects')
 
         return filtered_projects

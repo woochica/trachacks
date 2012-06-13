@@ -28,6 +28,9 @@ class SmpMilestoneProject(Component):
                 id_project = req.args.get('project')
 
                 if action == 'edit':
+                    if milestone_id != milestone:
+                        self.__SmpModel.rename_milestone_project(milestone_id, milestone)
+                        
                     id_project_milestone = self.__SmpModel.get_id_project_milestone(milestone)
                     
                     if id_project:

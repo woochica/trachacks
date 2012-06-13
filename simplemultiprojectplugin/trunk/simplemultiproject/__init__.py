@@ -10,5 +10,6 @@ from milestone import *
 from roadmap import *
 from ticket import *
 from timeline import *
+from version import *
 
 __version__ = __import__('pkg_resources').get_distribution('SimpleMultiProject').version

@@ -6,12 +6,13 @@
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
 from genshi.input import HTML
-from simplemultiproject.model import *
 from trac.util.text import to_unicode
 from trac.core import *
-from trac.web.api import IRequestFilter
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from operator import itemgetter
+
+from simplemultiproject.model import *
+from simplemultiproject.model import smp_filter_settings, smp_settings
 
 class SmpRoadmapProjectFilter(Component):
     """Allows for filtering by 'Project'
@@ -29,19 +30,12 @@ class SmpRoadmapProjectFilter(Component):
         
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/roadmap'):
-            filter_projects = req.args.get('filter-projects')
-            filter_projects = type(filter_projects) is unicode and (filter_projects,) or filter_projects
-    
-            # check session attribtes
-            if not filter_projects:
-                if req.session.has_key('roadmap.filter.projects'):
-                    filter_projects = to_unicode(req.session['roadmap.filter.projects'])
-            else:
-                req.session['roadmap.filter.projects'] = filter_projects
-    
-            if filter_projects and len(filter_projects) > 0 and u'All' not in filter_projects:
+            filter_projects = smp_filter_settings(req, 'roadmap', 'projects')
+                
+            if filter_projects and len(filter_projects) > 0:
                 milestones = data.get('milestones')
                 milestones_stats = data.get('milestone_stats')
+                
                 filtered_milestones = []
                 filtered_milestone_stats = []
         
@@ -62,17 +56,8 @@ class SmpRoadmapProjectFilter(Component):
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == "roadmap.html":
-            filter_projects = req.args.get('filter-projects')
-            filter_projects = type(filter_projects) is unicode and (filter_projects,) or filter_projects
-
-            # check session attribtes
-            if not filter_projects:
-                if req.session.has_key('roadmap.filter.projects'):
-                    filter_projects = to_unicode(req.session['roadmap.filter.projects'])
-            else:
-                req.session['roadmap.filter.projects'] = filter_projects
-
+        if filename.startswith("roadmap"):
+            filter_projects = smp_filter_settings(req, 'roadmap', 'projects')
             filter = Transformer('//form[@id="prefs"]/div[1]')
             stream = stream | filter.before(tag.label("Filter Projects:")) | filter.before(tag.br()) | filter.before(self._projects_field_input(req, filter_projects)) | filter.before(tag.br()) | filter.before(tag.br())
 
@@ -162,6 +147,9 @@ class SmpRoadmapProject(Component):
             project_id = self.__SmpModel.get_project_milestone(milestone)
             
             if project_id == None:
+                project_id = self.__SmpModel.get_project_version(milestone)
+            
+            if project_id == None:
                 if project.has_key("--None Project--"):
                     project["--None Project--"].append(milestone)
                 else:
@@ -177,7 +165,7 @@ class SmpRoadmapProject(Component):
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == "roadmap.html":
+        if filename.startswith("roadmap"):
             stream_roadmap = HTML(stream)
             stream_milestones = HTML(stream_roadmap.select('//div[@class="roadmap"]/div[@class="milestones"]'))
             
