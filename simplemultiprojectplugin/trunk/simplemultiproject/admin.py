@@ -6,19 +6,32 @@
 # Trac core imports
 from trac.core import *
 from trac.config import *
+from trac.util.translation import _
 
 # Trac extension point imports
+from trac.perm import IPermissionRequestor
 from trac.admin.api import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider, add_notice
 
 # Model Class
 from simplemultiproject.model import *
 
+from operator import itemgetter
+
 # Trac Administration Panel
 class SmpAdminPanel(Component):
     """Modifies Trac UI for editing Projects"""
 
-    implements(IAdminPanelProvider, ITemplateProvider)
+    implements(IPermissionRequestor, IAdminPanelProvider, ITemplateProvider)
+
+
+    # IPermissionRequestor method
+    
+    def get_permission_actions(self):
+        """ Permissions supported by the plugin. """
+        return ['PROJECT_ADMIN']
+
+
     def __init__(self):
         self.__SmpModel = SmpModel(self.env)
 
@@ -44,9 +57,10 @@ class SmpAdminPanel(Component):
 
     def render_admin_panel(self, req, category, page, path_info):
         """Return the template and data used to render our administration page."""
+        req.perm.require('PROJECT_ADMIN')
         projects_rows  = self.__SmpModel.get_all_projects()
         projects = []
-        for row in projects_rows:
+        for row in sorted(projects_rows, key=itemgetter(1)):
             projects.append({'id': row[0], 'name':row[1], 'description': row[2]})
 
         if path_info:
@@ -101,7 +115,8 @@ class SmpAdminPanel(Component):
         return [('simplemultiproject', resource_filename(__name__, 'htdocs'))]
 
     def get_admin_panels(self, req):
-        return (('projects', 'Manage Projects', 'simplemultiproject', 'Projects'),)
+        if 'PROJECT_ADMIN' in req.perm('projects'):
+            yield ('projects', _('Manage Projects'), 'simplemultiproject', 'Projects')
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
