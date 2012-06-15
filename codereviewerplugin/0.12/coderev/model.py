@@ -215,7 +215,7 @@ class CodeReview(object):
         cursor.execute("""
             SELECT ticket, time
             FROM codereviewer_map
-            WHERE repo='%s' AND changeset='%s;
+            WHERE repo='%s' AND changeset='%s';
             """ % (self.repo,self.changeset))
         self._tickets = []
         self._changeset_when = 0
