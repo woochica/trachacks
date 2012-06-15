@@ -530,7 +530,9 @@ jQuery(document).ready(function($) {
         if (hasDragAndDrop) {
             fieldset.append(textNode(
                 ' ' + _("You may use drag and drop here.")));
-            createPasteArea(fieldset);
+            if ('onpaste' in document.body) {
+                createPasteArea(fieldset);
+            }
         }
         if (xhrHasUpload || file.get(0).files && hasFileReader) {
             queue.delegate('dt, li', 'click', cancelUploadItem);
