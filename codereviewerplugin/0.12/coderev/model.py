@@ -215,12 +215,13 @@ class CodeReview(object):
         cursor.execute("""
             SELECT ticket, time
             FROM codereviewer_map
-            WHERE repo='%s' AND changeset='%s';
+            WHERE repo='%s' AND changeset='%s;
             """ % (self.repo,self.changeset))
         self._tickets = []
         self._changeset_when = 0
         for ticket,when in cursor:
-            self._tickets.append(ticket)
+            if ticket:
+                self._tickets.append(ticket)
             self._changeset_when = when
     
     def _wiki_to_html(self, message):
