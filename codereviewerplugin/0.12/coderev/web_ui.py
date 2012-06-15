@@ -272,8 +272,8 @@ class ChangesetTicketMapper(Component):
         # extract tickets from changeset message
         ticket_re = CommitTicketUpdater.ticket_re
         tickets = ticket_re.findall(changeset.message)
-        epoch = time.mktime(changeset.date.timetuple())
-        now = int(epoch * CodeReview.EPOCH_MULTIPLIER)
+        epoch = time.mktime(changeset.date.utctimetuple())
+        when = int(epoch * CodeReview.EPOCH_MULTIPLIER)
         
         # insert into db
         db = self.env.get_db_cnx()
@@ -283,13 +283,15 @@ class ChangesetTicketMapper(Component):
                 DELETE FROM codereviewer_map
                 WHERE repo=%s and changeset=%s;
                 """, (reponame,changeset.rev))
+        if not tickets:
+            tickets = [''] # we still want merges inserted
         for ticket in tickets:
             try:
                 cursor.execute("""
                     INSERT INTO codereviewer_map
                            (repo,changeset,ticket,time)
                     VALUES (%s,%s,%s,%s);
-                    """, (reponame,changeset.rev,ticket,now))
+                    """, (reponame,changeset.rev,ticket,when))
             except Exception, e:
                 self.log.warning("Unable to insert changeset %s/%s " +\
                     "and ticket %s into db: %s" %\
