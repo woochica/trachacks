@@ -121,14 +121,7 @@ jQuery(document).ready(function($) {
     }
 
     function generateImageMacro(val) {
-        var text = '[[Image(' + val + ')]]';
-        if (!/[,)"']/.test(val))
-            return text;
-        if (!/"/.exec(val))
-            return '[[Image("' + val + '")]]';
-        if (!/'/.exec(val))
-            return "[[Image('" + val + "')]]";
-        return text; // XXX maybe corrupted macro
+        return '[[Image(' + val + ')]]';
     }
 
     function refreshAttachmentsList(src) {
