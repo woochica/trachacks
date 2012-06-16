@@ -52,6 +52,8 @@ class Reviewer(object):
         # restrict changesets to only those not completed
         changesets = self.get_changesets()
         blocking_changeset = self.get_blocking_changeset(changesets)
+        if blocking_changeset is None:
+            return []
         changesets = changesets[changesets.index(blocking_changeset):]
         
         # only consider changesets that come after the blocking changeset
