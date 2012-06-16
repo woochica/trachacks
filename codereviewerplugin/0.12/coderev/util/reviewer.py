@@ -34,10 +34,11 @@ class Reviewer(object):
             next = changeset
         return self.set_current_changeset(next, save)
     
-    def get_blocking_changeset(self):
+    def get_blocking_changeset(self, changesets=None):
         """Return the next blocking changeset."""
-        # find last *not* reviewed
-        for changeset in self.get_changesets():
+        if changesets is None:
+            changesets = self.get_changesets()
+        for changeset in changesets:
             if not self.is_complete(changeset):
                 return changeset
         return None
@@ -46,24 +47,24 @@ class Reviewer(object):
         """Return all tickets of blocking changesets in order of them
         getting unblocked."""
         tickets = []
-        visited = set(['']) # merge changesets have empty ticket values
-        found = False
+        tickets_visited = set(['']) # merge changesets have empty ticket values
+        
+        # restrict changesets to only those not completed
         changesets = self.get_changesets()
+        blocking_changeset = self.get_blocking_changeset(changesets)
+        changesets = changesets[changesets.index(blocking_changeset):]
+        
+        # only consider changesets that come after the blocking changeset
+        review = self.get_review(blocking_changeset)
+        blocking_when = review.changeset_when
+        
+        # find blocked tickets
         for changeset in changesets:
-            if not found and self.is_complete(changeset):
-                changesets.pop(0)
-                continue
-            
             review = self.get_review(changeset)
-            if not found:
-                # all changesets must come after the blocking one
-                blocking_when = review.changeset_when
-            
-            found = True
             for ticket in review.tickets:
-                if ticket in visited:
+                if ticket in tickets_visited:
                     continue
-                visited.add(ticket)
+                tickets_visited.add(ticket)
         
                 def get_first_remaining_changeset():
                     for review in self.get_reviews(ticket):
@@ -95,7 +96,9 @@ class Reviewer(object):
         if self.verbose:
             print "\n%d changesets from current %s to target %s" % \
                     (len(changesets),current_ref,self.target_ref)
-        return [current_ref] + changesets
+        if current_ref not in changesets:
+            changesets.insert(0,current_ref)
+        return changesets
     
     def get_reviews(self, ticket):
         return CodeReview.get_reviews(self.env, ticket)
