@@ -11,6 +11,7 @@ from trac.core import *
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import add_script, add_script_data
 from trac.ticket import model
+from operator import itemgetter
 
 class SmpTicketProject(Component):
     
@@ -26,14 +27,14 @@ class SmpTicketProject(Component):
     def post_process_request(self, req, template, data, content_type):
         if template == 'ticket.html':
             all_components = model.Component.select(self.env)
-            all_projects   = [project[1] for project in self.__SmpModel.get_all_projects()]
+            all_projects   = [project[1] for project in sorted(self.__SmpModel.get_all_projects(), key=itemgetter(1))]
             component_projects = {}
             components = []
             project_versions = {}
 
             for comp in all_components:
                 components.append(comp.name)
-                comp_projects = [project[0] for project in self.__SmpModel.get_projects_component(comp.name)]
+                comp_projects = [project[0] for project in sorted(self.__SmpModel.get_projects_component(comp.name), key=itemgetter(0))]
                 if comp_projects and len(comp_projects) > 0:
                     component_projects[comp.name] = comp_projects
 
@@ -88,11 +89,11 @@ class SmpTicketProject(Component):
         jsVar = 'var smp_initialProjectMilestone = [ "%s" , "%s" ]; ' % (project, milestone)
         jsVar = to_unicode('%s var smp_milestonesForProject = { "" : { "Please, select a project!"  : "" }') % jsVar
 
-        for project in allProjects:
+        for project in sorted(allProjects, key=itemgetter(1)):
             jsVar = '%s, "%s" : { "" : ""' % (jsVar, project[1])
             milestones = self.__SmpModel.get_milestones_of_project(project[1])
 
-            for milestone in milestones:
+            for milestone in sorted(milestones, key=itemgetter(0)):
                 jsVar = '%s, "%s" : "%s"' % (jsVar, milestone[0], milestone[0])
     
             jsVar = '%s }' % jsVar
@@ -103,19 +104,15 @@ class SmpTicketProject(Component):
         return script
 
     def _projects_field_ticket_input(self, req, ticket_data):
-        cursor = self.__SmpModel.get_all_projects()
+        all_projects = [project[1] for project in sorted(self.__SmpModel.get_all_projects(), key=itemgetter(1))]
         select = tag.select(name="field_project", id="field-project", onchange="smp_onProjectChange(this.value)")
-      
-        db = self.env.get_db_cnx()
-        cursor2 = db.cursor()
+        
+        cur_project = ticket_data.get_value_or_default('project')
 
-        project = ticket_data.get_value_or_default('project')
-
-        #select.append(tag.option(row[0], value=row[0]))
         select.append(tag.option("", value=""))
-        for component in cursor:
-            if project and component[1] == project:
-                select.append(tag.option(component[1], value=component[1], selected="selected"))
+        for project in all_projects:
+            if cur_project and project == cur_project:
+                select.append(tag.option(project, value=project, selected="selected"))
             else:
-                select.append(tag.option(component[1], value=component[1]))
+                select.append(tag.option(project, value=project))
         return select
