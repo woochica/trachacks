@@ -6,6 +6,7 @@
 from model import *
 from environmentSetup import *
 from admin import *
+from admin_component import *
 from milestone import *
 from roadmap import *
 from ticket import *

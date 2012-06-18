@@ -16,15 +16,15 @@
 
       <form id="prefs" method="get" action="">
         <div>
-          <input type="hidden" name="show" id="showall" value="all" />
-          <input type="checkbox" id="hideversions" name="show" value="hideversions"
-                 checked="${'hideversions' in show or None}" />
-          <label for="hideversions">${_('Hide versions')}</label>
+          <input type="hidden" name="hide" id="hideall" value="none" />
+          <input type="checkbox" id="hideversions" name="hide" value="versions"
+                 checked="${'versions' in hide or None}" />
+          <label for="versions">${_('Hide versions')}</label>
         </div>
         <div>
-          <input type="checkbox" id="hidemilestones" name="show" value="hidemilestones"
-                 checked="${'hidemilestones' in show or None}" />
-          <label for="hidemilestones">Hide milestones</label>
+          <input type="checkbox" id="hidemilestones" name="hide" value="milestones"
+                 checked="${'milestones' in hide or None}" />
+          <label for="milestones">${_('Hide milestones')}</label>
         </div>
         <hr size="1"/>
         <div>

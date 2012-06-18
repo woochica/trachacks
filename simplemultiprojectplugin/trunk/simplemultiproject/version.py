@@ -125,18 +125,18 @@ class SmpVersionProject(Component):
         
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/roadmap'):
-            show            = smp_settings(req, 'roadmap', 'show', None)
+            hide            = smp_settings(req, 'roadmap', 'hide', None)
             filter_projects = smp_filter_settings(req, 'roadmap', 'projects')
             
-            if show:
-                data['show'] = show
+            if hide:
+                data['hide'] = hide
                 
-            if not show or 'hideversions' not in show:
+            if not hide or 'versions' not in hide:
                 versions, version_stats = self._versions_and_stats(req, filter_projects)
                 data['versions'] = versions
                 data['version_stats'] = version_stats
             
-            if show and 'hidemilestones' in show:
+            if hide and 'milestones' in hide:
                 data['milestones'] = []
                 data['milestone_stats'] = []
                 
@@ -199,13 +199,13 @@ class SmpVersionProject(Component):
                        
     def _do_delete(self, req, version):
         req.perm.require('MILESTONE_DELETE')
-
+        version_name = version.name
         version.delete()
 
-        self.__SmpModel.delete_version_project(version.name)
+        self.__SmpModel.delete_version_project(version_name)
 
         add_notice(req, _('The version "%(name)s" has been deleted.',
-                          name=version.name))
+                          name=version_name))
         req.redirect(req.href.roadmap())
 
     def _do_save(self, req, db, version):

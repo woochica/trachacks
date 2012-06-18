@@ -13,7 +13,7 @@ from trac.db import Table, Column, DatabaseManager
 
 # Database schema variables
 db_version_key = 'simplemultiproject_version'
-db_version = 2
+db_version = 3
 
 tables = [
     Table('smp_project', key = 'id') [
@@ -33,6 +33,15 @@ tables_v2 = [
     Table('smp_version_project',key = 'id') [
         Column('id', type = 'integer', auto_increment = True),
         Column('version',type = 'varchar'),
+        Column('id_project',type = 'integer')
+    ],
+]
+
+tables_v3 = [
+    # Added with version 3
+    Table('smp_component_project',key = 'id') [
+        Column('id', type = 'integer', auto_increment = True),
+        Column('component',type = 'varchar'),
         Column('id_project',type = 'integer')
     ],
 ]
@@ -112,3 +121,13 @@ class smpEnvironmentSetupParticipant(Component):
             sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
             cursor.execute(sqlInsertVersion)
             db_installed_version = 2
+
+        if db_installed_version < 3:
+            # Create tables
+            for table in tables_v3:
+                for statement in db_connector.to_sql(table):
+                    cursor.execute(statement)
+                    
+            sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
+            cursor.execute(sqlInsertVersion)
+            db_installed_version = 3

@@ -116,7 +116,7 @@ class SmpAdminPanel(Component):
 
     def get_admin_panels(self, req):
         if 'PROJECT_ADMIN' in req.perm('projects'):
-            yield ('projects', _('Manage Projects'), 'simplemultiproject', 'Projects')
+            yield ('projects', _('Manage Projects'), 'simplemultiproject', _('Projects'))
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename

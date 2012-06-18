@@ -58,6 +58,25 @@ class SmpModel(Component):
         cursor.execute(query)
         return  cursor.fetchall()
 
+    def get_project_name(self, project_id):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        name
+                   FROM
+                        smp_project
+                   WHERE
+                        id_project=%s""" % str(project_id)
+        
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        if result:
+            name = result[0]
+        else:
+            name = None
+
+        return name
+
     # AdminPanel Methods
     def insert_project(self, name, description):
         cursor = self.__get_cursor()
@@ -278,24 +297,94 @@ class SmpModel(Component):
         cursor.execute(query)
         self.__start_transacction()
 
-    def get_id_project_version(self,version):
-        cursor = self.__get_cursor()
-        query = """SELECT
-                        id_project
-                   FROM
-                        smp_version_project
-                   WHERE
-                        version='%s';""" % (version)
-
-        cursor.execute(query)
-        return cursor.fetchone()
-
     def rename_version_project(self,old_version,new_version):
         cursor = self.__get_cursor()
         query = '''UPDATE
                         smp_version_project
                    SET
                         version='%s' WHERE version='%s';''' % (new_version,old_version)
+
+        cursor.execute(query)
+        self.__start_transacction()
+
+    # ComponentProject Methods
+    def insert_component_projects(self, component, id_projects):
+        cursor = self.__get_cursor()
+                 
+        for id_project in id_projects:
+            query = "INSERT INTO smp_component_project(component, id_project) VALUES ('%s', %s)" % (component, id_project)
+            cursor.execute(query)
+            
+        self.__start_transacction()
+
+    def get_components_of_project(self,project):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        m.component AS component
+                   FROM
+                        smp_project AS p,
+                        smp_component_project AS m
+                   WHERE
+                        p.name = '%s' AND
+                        p.id_project = m.id_project""" % (project)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def get_components_for_projectid(self,projectid):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        component
+                   FROM
+                        smp_component_project
+                   WHERE
+                        id_project = %i""" % (projectid)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def get_projects_component(self,component):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        name
+                   FROM
+                        smp_project AS p,
+                        smp_component_project AS m
+                   WHERE
+                        m.component='%s' and
+                        m.id_project = p.id_project""" % (component)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def get_id_projects_component(self,component):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        id_project
+                   FROM
+                        smp_component_project
+                   WHERE
+                        component='%s';""" % (component)
+
+        cursor.execute(query)
+        return cursor.fetchall()
+
+    def delete_component_projects(self,component):
+        cursor = self.__get_cursor()
+        query = """DELETE FROM
+                        smp_component_project
+                   WHERE
+                        component='%s';""" % (component)
+
+        cursor.execute(query)
+        self.__start_transacction()
+
+    def rename_component_project(self,old_component,new_component):
+        cursor = self.__get_cursor()
+        query = '''UPDATE
+                        smp_component_project
+                   SET
+                        component='%s' WHERE component='%s';''' % (new_component,old_component)
 
         cursor.execute(query)
         self.__start_transacction()
