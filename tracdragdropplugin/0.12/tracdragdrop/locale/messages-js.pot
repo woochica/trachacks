@@ -7,95 +7,99 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracDragDrop 0.12.0.8\n"
+"Project-Id-Version: TracDragDrop 0.12.0.9\n"
 "Report-Msgid-Bugs-To: jun66j5@gmail.com\n"
-"POT-Creation-Date: 2012-06-02 11:21+0900\n"
+"POT-Creation-Date: 2012-06-18 02:44+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 0.9.5\n"
+"Generated-By: Babel 0.9.6\n"
 
-#: tracdragdrop/htdocs/tracdragdrop.js:122
+#: tracdragdrop/htdocs/tracdragdrop.js:192
 msgid "Paste an image to attach"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:170
-#: tracdragdrop/htdocs/tracdragdrop.js:192
+#: tracdragdrop/htdocs/tracdragdrop.js:223
+#: tracdragdrop/htdocs/tracdragdrop.js:247
 msgid "No available image on your clipboard"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:213
-#: tracdragdrop/htdocs/tracdragdrop.js:250
+#: tracdragdrop/htdocs/tracdragdrop.js:268
+#: tracdragdrop/htdocs/tracdragdrop.js:305
 #, python-format
 msgid "Cannot load an image from '%(src)s'."
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:222
+#: tracdragdrop/htdocs/tracdragdrop.js:277
 msgid ""
 "You can attach an image from your clipboard directly with CTRL-V or "
 "\"Paste\" on the context menu."
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:287
+#: tracdragdrop/htdocs/tracdragdrop.js:342
 #, python-format
 msgid "Exceeded maximum allowed file size (%(size)s bytes)"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:291
+#: tracdragdrop/htdocs/tracdragdrop.js:346
 msgid "Can't upload empty file"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:317
+#: tracdragdrop/htdocs/tracdragdrop.js:372
 msgid "Canceled"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:340
+#: tracdragdrop/htdocs/tracdragdrop.js:395
 #, python-format
 msgid "Uploaded %(percent)s%%"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:367
-#: tracdragdrop/htdocs/tracdragdrop.js:570
+#: tracdragdrop/htdocs/tracdragdrop.js:423
+#: tracdragdrop/htdocs/tracdragdrop.js:629
 msgid "Uploading..."
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:379
+#: tracdragdrop/htdocs/tracdragdrop.js:435
 msgid "Timed out"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:382
+#: tracdragdrop/htdocs/tracdragdrop.js:438
 msgid "Aborted"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:470
+#: tracdragdrop/htdocs/tracdragdrop.js:527
 msgid "Add Attachment"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:502
+#: tracdragdrop/htdocs/tracdragdrop.js:559
 msgid "You may use drag and drop here."
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:611
+#: tracdragdrop/htdocs/tracdragdrop.js:669
 msgid "Delete attachment"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:617
+#: tracdragdrop/htdocs/tracdragdrop.js:675
 #, python-format
 msgid "Are you sure you want to delete '%(name)s'?"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:651
+#: tracdragdrop/htdocs/tracdragdrop.js:709
 msgid "TracLink"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:651
+#: tracdragdrop/htdocs/tracdragdrop.js:709
 msgid "Image macro"
 msgstr ""
 
-#: tracdragdrop/htdocs/tracdragdrop.js:712
+#: tracdragdrop/htdocs/tracdragdrop.js:808
 msgid "Drop files to attach"
+msgstr ""
+
+#: tracdragdrop/htdocs/tracdragdrop.js:886
+msgid "No available image in the dropped data"
 msgstr ""
 

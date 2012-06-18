@@ -56,6 +56,9 @@ jQuery(document).ready(function($) {
     var hasFileReader = !!window.FileReader;
     var hasFormData = !!window.FormData;
     var hasDragAndDrop = xhrHasUpload && hasFileReader;
+    var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder ||
+                      window.MozBlobBuilder || window.MSBlobBuilder ||
+                      undefined;
     var containers = {list: null, queue: null, dropdown: null};
     var queueItems = [];
     var queueCount = 0;
@@ -146,8 +149,7 @@ jQuery(document).ready(function($) {
         attachments.removeClass('collapsed');
     }
 
-    function createPasteArea(form) {
-        var message = _("Paste an image to attach");
+    function generateFilenamePrefix(now) {
         function pad0(val, size) {
             var pad;
             switch (size) {
@@ -156,6 +158,38 @@ jQuery(document).ready(function($) {
             }
             return (pad + val).slice(-size);
         }
+        now = now || new Date();
+        now = {year: now.getFullYear(), month: now.getMonth() + 1,
+               date: now.getDate(), hours: now.getHours(),
+               minutes: now.getMinutes(), seconds: now.getSeconds()};
+        return [
+            'image-',
+            pad0(now.year, 4), pad0(now.month, 2), pad0(now.date, 2),
+            '-',
+            pad0(now.hours, 2), pad0(now.minutes, 2), pad0(now.seconds, 2),
+        ].join('');
+    }
+
+    function generateFilename(prefix, mimetype, n) {
+        var suffix;
+        switch (mimetype) {
+        case 'image/png':
+        case 'image/jpeg':
+        case 'image/gif':
+            suffix = '.' + mimetype.substring(6);
+            break;
+        default:
+            suffix = mimetype.substring(0, 6) === 'image/'
+                   ? '.' + mimetype.substring(6)
+                   : '.dat';
+            break;
+        }
+        return n === undefined ? (prefix + suffix)
+                               : (prefix + '-' + n + suffix);
+    }
+
+    function createPasteArea(form) {
+        var message = _("Paste an image to attach");
         var events = {};
         events.mouseenter = function() { $(this).focus() };
         events.focus = function() {
@@ -173,16 +207,7 @@ jQuery(document).ready(function($) {
         };
         events.paste = function(event) {
             var editable = $(this);
-            var now = new Date();
-            now = {year: now.getFullYear(), month: now.getMonth() + 1,
-                   date: now.getDate(), hours: now.getHours(),
-                   minutes: now.getMinutes(), seconds: now.getSeconds()};
-            var prefix = [
-                'image-',
-                pad0(now.year, 4), pad0(now.month, 2), pad0(now.date, 2),
-                '-',
-                pad0(now.hours, 2), pad0(now.minutes, 2), pad0(now.seconds, 2),
-            ].join('');
+            var prefix = generateFilenamePrefix();
 
             if (event.originalEvent.clipboardData &&
                 event.originalEvent.clipboardData.items)
@@ -198,11 +223,13 @@ jQuery(document).ready(function($) {
                     alert(_("No available image on your clipboard"));
                     return false;
                 case 1:
-                    prepareUploadItem(images[0], {filename: prefix + '.png'});
+                    var filename = generateFilename(prefix, images[0].type);
+                    prepareUploadItem(images[0], {filename: filename});
                     break;
                 default:
                     $.each(images, function(idx, image) {
-                        var filename = prefix + '-' + (idx + 1) + '.png';
+                        var filename = generateFilename(prefix, image.type,
+                                                        idx + 1);
                         prepareUploadItem(image, {filename: filename});
                     });
                     break;
@@ -736,6 +763,44 @@ jQuery(document).ready(function($) {
         containers.dropdown = dropdown;
     }
 
+    function convertBlobsFromUriList(urilist) {
+        var items = [];
+        var re = /^data:([^,;]+)((?:;[^;,]*)*),([^\n]*)/;
+        $.each(urilist.split(/\n/), function(idx, line) {
+            var match = re.exec(line);
+            if (!match) {
+                return;
+            }
+            var mimetype = match[1].toLowerCase();
+            switch (mimetype) {
+            case 'image/png':
+            case 'image/jpeg':
+            case 'image/gif':
+                break;
+            default:
+                return;
+            }
+            var attrs = match[2].substring(1);
+            var body = match[3];
+            $.each(attrs.split(/;/), function(idx, val) {
+                switch (val) {
+                case 'base64':
+                    body = atob(body);
+                    break;
+                }
+            });
+            var length = body.length;
+            var buffer = new Uint8Array(length);
+            for (var i = 0; i < length; i++) {
+                buffer[i] = body.charCodeAt(i);
+            }
+            var builder = new BlobBuilder();
+            builder.append(buffer.buffer);
+            items.push(builder.getBlob(mimetype));
+        });
+        return items;
+    }
+
     function prepareDragEvents() {
         var body = document.body;
         var elements = $('html');
@@ -747,34 +812,41 @@ jQuery(document).ready(function($) {
                                  .hide()
                                  .click(function() { effect.hide() })
                                  .appendTo(body);
-        var dragging = false;
+        var dragging = undefined;
         var events = {};
+        var type;
+        events.dragstart = function(event) { dragging = false };
+        events.dragend = function(event) { dragging = undefined };
         events.dragenter = function(event) {
-            if (dragging !== true) {
+            if (dragging === undefined) {
                 var transfer = event.originalEvent.dataTransfer;
                 var found;
-                $.each(transfer.types, function() {
-                    switch ('' + this) {
-                    case 'text/html':
-                    case 'text/plain':
-                        return false;
+                $.each(transfer.types, function(idx, type) {
+                    type = '' + type;
+                    switch (type) {
                     case 'Files':
                     case 'application/x-moz-file':
-                        found = true;
+                        found = type;
                         return false;
+                    case 'text/uri-list':
+                        if (BlobBuilder) {
+                            found = type;
+                        }
+                        break;
                     }
                 });
-                if (found !== true) {
+                if (found === undefined) {
                     return;
                 }
                 dragging = true;
+                type = found;
                 effect.show();
             }
-            return false;
+            return !dragging;
         };
         events.dragleave = function(event) {
             if (dragging === true && event.target === mask.get(0)) {
-                dragging = false;
+                dragging = undefined;
                 effect.hide();
             }
         };
@@ -783,14 +855,42 @@ jQuery(document).ready(function($) {
             if (dragging !== true) {
                 return;
             }
-            dragging = false;
+            dragging = undefined;
             effect.hide();
-            var files = event.originalEvent.dataTransfer.files;
-            if (files.length === 0) {
-                return;
+            var items;
+            var transfer = event.originalEvent.dataTransfer;
+            switch (type) {
+            case 'Files':
+            case 'application/x-moz-file':
+                items = transfer.files;
+                $.each(items, function() { prepareUploadItem(this) });
+                break;
+            case 'text/uri-list':
+                var uris = transfer.getData(type);
+                var prefix = generateFilenamePrefix();
+                items = convertBlobsFromUriList(uris);
+                switch (items.length) {
+                case 1:
+                    var filename = generateFilename(prefix, items[0].type);
+                    prepareUploadItem(items[0], {filename: filename});
+                    break;
+                default:
+                    $.each(items, function(idx, item) {
+                        var filename = generateFilename(prefix, item.type,
+                                                        idx + 1);
+                        prepareUploadItem(item, {filename: filename});
+                    });
+                    break;
+                }
+                break;
             }
-            $.each(files, function() { prepareUploadItem(this) });
-            startUpload();
+            if (items.length !== 0) {
+                startUpload();
+            }
+            else {
+                alert(_("No available image in the dropped data"));
+            }
+            items = undefined;
             return false;
         };
         elements.bind(events);
