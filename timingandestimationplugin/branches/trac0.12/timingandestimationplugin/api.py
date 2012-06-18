@@ -4,7 +4,6 @@ import time
 from tande_filters import *
 from ticket_daemon import *
 from usermanual import *
-from trac.log import logger_factory
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant

@@ -1,6 +1,5 @@
 import re
 from trac.web.api import ITemplateStreamFilter
-from trac.log import logger_factory
 from trac.core import *
 from genshi.builder import tag
 from trac.web import IRequestHandler

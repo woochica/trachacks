@@ -5,7 +5,6 @@ import time
 import datetime
 import dbhelper
 from usermanual import *
-from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler
 from trac.util import Markup
