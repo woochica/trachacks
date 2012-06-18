@@ -8,7 +8,6 @@ from ticket_daemon import *
 from ticket_webui import *
 from usermanual import *
 from ticket_policy import *
-from trac.log import logger_factory
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
