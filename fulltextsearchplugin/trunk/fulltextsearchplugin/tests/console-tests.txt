@@ -1,0 +1,13 @@
+===== test_optimize =====
+===== test_reindex_milestone =====
+Wiping search index and re-indexing all items in realms: milestone
+Indexing finished
+===== test_reindex_unknown =====
+Wiping search index and re-indexing all items in realms: unknown_realm
+TracError: These realms are not supported by FullTextSearch: unknown_realm
+===== test_remove_all =====
+===== test_remove_all_empty =====
+===== test_remove_milestone =====
+===== test_remove_milestone_empty =====
+===== test_remove_unknown_realm =====
+TracError: These realms are not supported by FullTextSearch: unknown_realm

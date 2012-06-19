@@ -1,0 +1,288 @@
+SVN-fs-dump-format-version: 2
+
+UUID: e119ab8d-cc54-4e32-b402-1426727afab5
+
+Revision-number: 0
+Prop-content-length: 56
+Content-length: 56
+
+K 8
+svn:date
+V 27
+2012-01-26T12:53:34.478042Z
+PROPS-END
+
+Revision-number: 1
+Prop-content-length: 113
+Content-length: 113
+
+K 10
+svn:author
+V 6
+system
+K 8
+svn:date
+V 27
+2012-01-26T12:53:34.935885Z
+K 7
+svn:log
+V 12
+Create trunk
+PROPS-END
+
+Node-path: trunk
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 2
+Prop-content-length: 116
+Content-length: 116
+
+K 10
+svn:author
+V 6
+system
+K 8
+svn:date
+V 27
+2012-01-26T12:53:35.728112Z
+K 7
+svn:log
+V 15
+Create branches
+PROPS-END
+
+Node-path: branches
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 3
+Prop-content-length: 112
+Content-length: 112
+
+K 10
+svn:author
+V 6
+system
+K 8
+svn:date
+V 27
+2012-01-26T12:53:36.205165Z
+K 7
+svn:log
+V 11
+Create tags
+PROPS-END
+
+Node-path: tags
+Node-kind: dir
+Node-action: add
+Prop-content-length: 10
+Content-length: 10
+
+PROPS-END
+
+
+Revision-number: 4
+Prop-content-length: 105
+Content-length: 105
+
+K 10
+svn:author
+V 7
+enmarkp
+K 8
+svn:date
+V 27
+2012-01-26T12:56:27.104619Z
+K 7
+svn:log
+V 4
+mook
+PROPS-END
+
+Node-path: apa.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 10
+Text-content-md5: 3ad28d90a6a39f66295e2f5a2996620f
+Text-content-sha1: de0712c8b5a3033cc8296c1f1395fc1561caa9ee
+Content-length: 20
+
+PROPS-END
+hej
+dåre
+
+
+Node-path: sig.html
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 495
+Text-content-md5: 19ab693c8f375ede1e78653a662f58d8
+Text-content-sha1: 1b40af92157e08bb538e653901968f9579f93452
+Content-length: 505
+
+PROPS-END
+<div style="font-family:verdana,helvetica,sans-serif;font-size:9pt;color:rgb(162,151,145)">
+<strong>Pontus Enmark</strong> | Software Engineer #define<br>
+Application Management | Logica Sweden<br>
+Tegsplan 2B, 90420 Umeå | Sweden<br>
+T: +46 90 15 91 72 | M: +46 73 820 01 72<br>
+<a style="color:rgb(162,151,145) !important" href="mailto:pontus.enmark@logica.com">pontus.enmark@logica.com</a> |
+<a style="color:rgb(162,151,145) !important" href="http://www.logica.se">www.logica.se</a>
+</div>
+
+
+
+Revision-number: 5
+Prop-content-length: 107
+Content-length: 107
+
+K 10
+svn:author
+V 7
+enmarkp
+K 8
+svn:date
+V 27
+2012-02-06T10:47:06.483566Z
+K 7
+svn:log
+V 6
+Hoppla
+PROPS-END
+
+Node-path: trunk/mook.txt
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 13
+Text-content-md5: 95bc96da6da57799a35f00804480f680
+Text-content-sha1: a88a846ae47dadadf6266b24fad4fb32f7d77c08
+Content-length: 23
+
+PROPS-END
+banjo!
+banjo
+
+
+Revision-number: 6
+Prop-content-length: 108
+Content-length: 108
+
+K 10
+svn:author
+V 7
+enmarkp
+K 8
+svn:date
+V 27
+2012-02-06T12:22:30.991237Z
+K 7
+svn:log
+V 7
+Tag 0.1
+PROPS-END
+
+Node-path: tags/0.1
+Node-kind: dir
+Node-action: add
+Node-copyfrom-rev: 3
+Node-copyfrom-path: trunk
+
+
+Node-path: tags/0.1/mook.txt
+Node-kind: file
+Node-action: add
+Node-copyfrom-rev: 5
+Node-copyfrom-path: trunk/mook.txt
+Text-copy-source-md5: 95bc96da6da57799a35f00804480f680
+Text-copy-source-sha1: a88a846ae47dadadf6266b24fad4fb32f7d77c08
+
+
+Revision-number: 7
+Prop-content-length: 120
+Content-length: 120
+
+K 10
+svn:author
+V 7
+enmarkp
+K 8
+svn:date
+V 27
+2012-02-06T12:36:52.503070Z
+K 7
+svn:log
+V 18
+Add a unicode file
+PROPS-END
+
+Node-path: trunk/üniköd.html
+Node-kind: file
+Node-action: add
+Prop-content-length: 10
+Text-content-length: 4966
+Text-content-md5: c7d47fbf1882acee1eb737fd97d520cc
+Text-content-sha1: 138d28301b942fed701b5a29e3f30e96408f45e2
+Content-length: 4976
+
+PROPS-END
+<!doctype html>
+<html>
+<head><title>Unicode</title>
+</head>
+<body>
+<h1>Lorem Ipsum Unicode</h1>
+<p>(<a href="http://www.apfeltalk.de/forum/lorem-ipsum-unicode-t136488.html">Lorem Ipsum Unicode</a>)</p>
+<p>Da ich immer wieder mal Schriftarten auf ihre Ausstattung prüfen muss/möchte, habe ich irgendwann angefangen, mir einen Blindtext aufzusetzen, der über die läppischen sechsundzwanzig Buchstaben des lateinischen Alphabets hinausgeht (oder sind es noch weniger?). Leider war ich etwas faul, alle Sprachen durchzuackern. Aber vielleicht kann hier ja ein kleiner Austausch statt finden :)
+Ergänzungen und Korrekturen sind also erwünscht! Besonders beim letzten Beispiel bin ich mir nicht sehr sicher (kann (noch) kein Griechisch) und beim Beispiel für romanische Sprachen war ich vermutlich auch nicht sehr fleißig/konsequent.
+In der Hoffnung, dass das hier im AT jetzt alles richtig codiert angezeigt wird:</p>
+
+<h2>Lorem Ipsum Normal (inkl. Satzzeichen)</h2>
+<p>
+Lorem ipsum dolor sit amet, consetetur sadipscing elitr; sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, ¿sed diam voluptua? »At vero eos et accusam et ›justo‹ duo dolores et ea rebum.« „Stet clita kasd gubergren, no sea ‚takimata sanctus est‘ Lorem ipsum dolor sit amet.“ Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy “eirmod tempor” invidunt ut labore et dolore magna aliquyam erat, ¡sed diam voluptua!</p>
+
+<h2>Ziffern und Währungssymbole</h2>
+<p>123£, 456¥ 78$, 90€</p>
+
+<h2>Lorem Ipsum für nordeuropäische Sprachen</h2>
+<p>
+Nordeuropäische Sprachen: Duis autem vel äum iriure dolör in hendrerit in vulputate velit esse moleßtie consequat, vel illum dolore eu feugiåt nülla facilisis at verø eros et accumsan et iusto odio dignissim qui blandit præsent luptatum zzril delenit augue duis dolœre te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.</p>
+
+<h2>Lorem Ipsum für slawische Sprachen</h2>
+<p>
+Slawische Sprachen: Ši wiši enim ađ minim věniam, quis nostrud exerić tation ullamcořper suščipit lobortis niž ut ąliquip ęx eä commodo consequat. Đuis autem veł eum iriure dolor in heńdrerit ín vulputáte velit ésse moleśtie conźequat. Čim illum ďolóre eu feugiat ňulla facilisis at veŕo eroź et áccumsan et iusto ôdio dignissim. Ćui blandit praeżent luptatum Žril deleniť Ťaugue důis dolore tý feugait núlla facilisi.</p>
+
+<h2>Lorem Ipsum für romanische Sprachen</h2>
+<p>
+Romanische Sprachen: Nam líber tiëmpor cum soluta nobis élèifend option coñgue nihil imperdiet doming id quod maçim placerat, ¡fãcer possim assum! Lorem ipsum dolor sit ámet, ¿consectetuer ãdipiscing elit? Sed diàm nõnñmmy nibh euismod tıncidunt ut laoreet dolore magnæ aliquam erat volutpat. Ut wısi enim ad minim veniam, quis nœstrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat.</p>
+
+<h2>Lorem Ipsum für kyrillische Schrift</h2>
+<p>
+Истории исправляя поставлять не мы, того платформу Њраспоряженияњ без от, означает Љслучается љвоздействий то дни. Было ђнанять Ђшеф Шдо. Во чем весьма заложенным. Очередь найденных постигнет Жты нее, жвою ажиотажа остальных во где, проћ улице Ћостальным по. Его то направо Чдействий образованиеч.</p>
+
+<h2>Lorem Ipsum für griechische Schrift</h2>
+<p>
+Ως σύστημα τεσσαρών περισσότερες σας, ώρα τρόποι δεδομένη τη. Τα εγώ σωστά κειμένων ανακαλύπτεις, κι πάρα μπαίνοντας χαρακτηριστικό ώρα. Σε τον έτσι πολλοί. Μηχανής λιγότερο τι νέο, κι τρόποι συγγραφής αντιλήφθηκαν για'. Ας που δούλευε αναζήτησης μεταγλωτιστής, μερικούς εξαρτάται που μη.</p>
+
+<h2>Lorem Ipsum für arabische Schrift</h2>
+<p dir="rtl">
+بـ دنو وعُرفت بالفشل, أي هُزم بالرّغم والعتاد دنو, في الحكم يونيو والكساد جهة. أي فصل مشارف السيء استمرار, في عدد بعتادهم اليابان ناجازاكي, كلا من يقوم والبريطاني. بها مع الأمم باستسلام, هذا ويعزى لفرنسا مسؤولية لم. إذ ذات أصقاع ديسمبر, زهاء يتبقّ تكاليف تعد ان. خيار الأجل الجنوب بحث أم, حرب انتهت واُسدل الصعداء أم. هذه أي الشتوية بريطانيا،, بوزيرها الدنمارك لم قب.
+</p>
+</body>
+</html>
+
+
