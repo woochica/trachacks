@@ -13,30 +13,31 @@
   <body>
     <div id="content" class="roadmap">
       <h1>Roadmap</h1>
-
       <form id="prefs" method="get" action="">
-        <div>
-          <input type="hidden" name="hide" id="hideall" value="none" />
-          <input type="checkbox" id="hideversions" name="hide" value="versions"
-                 checked="${'versions' in hide or None}" />
-          <label for="versions">${_('Hide versions')}</label>
-        </div>
-        <div>
-          <input type="checkbox" id="hidemilestones" name="hide" value="milestones"
-                 checked="${'milestones' in hide or None}" />
-          <label for="milestones">${_('Hide milestones')}</label>
-        </div>
-        <hr size="1"/>
-        <div>
-          <input type="checkbox" id="showcompleted" name="show" value="completed"
-                 checked="${'completed' in show or None}" />
-          <label for="showcompleted">Show completed milestones</label>
-        </div>
-        <div>
-          <input type="checkbox" id="hidenoduedate" name="show" value="noduedate"
-                 checked="${'noduedate' in show or None}" />
-          <label for="hidenoduedate">Hide milestones with no due date</label>
-        </div>
+        <fieldset>
+            <div>
+              <input type="hidden" name="hide" id="hideall" value="none" />
+              <input type="checkbox" id="hideversions" name="hide" value="versions"
+                     checked="${'versions' in hide or None}" />
+              <label for="versions">${_('Hide versions')}</label>
+            </div>
+            <div>
+              <input type="checkbox" id="hidemilestones" name="hide" value="milestones"
+                     checked="${'milestones' in hide or None}" />
+              <label for="milestones">${_('Hide milestones')}</label>
+            </div>
+            <br/>
+            <div>
+              <input type="checkbox" id="showcompleted" name="show" value="completed"
+                     checked="${'completed' in show or None}" />
+              <label for="showcompleted">Show completed milestones</label>
+            </div>
+            <div>
+              <input type="checkbox" id="hidenoduedate" name="show" value="noduedate"
+                     checked="${'noduedate' in show or None}" />
+              <label for="hidenoduedate">Hide milestones with no due date</label>
+            </div>
+        </fieldset>
         <div class="buttons">
           <input type="submit" value="${_('Update')}" />
         </div>

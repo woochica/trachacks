@@ -58,8 +58,8 @@ class SmpRoadmapProjectFilter(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if filename.startswith("roadmap"):
             filter_projects = smp_filter_settings(req, 'roadmap', 'projects')
-            filter = Transformer('//form[@id="prefs"]/div[1]')
-            stream = stream | filter.before(tag.label("Filter Projects:")) | filter.before(tag.br()) | filter.before(self._projects_field_input(req, filter_projects)) | filter.before(tag.br()) | filter.before(tag.br())
+            filter = Transformer('//form[@id="prefs"]/fieldset/div[1]')
+            stream = stream | filter.before(tag.label("Filter Projects:")) | filter.before(tag.br()) | filter.before(self._projects_field_input(req, filter_projects)) | filter.before(tag.br())
 
         return stream
 
@@ -77,6 +77,7 @@ class SmpRoadmapProjectFilter(Component):
                 select.append(tag.option(project, value=project, selected="selected"))
             else:
                 select.append(tag.option(project, value=project))
+
         return select
 
 class SmpRoadmapProject(Component):
