@@ -55,7 +55,7 @@ jQuery(document).ready(function($) {
             label_th.attr("class", col_class);                             // fix the column class
             $('tr:last', table).append(label_th);
 
-            var value_td = $('#' + field_id).parent();                     // get the <td>
+            var value_td = $('td').has('#' + field_id);                     // get the <td>
             if (columns == 1) {
                 value_td.attr("class", "fullrow");
             } else {
@@ -65,7 +65,5 @@ jQuery(document).ready(function($) {
         }
     }
 
-    $('td:empty').remove();
-    $('th:empty').remove();
     $('tr:empty').remove();
 });
