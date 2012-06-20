@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import sets
-
 from tracdownloads.api import *
 from trac.core import *
 from trac.resource import *
