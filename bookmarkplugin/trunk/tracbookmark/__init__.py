@@ -5,7 +5,7 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web.api import IRequestFilter, IRequestHandler, Href
 from trac.web.chrome import ITemplateProvider, add_stylesheet, \
                             add_script, add_notice
-from trac.resource import Resource, get_resource_description
+from trac.resource import Resource, get_resource_description, get_resource_shortname, get_resource_summary
 from trac.db import DatabaseManager, Table, Column
 from trac.perm import IPermissionRequestor
 from trac.util import get_reporter_id
@@ -210,13 +210,13 @@ class BookmarkSystem(Component):
             resource = Resource(realm, path[2])
             if resource:
                 if realm == 'ticket':
-                    linkname = get_resource_description(self.env, resource, 'compact')
-                    name = get_resource_description(self.env, resource, 'summary')
+                    linkname = get_resource_shortname(self.env, resource)
+                    name = get_resource_summary(self.env, resource)
                 elif realm == 'milestone':
-                    linkname = get_resource_description(self.env, resource, 'compact')
+                    linkname = get_resource_shortname(self.env, resource)
                 elif realm == 'wiki':
                     resource = Resource(realm, '/'.join(path[2:]))
-                    linkname = get_resource_description(self.env, resource, 'compact')
+                    linkname = get_resource_shortname(self.env, resource)
                 elif realm == 'report':
                     linkname = "{%s}" % path[2]
                     name = self._format_report_name(path[2])
@@ -228,18 +228,17 @@ class BookmarkSystem(Component):
                     name = get_resource_description(self.env, resource)
                 elif realm == 'browser':
                     parent = Resource('source', path[2])
-                    self.env.log.debug("==============================> %s" % "/".join(path[3:]))
                     resource = Resource('source', '/'.join(path[3:]), False, parent)
                     linkname = get_resource_description(self.env, resource)
-                    name = get_resource_description(self.env, resource, 'summary')
+                    name = get_resource_summary(self.env, resource)
                 elif realm == 'attachment':
                     parent = Resource(path[2], '/'.join(path[3:-1]))
                     resource = Resource(realm, path[-1], False, parent)
-                    linkname = get_resource_description(self.env, resource, 'compact')
-                    name = get_resource_description(self.env, resource, 'summary')
+                    linkname = get_resource_shortname(self.env, resource)
+                    name = get_resource_summary(self.env, resource)
                 else:
-                    linkname = get_resource_description(self.env, resource, 'compact')
-                    name = get_resource_description(self.env, resource, 'summary')
+                    linkname = get_resource_shortname(self.env, resource)
+                    name = get_resource_summary(self.env, resource)
         elif len(path) == 2 and path[1]:
             linkname = path[1].capitalize()
         else:
