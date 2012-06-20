@@ -1,12 +1,3 @@
-Array.prototype.has = function(v) {
-    for (var i = 0; i < this.length; i++) {
-        if (this[i] == v) {
-            return true;
-        }
-    }
-    return false;
-} 
-
 function smp_updateSelect(id, newOptions, selectedOption)
 {
     var field_id = '#field-' + id;
@@ -24,7 +15,7 @@ function smp_updateSelect(id, newOptions, selectedOption)
     });
 
     if (selectedOption) {
-        if (!newOptions[selectedOption] && !newOptions.has(selectedOption)) {
+        if (!newOptions[selectedOption] && $.inArray(selectedOption, newOptions) == -1) {
             options[options.length] = new Option(selectedOption, selectedOption, true, true);
         } else {
             var option = $(field_id + ' option:contains("' + selectedOption + '")');
@@ -61,7 +52,7 @@ function smp_onProjectChange(project)
     
     for (var i = 0; i < components.length; i++) {
         var comp = components[i];
-        if (!smp_component_projects[comp] || smp_component_projects[comp].has(project)) {
+        if (!smp_component_projects[comp] || $.inArray(project, smp_component_projects[comp]) != -1) {
             filtered_components.push(comp)
         }
     }
