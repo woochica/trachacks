@@ -23,6 +23,7 @@ setup(
     author = 'thomasd',
     author_email='tdoering@baumer.com',
     license = "BSD 3-Clause",
+    url='http://trac-hacks.org/wiki/GroupTicketFieldsPlugin',
     description='Group Ticket Fields',
     long_description='Group Ticket Fields',
     keywords='Group Ticket Fields',
