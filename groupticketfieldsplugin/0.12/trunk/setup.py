@@ -22,8 +22,6 @@ setup(
     },
     author = 'thomasd',
     author_email='tdoering@baumer.com',
-    maintainer = 'falkb',
-    maintainer_email='fbrettschneider@baumer.com',
     license = "BSD 3-Clause",
     description='Group Ticket Fields',
     long_description='Group Ticket Fields',
