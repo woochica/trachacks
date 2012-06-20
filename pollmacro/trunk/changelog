@@ -3,5 +3,4 @@ PollMacro 0.3.0 (not yet released) - trunk
  * #8585: ResourceNotFound error if a ticket priority no longer existed in the model.  
  
  new features:
- * 
- 
+ * #7275: Display a message to users when they don't have permission to vote.

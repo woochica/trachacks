@@ -5,9 +5,9 @@ from StringIO import StringIO
 from trac.core import *
 from trac.config import Option
 from trac.perm import IPermissionRequestor
+from trac.resource import ResourceNotFound
 from trac.ticket.model import Ticket, Priority
 from trac.ticket.query import Query
-from trac.resource import ResourceNotFound
 from trac.util import sorted, escape
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import system_message, wiki_to_oneliner
@@ -94,7 +94,10 @@ class Poll(object):
                           '</span>, <span class="voter">'.join(self.votes[id]) +
                           '</span>)</span>')
             out.write('</li>\n')
-        can_vote and out.write('<input type="submit" value="Vote"/>')
+        if can_vote:
+            out.write('<input type="submit" value="Vote"/>')
+        else:
+            out.write("<br/><i>You don't have permission to vote. You may need to login.</i>")
         out.write(' </ul>\n</fieldset>\n')
         can_vote and out.write('</form>\n')
         return out.getvalue()
