@@ -47,8 +47,15 @@ class SmpAdminPanel(Component):
 
     def update_project(self, id, name, description):
         try:
+            # we have to rename the project in tickets custom field
+            old_project_name = self.__SmpModel.get_project_name(id)
+
             self.log.info("Simple Multi Project: Modify project %s" % (name))
             self.__SmpModel.update_project(id, name, description)
+
+            if old_project_name and old_project_name != name:
+                self.__SmpModel.update_custom_ticket_field(old_project_name, name)
+
             return True
         
         except Exception, e:

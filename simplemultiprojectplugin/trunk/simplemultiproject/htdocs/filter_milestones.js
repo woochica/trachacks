@@ -2,17 +2,20 @@ function smp_updateSelect(id, newOptions, selectedOption)
 {
     var field_id = '#field-' + id;
     var select = $(field_id);
-    if(select.prop) {
-      var options = select.prop('options');
+    var options;
+    if (select.prop) {
+        options = select.prop('options');
     }
     else {
-      var options = select.attr('options');
+        options = select.attr('options');
     }
     select.empty();
     
-    $.each(newOptions, function(val, text) {
-        options[options.length] = new Option(text);
-    });
+    if (newOptions) {
+        $.each(newOptions, function(val, text) {
+            options[options.length] = new Option(text);
+        });
+    }
 
     if (selectedOption) {
         if (!newOptions[selectedOption] && $.inArray(selectedOption, newOptions) == -1) {

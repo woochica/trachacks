@@ -77,6 +77,20 @@ class SmpModel(Component):
 
         return name
 
+    def update_custom_ticket_field(self, old_project_name, new_project_name):
+        cursor = self.__get_cursor()
+
+        query    = """UPDATE
+                        ticket_custom
+                      SET
+                        value = '%s'
+                      WHERE
+                        name = 'project' AND value = '%s'""" % (new_project_name, old_project_name)
+
+        cursor.execute(query)
+
+        self.__start_transacction()
+        
     # AdminPanel Methods
     def insert_project(self, name, description):
         cursor = self.__get_cursor()
@@ -97,6 +111,7 @@ class SmpModel(Component):
 
     def update_project(self, id, name, description):
         cursor = self.__get_cursor()
+
         query    = """UPDATE
                         smp_project
                       SET
@@ -104,6 +119,7 @@ class SmpModel(Component):
                       WHERE
                         id_project = '%s'""" % (name, description, id)
         cursor.execute(query)
+
         self.__start_transacction()
 
     # Ticket Methods
