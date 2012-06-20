@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='TracPoll',
-      version='0.2.1',
+      version='0.3.0',
       packages=['tracpoll'],
       entry_points = {'trac.plugins': ['tracpoll = tracpoll']},
       author='Alec Thomas',

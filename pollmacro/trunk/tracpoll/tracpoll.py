@@ -5,10 +5,13 @@ from StringIO import StringIO
 from trac.core import *
 from trac.config import Option
 from trac.perm import IPermissionRequestor
+from trac.ticket.model import Ticket, Priority
+from trac.ticket.query import Query
+from trac.resource import ResourceNotFound
 from trac.util import sorted, escape
-from trac.wiki.formatter import wiki_to_oneliner
-from trac.wiki.macros import WikiMacroBase
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.wiki.formatter import system_message, wiki_to_oneliner
+from trac.wiki.macros import WikiMacroBase
 
 class Poll(object):
     def __init__(self, base_dir, title, vote_defs):
@@ -123,14 +126,16 @@ class PollMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, content):
         req = formatter.req
+        if not content:
+            return system_message("A title must be provided as the first argument to the poll macro")
         content = filter(None, [i.strip() for i in
                                 content.replace(';', '\n').split('\n')])
+        if len(content) < 2:
+            return system_message("One or more options must be provided to vote on.")
         title = content.pop(0)
         return self.render_poll(req, title, content)
 
     def render_poll(self, req, title, votes):
-        from trac.ticket.model import Ticket, Priority
-        from trac.ticket.query import Query
         add_stylesheet(req, 'poll/css/poll.css')
         if not req.perm.has_permission('POLL_VIEW'):
             return ''
@@ -159,7 +164,10 @@ class PollMacro(WikiMacroBase):
                 except Exception:
                     continue
                 summary = ticket['summary'] + ' (#%i)' % id
-                priority = Priority(self.env, ticket['priority']).value
+                try:
+                    priority = Priority(self.env, ticket['priority']).value
+                except ResourceNotFound, e: #this priority name has been removed from model
+                    priority = 0
                 summary = wiki_to_oneliner(summary, self.env, req=req)
 
                 all_votes.append((str(id), "ticket prio%s%s%s" %
