@@ -439,7 +439,7 @@ class MDashboard(Component):
               
                 # Get first date that ticket enter the milestone
                 min_time = min(sorted_events)[0] #in Epoch Seconds
-                begin_date = to_datetime(min_time) 
+                begin_date = to_datetime(min_time).date() 
                 
                 if milestone.completed is not None:
                     end_date = milestone.completed        
