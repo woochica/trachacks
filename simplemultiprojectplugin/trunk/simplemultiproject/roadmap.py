@@ -167,7 +167,7 @@ class SmpRoadmapProject(Component):
 
     def filter_stream(self, req, method, filename, stream, data):
         if filename.startswith("roadmap"):
-            stream_roadmap = HTML(stream)
+            stream_roadmap = HTML(to_unicode(stream))
             stream_milestones = HTML(stream_roadmap.select('//div[@class="roadmap"]/div[@class="milestones"]'))
             
             milestones = self.__extract_milestones_array(stream_milestones.select('//div[@class="milestone"]/div/h2/a/em'))
