@@ -6,7 +6,7 @@
 from trac.core import *
 from trac.util.text import to_unicode
 
-def smp_settings(req, context, kind, name):
+def smp_settings(req, context, kind, name=None):
     
     if name:
         settings_name       = '%s-%s' % (kind, name)
@@ -48,6 +48,18 @@ class SmpModel(Component):
         self.db.close()
 
     # Commons Methods
+    def get_project_info(self, name):
+        cursor = self.__get_cursor()
+        query = """SELECT
+                        id_project,name,description
+                   FROM
+                        smp_project
+                   WHERE
+                        name = '%s'""" % name
+        
+        cursor.execute(query)
+        return  cursor.fetchone()
+        
     def get_all_projects(self):
         cursor = self.__get_cursor()
         query = """SELECT
@@ -327,6 +339,9 @@ class SmpModel(Component):
     def insert_component_projects(self, component, id_projects):
         cursor = self.__get_cursor()
                  
+        if type(id_projects) is not list:
+            id_projects = [id_projects]
+
         for id_project in id_projects:
             query = "INSERT INTO smp_component_project(component, id_project) VALUES ('%s', %s)" % (component, id_project)
             cursor.execute(query)

@@ -52,15 +52,13 @@
                             <thead>
                                 <tr>
                                     <th class="sel">&nbsp;</th>
-                                    <th>Name</th>
-                                    <th>Description</th>
+                                    <th>Name / Description</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr py:for="project in projects">
                                     <td><input type="checkbox" name="sel" value="$project.id" /></td>
-                                    <td><a href="${href.admin('projects','simplemultiproject')}/${project.id}" method="post">${project.name}</a></td>
-                                    <td>${project.description}</td>
+                                    <td><a href="${href.admin('projects','simplemultiproject')}/${project.id}" method="post">${project.name}</a><fieldset py:if="project.description != ''"><legend>Description</legend>${wiki_to_html(context(''), project.description)}</fieldset></td>
                                 </tr>
                             </tbody>
                         </table>

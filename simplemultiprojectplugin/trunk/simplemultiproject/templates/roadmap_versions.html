@@ -26,6 +26,11 @@
                      checked="${'milestones' in hide or None}" />
               <label for="milestones">${_('Hide milestones')}</label>
             </div>
+            <div>
+              <input type="checkbox" id="hideprojectdescription" name="hide" value="projectdescription"
+                     checked="${'projectdescription' in hide or None}" />
+              <label for="projectdescription">${_('Hide project descriptions')}</label>
+            </div>
             <br/>
             <div>
               <input type="checkbox" id="showcompleted" name="show" value="completed"

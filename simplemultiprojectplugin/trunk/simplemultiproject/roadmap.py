@@ -10,6 +10,7 @@ from trac.util.text import to_unicode
 from trac.core import *
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from operator import itemgetter
+from trac.wiki.formatter import wiki_to_html
 
 from simplemultiproject.model import *
 from simplemultiproject.model import smp_filter_settings, smp_settings
@@ -118,16 +119,21 @@ class SmpRoadmapProject(Component):
                 ini_index = end_index
         return divarray
 
-    def __process_div_projects_milestones(self,milestones,div_milestones_array):
+    def __process_div_projects_milestones(self,milestones,div_milestones_array, req):
         project = self._map_milestones_to_projects(milestones)
+        hide = smp_settings(req, 'roadmap', 'hide')
 
         div_projects_milestones = ''
         
         for a in sorted(project.keys()):
             if(a == "--None Project--"):
-                div_project = '<br><div id="project"><fieldset><legend><b>None Project</b></legend>'
+                div_project = '<br><div id="project"><fieldset><legend><h2>No Project</h2></legend>'
             else:
-                div_project = '<br><div id="project"><fieldset><legend><b>Project: <em>%s</em></b></legend>' % a
+                project_info = self.__SmpModel.get_project_info(a)
+                div_project = '<br><div id="project"><fieldset><legend><b>Project </b> <em style="font-size: 12pt; color: black;">%s</em></legend>' % a
+                if project_info and 'projectdescription' not in hide:
+                    div_project = div_project + '<div class="description" xml:space="preserve">%s</div>' % wiki_to_html(project_info[2], self.env, req)
+
             div_milestone = ''
             
             if len(project[a]) > 0:
@@ -173,7 +179,7 @@ class SmpRoadmapProject(Component):
             milestones = self.__extract_milestones_array(stream_milestones.select('//div[@class="milestone"]/div/h2/a/em'))
             div_milestones_array = self.__extract_div_milestones_array('<div class="milestone">',stream_milestones)
             
-            div_projects_milestones = self.__process_div_projects_milestones(milestones, div_milestones_array)
+            div_projects_milestones = self.__process_div_projects_milestones(milestones, div_milestones_array, req)
             
             return stream_roadmap | Transformer('//div[@class="roadmap"]/div[@class="milestones"]').replace(div_projects_milestones)
 
