@@ -56,6 +56,8 @@ class SmpTicketProject(Component):
             add_script_data(req, def_component)
             add_script_data(req, def_version)
             add_script_data(req, project_versions)
+            
+            self._add_milestones_maps(req, data['ticket'])
 
         return template, data, content_type
 
@@ -70,7 +72,6 @@ class SmpTicketProject(Component):
             script_filter = Transformer('//div[@id="banner"]')
 
             stream = stream | filter.replace(self._projects_field_ticket_input(req, ticket_data))
-            stream = stream | script_filter.before(self._update_milestones_maps(req, ticket_data))
             stream = stream | script_filter.before(self._update_milestones_script(req))
 
         return stream
@@ -79,29 +80,28 @@ class SmpTicketProject(Component):
         script = tag.script(type="text/javascript", src=req.href.chrome("simplemultiproject", "filter_milestones.js"))
         return script
 
-    def _update_milestones_maps(self, req, ticket_data):
+    def _add_milestones_maps(self, req, ticket_data):
 
         milestone = ticket_data.get_value_or_default('milestone')
         project   = ticket_data.get_value_or_default('project')
 
         allProjects = self.__SmpModel.get_all_projects()
 
-        jsVar = 'var smp_initialProjectMilestone = [ "%s" , "%s" ]; ' % (project, milestone)
-        jsVar = to_unicode('%s var smp_milestonesForProject = { "" : { "Please, select a project!"  : "" }') % jsVar
+        initialProjectMilestone = [ project, milestone ]
+        milestonesForProject = {}
+        milestonesForProject[""] = { "Please, select a project!": "" }
 
         for project in sorted(allProjects, key=itemgetter(1)):
-            jsVar = '%s, "%s" : { "" : ""' % (jsVar, project[1])
             milestones = self.__SmpModel.get_milestones_of_project(project[1])
-
+            milestonesForProject[project[1]] = { "": "" }
             for milestone in sorted(milestones, key=itemgetter(0)):
-                jsVar = '%s, "%s" : "%s"' % (jsVar, milestone[0], milestone[0])
-    
-            jsVar = '%s }' % jsVar
+                milestonesForProject[project[1]][milestone[0]] = milestone[0]
 
-        jsVar = '%s };' % jsVar
-            
-        script = tag.script(jsVar, type="text/javascript")
-        return script
+        smp_milestonesForProject = { 'smp_milestonesForProject' : milestonesForProject }
+        smp_initialProjectMilestone = { 'smp_initialProjectMilestone' : initialProjectMilestone }
+
+        add_script_data(req, smp_initialProjectMilestone)
+        add_script_data(req, smp_milestonesForProject)
 
     def _projects_field_ticket_input(self, req, ticket_data):
         all_projects = [project[1] for project in sorted(self.__SmpModel.get_all_projects(), key=itemgetter(1))]

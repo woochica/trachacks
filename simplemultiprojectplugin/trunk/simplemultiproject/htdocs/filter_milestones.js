@@ -11,26 +11,21 @@ function smp_updateSelect(id, newOptions, selectedOption)
     }
     select.empty();
     
+    var addedOptions = [];
     if (newOptions) {
         $.each(newOptions, function(val, text) {
-            options[options.length] = new Option(text);
+            var isSelected = (selectedOption && text == selectedOption);
+            options[options.length] = new Option(text, text, isSelected, isSelected);
+            addedOptions.push(text);
         });
     }
 
-    if (selectedOption) {
-        if (!newOptions[selectedOption] && $.inArray(selectedOption, newOptions) == -1) {
-            options[options.length] = new Option(selectedOption, selectedOption, true, true);
-        } else {
-            var option = $(field_id + ' option:contains("' + selectedOption + '")');
-            if (option) {
-                if (option.prop) {
-                    option.prop('selected', true);
-                } else {
-                    option.attr('selected', 'selected');
-                }
-            }
-        }
+    if (selectedOption && $.inArray(selectedOption, addedOptions) == -1) {
+        options[options.length] = new Option(selectedOption, selectedOption, true, true);
     }
+    
+    // call custom event trigger to allow other plugins to notify the change
+    $(field_id).trigger("onUpdate");
 }
 
 function smp_onProjectChange(project)
