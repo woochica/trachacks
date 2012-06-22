@@ -16,11 +16,16 @@
                         </label>
                     </div>
                     <div class="field">
+                        <label>Summary:<br />
+                            <input type="text" name="summary" value="${project.summary}"/>
+                        </label>
+                    </div>
+                    <div class="field">
                         <label>Description:<br />
                             <textarea cols="60" rows="10" class="wikitext trac-resizable"  name="description">${project.description}</textarea>
                         </label>
                     </div>
-                        <input type="hidden" name="id" value="${project.id}"/>
+                    <input type="hidden" name="id" value="${project.id}"/>
                     <div class="buttons">
                         <input type="submit" name="modify" value="Modify" />
                         <input type="submit" name="cancel" value="Cancel" />
@@ -34,6 +39,11 @@
                         <div class="field">
                             <label>Name:<br />
                                 <input type="text" name="name" value=""/>
+                            </label>
+                        </div>
+                        <div class="field">
+                            <label>Summary:<br />
+                                <input type="text" name="summary" value=""/>
                             </label>
                         </div>
                         <div class="field">
@@ -52,13 +62,15 @@
                             <thead>
                                 <tr>
                                     <th class="sel">&nbsp;</th>
-                                    <th>Name / Description</th>
+                                    <th>Name</th>
+                                    <th>Summary</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr py:for="project in projects">
                                     <td><input type="checkbox" name="sel" value="$project.id" /></td>
-                                    <td><a href="${href.admin('projects','simplemultiproject')}/${project.id}" method="post">${project.name}</a><fieldset py:if="project.description != ''"><legend>Description</legend>${wiki_to_html(context(''), project.description)}</fieldset></td>
+                                    <td><a href="${href.admin('projects','simplemultiproject')}/${project.id}" method="post">${project.name}</a></td>
+                                    <td>${project.summary}</td>
                                 </tr>
                             </tbody>
                         </table>

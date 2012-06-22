@@ -132,7 +132,11 @@ class SmpRoadmapProject(Component):
                 project_info = self.__SmpModel.get_project_info(a)
                 div_project = '<br><div id="project"><fieldset><legend><b>Project </b> <em style="font-size: 12pt; color: black;">%s</em></legend>' % a
                 if project_info and 'projectdescription' not in hide:
-                    div_project = div_project + '<div class="description" xml:space="preserve">%s</div>' % wiki_to_html(project_info[2], self.env, req)
+                    div_project = div_project + '<div class="description" xml:space="preserve">'
+                    if project_info[2]:
+                        div_project = div_project + '%s<br/><br/>' % project_info[2]
+                    
+                    div_project = div_project + '%s</div>' % wiki_to_html(project_info[3], self.env, req)
 
             div_milestone = ''
             

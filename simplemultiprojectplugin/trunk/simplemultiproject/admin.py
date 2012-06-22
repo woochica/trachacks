@@ -35,23 +35,23 @@ class SmpAdminPanel(Component):
     def __init__(self):
         self.__SmpModel = SmpModel(self.env)
 
-    def add_project(self, name, description):
+    def add_project(self, name, summary, description):
         try:
             self.log.info("Simple Multi Project: Adding project %s" % (name))
-            self.__SmpModel.insert_project(name, description)
+            self.__SmpModel.insert_project(name, summary, description)
             return True
 
         except Exception, e:
             self.log.error("Add Project Error: %s" % (e, ))
             return False
 
-    def update_project(self, id, name, description):
+    def update_project(self, id, name, summary, description):
         try:
             # we have to rename the project in tickets custom field
             old_project_name = self.__SmpModel.get_project_name(id)
 
             self.log.info("Simple Multi Project: Modify project %s" % (name))
-            self.__SmpModel.update_project(id, name, description)
+            self.__SmpModel.update_project(id, name, summary, description)
 
             if old_project_name and old_project_name != name:
                 self.__SmpModel.update_custom_ticket_field(old_project_name, name)
@@ -68,12 +68,12 @@ class SmpAdminPanel(Component):
         projects_rows  = self.__SmpModel.get_all_projects()
         projects = []
         for row in sorted(projects_rows, key=itemgetter(1)):
-            projects.append({'id': row[0], 'name':row[1], 'description': row[2]})
+            projects.append({'id': row[0], 'name':row[1], 'summary': row[2], 'description': row[3]})
 
         if path_info:
             if req.method == 'POST':
                 if req.args.get('modify'):
-                    if not self.update_project(req.args.get('id'), req.args.get('name'), req.args.get('description')):
+                    if not self.update_project(req.args.get('id'), req.args.get('name'), req.args.get('summary'), req.args.get('description')):
                         self.log.error("SimpleMultiProject Error: Failed to added project '%s'" % (req.args.get('name'),))
                     else:
                         add_notice(req, "'The project '%s' has been modify." % req.args.get('name'))
@@ -90,7 +90,7 @@ class SmpAdminPanel(Component):
             if req.method == 'POST':
                 if req.args.get('add'):
                     if req.args.get('name') != '':
-                        if not self.add_project(req.args.get('name'), req.args.get('description')):
+                        if not self.add_project(req.args.get('name'), req.args.get('summary'), req.args.get('description')):
                             self.log.error("SimpleMultiProject Error: Failed to added project '%s'" % (req.args.get('name'),))
                         else:
                             add_notice(req, "'The project '%s' has been added." % req.args.get('name'))

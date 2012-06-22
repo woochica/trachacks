@@ -51,7 +51,7 @@ class SmpModel(Component):
     def get_project_info(self, name):
         cursor = self.__get_cursor()
         query = """SELECT
-                        id_project,name,description
+                        id_project,name,summary,description
                    FROM
                         smp_project
                    WHERE
@@ -63,7 +63,7 @@ class SmpModel(Component):
     def get_all_projects(self):
         cursor = self.__get_cursor()
         query = """SELECT
-                        id_project,name,description
+                        id_project,name,summary,description
                    FROM
                         smp_project"""
         
@@ -104,11 +104,11 @@ class SmpModel(Component):
         self.__start_transacction()
         
     # AdminPanel Methods
-    def insert_project(self, name, description):
+    def insert_project(self, name, summary, description):
         cursor = self.__get_cursor()
         query    = """INSERT INTO
-                        smp_project (name, description)
-                      VALUES ('%s', '%s');""" % (name, description)
+                        smp_project (name, summary, description)
+                      VALUES ('%s', '%s');""" % (name, summary, description)
 
         cursor.execute(query)
         self.__start_transacction()
@@ -121,15 +121,15 @@ class SmpModel(Component):
             
         self.__start_transacction()
 
-    def update_project(self, id, name, description):
+    def update_project(self, id, name, summary, description):
         cursor = self.__get_cursor()
 
         query    = """UPDATE
                         smp_project
                       SET
-                        name = '%s', description = '%s'
+                        name = '%s', summary = '%s', description = '%s'
                       WHERE
-                        id_project = '%s'""" % (name, description, id)
+                        id_project = '%s'""" % (name, summary, description, id)
         cursor.execute(query)
 
         self.__start_transacction()
