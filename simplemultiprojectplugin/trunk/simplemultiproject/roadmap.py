@@ -122,6 +122,9 @@ class SmpRoadmapProject(Component):
     def __process_div_projects_milestones(self,milestones,div_milestones_array, req):
         project = self._map_milestones_to_projects(milestones)
         hide = smp_settings(req, 'roadmap', 'hide')
+        show_proj_descr = False
+        if hide is None or 'projectdescription' not in hide:
+            show_proj_descr = True
 
         div_projects_milestones = ''
         
@@ -131,7 +134,7 @@ class SmpRoadmapProject(Component):
             else:
                 project_info = self.__SmpModel.get_project_info(a)
                 div_project = '<br><div id="project"><fieldset><legend><b>Project </b> <em style="font-size: 12pt; color: black;">%s</em></legend>' % a
-                if project_info and 'projectdescription' not in hide:
+                if project_info and show_proj_descr:
                     div_project = div_project + '<div class="description" xml:space="preserve">'
                     if project_info[2]:
                         div_project = div_project + '%s<br/><br/>' % project_info[2]
