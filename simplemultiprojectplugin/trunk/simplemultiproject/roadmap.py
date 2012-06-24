@@ -69,10 +69,15 @@ class SmpRoadmapProjectFilter(Component):
     def _projects_field_input(self, req, selectedcomps):
         cursor = self.__SmpModel.get_all_projects()
 
-        select = tag.select(name="filter-projects", id="filter-projects", multiple="multiple", size="10")
+        sorted_project_names_list = sorted(cursor, key=itemgetter(1))
+        number_displayed_entries = len(sorted_project_names_list)+1     # +1 for special entry 'All'
+        if number_displayed_entries > 15:
+            number_displayed_entries = 15
+
+        select = tag.select(name="filter-projects", id="Filter-Projects", multiple="multiple", size=("%s" % number_displayed_entries))
         select.append(tag.option("All", value="All"))
         
-        for component in sorted(cursor, key=itemgetter(1)):
+        for component in sorted_project_names_list:
             project = to_unicode(component[1])
             if selectedcomps and project in selectedcomps:
                 select.append(tag.option(project, value=project, selected="selected"))
