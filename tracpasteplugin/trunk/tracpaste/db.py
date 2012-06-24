@@ -64,7 +64,6 @@ class TracpasteSetup(Component):
                               ' version %d to %d',
                               current_version, schema_version)
         except Exception, e:
-            db.rollback()
             self.env.log.error(e, exc_info=1)
             raise TracError(str(e))
 
@@ -84,7 +83,7 @@ class TracpasteSetup(Component):
             if row:
                 return int(row[0])
         except:
-            db.rollback()
+            pass
 
         stmt = "SELECT count(*) FROM pastes"
         try:
@@ -93,10 +92,7 @@ class TracpasteSetup(Component):
             row = cursor.fetchone()
             return row and 1 or 0
         except:
-            db.rollback()
             return 0
-
-        return 0
 
     def _has_old_permission(self, db):
         """ Determine whether the old PASTEBIN_USE permission is assigned
@@ -110,7 +106,6 @@ class TracpasteSetup(Component):
             row = cursor.fetchone()
             return row[0] > 0
         except:
-            db.rollback()
             return False
 
         return False
@@ -140,7 +135,6 @@ def add_paste_table(env, db):
             env.log.debug(stmt)
             cursor.execute(stmt)
     except Exception, e:
-        db.rollback()
         env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
@@ -151,7 +145,6 @@ def add_database_version(env, db):
         cursor.execute("INSERT INTO system VALUES "
                        "('tracpaste_version',%s)", (schema_version,))
     except Exception, e:
-        db.rollback()
         env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
@@ -174,7 +167,6 @@ def convert_use_permissions(env, db):
                            "username=%s AND action='PASTEBIN_USE'", (user,))
             env.log.debug("Pastebin permissions converted for %s ", user)
     except Exception, e:
-        db.rollback()
         env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
@@ -207,7 +199,6 @@ def add_indexes(env, db):
                        "FROM pastes_old")
         cursor.execute("DROP TABLE pastes_old")
     except Exception, e:
-        db.rollback()
         env.log.error(e, exc_info=1)
         raise TracError(str(e))
 
