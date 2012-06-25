@@ -74,7 +74,7 @@ class SmpRoadmapProjectFilter(Component):
         if number_displayed_entries > 15:
             number_displayed_entries = 15
 
-        select = tag.select(name="filter-projects", id="Filter-Projects", multiple="multiple", size=("%s" % number_displayed_entries))
+        select = tag.select(name="filter-projects", id="Filter-Projects", multiple="multiple", size=("%s" % number_displayed_entries), style="overflow:auto;")
         select.append(tag.option("All", value="All"))
         
         for component in sorted_project_names_list:
