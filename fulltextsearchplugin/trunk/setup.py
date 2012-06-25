@@ -37,13 +37,16 @@ setup(
     description = "Provide full text indexing of all core items like tickets, wiki, attachments, source code.",
     license = \
     """Copyright (c) 2010, Logica. All rights reserved. Released under the 3-clause BSD license. """,
-    url = "http://define4.trac.uk.logica.com",
+    url = "http://trac-hacks.org/attachment/wiki/FullTextSearchPlugin",
     packages = ['fulltextsearchplugin'],
     package_data = {'fulltextsearchplugin' : ['htdocs/js/*.js', 'htdocs/css/*.css']}, 
     install_requires = ['Trac>=0.12', 'Genshi>=0.5',
                         'sunburnt', 'lxml', 'httplib2',
                         'TracTags',
                         'ComponentDependencyPlugin',
+                        ],
+    dependency_links = ['http://trac-hacks.org/attachment/wiki/FullTextSearchPlugin/ComponentDependencyPlugin-0.1.tar.gz?format=raw',
+                        'http://trac-hacks.org/attachment/wiki/FullTextSearchPlugin/TracTags-0.6.tar.gz?format=raw',
                         ],
     entry_points = {
         'trac.plugins': [
