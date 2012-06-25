@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2007 Armin Ronacher <armin.ronacher@active-4.com>
+# Copyright (C) 2008 Michael Renzmann <mrenzmann@otaku42.de>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 """
 TracPastePlugin: entity model for pastes, including:
  * CRUD (create, read, update, delete)

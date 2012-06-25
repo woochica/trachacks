@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
-"""
-TracPastePlugin: code required for web interface handling
-"""
+#
+# Copyright (C) 2007 Armin Ronacher <armin.ronacher@active-4.com>
+# Copyright (C) 2008 Michael Renzmann <mrenzmann@otaku42.de>
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 import re
 from genshi.builder import tag
@@ -12,6 +16,7 @@ from trac.config import BoolOption, IntOption, ListOption
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link, Chrome
 from trac.web.main import IRequestHandler
+from trac.wiki.api import IWikiSyntaxProvider
 from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
 from trac.util.translation import _
@@ -22,8 +27,8 @@ from model import Paste, get_pastes
 
 
 class TracpastePlugin(Component):
-    implements(INavigationContributor, ITemplateProvider, IRequestHandler, \
-               IPermissionRequestor, ITimelineEventProvider)
+    implements(INavigationContributor, ITemplateProvider, IRequestHandler,
+               IPermissionRequestor, ITimelineEventProvider, IWikiSyntaxProvider)
 
     _url_re = re.compile(r'^/pastebin(?:/(\d+))?/?$')
 
@@ -237,8 +242,23 @@ class TracpastePlugin(Component):
                          href=context.href.pastebin(resource.id))
         else:
             return _('Pastebin: ') + p.title
+    
+    # IWikiSyntaxProvider
+    def get_wiki_syntax(self):
+        return []
 
+    def get_link_resolvers(self):
+        yield('paste', self._format_link)
+        
     # private methods
+    def _format_link(self, formatter, ns, target, label, match=None):
+        try:
+            paste = Paste(self.env, id=target)
+            return tag.a(label, title=paste.title,
+                         href=formatter.href.pastebin(paste.id), class_='paste')
+        except Exception, e:
+            return tag.a(label, class_='missing paste')
+    
     def _get_mimetypes(self):
         result = []
         for name, _, _, mimetypes in get_all_lexers():
@@ -271,4 +291,3 @@ class TracpastePlugin(Component):
             return False
         else:
             return True
-

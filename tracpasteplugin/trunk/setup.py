@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2007 Armin Ronacher <armin.ronacher@active-4.com>
+# Copyright (C) 2008 Michael Renzmann <mrenzmann@otaku42.de>
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from setuptools import setup
 
 PACKAGE = 'TracPaste'
@@ -28,5 +37,7 @@ setup(
         'tracpaste.model = tracpaste.model',
         'tracpaste.web_ui = tracpaste.web_ui'],
     },
-    install_requires = ['Pygments']
+    install_requires = ['Pygments'],
+    test_suite = 'tracpaste.tests.test_suite',
+    tests_require = []
 )
