@@ -35,7 +35,7 @@
             <div>
               <input type="checkbox" id="showcompleted" name="show" value="completed"
                      checked="${'completed' in show or None}" />
-              <label for="showcompleted">Show completed milestones</label>
+              <label for="showcompleted">Show completed milestones or versions</label>
             </div>
             <div>
               <input type="checkbox" id="hidenoduedate" name="show" value="noduedate"
@@ -94,9 +94,14 @@
               Version: <em>${version.name}</em>
             </a></h2>
             <py:choose>
-              <p py:when="version.time" class="date">
+              <p py:if="version.is_completed" class="date">
                 <i18n:msg params="duration, date">
-                  Date ${dateinfo(version.time)} (${format_datetime(version.time)})
+                  Completed ${dateinfo(version.time)} (${format_datetime(version.time)})
+                </i18n:msg>
+              </p>
+              <p py:when="version.is_due" class="date">
+                <i18n:msg params="duration, date">
+                  Due in ${dateinfo(version.time)} (${format_datetime(version.time)})
                 </i18n:msg>
               </p>
               <p py:otherwise="" class="date">

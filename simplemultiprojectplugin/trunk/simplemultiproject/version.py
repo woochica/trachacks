@@ -400,6 +400,12 @@ class SmpVersionProject(Component):
         add_script(req, 'common/js/folding.js')
         return 'version_view.html', data, None
 
+    def _version_time(self, version):
+        if version.time:
+            return version.time.replace(tzinfo=None)
+        else:
+            return datetime(9999,12,31)
+            
     def _versions_and_stats(self, req, filter_projects):
         req.perm.require('MILESTONE_VIEW')
         db = self.env.get_db_cnx()
@@ -409,17 +415,27 @@ class SmpVersionProject(Component):
         filtered_versions = []
         stats = []
     
-        for version in versions:
+        show = req.args.getlist('show')
+        
+        for version in sorted(versions, key=lambda v: self._version_time(v)):
             project = self.__SmpModel.get_project_version(version.name)
             
             if not filter_projects or (project and project[0] in filter_projects):
-                filtered_versions.append(version)
-                tickets = get_tickets_for_any(self.env, db, 'version', version.name,
-                                                    'owner')
-                tickets = apply_ticket_permissions(self.env, req, tickets)
-                stat = get_ticket_stats(self.stats_provider, tickets)
-                stats.append(any_stats_data(self.env, req, stat,
-                                                  'version', version.name))
+                if not version.time or version.time.replace(tzinfo=None) >= datetime.now() or 'completed' in show:
+                    
+                    if version.time:
+                        if version.time.replace(tzinfo=None) >= datetime.now():
+                            version.is_due = True;
+                        else:
+                            version.is_completed = True;
+                        
+                    filtered_versions.append(version)
+                    tickets = get_tickets_for_any(self.env, db, 'version', version.name,
+                                                        'owner')
+                    tickets = apply_ticket_permissions(self.env, req, tickets)
+                    stat = get_ticket_stats(self.stats_provider, tickets)
+                    stats.append(any_stats_data(self.env, req, stat,
+                                                      'version', version.name))
     
         return filtered_versions, stats
 
