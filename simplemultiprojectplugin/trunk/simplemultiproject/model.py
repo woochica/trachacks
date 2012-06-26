@@ -108,7 +108,7 @@ class SmpModel(Component):
         cursor = self.__get_cursor()
         query    = """INSERT INTO
                         smp_project (name, summary, description)
-                      VALUES ('%s', '%s');""" % (name, summary, description)
+                      VALUES ('%s', '%s', '%s');""" % (name, summary, description)
 
         cursor.execute(query)
         self.__start_transacction()
