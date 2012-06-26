@@ -98,17 +98,6 @@ class SmpRoadmapProject(Component):
     def pre_process_request(self, req, handler):
         return handler
 
-    def __extract_milestones_array(self,stream_name_milestones):
-        names_milestone = str(stream_name_milestones)
-        edits = [('<em>', ';'), ('</em>', ';')]
-        for search, replace in edits:
-            names_milestone = names_milestone.replace(search, replace)
-        names_milestone = names_milestone.replace(';;', ',')
-        names_milestone = names_milestone.replace(';', '')
-        array_milestones = names_milestone.split(',')
-
-        return array_milestones
-
     def __extract_div_milestones_array(self,tag_milestone,stream_milestones):
         html_milestones = str(stream_milestones)
         ini_index = html_milestones.find(tag_milestone)
@@ -117,10 +106,10 @@ class SmpRoadmapProject(Component):
         while (ocurrencia):
             end_index = html_milestones.find(tag_milestone, ini_index + len(tag_milestone))
             if(end_index < 0):
-                divarray.append(html_milestones[ini_index:len(html_milestones)])
+                divarray.append(to_unicode(html_milestones[ini_index:len(html_milestones)]))
                 ocurrencia = False
             else:
-                divarray.append(html_milestones[ini_index:end_index])
+                divarray.append(to_unicode(html_milestones[ini_index:end_index]))
                 ini_index = end_index
         return divarray
 
@@ -188,7 +177,13 @@ class SmpRoadmapProject(Component):
             stream_roadmap = HTML(to_unicode(stream))
             stream_milestones = HTML(stream_roadmap.select('//div[@class="roadmap"]/div[@class="milestones"]'))
             
-            milestones = self.__extract_milestones_array(stream_milestones.select('//div[@class="milestone"]/div/h2/a/em'))
+            milestones = data.get('milestones')
+            milestones = [milestone.name for milestone in milestones]
+            
+            versions = data.get('versions')
+            for version in versions:
+                milestones.append(version.name)
+
             div_milestones_array = self.__extract_div_milestones_array('<div class="milestone">',stream_milestones)
             
             div_projects_milestones = self.__process_div_projects_milestones(milestones, div_milestones_array, req)
