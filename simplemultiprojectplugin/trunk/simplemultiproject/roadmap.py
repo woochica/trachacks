@@ -181,8 +181,9 @@ class SmpRoadmapProject(Component):
             milestones = [milestone.name for milestone in milestones]
             
             versions = data.get('versions')
-            for version in versions:
-                milestones.append(version.name)
+            if versions:
+                for version in versions:
+                    milestones.append(version.name)
 
             div_milestones_array = self.__extract_div_milestones_array('<div class="milestone">',stream_milestones)
             
