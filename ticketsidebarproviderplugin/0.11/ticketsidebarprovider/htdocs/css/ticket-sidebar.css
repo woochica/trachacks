@@ -3,19 +3,22 @@ float: right;
 border: 1px solid black; 
 text-align: left;
 clear: right;
-width: 49%;
+width: 20%;
+max-width: 49%;
 overflow: hidden;
 }
 
 .sidebar img {
-max-width: 100%;
+max-width: 49%;
 }
 
 /* overrides of default ticket.css styles */
 #content.ticket {
 float:left;
-width: 49%;
-max-width: 49%
+width: 58em;
+max-width: 100%;
+margin-left: auto; 
+margin-right: auto;
 }
 
 #main {
