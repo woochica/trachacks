@@ -6,7 +6,7 @@ http://trac.edgewall.org/wiki/TracTicketsCustomFields
 
 from genshi.builder import tag
 from genshi.filters import Transformer
-from interface import ITicketSidebarProvider
+from pkg_resources import resource_filename
 
 from trac.config import Option
 from trac.core import *
@@ -14,9 +14,13 @@ from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet
 from trac.web.chrome import ITemplateProvider
 
+from ticketsidebarprovider.interface import ITicketSidebarProvider
+
+
 class TicketSidebarProvider(Component):
 
     implements(ITemplateStreamFilter, ITemplateProvider)
+
     providers = ExtensionPoint(ITicketSidebarProvider)
 
     ### method for ITemplateStreamFilter : 
@@ -37,15 +41,14 @@ class TicketSidebarProvider(Component):
         if filename != 'ticket.html':
             return stream
 
-        add_stylesheet(req, 'common/css/ticket-sidebar.css')
-
         ticket = data['ticket']
         for provider in self.providers: # TODO : sorting
             if provider.enabled(req, ticket):
-                stream |= Transformer("//div[@id='content']").after(tag.div(provider.content(req, ticket), **{'class': "sidebar" }))
-
+                add_stylesheet(req, 'common/css/ticket-sidebar.css')
+                filter = Transformer('//div[@id="content"]')
+                stream |= filter.after(tag.div(provider.content(req, ticket),
+                                               **{'class': "sidebar" }))
         return stream
-
 
     def get_htdocs_dirs(self):
         """Return a list of directories with static resources (such as style
@@ -58,8 +61,6 @@ class TicketSidebarProvider(Component):
         The `abspath` is the absolute path to the directory containing the
         resources on the local file system.
         """
-
-        from pkg_resources import resource_filename
         return [('common', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
@@ -67,6 +68,3 @@ class TicketSidebarProvider(Component):
         files.
         """
         return []
-
-    
-            
