@@ -1,5 +1,6 @@
 from ConfigParser import ConfigParser
 from trac.ticket import TicketSystem
+from trac.util.text import to_unicode
 
 PREFIX = 'dynfields.'
 PREF_DEFAULTS = {'(pref)':'1',
@@ -28,7 +29,7 @@ class Options(dict):
         parser.optionxform = str # case sensitive options
         parser.read(self.env.config.filename)
         for key in parser.options('ticket-custom'):
-            val = parser.get('ticket-custom',key)
+            val = to_unicode(parser.get('ticket-custom',key))
             for pref,default in PREF_DEFAULTS.items():
                 if val.endswith(pref):
                     val = val.replace(pref,'').rstrip()
