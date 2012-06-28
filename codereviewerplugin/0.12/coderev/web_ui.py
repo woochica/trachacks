@@ -293,8 +293,8 @@ class ChangesetTicketMapper(Component):
                     VALUES (%s,%s,%s,%s);
                     """, (reponame,changeset.rev,ticket,when))
             except Exception, e:
-                self.log.warning("Unable to insert changeset %s/%s " +\
-                    "and ticket %s into db: %s" %\
+                self.log.warning("Unable to insert changeset " +\
+                    "%s/%s and ticket %s into db: %s" %\
                     (changeset.rev,reponame,ticket,str(e)))
         db.commit()
 
