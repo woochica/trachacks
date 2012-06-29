@@ -1212,7 +1212,10 @@ class ResourceScheduler(Component):
 
                 # Check resource availability.  Can't start later than
                 # earliest available time.
-                if options.get('doResourceLeveling') == '1':
+                # NOTE: Milestones don't require any work so they
+                # don't need to be resource leveled.
+                if options.get('doResourceLeveling') == '1' and \
+                        t['type'] != self.pm.milestoneType:
                     limit = self.limits.get(t['owner'])
                     if limit and limit < finish[0]:
                         finish = [limit, True]
