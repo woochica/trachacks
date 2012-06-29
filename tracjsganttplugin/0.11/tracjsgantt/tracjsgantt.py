@@ -70,7 +70,7 @@ class TracJSGanttSupport(Component):
     Option('trac-jsgantt', 'option.hoursPerDay', '8.0',
                 """Hours worked per day""")
     Option('trac-jsgantt', 'option.display', None,
-                """Display filter for tickets in the form 'field1:value1|field2:value2' displays tickets where field1==value1, etc.""")
+                """Display filter for tickets in the form 'field1:value1|field2:value2' or 'field:value1|value2'; displays tickets where field1==value1, etc.""")
      
 
     # ITemplateProvider methods
@@ -597,24 +597,46 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
                 # Process each part into the display filter
                 displayFilter = {}
+                field = None
                 for f in displayList:
-                    field, value = f.split(':')
-                    displayFilter[field] = value
-                    
+                    parts = f.split(':')
+                    # Just one part, it's a value for the previous field
+                    if len(parts) == 1:
+                        if field == None:
+                            raise TracError(('display option error in "%s".' +
+                                             ' Should be "display=f1:v1|f2:v2"' +
+                                             ' or "display=f:v1|v2".') %
+                                            options['display'])
+                        else:
+                            value = parts[0]
+                    else:
+                        field = parts[0]
+                        value = parts[1]
+
+                    if field in displayFilter:
+                        displayFilter[field].append(value)
+                    else:
+                        displayFilter[field] = [ value ]
+
                 # Filter the tickets
                 displayTickets = []
                 for ticket in self.tickets:
                     # Default to showing every ticket
-                    display = True
-                    # Process each element and disable display if any
-                    # filter fails to match.
+                    fieldDisplay = True
+                    # Process each element and disable display if all
+                    # filters fail to match. ((or) disjunction)
                     for f in displayFilter:
-                        if ticket[f] != displayFilter[f]:
+                        display = True
+                        for v in displayFilter[f]:
+                            if ticket[f] == v:
+                                display = True
+                                break
                             display = False
-                    if display:
+                        fieldDisplay = fieldDisplay & display
+                    if fieldDisplay:
                         displayTickets.append(ticket)
 
-                # Sort the tickets
+                # Sort the tickets by date and successor dependencies
                 displayTickets.sort(self._compare_tickets)
 
             for ticket in displayTickets:
