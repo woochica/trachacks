@@ -43,7 +43,22 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 
 class TracPM(Component):
     cfgSection = 'TracPM'
+
+    # Configurable data sources
     fields = None
+    sources = None
+    relations = None
+    # How dates are stored in the database
+    dbDateFormat = None
+    # What ticket type to treat like milestones
+    milestoneType = None
+    # Configurable estimate pad, default estimate, hours per estimate
+    estPad = None
+    dftEst = None
+    hpe = None
+    # Format of parent field (e.g., with or without leading '#')
+    parent_format = None
+    
 
     Option(cfgSection, 'hours_per_estimate', '1', 
            """Hours represented by each unit of estimated work""")
@@ -459,7 +474,7 @@ class TracPM(Component):
 
             return origins + _expand(nodes, field, format)
 
-        id = ''
+        ids = ''
 
         if options.get('root'):
             if not self.isCfg('parent'):
@@ -474,7 +489,7 @@ class TracPM(Component):
                 else:
                     nodes = options['root'].split('|')
 
-                id += '|'.join(_expand(nodes, 
+                ids += '|'.join(_expand(nodes, 
                                        'parent',
                                        self.parent_format))
 
@@ -506,15 +521,15 @@ class TracPM(Component):
                     else:
                         nodes = nodes2
 
-                id += '|'.join(nodes)
+                ids += '|'.join(nodes)
 
-        return id
+        return ids
 
     # Create a pseudoticket for a Trac milestone with all the fields
     # needed for PM work.
-    def _pseudoTicket(self, id, summary, description, milestone):
+    def _pseudoTicket(self, tid, summary, description, milestone):
         ticket = {}
-        ticket['id'] = id
+        ticket['id'] = tid
         ticket['summary'] = summary
         ticket['description'] = description
         ticket['milestone'] = milestone
@@ -564,7 +579,7 @@ class TracPM(Component):
 
         # Need a unique ID for each task.
         if len(milestones) > 0:
-            id = 0
+            tid = 0
 
             # Get the milestones and their due dates
             db = self.env.get_db_cnx()
@@ -575,8 +590,8 @@ class TracPM(Component):
                            "WHERE name " + inClause,
                            milestones)
             for row in cursor:
-                id = id-1
-                milestoneTicket = self._pseudoTicket(id, 
+                tid = tid-1
+                milestoneTicket = self._pseudoTicket(tid, 
                                                      row[0],
                                                      'Milestone %s' % row[0],
                                                      row[0])
@@ -609,9 +624,9 @@ class TracPM(Component):
                                 self.successors(t) == []:
                             if self.isField('succ'):
                                 t[self.fields[self.sources['succ']]] = \
-                                    [ id ]
+                                    [ tid ]
                             else:
-                                t['succ'] = [ id ]
+                                t['succ'] = [ tid ]
                             pred.append(t['id'])
                     if self.isField('pred'):
                         milestoneTicket[self.fields[self.sources['pred']]] = \
@@ -833,6 +848,8 @@ class BaseSorter:
 class SimpleSorter(BaseSorter, Component):
     implements(ITaskSorter)
 
+    prioMap = None
+
     def __init__(self):
         self.prioMap = self._buildEnumMap('priority')
 
@@ -860,6 +877,10 @@ class SimpleSorter(BaseSorter, Component):
 # the project priority and having it carry through the tree.
 class ProjectSorter(BaseSorter, Component):
     implements(ITaskSorter)
+
+    pm = None
+
+    prioMap = None
 
     def __init__(self):
         self.prioMap = self._buildEnumMap('priority')
@@ -924,6 +945,8 @@ class ResourceScheduler(Component):
     implements(ITaskScheduler)
 
     pm = None
+    calendar = None
+    sorter = None
 
     # The ResourceScheduler uses the Bridge design pattern to separate
     # the overall scheduling process from the implementation of
@@ -973,13 +996,13 @@ class ResourceScheduler(Component):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
         
-        self.cal = self._mixIn('IResourceCalendar',
-                               self.calendars,
-                               SimpleCalendar)
+        self.calendar = self._mixIn('IResourceCalendar',
+                                    self.calendars,
+                                    SimpleCalendar)
 
-        self.cmp = self._mixIn('ITaskSorter',
-                               self.sorters,
-                               SimpleSorter)
+        self.sorter = self._mixIn('ITaskSorter',
+                                  self.sorters,
+                                  SimpleSorter)
 
 
 
@@ -1008,7 +1031,7 @@ class ResourceScheduler(Component):
                 f = fromDate + delta
 
                 # Get total hours available for resource on that date
-                available = self.cal.hoursAvailable(f, ticket['owner'])
+                available = self.calendar.hoursAvailable(f, ticket['owner'])
 
                 # Clip available based on time of day on target date
                 # (hours before a finish or after a start)
@@ -1134,9 +1157,9 @@ class ResourceScheduler(Component):
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _earliest_successor(t, start):
-                for id in self.pm.successors(t):
-                    if id in ticketsByID:
-                        s = _schedule_task_alap(ticketsByID[id])
+                for tid in self.pm.successors(t):
+                    if tid in ticketsByID:
+                        s = _schedule_task_alap(ticketsByID[tid])
                         if _betterDate(s, start) and \
                                 start == None or \
                                 (s and start and s[0] < start[0]):
@@ -1145,7 +1168,7 @@ class ResourceScheduler(Component):
                         self.env.log.info(('Ticket %s has successor %s ' +
                                            'but %s is not in the chart. ' +
                                            'Dependency deadlines ignored.') %
-                                          (t['id'], id, id))
+                                          (t['id'], tid, tid))
                 return copy.copy(start)
 
             # If we found a loop, tell the user and give up.
@@ -1269,9 +1292,9 @@ class ResourceScheduler(Component):
             # t is a ticket (list of ticket fields)
             # start is a tuple ([date, explicit])
             def _latest_predecessor(t, finish):
-                for id in self.pm.predecessors(t):
-                    if id in ticketsByID:
-                        f = _schedule_task_asap(ticketsByID[id])
+                for tid in self.pm.predecessors(t):
+                    if tid in ticketsByID:
+                        f = _schedule_task_asap(ticketsByID[tid])
                         if _betterDate(f, finish) and \
                                 finish == None or \
                                 (f and finish and f[0] > finish[0]):
@@ -1280,7 +1303,7 @@ class ResourceScheduler(Component):
                         self.env.log.info(('Ticket %s has predecessor %s ' +
                                            'but %s is not in the chart. ' +
                                            'Dependency deadlines ignored.') %
-                                          (t['id'], id, id))
+                                          (t['id'], tid, tid))
                 return copy.copy(finish)
 
             # If we found a loop, tell the user and give up.
@@ -1518,7 +1541,7 @@ class ResourceScheduler(Component):
             while unscheduled and eligible:
                 # FIXME - Maybe sort after adding some. I may not need
                 # to sort every loop.)
-                eligible.sort(self.cmp.compareTasks)
+                eligible.sort(self.sorter.compareTasks)
 
                 # Schedule the best eligible task
                 ticket = eligible.pop(nextIndex)
@@ -1549,7 +1572,7 @@ class ResourceScheduler(Component):
         _augmentTickets(ticketsByID)
 
         # Make sure sorting (compareTasks, below) works.
-        self.cmp.prepareTasks(ticketsByID)
+        self.sorter.prepareTasks(ticketsByID)
 
         if options['schedule'] == 'alap':
             # Schedule ALAP.

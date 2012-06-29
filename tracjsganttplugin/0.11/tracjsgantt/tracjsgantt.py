@@ -129,6 +129,19 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     """
 
     pm = None
+    options = {}
+
+    # These have to be in sync.  jsDateFormat is the date format
+    # that the JavaScript expects dates in.  It can be one of
+    # 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd'.  pyDateFormat
+    # is a strptime() format that matches jsDateFormat.  As long
+    # as they are in sync, there's no real reason to change them.
+    jsDateFormat = 'yyyy-mm-dd'
+    pyDateFormat = '%Y-%m-%d %H:%M'
+
+    # User map (login -> realname) is loaded on demand, once.
+    # Initialization to None means it is not yet initialized.
+    user_map = None
 
     def __init__(self):
         # Instantiate the PM component
@@ -146,23 +159,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'schedule', 'hoursPerDay', 'doResourceLeveling',
                    'display')
 
-        self.options = {}
         for opt in options:
             self.options[opt] = self.config.get('trac-jsgantt',
                                                 'option.%s' % opt)
-
-
-        # These have to be in sync.  jsDateFormat is the date format
-        # that the JavaScript expects dates in.  It can be one of
-        # 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd'.  pyDateFormat
-        # is a strptime() format that matches jsDateFormat.  As long
-        # as they are in sync, there's no real reason to change them.
-        self.jsDateFormat = 'yyyy-mm-dd'
-        self.pyDateFormat = '%Y-%m-%d %H:%M'
-
-        # User map (login -> realname) is loaded on demand, once.
-        # Initialization to None means it is not yet initialized.
-        self.user_map = None
 
 
     def _begin_gantt(self, options):
@@ -337,15 +336,15 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     # child of the second top-level element).
     def _compute_wbs(self):
         # Set the ticket's level and wbs then recurse to children.
-        def _setLevel(id, wbs, level):
+        def _setLevel(tid, wbs, level):
             # Update this node
-            self.ticketsByID[id]['level'] = level
-            self.ticketsByID[id]['wbs'] = copy.copy(wbs)
+            self.ticketsByID[tid]['level'] = level
+            self.ticketsByID[tid]['wbs'] = copy.copy(wbs)
 
             # Recurse to children
-            childIDs = self.pm.children(self.ticketsByID[id])
+            childIDs = self.pm.children(self.ticketsByID[tid])
             if childIDs:
-                childTickets = [self.ticketsByID[id] for id in childIDs]
+                childTickets = [self.ticketsByID[cid] for cid in childIDs]
                 childTickets.sort(self._compare_tickets)
                 childIDs = [ct['id'] for ct in childTickets]
                 
@@ -522,10 +521,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         if ticket['level'] < options['openLevel'] and \
                 ((options['expandClosedTickets'] != 0) or \
                      (ticket['status'] != 'closed')):
-            open = 1
+            openGroup = 1
         else:
-            open = 0
-        task += '%d,' % open
+            openGroup = 0
+        task += '%d,' % openGroup
 
         # predecessors
         pred = [str(s) for s in self.pm.predecessors(ticket)]
