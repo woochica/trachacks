@@ -590,7 +590,7 @@ class TracPM(Component):
                            "WHERE name " + inClause,
                            milestones)
             for row in cursor:
-                tid = tid-1
+                tid = tid - 1
                 milestoneTicket = self._pseudoTicket(tid, 
                                                      row[0],
                                                      'Milestone %s' % row[0],

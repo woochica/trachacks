@@ -131,11 +131,16 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     pm = None
     options = {}
 
-    # These have to be in sync.  jsDateFormat is the date format
-    # that the JavaScript expects dates in.  It can be one of
-    # 'mm/dd/yyyy', 'dd/mm/yyyy', or 'yyyy-mm-dd'.  pyDateFormat
-    # is a strptime() format that matches jsDateFormat.  As long
-    # as they are in sync, there's no real reason to change them.
+    # The date part of these formats has to be in sync.  Including
+    # hour and minute in the pyDateFormat makes the plugin easier to
+    # debug at times because that's how the date shows up in page
+    # source.
+    #
+    # jsDateFormat is the date format that the JavaScript expects
+    # dates in.  It can be one of 'mm/dd/yyyy', 'dd/mm/yyyy', or
+    # 'yyyy-mm-dd'.  pyDateFormat is a strptime() format that matches
+    # jsDateFormat.  As long as they are in sync, there's no real
+    # reason to change them.
     jsDateFormat = 'yyyy-mm-dd'
     pyDateFormat = '%Y-%m-%d %H:%M'
 
