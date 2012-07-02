@@ -33,6 +33,7 @@ class OverlayViewModule(Component):
                         'milestone_view.html', 'attachment.html'):
             add_stylesheet(req, 'common/css/code.css')
             add_stylesheet(req, 'overlayview/base.css')
+            add_script(req, 'common/js/folding.js')
             add_script(req, 'overlayview/jquery.colorbox.js')
             add_script(req, 'overlayview/base.js')
             script_data = {}

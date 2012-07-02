@@ -9,6 +9,12 @@
     <py:for each="link in chrome.links.get('stylesheet')">
       overlayview.loadStyleSheet("${link.href}", "${link.type}");
     </py:for>
+    jQuery(document).ready(function($) {
+      var code = $('#overlayview_attachment table.code');
+      code.enableCollapsibleColumns(code.find('thead th.content'));
+    });
   </script>
-  <xi:include href="preview_file.html" py:with="preview = preview"/>
+  <div id="overlayview_attachment">
+    <xi:include href="preview_file.html" py:with="preview = preview"/>
+  </div>
 </html>
