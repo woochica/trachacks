@@ -106,7 +106,7 @@ class WorksheetWriter(object):
         thead.font.bold = True
         thead.font.colour_index = Style.colour_map['white']
         thead.pattern.pattern = Pattern.SOLID_PATTERN
-        thead.pattern.pattern_back_colour = Style.colour_map['black']
+        thead.pattern.pattern_fore_colour = Style.colour_map['black']
         thead.borders.colour = 'white'
         thead.borders.left = Borders.THIN
         thead.borders.right = Borders.THIN
