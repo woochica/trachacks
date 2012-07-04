@@ -175,10 +175,10 @@ The Macro accepts arguments as well:
                     newver = WikiPage(self.env, base_page_name).version
                     oldver = abs(int(regres.group(1)))
                     if(newver != oldver):
-                        outver = "[wiki:/%s?action=diff&old_version=%s @%s-@%s]" \
+                        outver = "[[wiki:/%s?action=diff&old_version=%s|@%s-@%s]]" \
                         % (base_page_name, oldver, oldver, newver)
             if outcode != "" or outver != "":
-                res += "|| [wiki:/%s] || %s || %s ||\n" % (page, outver, outcode)
+                res += "|| [[wiki:/%s]] || %s || %s ||\n" % (page, outver, outcode)
                 found += 1
 
         if found == 0:
@@ -209,7 +209,7 @@ The Macro accepts arguments as well:
                 (prefix, page, lang_code) = self._get_page_info(base_page)
                 tr = self._get_translated_page(prefix, page, l);
                 if not WikiSystem(self.env).has_page(tr):
-                    reslang += " * [wiki:/%s]\n" % tr
+                    reslang += " * [[wiki:/%s]]\n" % tr
             if len(reslang) > 0:
                 langd = l
                 if self.languagesbase.has_key(l):
@@ -224,7 +224,7 @@ The Macro accepts arguments as well:
         res = ""
         for page in sorted(WikiSystem(self.env).get_pages()):
             if self.macro_re.search(WikiPage(self.env, page).text) == None:
-                res += " * [wiki:/%s]\n" % page
+                res += " * [[wiki:/%s]]\n" % page
 
         if len(res) == 0:
             if(silent):
@@ -235,7 +235,7 @@ The Macro accepts arguments as well:
     def _check_args(self, page, argstr, lang_code):
         if argstr == None or len(argstr) == 0:
             if lang_code != self.base_lang:
-                return "||[wiki:/%s]|| ||No revision specified for translated page\n" \
+                return "||[[wiki:/%s]]|| ||No revision specified for translated page\n" \
                     % page
             else:
                 return ""
@@ -252,31 +252,31 @@ The Macro accepts arguments as well:
             if arg == 'lang':
                 if not ('showoutdated' in args or 'showmissing' in args or \
                     'showstatus' in args):
-                        resargs += "||[wiki:/%s]||%s||'lang' argument without proper show argument'||\n" \
+                        resargs += "||[[wiki:/%s]]||%s||'lang' argument without proper show argument'||\n" \
                             % (page, argstr)
                 elif not self.languages.has_key(kw[arg]):
-                    resargs += "||[wiki:/%s]||%s||'lang'='%s' argument uses unknown language||\n" \
+                    resargs += "||[[wiki:/%s]]||%s||'lang'='%s' argument uses unknown language||\n" \
                         % (page, argstr, kw[arg])
             elif arg == 'revision':
                 try:
                     int(kw[arg])
                     #if int(kw[arg]) < 0:
-                    #    resargs += "||[wiki:/%s]||%s||'revision'='%s' is no positive value||\n" \
+                    #    resargs += "||[[wiki:/%s]]||%s||'revision'='%s' is no positive value||\n" \
                     #        % (page, argstr, kw[arg])
                 except:
-                    resargs += "||[wiki:/%s]||%s||'revision'='%s' is no integer value||\n" \
+                    resargs += "||[[wiki:/%s]]||%s||'revision'='%s' is no integer value||\n" \
                         % (page, argstr, kw[arg])
                 if show:
-                    resargs += "||[wiki:/%s]||%s||'revision'='%s' used with show argument||\n" \
+                    resargs += "||[[wiki:/%s]]||%s||'revision'='%s' used with show argument||\n" \
                         % (page, argstr, kw[arg])
                 elif lang_code == self.base_lang:
-                    resargs += "||[wiki:/%s]||%s||Revision specified for base page\n" \
+                    resargs += "||[[wiki:/%s]]||%s||Revision specified for base page\n" \
                         % (page, argstr)
             elif arg != 'outdated':
-                resargs += "||[wiki:/%s]||%s||unknown argument '%s'='%s'||\n" \
+                resargs += "||[[wiki:/%s]]||%s||unknown argument '%s'='%s'||\n" \
                     % (page, argstr, arg, kw[arg])
         if lang_code != self.base_lang and not kw.has_key(u'revision') and not show:
-            resargs += "||[wiki:/%s]||%s||No revision specified for translated page\n" \
+            resargs += "||[[wiki:/%s]]||%s||No revision specified for translated page\n" \
                 % (page, argstr)
         return resargs
 
@@ -296,7 +296,7 @@ The Macro accepts arguments as well:
                         base_pages.append(basename)
                     resargs += self._check_args(page, regres.group(1), lang_code)
                     if self.languages.get(lang_code, None) == None:
-                      respages += "||[wiki:/%s]||Translated page language code unknown||\n" % page
+                      respages += "||[[wiki:/%s]]||Translated page language code unknown||\n" % page
 
         base_pages.sort()
         for base_page in base_pages:
@@ -304,7 +304,7 @@ The Macro accepts arguments as well:
             translations = self._get_translations(prefix, page)
             basever = 0;
             if not self.base_lang in translations:
-                respages += "||[wiki:/%s]||Base language is missing for translated pages||\n" % base_page
+                respages += "||[[wiki:/%s]]||Base language is missing for translated pages||\n" % base_page
             else:
                 basever = WikiPage(self.env, base_page).version
             for translation in translations:
@@ -317,12 +317,12 @@ The Macro accepts arguments as well:
                          try:
                              rev = int(kw[u'revision'])
                              if rev != 0 and rev > basever:
-                                 respages += "||[wiki:/%s]||Revision %s is higher than base revision %s||\n" \
+                                 respages += "||[[wiki:/%s]]||Revision %s is higher than base revision %s||\n" \
                                      % (transpage, rev, basever)
                          except:
                              pass
                 else:
-                    respages += "||[wiki:/%s]||Translated page misses macro 'TranslatedPages'||\n" % transpage
+                    respages += "||[[wiki:/%s]]||Translated page misses macro 'TranslatedPages'||\n" % transpage
         
         if len(resargs):
             res += u"=== Errors in supplied arguments ===\n||= Page =||= Arguments =||= Issue =||\n"+resargs
@@ -368,7 +368,7 @@ The Macro accepts arguments as well:
             if WikiSystem(self.env).has_page(base_page):
                 basever = WikiPage(self.env, base_page).version
             if lang == None:
-                res += "||[wiki:/%s]" % base_page
+                res += "||[[wiki:/%s]]" % base_page
             for l in langs:
                 color = "green"
                 transpage = self._get_translated_page(prefix, page, l)
@@ -396,9 +396,9 @@ The Macro accepts arguments as well:
                 else:
                     color = "grey"
                 if lang != None:
-                    res += "||$$$%s$$$[wiki:/%s %s]" % (color, transpage, base_page)
+                    res += "||$$$%s$$$[[wiki:/%s|%s]]" % (color, transpage, base_page)
                 else:
-                    res += "||$$$%s$$$[wiki:/%s %s]" % (color, transpage, l)
+                    res += "||$$$%s$$$[[wiki:/%s|%s]]" % (color, transpage, l)
             res +="||\n"
         
         return res
