@@ -61,6 +61,7 @@ SMILEYS = {
     "{!OK}": "thumbs-dn.png",
     "{UP}": "thumbs-up.png",
     "{DN}": "thumbs-dn.png",
+    "(y)": "thumbs-up.png",
     "{X}": "icon-error.png",
 }
 
