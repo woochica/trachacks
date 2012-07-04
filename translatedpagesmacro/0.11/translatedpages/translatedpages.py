@@ -449,7 +449,7 @@ The Macro accepts arguments as well:
         for translation in self._get_translations(prefix, base_page_name):
             if translation != lang_code:
                 page_name = self._get_translated_page(prefix, base_page_name, translation)
-                lang_link_list.append(u"  * [wiki:/%s %s]" % (page_name, \
+                lang_link_list.append(u"  * [[wiki:/%s|%s]]" % (page_name, \
                     self._get_language_name(translation)))
             else:
                 lang_link_list.append(u"  * '''%s'''" % self._get_language_name(translation))
@@ -460,7 +460,7 @@ The Macro accepts arguments as well:
             newver = WikiPage(self.env, basepage).version
             oldver = abs(int(kw[u'revision']))
             if oldver < newver:
-                baselink = u"\n  * [wiki:/%s?action=diff&old_version=%s @%s - @%s]" \
+                baselink = u"\n  * [[wiki:/%s?action=diff&old_version=%s|@%s - @%s]]" \
                     % (basepage, oldver, oldver, newver)
 
         if len(lang_link_list) <= 1:
