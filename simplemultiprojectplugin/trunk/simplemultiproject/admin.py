@@ -29,7 +29,7 @@ class SmpAdminPanel(Component):
     
     def get_permission_actions(self):
         """ Permissions supported by the plugin. """
-        return ['PROJECT_ADMIN']
+        return ['PROJECT_ADMIN', 'PROJECT_SETTINGS_VIEW']
 
 
     def __init__(self):
@@ -64,7 +64,7 @@ class SmpAdminPanel(Component):
 
     def render_admin_panel(self, req, category, page, path_info):
         """Return the template and data used to render our administration page."""
-        req.perm.require('PROJECT_ADMIN')
+        req.perm.require('PROJECT_SETTINGS_VIEW')
         projects_rows  = self.__SmpModel.get_all_projects()
         projects = []
         for row in sorted(projects_rows, key=itemgetter(1)):
@@ -73,6 +73,7 @@ class SmpAdminPanel(Component):
         if path_info:
             if req.method == 'POST':
                 if req.args.get('modify'):
+                    req.perm.require('PROJECT_ADMIN')
                     if not self.update_project(req.args.get('id'), req.args.get('name'), req.args.get('summary'), req.args.get('description')):
                         self.log.error("SimpleMultiProject Error: Failed to added project '%s'" % (req.args.get('name'),))
                     else:
@@ -89,6 +90,7 @@ class SmpAdminPanel(Component):
         else:
             if req.method == 'POST':
                 if req.args.get('add'):
+                    req.perm.require('PROJECT_ADMIN')
                     if req.args.get('name') != '':
                         if not self.add_project(req.args.get('name'), req.args.get('summary'), req.args.get('description')):
                             self.log.error("SimpleMultiProject Error: Failed to added project '%s'" % (req.args.get('name'),))
@@ -100,6 +102,7 @@ class SmpAdminPanel(Component):
                         raise TracError('No name input')
 
                 elif req.args.get('remove'):
+                    req.perm.require('PROJECT_ADMIN')
                     sel = req.args.get('sel')
                     if not sel:
                         raise TracError('No project selected')
@@ -122,7 +125,7 @@ class SmpAdminPanel(Component):
         return [('simplemultiproject', resource_filename(__name__, 'htdocs'))]
 
     def get_admin_panels(self, req):
-        if 'PROJECT_ADMIN' in req.perm('projects'):
+        if 'PROJECT_SETTINGS_VIEW' in req.perm('projects'):
             yield ('projects', _('Manage Projects'), 'simplemultiproject', _('Projects'))
 
     def get_templates_dirs(self):

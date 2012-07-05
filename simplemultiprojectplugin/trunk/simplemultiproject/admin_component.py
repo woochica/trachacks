@@ -64,7 +64,7 @@ class SmpComponentAdminPanel(Component):
 
     # IAdminPanelProvider
     def render_admin_panel(self, req, category, page, component):
-        req.perm.require('PROJECT_ADMIN')
+        req.perm.require('PROJECT_SETTINGS_VIEW')
         # Detail view?
         if component:
             comp = model.Component(self.env, component)
@@ -75,6 +75,7 @@ class SmpComponentAdminPanel(Component):
             
             if req.method == 'POST':
                 if req.args.get('apply'):
+                    req.perm.require('PROJECT_ADMIN')
                     cprojects = req.args.get('sel')
                     self.__SmpModel.delete_component_projects(comp.name)
                     if cprojects and 'all' not in cprojects:
@@ -103,7 +104,7 @@ class SmpComponentAdminPanel(Component):
         return 'smp_admin_components.html', data
 
     def get_admin_panels(self, req):
-        if 'PROJECT_ADMIN' in req.perm('projects'):
+        if 'PROJECT_SETTINGS_VIEW' in req.perm('projects'):
             return (('projects', _('Manage Projects'), 'components', _('Components')),)
 
     # ITemplateProvider
