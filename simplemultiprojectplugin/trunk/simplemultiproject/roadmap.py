@@ -78,7 +78,7 @@ class SmpRoadmapProjectFilter(Component):
         select.append(tag.option("All", value="All"))
         
         for component in sorted_project_names_list:
-            project = to_unicode(component[1])
+            project = component[1]
             if selectedcomps and project in selectedcomps:
                 select.append(tag.option(project, value=project, selected="selected"))
             else:

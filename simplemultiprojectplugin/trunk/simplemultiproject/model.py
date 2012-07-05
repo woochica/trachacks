@@ -16,16 +16,22 @@ def smp_settings(req, context, kind, name=None):
         settings_settings   = '%s.%s' % (context, kind)
 
     settings = req.args.get(settings_name)
-    settings = type(settings) is unicode and (settings,) or settings
+    if type(settings) is list:
+        new_settings = u''
+        for setting in settings:
+            new_settings = "%s,///,%s" % (setting,new_settings)
+
+        settings = new_settings
 
     # check session attribtes
     if not settings:
         if req.session.has_key(settings_settings):
-            settings = to_unicode(req.session[settings_settings])
+            settings = req.session[settings_settings]
     else:
         req.session[settings_settings] = settings
 
-    return settings
+    
+    return settings.split(",///,")
 
 def smp_filter_settings(req, context, name):
     settings = smp_settings(req, context, 'filter', name)
