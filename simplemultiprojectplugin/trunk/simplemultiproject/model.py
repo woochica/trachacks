@@ -30,8 +30,10 @@ def smp_settings(req, context, kind, name=None):
     else:
         req.session[settings_settings] = settings
 
-    
-    return settings.split(",///,")
+    if settings is None:
+        return None
+    else:
+        return settings.split(",///,")
 
 def smp_filter_settings(req, context, name):
     settings = smp_settings(req, context, 'filter', name)
