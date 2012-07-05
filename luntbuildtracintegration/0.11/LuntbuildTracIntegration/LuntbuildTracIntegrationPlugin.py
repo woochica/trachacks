@@ -83,8 +83,8 @@ class LuntbuildTracIntegrationPlugin(Component):
                      LB_SCHEDULE s
                 WHERE p.id = s.fk_project_id
                   AND s.id = b.fk_schedule_id
-                  AND end_date > '%s'
-                  AND end_date < '%s'
+                  AND b.start_date > '%s'
+                  AND b.start_date < '%s'
                 ORDER BY end_date DESC;
                 """ % (self.float2datetime(start).isoformat(' '), 
                        self.float2datetime(stop).isoformat(' '))
@@ -98,22 +98,24 @@ class LuntbuildTracIntegrationPlugin(Component):
                 if build[1] == 1:
                     success = 'build successful'  
                     kind = 'build-successful'
+                    comment = success + ", took " + str(build[4] - build[5])
                 elif build[1] == 3:
                     success = 'build in progress'  
                     kind = 'build-inprogress'
+                    comment = success
                 else:
                     success = 'build failed'  
                     kind = 'build-failed'
+                    comment = success + ", took " + str(build[4] - build[5])
                 
                 href = base_url + "/app.do?service=direct/1/Home/builds.buildListComponent.$DirectLink$1&sp=l%d" % build[3]
                 title = Markup("<em>%s</em>" % (build[2]))
-                comment = success + ", took " + str(build[4] - build[5])
-                completed = build[4]
+                started = build[5]
                 
                 #if format == 'rss':
                 #else:
                 
-                yield kind, href, title, self.datetime2float(completed), None, comment
+                yield kind, href, title, self.datetime2float(started), None, comment
 
     def datetime2float(self, thedatetime):
         return  time.mktime(thedatetime.timetuple()) + thedatetime.microsecond / 1e6
