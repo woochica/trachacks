@@ -1,3 +1,52 @@
+Version 3.4.4 (June 20, 2012)
+- Add <blue-document-epub*> and <blue-document-mobi*>.
+- Add <cursor-lifebuoy>.
+- Add <document-epub*> and <document-mobi*>.
+- Add <flag-checker>.
+- Add <lifebuoy-medium> and <lifebuoy-small>.
+- Add <pencil-button>.
+- Add <shuriken>.
+- Add <stickman-run*> and <stickman-smiley-*>.
+------------------------------------------------------------
+Version 3.4.3 (June 8, 2012)
+- Add <dress>.
+- Add <edit-lipsum> and <edit-style>.
+- Add <keyboard-small> and <keyboards*>.
+- Add <santa-hat>.
+- Add <smiley-medium>.
+- Add <sushi>.
+- Add <wand-magic>.
+------------------------------------------------------------
+Version 3.4.2 (June 5, 2012)
+- Add <box-resize*> and <box-zipper>.
+- Add <controller-d-pad>.
+- Add <lock-warning>.
+- Add <map-resize*>.
+- Add <selection-resize*>.
+- Add <slide-resize*>.
+- Add <table-resize*> and <table-rotate>.
+- Add <ui-panel-resize*>.
+- Add <zone-resize*>.
+------------------------------------------------------------
+Version 3.4.1 (May 3, 2012)
+- Add <blue-document-number-*>.
+- Add <document-number-*>.
+- Add <footprint*>.
+------------------------------------------------------------
+Version 3.4 (April 28, 2012)
+- Add <balloon-smiley-sad>.
+- Add <blue-document-smiley*>.
+- Add <blue-folder-smiley*> and <blue-folder-tree>.
+- Add <document-smiley*>.
+- Add <folder-smiley*>.
+- Add <geolocation*>.
+- Add <keyboard-smiley>.
+- Add <notification-counter*>.
+- Add <report-share>.
+- Add <script-smiley*>.
+- Add <tag-share>.
+- Add <zone-share>.
+------------------------------------------------------------
 Version 3.3.4 (March 15, 2012)
 - Add <edit-code-division>, <edit-indent-rtl>,
   <edit-list-order-rtl>, <edit-list-rtl> and

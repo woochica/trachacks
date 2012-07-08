@@ -19,7 +19,7 @@ Same license terms as stipulated by Edgewall Software, see below.
 
 - trac.png
 
-Copyright (C) 2003-2011 Edgewall Software
+Copyright (C) 2003-2012 Edgewall Software
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
