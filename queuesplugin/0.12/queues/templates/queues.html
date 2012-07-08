@@ -3,7 +3,7 @@
       xmlns:py="http://genshi.edgewall.org/" py:strip="">
 
 var setup = function(paging){
-    jQuery('table.listing.tickets tbody').attr('op', 'ignore');
+    jQuery('table.listing.tickets tbody').attr('op', 'reorder');
         
     // make the table rows sortable (but only if on first page)
     if (jQuery('div.paging').length == 0 || jQuery('div.paging:last span.current').text() == '1'){
