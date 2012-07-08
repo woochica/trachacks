@@ -113,12 +113,14 @@ var change = function(changes, cells){
                 if (!ignore(jQuery.trim(cell.text()), new_pos)){
                     // returned args look like: id5=position1 amp id23=position2
                     var id = cell.siblings('.ticket').text().replace(/[^\d]/g,'');
-                    var field = cell.attr('class').replace(/ /g,'').toLowerCase();
-                    changes['id'+id] = field+new_pos;
-                    len += 1;
-                    
-                    // update cell to new position
-                    cells.push(cell.text(new_pos));
+                    if (id.length){ // skip column headers and such
+                        var field = cell.attr('class').replace(/ /g,'').toLowerCase();
+                        changes['id'+id] = field+new_pos;
+                        len += 1;
+                        
+                        // update cell to new position
+                        cells.push(cell.text(new_pos));
+                    }
                 };
             }
             
