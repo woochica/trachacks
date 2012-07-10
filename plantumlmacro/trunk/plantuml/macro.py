@@ -75,17 +75,22 @@ class PlantUmlMacro(WikiMacroBase):
             return system_message(_("Installation error: plantuml.jar not found at '%s'") % self.plantuml_jar)
         
         # Trac 0.12 supports expand_macro(self, formatter, name, content, args)
-        # To support Trac 0.11, some additional work is required
+        # which allows us to readily differentiate between a WikiProcess and WikiMacro
+        # call. To support Trac 0.11, some additional work is required.
         try:
             args = formatter.code_processor.args
         except AttributeError:
             args = None
-                        
+        
         path = None
-        if args is None: #WikiMacro
-            path = content
-            if not path:
-                return system_message(_("Path not specified"))            
+        if not args: #Could be WikiProcessor or WikiMacro call
+            if content.strip().startswith("@startuml"):
+                markup = content
+                path = None
+            else:
+                path = content
+                if not path:
+                    return system_message(_("Path not specified"))
         elif args: #WikiProcessor with args
             path = args.get('path')
             if not path:
@@ -149,7 +154,7 @@ class PlantUmlMacro(WikiMacroBase):
     def _read_source_from_repos(self, formatter, src_path):
         repos_mgr = RepositoryManager(self.env)
         try: #0.12+
-            repos_name, repos,source_obj = repos_mgr.get_repository_by_path(src_path)
+            repos_name, repos, source_obj = repos_mgr.get_repository_by_path(src_path)
         except AttributeError, e: #0.11
             repos = repos_mgr.get_repository(formatter.req.authname)
         path, rev = _split_path(src_path)
@@ -159,6 +164,7 @@ class PlantUmlMacro(WikiMacroBase):
             exists = True
         else:
             rev = rev or repos.get_youngest_rev()
+            # TODO: use `raise NoSuchNode(path, rev)`
             content = system_message(_("No such node '%s' at revision '%s'") % (path, rev) )
             exists = False
         
