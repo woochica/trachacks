@@ -71,7 +71,7 @@ class TracHacksMacros(Component):
                 show_releases = [show_releases]
             req.session['th_release_filter'] = ','.join(show_releases)
         else:
-            show_releases = req.session.get('th_release_filter', '0.11').split(',')
+            show_releases = req.session.get('th_release_filter', '0.12').split(',')
         for version in releases:
             checked = version in show_releases
             out.write('<input type="checkbox" name="release" value="%s"%s>%s\n' % (version, checked and ' checked' or '', version))
