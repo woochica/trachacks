@@ -16,6 +16,9 @@ from simplemultiproject.model import smp_filter_settings
 class SmpTimelineProjectFilter(Component):
     """Allows for filtering by 'Project'
     """
+    _old_render_fn = []
+    _current_project = []
+    _read_idx = -1
     
     implements(IRequestFilter, ITemplateStreamFilter)
     
@@ -29,11 +32,16 @@ class SmpTimelineProjectFilter(Component):
         
     def post_process_request(self, req, template, data, content_type):
         if template == 'timeline.html':
-            filter_projects = self._filtered_projects(req) 
+            filter_projects = self._filtered_projects(req)
+            if not filter_projects: #no filter means likely more than 1 project, so we insert the project name
+                filter_projects = [project[1] for project in self.__SmpModel.get_all_projects()]
             
             if filter_projects:               
                 filtered_events = []
                 tickettypes = ("newticket", "editedticket", "closedticket", "attachment", "reopenedticket")
+                self._old_render_fn = []
+                self._current_project = []
+                self._read_idx = -1
                 for event in data['events']:
                     if event['kind'] in tickettypes:
                         resource = event['kind'] == "attachment" and event['data'][0].parent or event['data'][0]
@@ -41,6 +49,13 @@ class SmpTimelineProjectFilter(Component):
                             ticket = Ticket( self.env, resource.id )   
                             project = ticket.get_value_or_default('project')
                             if project and project in filter_projects:
+                                if len(filter_projects) > 1: #only if more than 1 filtered project
+                                    #store the old render function and the project to be inserted
+                                    self._old_render_fn.append(event['render'])
+                                    self._current_project.append(project)
+                                    #redirect to our new render function (which will insert the project name)
+                                    event['render'] = self._render_ticket_event
+                                #add to the list of displayed events
                                 filtered_events.append(event)
                         
                     else:
@@ -62,6 +77,24 @@ class SmpTimelineProjectFilter(Component):
         return stream
 
     # Internal
+    def _render_ticket_event(self, field, context):
+        if (field == 'url'):
+            self._read_idx += 1 #next index now
+
+        #call the original render function
+        output = self._old_render_fn[self._read_idx](field, context)
+
+        if field == 'title': #now it's time to insert the project name
+            #split the whole string until we can insert
+            splitted_output = to_unicode(output).split("</em>")
+            tooltip = splitted_output[0].split('\"')
+            ticket_no = splitted_output[0].split('>')
+            if len(tooltip) == 3: #it's a ticket
+                #now rebuild the puzzle by inserting the name
+                output = tag('Ticket' + ' ', tag.em(ticket_no[1], title=tooltip[1]), ' ', tag.span(self._current_project[self._read_idx], style="background-color: #ffffd0;"), splitted_output[1])
+            elif len(tooltip) == 1 and len(splitted_output) == 3: #it's an attachment
+                output += tag(' ', tag.span(self._current_project[self._read_idx], style="background-color: #ffffd0;"))
+        return output
 
     def _projects_field_input(self, req, selectedcomps):
         cursor = self.__SmpModel.get_all_projects()
