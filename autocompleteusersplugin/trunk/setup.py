@@ -20,10 +20,10 @@ setup(name='AutocompleteUsers',
       maintainer_email = 'ryano@physiosonics.com',
       url='http://trac-hacks.org/wiki/AutocompleteUsersPlugin',
       keywords='trac plugin',
-      license="BSD 3-Clause",
+      license='3-Clause BSD',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),      
       include_package_data=True,
-      package_data={'autocompleteusers': ['htdocs/css/*', 'htdocs/js/*']},
+      package_data={'autocompleteusers': ['htdocs/css/*.css', 'htdocs/css/*.gif', 'htdocs/js/*.js']},
       zip_safe=False,
       entry_points = """
       [trac.plugins]

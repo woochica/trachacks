@@ -4,6 +4,7 @@
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
+
 import fnmatch
 
 from pkg_resources import resource_filename
