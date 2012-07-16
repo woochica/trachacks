@@ -1,0 +1,5 @@
+AutocompleteUsers (0.4.2) (not yet released) - trunk
+ resolved issues:  
+ 
+ new features:
+ * #7324: Users and groups on the admin permissions page are autocompleted.

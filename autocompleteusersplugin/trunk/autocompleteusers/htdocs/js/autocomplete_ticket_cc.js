@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-  $("#field-cc").autocomplete("../users", {
+  $("#field-cc").autocomplete("../subjects", {
     multiple: true,
     formatItem: formatItem
   });

@@ -1,5 +1,5 @@
 jQuery(document).ready(function($) {
-  $("#field-owner").autocomplete("users", {
+  $("#field-owner").autocomplete("subjects", {
     formatItem: formatItem
   });
 });
