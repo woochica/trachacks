@@ -1,7 +1,8 @@
-#/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2008-2009 Jeff Hammel
+# Copyright (C) 2008-2009 Jeff Hammel <jhammel@openplans.org>
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -9,7 +10,7 @@
 
 from setuptools import find_packages, setup
 
-version='0.4.2'
+version='0.5.0'
 
 setup(name='AutocompleteUsers',
       version=version,
@@ -27,7 +28,7 @@ setup(name='AutocompleteUsers',
       zip_safe=False,
       entry_points = """
       [trac.plugins]
-      autocompleteusers = autocompleteusers
+      autocompleteusers = autocompleteusers.autocompleteusers
       """,
       )
 

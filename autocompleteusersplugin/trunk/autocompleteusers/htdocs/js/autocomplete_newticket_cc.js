@@ -3,5 +3,5 @@ jQuery(document).ready(function($) {
     multiple: true,
     formatItem: formatItem,
     delay: 100
-    });
+  });
 });
