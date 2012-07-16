@@ -35,12 +35,12 @@
             <div>
               <input type="checkbox" id="showcompleted" name="show" value="completed"
                      checked="${'completed' in show or None}" />
-              <label for="showcompleted">Show completed milestones or versions</label>
+              <label for="showcompleted">${_('Show completed milestones or versions')}</label>
             </div>
             <div>
               <input type="checkbox" id="hidenoduedate" name="show" value="noduedate"
                      checked="${'noduedate' in show or None}" />
-              <label for="hidenoduedate">Hide milestones with no due date</label>
+              <label for="hidenoduedate">${_('Hide milestones with no due date')}</label>
             </div>
         </fieldset>
         <div class="buttons">
@@ -127,7 +127,7 @@
        </div></form>
        <form method="get" action="${href.version()}"><div>
         <input type="hidden" name="action" value="new" />
-        <input type="submit" value="Version ${_('Add')}" />
+        <input type="submit" value="${_('Add new version')}" />
        </div></form>
       </div>
 

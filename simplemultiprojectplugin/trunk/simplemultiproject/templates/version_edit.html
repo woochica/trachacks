@@ -2,12 +2,27 @@
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/"
-      xmlns:i18n="http://genshi.edgewall.org/i18n">
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
   <head>
-    <title>Versions</title>
+    <py:choose test="version.exists">
+      <title py:when="True">Edit Version ${version.name}</title>
+      <title py:otherwise="">New Version</title>
+    </py:choose>
+    <link rel="stylesheet" type="text/css"
+          href="${chrome.htdocs_location}css/roadmap.css" />
+    <script type="text/javascript">/*<![CDATA[*/
+      jQuery(document).ready(function($) {
+        function updateDueDate() {
+          $("#versiondate").enable($("#due").checked());
+        }        
+        $("#due").click(updateDueDate);        
+        updateDueDate();
+        $("#name").get(0).focus()
+      });
+    /*]]>*/</script>
   </head>
 
   <body>
@@ -21,18 +36,25 @@
         <div class="field">
           <input type="hidden" name="id" value="${version.name}" />
           <input type="hidden" name="action" value="edit" />
-          <label>Name:<br />
+          <label>Name of the version:<br />
             <input type="text" id="name" name="name" size="32" value="${version.name or req.args.get('name')}" />
           </label>
         </div>
-        <div class="field">
-          <label>${_('Due')}:<br />
-            <input type="text" id="versiondate" name="time" size="${len(datetime_hint)}"
+        <fieldset>
+          <legend>Schedule</legend>
+          <div class="field">
+            <label>
+              <input type="checkbox" id="due" name="due" checked="${version.time or None}" />
+              Due:<br />
+            </label>
+            <label>
+              <input type="text" id="versiondate" name="time" size="${len(datetime_hint)}"
                      value="${format_datetime(version.time)}"
                      title="${_('Format: %(datehint)s', datehint=datetime_hint)}" />
-            <em i18n:msg="datehint">Format: $datetime_hint</em>
-          </label>
-        </div>
+              <em i18n:msg="datehint">Format: ${datetime_hint}</em>
+            </label>
+          </div>
+        </fieldset>
         <div class="field">
           <fieldset class="iefix">
             <label for="description" i18n:msg="">
