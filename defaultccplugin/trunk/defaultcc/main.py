@@ -51,4 +51,3 @@ class TicketDefaultCC(Component):
 def simplify_whitespace(name):
     """Strip spaces and remove duplicate spaces within names"""
     return ' '.join(name.split())
-

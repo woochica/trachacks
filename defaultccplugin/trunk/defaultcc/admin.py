@@ -56,7 +56,6 @@ class DefaultCCAdmin(Component):
             cursor.fetchone()
             return False
         except:
-            db.rollback()
             return True
 
     def upgrade_environment(self, db):
@@ -72,7 +71,6 @@ class DefaultCCAdmin(Component):
                     cursor.execute(stmt)
                     db.commit()
         except Exception, e:
-            db.rollback()
             self.log.error(e, exc_info=True)
             raise TracError(str(e))
 
@@ -104,8 +102,12 @@ class DefaultCCAdmin(Component):
     # Display
     def filter_stream(self, req, method, filename, stream, data):
         if 'TICKET_ADMIN' in req.perm:
-            if req.path_info == '/admin/ticket/components' or req.path_info == '/admin/ticket/components/':
+            if req.path_info.startswith('/admin/ticket/components') or req.path_info == '/admin/ticket/components/':
                 components = data.get('components')
+                # 'components' will be None if component with specified name already exists.
+                if not components:
+                    return stream
+                
                 default_ccs = DefaultCC.select(self.env)
 
                 stream = stream | Transformer('//table[@id="complist"]/thead/tr') \
