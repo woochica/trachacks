@@ -63,7 +63,7 @@ class AutocompleteUsers(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if template in ('ticket.html', 'admin_perms.html'):
+        if template in ('ticket.html', 'admin_perms.html', 'query.html'):
             add_stylesheet(req, 'autocomplete/css/autocomplete.css')
             add_script(req, 'autocomplete/js/autocomplete.js')
             add_script(req, 'autocomplete/js/format_item.js')
@@ -79,6 +79,9 @@ class AutocompleteUsers(Component):
                         add_script(req, 'autocomplete/js/autocomplete_ticket.js')
             elif template == 'admin_perms.html':
                 add_script(req, 'autocomplete/js/autocomplete_perms.js')
+            elif template == 'query.html':
+                add_script(req, 'autocomplete/js/autocomplete_query.js')
+            
         return template, data, content_type
 
     # ITemplateStreamFilter methods
