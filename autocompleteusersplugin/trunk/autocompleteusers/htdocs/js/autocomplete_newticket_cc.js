@@ -4,4 +4,7 @@ jQuery(document).ready(function($) {
     formatItem: formatItem,
     delay: 100
   });
+  $("input:text#field-reporter").autocomplete("subjects", {
+    formatItem: formatItem
+  });
 });

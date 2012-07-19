@@ -3,4 +3,7 @@ jQuery(document).ready(function($) {
     multiple: true,
     formatItem: formatItem
   });
+  $("input:text#field-reporter").autocomplete("../subjects", {
+    formatItem: formatItem
+  });
 });
