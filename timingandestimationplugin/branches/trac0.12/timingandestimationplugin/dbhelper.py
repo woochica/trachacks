@@ -1,6 +1,14 @@
+import trac.db.pool
 import trac.db.sqlite_backend
 import trac.db.postgres_backend
 import trac.db.mysql_backend
+
+def is_db_type(db, typeToVerify):
+    cnx = db.cnx
+    t = type(cnx)
+    if t == trac.db.pool.PooledConnection:
+        t = type(cnx.cnx)
+    return typeToVerify == t
 
 def get_all(env, sql, *params):
     """Executes the query and returns the (description, data)"""
@@ -85,11 +93,11 @@ def execute_in_nested_trans(env, name, *args):
 
 def current_schema (env):
     db = env.get_read_db()
-    if (type(db.cnx) == trac.db.sqlite_backend.SQLiteConnection):
+    if is_db_type(db, trac.db.sqlite_backend.SQLiteConnection):
         return None
-    elif (type(db.cnx) == trac.db.mysql_backend.MySQLConnection):
+    elif is_db_type(db, trac.db.mysql_backend.MySQLConnection):
         return get_scalar(env, 'SELECT schema();')
-    elif (type(db.cnx) == trac.db.postgres_backend.PostgreSQLConnection):
+    elif is_db_type(db, trac.db.postgres_backend.PostgreSQLConnection):
         return get_scalar(env, 'SHOW search_path;')
 
 def _prep_schema(s):
@@ -101,7 +109,7 @@ def _prep_schema(s):
 def db_table_exists(env,  table):
     db = env.get_read_db()
     cnt = None
-    if(type(db.cnx) == trac.db.sqlite_backend.SQLiteConnection):
+    if is_db_type(db, trac.db.sqlite_backend.SQLiteConnection):
         sql = "select count(*) from sqlite_master where type = 'table' and name = %s"
         cnt = get_scalar(env, sql, 0, table)
     else:
