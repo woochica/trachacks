@@ -3,6 +3,7 @@ import time
 from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
+from trac.util.text import to_unicode
 from trac.util.html import Markup
 from trac.util.text import javascript_quote
 from trac.wiki.macros import WikiMacroBase
@@ -299,7 +300,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         # Construct the querystring. 
         query_string = '&'.join(['%s=%s' % 
-                                 (f, str(v)) for (f, v) in 
+                                 (f, unicode(v)) for (f, v) in 
                                  query_args.iteritems()]) 
 
         # Get the Query Object. 
