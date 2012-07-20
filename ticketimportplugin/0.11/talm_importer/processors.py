@@ -19,9 +19,8 @@ class ImportProcessor(object):
         self.env = env
         self.req = req
         self.filename = filename
-        self.modifiedcount = 0
-        self.notmodifiedcount = 0
-        self.added = 0
+        self.modified = {}
+        self.added = {}
 
         # TODO: check that the tickets haven't changed since preview
         self.tickettime = tickettime
@@ -34,6 +33,8 @@ class ImportProcessor(object):
         self.importedfields = None
 
     def start(self, importedfields, reconciliate_by_owner_also, has_comments):
+        # Index by row index, returns ticket id
+        self.crossref = []
         self.lowercaseimportedfields = [f.lower() for f in importedfields]
 
     def process_missing_fields(self, missingfields, missingemptyfields, missingdefaultedfields, computedfields):
@@ -113,20 +114,18 @@ class ImportProcessor(object):
                             self.computedfields[f]['set']:
                         self.ticket[f] = self.computedfields[f]['value']
 
-            
-            self.added += 1
             self.ticket.insert(when=tickettime, db=self.db)
+            self.added[self.ticket.id] = 1
         else:
             if self.comment:
                 message = "''Batch update from file " + self.filename + ":'' " + self.comment
             else:
                 message = "''Batch update from file " + self.filename + "''"
             if self.ticket.is_modified() or self.comment:
-                self.modifiedcount += 1
                 self.ticket.save_changes(get_reporter_id(self.req), message, when=tickettime, db=self.db) # TODO: handle cnum, cnum = ticket.values['cnum'] + 1)
-            else:
-                self.notmodifiedcount += 1
+                self.modified[self.ticket.id] = 1
 
+        self.crossref.append(self.ticket.id)
         self.ticket = None
 
     def process_new_lookups(self, newvalues):
@@ -153,6 +152,79 @@ class ImportProcessor(object):
 
     def process_new_users(self, newusers):
         pass
+
+    # Rows is an array of dictionaries.
+    # Each row is indexed by the field names in relativeticketfields.
+    def process_relativeticket_fields(self, rows, relativeticketfields):
+        from ticket import PatchedTicket
+        
+        # Find the WBS columns, if any.  We never expect to have more
+        # than one but this is flexible and easy.  There's no good
+        # reason to go to the trouble of ignoring extras.
+        wbsfields=[]
+        for row in rows:
+            for f in relativeticketfields:
+                if row[f].find('.') != -1:
+                    if f not in wbsfields:
+                        wbsfields.append(f)
+
+
+        # If WBS column present, build reverse lookup to find the
+        # ticket ID from a WBS number.
+        wbsref = {}
+        if wbsfields != []:
+            row_idx = 0
+            for row in rows:
+                wbsref[row[wbsfields[0]]] = self.crossref[row_idx]
+                row_idx += 1
+
+        row_idx = 0
+        for row in rows:
+            id = self.crossref[row_idx]
+
+            # Get the ticket (added or updated in the main loop
+            ticket = PatchedTicket(self.env, tkt_id=id, db=self.db)
+
+            for f in relativeticketfields:
+                # Get the value of the relative field column (e.g., "2,3")
+                v = row[f]
+                # If it's not empty, process the contents
+                if len(v) > 0:
+                    # Handle WBS numbers
+                    if f in wbsfields:
+                        if row[f].find('.') == -1:
+                            # Top level, no parent
+                            ticket[f] = ''
+                        else:
+                            # Get this task's wbs
+                            wbs = row[f]
+                            # Remove the last dot-delimited field
+                            pwbs = wbs[:wbs.rindex(".")]
+                            # Look up the parent's ticket ID
+                            ticket[f] = str(wbsref[pwbs])
+                    # Handle dependencies
+                    else:
+                        s = []
+                        for r in v.split(","):
+                            # Make the string value an integer
+                            r = int(r)
+
+                            # The relative ticket dependencies are 1-based,
+                            # array indices are 0-based.  Convert and look up
+                            # the new ticket ID of the other ticket.
+                            i = self.crossref[r-1]
+
+                            # TODO check that i != id
+
+                            s.append(str(i))
+
+                        # Empty or not, use it to update the ticket
+                        ticket[f] = ', '.join(s)
+
+
+            ticket.save_changes(get_reporter_id(self.req), '', db=self.db)
+            row_idx += 1
+        
             
     def end_process(self, numrows):
         self.db.commit()
@@ -160,8 +232,9 @@ class ImportProcessor(object):
         data = {}
         data['title'] = 'Import completed'
         #data['report.title'] = data['title'].lower()
+        notmodifiedcount = numrows - len(self.added) - len(self.modified)
 
-        message = 'Successfully imported ' + str(numrows) + ' tickets (' + str(self.added) + ' added, ' + str(self.modifiedcount) + ' modified, ' + str(self.notmodifiedcount) + ' unchanged).'
+        message = 'Successfully imported ' + str(numrows) + ' tickets (' + str(len(self.added)) + ' added, ' + str(len(self.modified)) + ' modified, ' + str(notmodifiedcount) + ' unchanged).'
 
         data['message'] = Markup("<style type=\"text/css\">#report-notfound { display:none; }</style>\n") + wiki_to_html(message, self.env, self.req)
 
@@ -175,12 +248,11 @@ class PreviewProcessor(object):
         self.req = req
         self.data = {'rows': []}
         self.ticket = None
-        self.modified = False
+        self.rowmodified = False
         self.styles = ''
         self.duplicatessumaries = []
-        self.modifiedcount = 0
-        self.notmodifiedcount = 0
-        self.added = 0
+        self.modified = {}
+        self.added = {}
 
     def start(self, importedfields, reconciliate_by_owner_also, has_comments):
         self.data['title'] = 'Preview Import'
@@ -228,6 +300,21 @@ class PreviewProcessor(object):
         self.message += u' * Some fields will not be imported because they don\'t exist in Trac: %s.\n' \
                         % u', '.join([x and to_unicode(x) or u"''(empty name)''" for x in notimportedfields])
 
+    # Rows is an array of arrays.
+    # Each row is indexed by the field names in relativeticketfields.
+    def process_relativeticket_fields(self, rows, relativeticketfields):
+        self.message += ' * Relative ticket numbers will be processed in: ' + ', '.join([x and x or "''(empty name)''" for x in relativeticketfields])  + '.\n'
+        wbsfields=[]
+        for row in rows:
+            for f in relativeticketfields:
+                self.env.log.debug("f %s, row '%s'" % (f, row[f]))
+                if row[f].find('.') != -1:
+                    self.env.log.debug("found")
+                    if f not in wbsfields:
+                        wbsfields.append(f)
+        if wbsfields != []:
+            self.message += '    WBS numbers processed in: ' + ', '.join([x and x or "''(empty name)''" for x in wbsfields])  + '.\n'
+            
     def process_comment_field(self, comment):
         self.message += u' * The field "%s" will be used as comment when modifying tickets, and appended to the description for new tickets.\n' % comment
 
@@ -235,7 +322,8 @@ class PreviewProcessor(object):
         from ticket import PatchedTicket
         self.ticket = None
         self.cells = []
-        self.modified = False
+        self.rowmodified = False
+        self.row_idx = row_idx
         if ticket_id > 0:
             # existing ticket. Load the ticket, to see which fields will be modified
             self.ticket = PatchedTicket(self.env, ticket_id)
@@ -244,7 +332,7 @@ class PreviewProcessor(object):
     def process_cell(self, column, cell):
         if self.ticket and not (self.ticket.values.has_key(column.lower()) and self.ticket[column.lower()] == cell):
             self.cells.append( { 'col': column, 'value': cell, 'style': 'modified-' + column })
-            self.modified = True
+            self.rowmodified = True
         else:
             # if status of new ticket is empty, force to use 'new'
             if not self.ticket and column.lower() == 'status' and not cell:
@@ -258,16 +346,15 @@ class PreviewProcessor(object):
     def end_process_row(self):
         odd = len(self.data['rows']) % 2
         if self.ticket:
-            if self.modified:
-                self.modifiedcount += 1
+            if self.rowmodified:
+                self.modified[self.ticket.id] = 1
                 style = ''
                 ticket = self.ticket.id
             else:
-                self.notmodifiedcount += 1
                 style = ''
                 ticket = self.ticket.id
         else: 
-            self.added += 1
+            self.added[self.row_idx] = 1
             style = odd and 'color-new-odd' or 'color-new-even'
             ticket = '(new)'
             
@@ -296,7 +383,8 @@ class PreviewProcessor(object):
 
             
     def end_process(self, numrows):
-        self.message = 'Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the \'\'\'Execute Import\'\'\' button.\n' + ' * ' + str(numrows) + ' tickets will be imported (' + str(self.added) + ' added, ' + str(self.modifiedcount) + ' modified, ' + str(self.notmodifiedcount) + ' unchanged).\n' + self.message
+        notmodifiedcount = numrows - len(self.added) - len(self.modified)
+        self.message = 'Scroll to see a preview of the tickets as they will be imported. If the data is correct, select the \'\'\'Execute Import\'\'\' button.\n' + ' * ' + str(numrows) + ' tickets will be imported (' + str(len(self.added)) + ' added, ' + str(len(self.modified)) + ' modified, ' + str(notmodifiedcount) + ' unchanged).\n' + self.message
         self.data['message'] = Markup(self.styles) + wiki_to_html(self.message, self.env, self.req) + Markup('<br/>')
 
         return 'import_preview.html', self.data, None

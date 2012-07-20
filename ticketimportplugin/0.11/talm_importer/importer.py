@@ -203,6 +203,12 @@ class ImportModule(Component):
             commentfield = None
         lowercaseimportedfields = [f.lower() for f in importedfields]
 
+        # Fields which contain relative ticket numbers to update after import
+        relativeticketfields = [f for f in columns if f.startswith('#')]
+        if relativeticketfields:
+            notimportedfields = [f for f in notimportedfields if f not in relativeticketfields]
+            relativeticketfields = [f[1:].lower() for f in relativeticketfields]
+
         idcolumn = None
 
         if 'ticket' in lowercaseimportedfields and 'id' in lowercaseimportedfields:
@@ -253,6 +259,8 @@ class ImportModule(Component):
         processor.start(importedfields, ownercolumn != None, commentfield)
 
         missingfields = [f for f in computedfields if f not in lowercaseimportedfields]
+        if relativeticketfields:
+            missingfields = [f for f in missingfields if f not in relativeticketfields]
         missingemptyfields = [ f for f in missingfields if computedfields[f] == None or computedfields[f]['value'] == '']
         missingdefaultedfields = [ f for f in missingfields if f not in missingemptyfields]
 
@@ -317,6 +325,7 @@ class ImportModule(Component):
 
         duplicate_summaries = []
 
+        relativeticketvalues = []
         row_idx = 0
 
         for row in rows:
@@ -377,10 +386,13 @@ class ImportModule(Component):
             if commentfield:
                 processor.process_comment(row[commentfield])
 
+            relativeticketvalues.append(dict([(f, row['#'+f]) for f in relativeticketfields]))
+
             processor.end_process_row()
             row_idx += 1
 
 
+        # All the rows have been processed.  Handle global stuff
         for name in list(newvalues):
             if not newvalues[name]:
                 del newvalues[name]
@@ -390,6 +402,9 @@ class ImportModule(Component):
             
         if newusers:
             processor.process_new_users(newusers)
+
+        if relativeticketfields:
+            processor.process_relativeticket_fields(relativeticketvalues, relativeticketfields)
 
         return processor.end_process(row_idx)
 

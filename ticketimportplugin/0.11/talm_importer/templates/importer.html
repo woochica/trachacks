@@ -53,6 +53,27 @@ or:
 </ul>
 </p>
 <p>
+If a field name starts with <b>#</b>, the contents of the field will
+be treated as references to other tickets, either a list of dependencies or a Work Breakdown System number. (The WBS is identified as the first ticket reference column which has a value containing a period.)  This can aid import of projects created in an external project management program.  For example:
+</p>
+<table>
+<tr><td><b>summary</b></td><td><b>#blockedby</b></td><td><b>#wbs</b></td></tr>
+<tr><td>Design schematic</td><td></td><td>1</td></tr>
+<tr><td>Layout board</td><td>1</td><td>2</td></tr>
+<tr><td>Check board</td><td>2</td><td>2.1</td></tr>
+<tr><td>Manufacture prototypes</td><td>2,3</td><td>2.1</td></tr>
+<tr><td>Verify prototypes</td><td>4</td><td>3</td></tr>
+</table>
+<p>Once imported, this might become:</p>
+<table>
+<tr><td><b>id</b></td><td><b>summary</b></td><td><b>blockedby</b></td><td><b>wbs</b></td></tr>
+<tr><td>3000</td><td>Design schematic</td><td></td><td></td></tr>
+<tr><td>3001</td><td>Layout board</td><td>3000</td><td></td></tr>
+<tr><td>3003</td><td>Check board</td><td>3001</td><td>3001</td></tr>
+<tr><td>3004</td><td>Manufacture prototypes</td><td>3001,3003</td><td>3001</td></tr>
+<tr><td>3005</td><td>Verify prototypes</td><td>3004</td><td></td></tr>
+</table>
+<p>
 First, you will be shown a preview of the changes, and then you will be able to execute the import. The first step (uploading and previewing) will not modify the database.
 </p>
 <p>
