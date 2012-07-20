@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2010 Steffen Hoffmann <hoff.st@shaas.net>
+# Copyright (C) 2010, 2012 Steffen Hoffmann <hoff.st@shaas.net>
 #
 
 from trac.core              import Component
-from trac.util.translation  import domain_functions
 
 # Import i18n methods.  Fallback modules maintain compatibility to Trac 0.11
 # by keeping Babel optional here.

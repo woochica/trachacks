@@ -4,7 +4,7 @@
 # Copyright (C) 2007 Mike Comb <mcomb@mac.com>
 # Copyright (C) 2008 JaeWook Choi <http://trac-hacks.org/wiki/butterflow>
 # Copyright (C) 2008, 2009 W. Martin Borgert <debacle@debian.org>
-# Copyright (C) 2010, 2011 Steffen Hoffmann <hoff.st@shaas.net>
+# Copyright (C) 2010-2012 Steffen Hoffmann <hoff.st@shaas.net>
 #
 # "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you
@@ -30,7 +30,7 @@ from sgmllib                import SGMLParser
 
 from trac.config            import Configuration, Option
 from trac.core              import Component, implements
-from trac.util.datefmt      import format_date, to_utimestamp
+from trac.util.datefmt      import format_date
 from trac.util.text         import shorten_line, to_unicode
 from trac.web.href          import Href
 from trac.web.chrome        import add_stylesheet, ITemplateProvider
@@ -38,8 +38,16 @@ from trac.wiki.api          import parse_args, IWikiMacroProvider, \
                                    WikiSystem
 from trac.wiki.formatter    import format_to_html
 
-from api                    import add_domain, _, tag_
-from ticket                 import WikiCalendarTicketProvider
+from wikicalendar.api       import add_domain, _, tag_
+from wikicalendar.ticket    import WikiCalendarTicketProvider
+
+uts = None
+try:
+    from trac.util.datefmt  import to_utimestamp
+    uts = "env with POSIX microsecond time stamps found"
+except ImportError:
+    # fallback to old module for 0.11 compatibility
+    from trac.util.datefmt  import to_timestamp
 
 
 __all__ = ['TextExtractor', 'WikiCalendarMacros']
@@ -528,8 +536,12 @@ class WikiCalendarMacros(Component):
                         td_class = 'day'
 
                     day_dt = self._mkdatetime(year, month, day)
-                    day_ts = to_utimestamp(day_dt)
-                    day_ts_eod = day_ts + 86399999999
+                    if uts:
+                        day_ts = to_utimestamp(day_dt)
+                        day_ts_eod = day_ts + 86399999999
+                    else:
+                        day_ts = to_timestamp(day_dt)
+                        day_ts_eod = day_ts + 86399
 
                     # check for milestone(s) on that day
                     db = self.env.get_db_cnx()
@@ -590,9 +602,11 @@ class WikiCalendarMacros(Component):
                                 if self.due_field_fmt == 'ts':
                                     if not isinstance(due, datetime.datetime):
                                         continue
-                                    due_ts = to_utimestamp(due)
-                                    if due_ts < day_ts or \
-                                        due_ts > day_ts_eod:
+                                    if uts:
+                                        due_ts = to_utimestamp(due)
+                                    else:
+                                        due_ts = to_timestamp(due)
+                                    if due_ts < day_ts or due_ts > day_ts_eod:
                                         continue
                                 else:
                                     # Beware: Format might even be unicode str
@@ -618,7 +632,10 @@ class WikiCalendarMacros(Component):
                                            class_='opendate_condense')
 
                             for t in self.tickets:
-                                ticket_ts = to_utimestamp(t.get('time'))
+                                if uts:
+                                    ticket_ts = to_utimestamp(t.get('time'))
+                                else:
+                                    ticket_ts = to_timestamp(t.get('time'))
                                 if ticket_ts < day_ts or \
                                         ticket_ts > day_ts_eod:
                                     continue

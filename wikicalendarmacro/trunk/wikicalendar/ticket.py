@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2010 Steffen Hoffmann <hoff.st@shaas.net>
+# Copyright (C) 2010, 2012 Steffen Hoffmann <hoff.st@shaas.net>
 #
 
 from trac.config        import Option
@@ -7,7 +7,7 @@ from trac.ticket.query  import Query
 from trac.util.text     import to_unicode
 from trac.wiki.api      import parse_args
 
-from api                import WikiCalendarBuilder
+from wikicalendar.api   import WikiCalendarBuilder
 
 
 __all__ = ['WikiCalendarTicketProvider']
