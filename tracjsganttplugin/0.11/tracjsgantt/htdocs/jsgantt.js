@@ -1184,8 +1184,8 @@ Complete-Displays task percent complete</p>
 	 }
 	 
 	 if (vFormatArr.join().indexOf("quarter")!=-1) { 
-	     if (vFormat=='quarter') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="quarter" checked>Quarter';
-	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("quarter",'+vGanttVar+') VALUE="quarter">Quarter';
+	     if (vFormat=='quarter') vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" VALUE="quarter" checked>Qtr.';
+	     else                vLeftTable += '<INPUT TYPE=RADIO NAME="radFormat_'+vGanttVar+'" onclick=JSGantt.changeFormat("quarter",'+vGanttVar+') VALUE="quarter">Qtr.';
 	 }
 			
 //            vLeftTable += '<INPUT TYPE=RADIO NAME="other" VALUE="other" style="display:none"> .';
@@ -1201,7 +1201,7 @@ Complete-Displays task percent complete</p>
          if(vShowRes ==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 60px; HEIGHT: 20px" align=center nowrap>Resource</TD>' ;
          if(vShowDur ==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 60px; HEIGHT: 20px" align=center nowrap>Duration</TD>' ;
          if(vShowComp==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 60px; HEIGHT: 20px" align=center nowrap>% Comp.</TD>' ;
-         if(vShowStartDate==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 60px; HEIGHT: 20px" align=center nowrap>Start Date</TD>' ;
+         if(vShowStartDate==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 65px; HEIGHT: 20px" align=center nowrap>Start Date</TD>' ;
          if(vShowEndDate==1) vLeftTable += '  <TD style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; WIDTH: 60px; HEIGHT: 20px" align=center nowrap>End Date</TD>' ;
  
          vLeftTable += '</TR>';
@@ -1274,8 +1274,12 @@ Complete-Displays task percent complete</p>
             // Draw the Chart Rows
             vRightTable = 
             '<DIV class=scroll2 id=rightside_'+pGanttVar+'>' +
-            '<TABLE style="width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>' +
-            '<TBODY><TR style="HEIGHT: 18px">';
+            '<TABLE style="width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>';
+            if (JSGantt.isIE()) { // IE;
+                vRightTable += '<TBODY><TR style="HEIGHT: 25px">';
+            } else {
+                vRightTable += '<TBODY><TR style="HEIGHT: 18px">';
+            }
 
             vTmpDate.setFullYear(vMinDate.getFullYear(), vMinDate.getMonth(), vMinDate.getDate());
             vTmpDate.setHours(0);
