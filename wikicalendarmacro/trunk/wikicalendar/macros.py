@@ -705,4 +705,3 @@ class WikiCalendarMacros(Component):
         # Add common CSS stylesheet
         add_stylesheet(self.ref.req, 'wikicalendar/wikicalendar.css')
         return buff
-

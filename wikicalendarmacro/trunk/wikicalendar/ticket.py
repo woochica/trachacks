@@ -66,8 +66,13 @@ class WikiCalendarTicketProvider(WikiCalendarBuilder):
 
     def _get_tickets(self, query, req):
         '''Returns a list of ticket objects.'''
-        rawtickets = query.execute(req) # Get all tickets
+        # Initialize query and get 1st "page" of tickets.
+        result = query.execute(req)
+        # Collect tickets from all other query "pages", if available.
+        while query.offset + query.max < query.num_items:
+            query.offset += query.max
+            result.extend(query.execute(req))
         # Do permissions check on tickets
-        tickets = [t for t in rawtickets
+        tickets = [t for t in result
                    if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
         return tickets
