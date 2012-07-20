@@ -1,8 +1,8 @@
 {   'headers': [   {'col': 'ticket', 'title': 'ticket'},
-                   {'col': 'owner', 'title': 'Owner'},
-                   {'col': 'priority', 'title': 'Priority'},
-                   {'col': 'component', 'title': 'Component'},
-                   {'col': 'mycustomfield', 'title': 'Mycustomfield'}],
+                   {'col': u'owner', 'title': u'Owner'},
+                   {'col': u'priority', 'title': u'Priority'},
+                   {'col': u'component', 'title': u'Component'},
+                   {'col': u'mycustomfield', 'title': u'Mycustomfield'}],
     'message': Markup(u"""\
 <style type="text/css">
 .ticket-imported, .modified-ticket-imported { width: 40px; }
@@ -46,7 +46,7 @@ Scroll to see a preview of the tickets as they will be imported. If the data is 
 </li></ul><br/>"""),
     'rows': [   {   'cells': [   {   'col': 'ticket',
                                      'style': '',
-                                     'value': 1},
+                                     'value': u'1'},
                                  {   'col': 'owner',
                                      'style': 'modified-owner',
                                      'value': u'me'},
@@ -62,7 +62,7 @@ Scroll to see a preview of the tickets as they will be imported. If the data is 
                     'style': ''},
                 {   'cells': [   {   'col': 'ticket',
                                      'style': '',
-                                     'value': 2},
+                                     'value': u'2'},
                                  {   'col': 'owner',
                                      'style': 'modified-owner',
                                      'value': u'you'},
