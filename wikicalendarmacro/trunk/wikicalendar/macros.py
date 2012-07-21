@@ -79,16 +79,26 @@ class WikiCalendarMacros(Component):
                               """Whether CSS should be embedded into the
                               HTML. This is meant as fallback, if linking
                               the external style sheet file fails.""")
+    ticket_due = Option('wikicalendar', 'ticket.due_field', 'due_close',
+                        doc="""Custom due date field name to evaluate
+                        for displaying tickets by date.""")
+    ticket_due_fmt = Option('wikicalendar', 'ticket.due_field.format',
+                            '%y-%m-%d', doc="""Custom due date value format,
+                            that is any expression supported by strftime or
+                            'ts' identifier for POSIX microsecond time stamps
+                            as supported in later Trac versions.""")
 
-    #  [wikiticketcalendar] section
+    # old [wikiticketcalendar] section
     due_field_name = Option('wikiticketcalendar', 'ticket.due_field.name',
                             'due_close', doc = """Custom due date field name
-                            to evaluate for displaying tickets by date.""")
+                            to evaluate for displaying tickets by date.
+                            (''depreciated - see wikicalendar section'')""")
     due_field_fmt = Option('wikiticketcalendar', 'ticket.due_field.format',
                            '%y-%m-%d', doc = """Custom due date value format,
                            that is any expression supported by strftime or
                            'ts' identifier for POSIX microsecond time stamps
-                           as supported in later Trac versions.""")
+                           as supported in later Trac versions.
+                           (''depreciated - see wikicalendar section'')""")
 
     htdocs_path = resource_filename(__name__, 'htdocs')
 
@@ -111,6 +121,25 @@ class WikiCalendarMacros(Component):
                     if len(check_type) == 3:
                         # We've got test type information too.
                         self.checks[check_type[-1]]['type'] = check_type[1]
+
+        # Options in 'wikicalendar' configuration section take precedence over
+        # those in old 'wikiticketcalendar' section.
+        c = self.config
+        if 'wikicalendar' in c.sections():
+            # Rewrite option name for easier plugin upgrade.
+            if c.has_option('wikicalendar', 'ticket.due_field.name'):
+                self.env.log.debug('Old wikiticketcalendar option found.')
+                c.set('wikicalendar', 'ticket.due_field',
+                      c.get('wikicalendar', 'ticket.due_field.name'))
+                c.remove('wikicalendar', 'ticket.due_field.name')
+                c.save()
+                self.env.log.debug('Updated to new option: ticket.due_field')
+
+            self.tkt_due_field = self.ticket_due
+            self.tkt_due_format = self.ticket_due_fmt
+        else:
+            self.tkt_due_field = self.due_field_name
+            self.tkt_due_format = self.due_field_fmt
 
         # Read options from Trac configuration system, adjustable in trac.ini.
         #  [wiki] section
@@ -603,11 +632,11 @@ class WikiCalendarMacros(Component):
 
                         # get tickets with due date set to day
                         for t in self.tickets:
-                            due = t.get(self.due_field_name)
+                            due = t.get(self.tkt_due_field)
                             if due is None or due in ['', '--']:
                                 continue
                             else:
-                                if self.due_field_fmt == 'ts':
+                                if self.tkt_due_format == 'ts':
                                     if not isinstance(due, datetime.datetime):
                                         continue
                                     if uts:
@@ -619,7 +648,7 @@ class WikiCalendarMacros(Component):
                                 else:
                                     # Beware: Format might even be unicode str
                                     duedate = format_date(day_dt,
-                                                      str(self.due_field_fmt))
+                                                      str(self.tkt_due_format))
                                     if not due == duedate:
                                         continue
 

@@ -22,6 +22,7 @@ wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
  * #9719: Regression: WikiTicketCalendar doesn't show >1 milestones per day.
  * restored full backwards-compatibility down to Trac 0.11
  * added wiki page template preselection support to WikiCalendar macro too
+ * auto-update old WikiTicketCalendar option in WikiCalendar config section
 
  new features
  * macro collection based on WikiTicketCalendar `trunk` branch pulled into
