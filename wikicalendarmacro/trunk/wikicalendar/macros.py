@@ -16,7 +16,6 @@
 # Author: Matthew Good <trac@matt-good.net>
 # See changelog for a detailed history
 
-
 import calendar
 import datetime
 import locale
@@ -28,7 +27,7 @@ from genshi.core            import escape, Markup
 from pkg_resources          import resource_filename
 from sgmllib                import SGMLParser
 
-from trac.config            import Configuration, Option
+from trac.config            import BoolOption, Configuration, Option
 from trac.core              import Component, implements
 from trac.util.datefmt      import format_date
 from trac.util.text         import shorten_line, to_unicode
@@ -75,6 +74,12 @@ class WikiCalendarMacros(Component):
 
     implements(IWikiMacroProvider, ITemplateProvider)
 
+    # generic [wikicalendar] section
+    internal_css = BoolOption('wikicalendar', 'internal_css', False,
+                              """Whether CSS should be embedded into the
+                              HTML. This is meant as fallback, if linking
+                              the external style sheet file fails.""")
+
     #  [wikiticketcalendar] section
     due_field_name = Option('wikiticketcalendar', 'ticket.due_field.name',
                             'due_close', doc = """Custom due date field name
@@ -84,6 +89,8 @@ class WikiCalendarMacros(Component):
                            that is any expression supported by strftime or
                            'ts' identifier for POSIX microsecond time stamps
                            as supported in later Trac versions.""")
+
+    htdocs_path = resource_filename(__name__, 'htdocs')
 
     def __init__(self):
         # bind 'wikicalendar' catalog to the specified locale directory
@@ -150,7 +157,7 @@ class WikiCalendarMacros(Component):
     # ITemplateProvider methods
     # Returns additional path where stylesheets are placed.
     def get_htdocs_dirs(self):
-        return [('wikicalendar', resource_filename(__name__, 'htdocs'))]
+        return [('wikicalendar', self.htdocs_path)]
 
     # Returns additional path where templates are placed.
     def get_templates_dirs(self):
@@ -703,5 +710,15 @@ class WikiCalendarMacros(Component):
         if name == 'WikiCalendar':
                 buff(class_='wiki-calendar')
         # Add common CSS stylesheet
-        add_stylesheet(self.ref.req, 'wikicalendar/wikicalendar.css')
+        if self.internal_css and not self.ref.req.args.get('wikicalendar'):
+            # Put definitions directly into the output.
+            f = open('/'.join([self.htdocs_path, 'wikicalendar.css']), 'Ur')
+            css = tag.style(Markup('<!--\n'), '\n'.join(f.readlines()),
+                            Markup('-->\n'))(type="text/css")
+            f.close()
+            # Add hint to prevent multiple inclusions.
+            self.ref.req.args['wikicalendar'] = True
+            return tag(css, buff)
+        elif not self.ref.req.args.get('wikicalendar'):
+            add_stylesheet(self.ref.req, 'wikicalendar/wikicalendar.css')
         return buff
