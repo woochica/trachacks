@@ -372,14 +372,15 @@ class WikiCalendarMacros(Component):
                     show_t_open_dates = args[4] in \
                                                ["True", "true", "yes", "1"]
 
-            # template name tried to create new pages
-            # optional, default (empty page) is used, if name is invalid
-            if len(args) >= 6 or kwargs.has_key('base'):
-                try:
-                    wiki_page_template = kwargs['base']
-                except KeyError:
-                    wiki_page_template = args[5]
+        # Optional page template to create new wiki pages.
+        # The default (empty page) is used, if the template name is invalid.
+        if len(args) >= 6 or kwargs.has_key('base'):
+            try:
+                wiki_page_template = kwargs['base']
+            except KeyError:
+                wiki_page_template = args[5]
 
+        if name == 'WikiTicketCalendar':
             # TracQuery support for ticket selection
             query_args = "id!=0"
             if len(args) >= 7 or kwargs.has_key('query'):
