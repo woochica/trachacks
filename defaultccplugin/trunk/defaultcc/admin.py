@@ -14,19 +14,13 @@
 #
 # Authors: Jean-Guilhem Rouel <jean-guilhem.rouel@ercim.org>
 #          Vivien Lacourba <vivien.lacourba@ercim.org>
-#
-
-from trac.core import *
-
-from trac.web.api import IRequestFilter, ITemplateStreamFilter
-
-from trac.env import IEnvironmentSetupParticipant
-
-from trac.db import Table, Column, Index
-from trac.db import DatabaseManager
 
 from genshi.builder import tag
 from genshi.filters import Transformer
+from trac.core import *
+from trac.db import Column, DatabaseManager, Index, Table
+from trac.env import IEnvironmentSetupParticipant
+from trac.web.api import IRequestFilter, ITemplateStreamFilter
 
 from defaultcc.model import DefaultCC
 
