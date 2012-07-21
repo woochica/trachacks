@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'Default CC',
-    version = '0.2',
+    version = '0.3',
 
     packages = ['defaultcc'],
     include_package_data = True,

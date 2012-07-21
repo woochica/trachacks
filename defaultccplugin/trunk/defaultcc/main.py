@@ -14,11 +14,9 @@
 #
 # Authors: Jean-Guilhem Rouel <jean-guilhem.rouel@ercim.org>
 #          Vivien Lacourba <vivien.lacourba@ercim.org>
-#
 
 from trac.core import *
-
-from trac.ticket.api import ITicketChangeListener
+from trac.ticket.api import ITicketManipulator
 
 from defaultcc.model import DefaultCC
 
@@ -29,25 +27,16 @@ class TicketDefaultCC(Component):
     default CC list to the ticket CC list.
     """
 
-    implements(ITicketChangeListener)
+    implements(ITicketManipulator)
 
-    def ticket_created(self, ticket):
+    def prepare_ticket(self, req, ticket, fields, actions):
+        pass
+
+    def validate_ticket(self, req, ticket):
         comp_default_cc = DefaultCC(self.env, ticket['component'])
+        if comp_default_cc and comp_default_cc.cc:
+            if ticket['cc']:
+                ticket['cc'] += ', '
+            ticket['cc'] += comp_default_cc.cc
 
-        if not comp_default_cc or not comp_default_cc.cc:
-            return
-
-        if ticket['cc']:
-            ticket['cc'] += ', '
-        ticket['cc'] += comp_default_cc.cc
-        ticket.save_changes('DefaultCC Plugin', '')
-
-    def ticket_changed(self, ticket, comment, author, old_values):
-        return
-
-    def ticket_deleted(self, ticket):
-        return
-
-def simplify_whitespace(name):
-    """Strip spaces and remove duplicate spaces within names"""
-    return ' '.join(name.split())
+        return []
