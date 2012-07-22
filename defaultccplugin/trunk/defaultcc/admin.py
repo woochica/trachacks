@@ -78,7 +78,7 @@ class DefaultCCAdmin(Component):
                 cc = DefaultCC(self.env, req.args.get('old_name'))
                 cc.delete()
                 cc.name = req.args.get('name')
-                cc.cc = req.args.get('defaultcc').strip()
+                cc.cc = req.args.get('defaultcc')
                 cc.insert()
             elif req.args.get('remove'):
                 if req.args.get('sel'):

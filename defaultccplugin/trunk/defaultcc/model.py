@@ -18,14 +18,14 @@
 
 from trac.core import *
 
+import re
+
 class DefaultCC(object):
     """Class representing components' default CC lists
     """
 
     def __init__(self, env, name, db=None):
         self.env = env
-        if name:
-            name = simplify_whitespace(name)
         if name:
             if not db:
                 db = self.env.get_db_cnx()
@@ -58,7 +58,6 @@ class DefaultCC(object):
             db.commit()
 
     def insert(self, db=None):
-        self.name = simplify_whitespace(self.name)
         assert self.name, 'Cannot create default CC for a component with no name'
         if not db:
             db = self.env.get_db_cnx()
@@ -70,7 +69,7 @@ class DefaultCC(object):
         self.env.log.debug("Creating %s's default CC" % self.name)
         cursor.execute("INSERT INTO component_default_cc (name,cc) "
                        "VALUES (%s,%s)",
-                       (self.name, self.cc))
+                       (self.name, _fixup_cc_list(self.cc)))
 
         if handle_ta:
             db.commit()
@@ -88,6 +87,10 @@ class DefaultCC(object):
 
         return res
 
-def simplify_whitespace(name):
-    """Strip spaces and remove duplicate spaces within names"""
-    return ' '.join(name.split())
+def _fixup_cc_list(cc_value):
+    """Fix up cc list separators and remove duplicates."""
+    cclist = []
+    for cc in re.split(r'[;,\s]+', cc_value):
+        if cc and cc not in cclist:
+            cclist.append(cc)
+    return ', '.join(cclist)
