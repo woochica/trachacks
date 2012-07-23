@@ -105,6 +105,8 @@ class DefaultCCAdmin(Component):
     def post_process_request(self, req, template, data, content_type):
         return template, data, content_type
 
+    # ITemplateStreamFilter methods
+
     def filter_stream(self, req, method, filename, stream, data):
         if 'TICKET_ADMIN' in req.perm and req.path_info.startswith('/admin/ticket/components'):
             if data.get('components'):
