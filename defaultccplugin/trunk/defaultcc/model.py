@@ -22,9 +22,9 @@ class DefaultCC(object):
     """Class representing components' default CC lists
     """
 
-    def __init__(self, env, name=None, db=None):
+    def __init__(self, env, name=None, cc=None, db=None):
         self.env = env
-        self.cc = self.name = None
+        self.name = self.cc = None
         if name:
             if not db:
                 db = self.env.get_db_cnx()

@@ -4,7 +4,7 @@ DefaultCc (0.3) (not yet released) - trunk
  * #4919: Comment would be added and notification sent on ticket creation.
  
  new features:
- * none
+ * #10173: CC list can now be set when the Component is added.
 
 DefaultCc (0.2) - trunk
  resolved issues:

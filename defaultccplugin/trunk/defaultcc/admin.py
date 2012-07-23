@@ -20,6 +20,8 @@ from genshi.filters import Transformer
 from trac.core import *
 from trac.db import Column, DatabaseManager, Index, Table
 from trac.env import IEnvironmentSetupParticipant
+from trac.resource import ResourceNotFound
+from trac.ticket import model
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 
 from defaultcc.model import DefaultCC
@@ -69,8 +71,6 @@ class DefaultCCAdmin(Component):
             raise TracError(str(e))
 
     # IRequestFilter methods
-    def post_process_request(self, req, template, data, content_type):
-        return template, data, content_type
 
     def pre_process_request(self, req, handler):
         if 'TICKET_ADMIN' in req.perm and req.method == 'POST' and req.path_info.startswith('/admin/ticket/components'):
@@ -80,6 +80,15 @@ class DefaultCCAdmin(Component):
                 cc.name = req.args.get('name')
                 cc.cc = req.args.get('defaultcc')
                 cc.insert()
+            elif req.args.get('add') and req.args.get('name'):
+                name = req.args.get('name')
+                try:
+                    model.Component(self.env, name)
+                except ResourceNotFound:
+                    cc = DefaultCC(self.env, name)
+                    cc.name = name
+                    cc.cc = req.args.get('defaultcc')
+                    cc.insert()
             elif req.args.get('remove'):
                 if req.args.get('sel'):
                     # If only one component is selected, we don't receive an array, but a string
@@ -93,9 +102,18 @@ class DefaultCCAdmin(Component):
                             cc.delete()
         return handler
 
+    def post_process_request(self, req, template, data, content_type):
+        return template, data, content_type
+
     def filter_stream(self, req, method, filename, stream, data):
         if 'TICKET_ADMIN' in req.perm and req.path_info.startswith('/admin/ticket/components'):
             if data.get('components'):
+                filter = Transformer('//form[@id="addcomponent"]/fieldset/div[@class="buttons"]')
+                stream = stream | filter.before(tag.div("Default CC:",
+                                                tag.br(),
+                                                tag.input(type='text', name='defaultcc'),
+                                                class_='field'))
+
                 default_ccs = DefaultCC.select(self.env)
 
                 stream = stream | Transformer('//table[@id="complist"]/thead/tr') \
@@ -126,8 +144,8 @@ class DefaultCCAdmin(Component):
                 filter = Transformer('//form[@id="modcomp"]/fieldset/div[@class="buttons"]')
                 filter = filter.before(tag.div("Default CC:",
                                                tag.br(),
-                                               tag.input(type="text", name="defaultcc", value=cc.cc),
-                                               class_="field")) \
+                                               tag.input(type='text', name='defaultcc', value=cc.cc),
+                                               class_='field')) \
                                                .before(tag.input(type='hidden', name='old_name', value=cc.name))
                 return stream | filter
 
