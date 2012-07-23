@@ -195,7 +195,9 @@ class ImportModule(Component):
         columns, rows = filereader.readers()
 
         importedfields = [f for f in columns if f.lower() in tracfields]
-        notimportedfields = [f for f in columns if f.lower() not in tracfields + ['comment']]
+        notimportedfields = [f for f in columns if f and (f.lower() not in tracfields + ['comment']
+                                                          # relative fields will be added later
+                                                          and f[0] != '#')]
         commentfields = [f for f in columns if f.lower() == 'comment']
         if commentfields:
             commentfield = commentfields[0]
@@ -204,10 +206,16 @@ class ImportModule(Component):
         lowercaseimportedfields = [f.lower() for f in importedfields]
 
         # Fields which contain relative ticket numbers to update after import
-        relativeticketfields = [f for f in columns if f.startswith('#')]
-        if relativeticketfields:
-            notimportedfields = [f for f in notimportedfields if f not in relativeticketfields]
-            relativeticketfields = [f[1:].lower() for f in relativeticketfields]
+        relativeticketfields = []
+        lowercaserelativeticketfields = []
+        for f in columns:
+            if not f.startswith('#'):
+                continue
+            if f[1:].lower() in tracfields:
+                relativeticketfields.append(f)
+                lowercaserelativeticketfields.append(f[1:].lower())
+            else:
+                notimportedfields.append(f)
 
         idcolumn = None
 
@@ -259,8 +267,9 @@ class ImportModule(Component):
         processor.start(importedfields, ownercolumn != None, commentfield)
 
         missingfields = [f for f in computedfields if f not in lowercaseimportedfields]
+
         if relativeticketfields:
-            missingfields = [f for f in missingfields if f not in relativeticketfields]
+            missingfields = [f for f in missingfields if f not in lowercaserelativeticketfields]
         missingemptyfields = [ f for f in missingfields if computedfields[f] == None or computedfields[f]['value'] == '']
         missingdefaultedfields = [ f for f in missingfields if f not in missingemptyfields]
 
@@ -386,7 +395,8 @@ class ImportModule(Component):
             if commentfield:
                 processor.process_comment(row[commentfield])
 
-            relativeticketvalues.append(dict([(f, row['#'+f]) for f in relativeticketfields]))
+            relativeticketvalues.append(dict([(f[1:].lower(), row[f]) 
+                                              for f in relativeticketfields]))
 
             processor.end_process_row()
             row_idx += 1
@@ -404,7 +414,7 @@ class ImportModule(Component):
             processor.process_new_users(newusers)
 
         if relativeticketfields:
-            processor.process_relativeticket_fields(relativeticketvalues, relativeticketfields)
+            processor.process_relativeticket_fields(relativeticketvalues, lowercaserelativeticketfields)
 
         return processor.end_process(row_idx)
 

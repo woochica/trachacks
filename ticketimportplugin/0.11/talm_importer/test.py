@@ -408,8 +408,6 @@ datetime_format=%Y-%m-%d %H:%M
         self._do_test_diffs(env, 'empty_columns.csv', self._test_preview) 
         self._do_test_diffs(env, 'empty_columns.csv', self._test_import)
 
-
-
     def test_ticket_refs(self):
         env = self._setup('\n[ticket-custom]\nblockedby = text\nwbs = text\n\n')
         self._do_test_diffs(env, 'ticketrefs.csv', self._test_preview) 
@@ -419,10 +417,23 @@ datetime_format=%Y-%m-%d %H:%M
         cursor = self._insert_one_ticket(env)
         self._do_test_diffs(env, 'ticketrefs.csv', self._test_import)
 
+    def test_ticket_refs_case(self):
+        env = self._setup('\n[ticket-custom]\nblockedby = text\nwbs = text\n\n')
+        self._do_test_diffs(env, 'ticketrefs_case.csv', self._test_preview) 
+        # insert one ticket, so that the IDs are not trivially equal 
+        # to the row numbers when importing the ticket refs...
+        ImporterTestCase.TICKET_TIME = 1190909220
+        cursor = self._insert_one_ticket(env)
+        self._do_test_diffs(env, 'ticketrefs_case.csv', self._test_import)
+
+    def test_ticket_refs_missing(self):
+        # no custom fields...
+        env = self._setup()
+        self._do_test_diffs(env, 'ticketrefs_missing.csv', self._test_preview) 
+        self._do_test_diffs(env, 'ticketrefs_missing_case.csv', self._test_preview) 
 
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_ticket_refs') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
