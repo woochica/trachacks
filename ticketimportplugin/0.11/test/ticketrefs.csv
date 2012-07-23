@@ -1,0 +1,6 @@
+summary,#blockedby,#wbs
+Design schematic,,1
+Layout board,1,2
+Check board,2,2.1
+Manufacture prototypes,"2,3",2.1
+Verify prototypes,4,3

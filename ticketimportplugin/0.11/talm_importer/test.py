@@ -409,9 +409,20 @@ datetime_format=%Y-%m-%d %H:%M
         self._do_test_diffs(env, 'empty_columns.csv', self._test_import)
 
 
+
+    def test_ticket_refs(self):
+        env = self._setup('\n[ticket-custom]\nblockedby = text\nwbs = text\n\n')
+        self._do_test_diffs(env, 'ticketrefs.csv', self._test_preview) 
+        # insert one ticket, so that the IDs are not trivially equal 
+        # to the row numbers when importing the ticket refs...
+        ImporterTestCase.TICKET_TIME = 1190909220
+        cursor = self._insert_one_ticket(env)
+        self._do_test_diffs(env, 'ticketrefs.csv', self._test_import)
+
+
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
-    #return unittest.TestSuite( [ ImporterTestCase('test_import_with_ticket_types') ])
+    #return unittest.TestSuite( [ ImporterTestCase('test_ticket_refs') ])
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')

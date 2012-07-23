@@ -89,14 +89,28 @@ class ImportProcessor(object):
     def process_comment(self, comment):
         self.comment = comment
 
-    def end_process_row(self):
+    def _tickettime(self):
         try:
             # 'when' is a datetime in 0.11, and an int in 0.10.
             # if we have trac.util.datefmt.to_datetime, we're likely with 0.11
             from trac.util.datefmt import to_datetime
-            tickettime = to_datetime(self.tickettime)
+            return to_datetime(self.tickettime)
         except ImportError:
-            tickettime = self.tickettime
+            return self.tickettime
+
+
+    def _save_ticket(self, ticket):
+        if self.comment:
+            comment = "''Batch update from file " + self.filename + ":'' " + self.comment
+        else:
+            comment = "''Batch update from file " + self.filename + "''"
+
+        ticket.save_changes(get_reporter_id(self.req), 
+                            comment, 
+                            when=self._tickettime(), 
+                            db=self.db)
+
+    def end_process_row(self):
                 
         if self.ticket.id == None:
             if self.missingemptyfields:
@@ -114,15 +128,11 @@ class ImportProcessor(object):
                             self.computedfields[f]['set']:
                         self.ticket[f] = self.computedfields[f]['value']
 
-            self.ticket.insert(when=tickettime, db=self.db)
+            self.ticket.insert(when=self._tickettime(), db=self.db)
             self.added[self.ticket.id] = 1
         else:
-            if self.comment:
-                message = "''Batch update from file " + self.filename + ":'' " + self.comment
-            else:
-                message = "''Batch update from file " + self.filename + "''"
             if self.ticket.is_modified() or self.comment:
-                self.ticket.save_changes(get_reporter_id(self.req), message, when=tickettime, db=self.db) # TODO: handle cnum, cnum = ticket.values['cnum'] + 1)
+                self._save_ticket(self.ticket)
                 self.modified[self.ticket.id] = 1
 
         self.crossref.append(self.ticket.id)
@@ -222,7 +232,7 @@ class ImportProcessor(object):
                         ticket[f] = ', '.join(s)
 
 
-            ticket.save_changes(get_reporter_id(self.req), '', db=self.db)
+            self._save_ticket(ticket)
             row_idx += 1
         
             
