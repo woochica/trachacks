@@ -24,10 +24,8 @@ from talm_importer.importer import ImportModule
 import trac
 if trac.__version__.startswith('0.12'):
     CTL_EXT = '-0.12.ctl'
-    TICKETS_DB = 'tickets-0.12.db'
 else:
     CTL_EXT = '.ctl'
-    TICKETS_DB = 'tickets.db'
 
 
 def _exec(cursor, sql, args = None): cursor.execute(sql, args)
@@ -97,8 +95,9 @@ class ImporterTestCase(unittest.TestCase):
         #print enums_before
         # when testing, always use the same time so that the results are comparable
         #print "importing " + filename + " with tickettime " + str(ImporterTestCase.TICKET_TIME)
-        template, data, content_type = ImportModule(env)._do_import(filename, sheet, req, filename,
-                                                                    ImporterTestCase.TICKET_TIME, encoding='cp1252')
+        template, data, content_type = \
+            ImportModule(env)._do_import(filename, sheet, req, filename,
+                                         ImporterTestCase.TICKET_TIME, encoding='cp1252')
         #sys.stdout = tempstdout
         #req.display(template, content_type or 'text/html')
         #open('/tmp/out.html', 'w').write(req.hdf.render(template, None))
@@ -164,14 +163,15 @@ class ImporterTestCase(unittest.TestCase):
            self._do_test(env, filename, testfun)
         except TracError, e:
            return str(e)
-
+    index = [0]
     def _setup(self, configuration = None):
         configuration = configuration or '[ticket-custom]\nmycustomfield = text\nmycustomfield.label = My Custom Field\nmycustomfield.order = 1\n'
 
         configuration += '\n[ticket]\ndefault_type = task\n'
 
 
-        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer._preview')
+        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer._preview_%d' % self.index[0])
+        self.index[0] += 1
         if os.path.exists(instancedir):
            shutil.rmtree(instancedir, False)
         env = Environment(instancedir, create=True)
@@ -183,12 +183,15 @@ class ImporterTestCase(unittest.TestCase):
         ImporterTestCase.TICKET_TIME = 1190909220
         return Environment(instancedir)
 
-    def test_import_1(self):
-        env = self._setup()
+    def _insert_one_ticket(self, env):
         db = env.get_db_cnx()
         cursor = db.cursor()
         _exec(cursor, "insert into ticket values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", [1245, u'defect', 1191377630, 1191377630, u'component1', None, u'major', u'somebody', u'anonymous', u'', u'', u'', u'new', None, u'sum2', u'', u''])
         db.commit()
+
+    def test_import_1(self):
+        env = self._setup()
+        self._insert_one_ticket(env)
         self._do_test_diffs(env, 'Backlog-for-import.csv', self._test_preview)
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
         self._do_test_diffs(env, 'simple.csv', self._test_preview)
@@ -197,6 +200,8 @@ class ImporterTestCase(unittest.TestCase):
         ImporterTestCase.TICKET_TIME = 1190909221
         self._do_test(env, 'simple-copy.csv', self._test_import)
         # import after modification should throw exception
+        db = env.get_db_cnx()
+        cursor = db.cursor()
         _exec(cursor, "update ticket set changetime = " + str(ImporterTestCase.TICKET_TIME + 10) + " where id = 1245")
         db.commit()
         try:
@@ -272,14 +277,20 @@ class ImporterTestCase(unittest.TestCase):
         self.assertEquals(self._do_test_with_exception(env, 'test-detect-duplicate-summary-in-spreadsheet.csv', self._test_import), 'Summary "test & integration" is duplicated in the spreadsheet. Ticket reconciliation by summary can not be done. Please modify the summaries in the spreadsheet to ensure that they are unique.')
 
     def test_import_7(self):
-        self._setup()
-        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer.tickets')
+        if trac.__version__.startswith('0.12'):
+            # Not working on 0.12, because of configuration reasons...
+            return
+
+        env = self._setup()
+        #print dir(env)
+        instancedir = os.path.join(tempfile.gettempdir(), 'test-importer._preview_%d' % self.index[0])
+        self.index[0] += 1
         if os.path.exists(instancedir):
            shutil.rmtree(instancedir, False)
         _dbfile = os.path.join(os.path.join(instancedir, 'db'), 'trac.db')
         env = Environment(instancedir, create=True)
         os.remove(_dbfile)
-        shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), TICKETS_DB), _dbfile)
+        shutil.copyfile(os.path.join(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(testfolder))), 'test'), 'tickets.db'), _dbfile)
         open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n[ticket-custom]\ndomain = text\ndomain.label = Domain\nstage = text\nstage.label = Stage\nusers = text\nusers.label = Users\n')
         env = Environment(instancedir)
         self._do_test(env, 'ticket-13.xls', self._test_import)
@@ -404,3 +415,4 @@ def suite():
 if __name__ == '__main__':
     testfolder = __file__
     unittest.main(defaultTest='suite')
+
