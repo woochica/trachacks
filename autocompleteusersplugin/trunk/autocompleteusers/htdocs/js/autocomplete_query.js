@@ -18,17 +18,23 @@ $(document).ready(function($) {
           var input = $(this).find('input:text').filter(function() {
             return target === this;
           });
+          var name = input.attr('name');
           if (input.attr('autocomplete') !== 'off' &&
-              /^(?:[0-9]+_)?(?:owner|reporter|cc)$/.test(input.attr('name')))
+              /^(?:[0-9]+_)?(?:owner|reporter|cc)$/.test(name))
           {
-            input.autocomplete('subjects', {formatItem: formatItem});
+            input.autocomplete('subjects', {formatItem: formatItem,
+                                            multiple: /cc$/.test(name)});
             input.focus(); // XXX Workaround for Trac 0.12.2 and jQuery 1.4.2
           }
         }
       });
     };
-    if ($.fn.delegate) {
-      // delegate method is available in jQuery 1.4+
+    if ($.fn.on) {
+      // delegate method is available in jQuery 1.7+
+      filters.on('focusin', 'input:text', listener);
+    }
+    else if ($.fn.delegate) {
+      // delegate method is available in jQuery 1.4.2+
       filters.delegate('input:text', 'focus', listener);
     }
     else if (window.addEventListener) {
