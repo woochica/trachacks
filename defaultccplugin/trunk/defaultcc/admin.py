@@ -94,13 +94,8 @@ class DefaultCCAdmin(Component):
         return handler
 
     def filter_stream(self, req, method, filename, stream, data):
-        if 'TICKET_ADMIN' in req.perm:
-            if req.path_info == '/admin/ticket/components' or req.path_info == '/admin/ticket/components/':
-                components = data.get('components')
-                # 'components' will be None if component with specified name already exists.
-                if not components:
-                    return stream
-                
+        if 'TICKET_ADMIN' in req.perm and req.path_info.startswith('/admin/ticket/components'):
+            if data.get('components'):
                 default_ccs = DefaultCC.select(self.env)
 
                 stream = stream | Transformer('//table[@id="complist"]/thead/tr') \
@@ -108,8 +103,8 @@ class DefaultCCAdmin(Component):
 
                 filter = Transformer('//table[@id="complist"]/tbody')
                 default_comp = self.config.get('ticket', 'default_component')
-                for comp in components:
-                    if default_comp == comp.name:
+                for comp in data.get('components'):
+                    if comp.name == default_comp:
                         default_tag = tag.input(type='radio', name='default', value=comp.name, checked='checked')
                     else:
                         default_tag = tag.input(type='radio', name='default', value=comp.name)
@@ -126,7 +121,7 @@ class DefaultCCAdmin(Component):
                                                   tag.td(default_cc, class_='defaultcc')))
                 return stream | filter
 
-            elif req.path_info.startswith('/admin/ticket/components/') and data.get('component'):
+            elif data.get('component'):
                 cc = DefaultCC(self.env, data.get('component').name)
                 filter = Transformer('//form[@id="modcomp"]/fieldset/div[@class="buttons"]')
                 filter = filter.before(tag.div("Default CC:",

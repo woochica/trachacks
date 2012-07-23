@@ -16,16 +16,15 @@
 #          Vivien Lacourba <vivien.lacourba@ercim.org>
 #
 
-from trac.core import *
-
 import re
 
 class DefaultCC(object):
     """Class representing components' default CC lists
     """
 
-    def __init__(self, env, name, db=None):
+    def __init__(self, env, name=None, db=None):
         self.env = env
+        self.cc = self.name = None
         if name:
             if not db:
                 db = self.env.get_db_cnx()
@@ -33,15 +32,9 @@ class DefaultCC(object):
             cursor.execute("SELECT cc FROM component_default_cc "
                            "WHERE name=%s", (name,))
             row = cursor.fetchone()
-            if not row:
-                self.name = name
-                self.cc = None
-            else:
+            if row:
                 self.name = name
                 self.cc = row[0] or None
-        else:
-            self.name = None
-            self.cc = None
 
     def delete(self, db=None):
         if not db:
@@ -58,7 +51,7 @@ class DefaultCC(object):
             db.commit()
 
     def insert(self, db=None):
-        assert self.name, 'Cannot create default CC for a component with no name'
+        assert self.name, "Cannot create default CC for a component with no name"
         if not db:
             db = self.env.get_db_cnx()
             handle_ta = True
