@@ -66,7 +66,7 @@ class TracHacksMacros(Component):
         out.write('Show hacks for releases: ')
         releases = natsorted(tagspace.get_tagged_names(tags=['release']))
         if 'update_th_filter' in req.args:
-            show_releases = req.args.get('release', ['0.10'])
+            show_releases = req.args.get('release', ['0.12'])
             if isinstance(show_releases, basestring):
                 show_releases = [show_releases]
             req.session['th_release_filter'] = ','.join(show_releases)
