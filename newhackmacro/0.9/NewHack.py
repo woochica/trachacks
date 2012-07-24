@@ -237,7 +237,7 @@ def execute(hdf, template, env):
         <br/>
 """)
 
-    if not page_releases: page_releases = [ '0.9' ]
+    if not page_releases: page_releases = [ '0.12' ]
     if not write_tags(out, RELEASES, page_releases, "releases"):
         raise TracError("No Trac releases available")
 
