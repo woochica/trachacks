@@ -402,9 +402,9 @@ class SmpVersionProject(Component):
 
     def _version_time(self, version):
         if version.time:
-            return version.time.replace(tzinfo=None)
+            return version.time.replace(tzinfo=None).strftime('%Y%m%d%H%M%S')
         else:
-            return datetime(9999,12,31)
+            return datetime(9999,12,31).strftime('%Y%m%d%H%M%S') + version.name
             
     def _versions_and_stats(self, req, filter_projects):
         req.perm.require('MILESTONE_VIEW')
