@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2008-2009 Bernhard Gruenewaldt <ryan.j.ollos@gmail.com>
+# Copyright (C) 2008-2009 Bernhard Gruenewaldt <trac@gruenewaldt.net>
 # Copyright (C) 2011-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
