@@ -3,6 +3,7 @@
 # Copyright (C) 2011 Christopher Paredes
 #
 
+from trac import __version__ as VERSION
 from trac.core import *
 from trac.util.text import to_unicode
 
@@ -48,7 +49,10 @@ class SmpModel(Component):
 
     # DB Method
     def __get_cursor(self):
-        self.db = self.env.get_read_db()
+        if VERSION < '0.12':
+            self.db = self.env.get_db_cnx()
+        else:
+            self.db = self.env.get_read_db()
         return self.db.cursor()
     
     def __start_transacction(self):
