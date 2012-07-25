@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2008-2009 Bernhard Gruenewaldt
-# Copyright (C) 2011-2012 Ryan J Ollos
+# Copyright (C) 2008-2009 Bernhard Gruenewaldt <ryan.j.ollos@gmail.com>
+# Copyright (C) 2011-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
