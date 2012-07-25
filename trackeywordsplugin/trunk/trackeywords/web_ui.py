@@ -28,12 +28,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import time
-
-from trac import core
+from trac.core import Component, implements
 from trac.web import api, chrome
 
-class TracKeywordsComponent(core.Component):
+import time
+
+class TracKeywordsComponent(Component):
     """
     This component allows you to add from a configured list
     of keywords to the Keywords entry field.
@@ -53,13 +53,37 @@ class TracKeywordsComponent(core.Component):
 
     The description will show up as a tooltip when you hover over the keyword.
     """
-    core.implements(api.IRequestFilter)
-    core.implements(chrome.ITemplateProvider)
+    
+    implements(api.IRequestFilter)
+    implements(chrome.ITemplateProvider)
+    
+    def __init__(self):
+        self.keywords = self._get_keywords()
 
-    # internal methods
+    ### IRequestFilter methods
+    
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template in ('ticket.html', 'wiki.html'):
+            data['keywords'] = self.keywords
+        return template, data, content_type
+
+    ### ITemplateProvider methods
+    
+    def get_htdocs_dirs(self):
+        return []
+
+    def get_templates_dirs(self): 
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
+
+    ### Internal methods
+    
     def _get_keywords(self):
         if not 'keywords' in self.env.config.sections():
-        
+
             # return a default set of keywords to show the plug-in works
             return [
                 ('patch', 'has a patch attached'),
@@ -72,27 +96,3 @@ class TracKeywordsComponent(core.Component):
             res.append((keyword, section.get(keyword)))
 
         return res
-
-    ### web.api.IRequestFilter methods
-    def pre_process_request(self, req, handler):
-        # don't do anything
-        return handler
-
-    # changed to Genshi signature
-    def post_process_request(self, req, template, data, content_type):
-        data['keywords'] = self._get_keywords()
-        return (template, data, content_type)
-
-    ### ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        # since we have nothing in htdocs, setuptools can't package the
-        # directory
-        return []
-
-        # if we ever do have htdocs, return this instead
-        from pkg_resources import resource_filename
-        return [('trackeywords', resource_filename(__name__, 'htdocs'))]
-            
-    def get_templates_dirs(self): 
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
