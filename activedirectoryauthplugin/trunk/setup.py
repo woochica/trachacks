@@ -16,8 +16,10 @@ PACKAGE = 'TracActiveDirectoryAuth'
 VERSION = '0.3'
 
 setup(  name=PACKAGE, version=VERSION,
-        author = 'Branson Matheson',
-        author_email = 'branson.matheson@nasa.gov',
+        author = 'John Hampton',
+        author_email = 'pacopablo@pacopablo.com',
+        maintainer = 'Branson Matheson',
+        maintainer_email = 'branson.matheson@nasa.gov',
         description = 'Trac Authentication against Active Directory ',
         url = 'http://trac-hacks.org/wiki/ActiveDirectoryAuthPlugin',
         license='BSD',
