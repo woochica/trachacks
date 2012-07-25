@@ -77,16 +77,19 @@ class TracKeywordsComponent(Component):
             if self.keywords and ticket and ticket.exists and \
                'TICKET_CHGPROP' in req.perm(ticket.resource):
                 filter = Transformer('//fieldset[@id="properties"]')
-                data = {'keywords': self.keywords}
-                insert = Chrome(self.env). \
-                    render_template(req, 'keywords.html', data, 'MarkupTemplate', True)
-                stream |= filter.after(insert)
-            elif filename == 'wiki.html':
-                pass
+                stream |= filter.after(self._render_template(req))
+        elif filename == 'wiki_edit.html':
+            filter = Transformer('//fieldset[@id="changeinfo"]')
+            stream |= filter.after(self._render_template(req))
 
         return stream
 
     ### Internal methods
+
+    def _render_template(self, req):
+        data = {'keywords': self.keywords}
+        return Chrome(self.env). \
+            render_template(req, 'keywords.html', data, 'MarkupTemplate', True)
 
     def _get_keywords(self):
         section = self.env.config.get('keywords', None)
@@ -101,4 +104,4 @@ class TracKeywordsComponent(Component):
                 ('easy',  'easy to fix, good for beginners'),
             ]
 
-        return keywords
+        return sorted(keywords)

@@ -10,8 +10,12 @@
 </style>
 
 <script type="text/javascript">
+
+field_id = document.getElementById('tags') ? "tags" : "field-keywords"; 
+
+
 function initTags() {
-    var el = document.getElementById('field-keywords');
+    var el = document.getElementById(field_id);
     var currentTags = el.value.split(/\s+/);
 
     for (i in currentTags) {
@@ -24,7 +28,7 @@ function initTags() {
 window.onload = initTags;
 
 function addTag(w) {
-    var el = document.getElementById('field-keywords');
+    var el = document.getElementById(field_id);
     var orig = el.value;
     var newval = orig.replace(new RegExp('\\b' + w + '\\b'), '');
     var link = document.getElementById('add_' + w);
