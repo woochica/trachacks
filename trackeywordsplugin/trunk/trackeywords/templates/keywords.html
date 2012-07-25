@@ -1,6 +1,7 @@
 <div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
      xmlns:py="http://genshi.edgewall.org/" py:strip="">
-
 
 <style type="text/css">
 .sel {
@@ -13,7 +14,7 @@ function initTags() {
     var el = document.getElementById('field-keywords');
     var currentTags = el.value.split(/\s+/);
 
-    for(i in currentTags) {
+    for (i in currentTags) {
         var link = document.getElementById('add_' + currentTags[i]);
         if(link)
             link.className = "sel";
@@ -38,13 +39,12 @@ function addTag(w) {
 }
 </script>
 
-<fieldset id="keywords">
- <legend>Add Keywords</legend>
- <py:for
-      each="name, title in keywords">
-    <a href="#" onclick="javascript:addTag('${name}'); return false;"
-       id="add_${name}"
-       title="${title}">${name}</a> </py:for>
-</fieldset>
+  <fieldset id="keywords">
+    <legend>Add Keywords</legend>
+    <py:for each="name, title in keywords">
+       <a href="#" onclick="javascript:addTag('${name}'); return false;"
+          id="add_${name}" title="${title}">${name}</a>
+    </py:for>
+  </fieldset>
 
 </div>

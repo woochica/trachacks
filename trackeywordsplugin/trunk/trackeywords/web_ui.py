@@ -1,7 +1,5 @@
-# -*- Mode: Python -*-
 # -*- coding: utf-8 -*-
-# vi:si:et:sw=4:sts=4:ts=4
-
+#
 # Copyright (C) 2007 Thomas Vander Stichele <thomas at apestaart dot org>
 # All rights reserved.
 
@@ -28,23 +26,16 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+from genshi.core import Markup
+from genshi.filters.transform import Transformer
 from trac.core import Component, implements
-from trac.web import api, chrome
-
-import time
+from trac.web.api import IRequestFilter
+from trac.web.chrome import Chrome, ITemplateProvider, ITemplateStreamFilter
 
 class TracKeywordsComponent(Component):
     """
     This component allows you to add from a configured list
     of keywords to the Keywords entry field.
-
-    To use it, enable the component in trac's configuration, then
-    add the line:
-        <xi:include "keywords.html" />
-    which will insert a field set.
-
-    The recommended place to put this is right after
-    the "properties" field set.
 
     The list of keywords can be configured in a [keywords] section in the
     trac configuration file.  Syntax is:
@@ -54,8 +45,7 @@ class TracKeywordsComponent(Component):
     The description will show up as a tooltip when you hover over the keyword.
     """
     
-    implements(api.IRequestFilter)
-    implements(chrome.ITemplateProvider)
+    implements(IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
     
     def __init__(self):
         self.keywords = self._get_keywords()
@@ -79,20 +69,36 @@ class TracKeywordsComponent(Component):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
-    ### Internal methods
-    
-    def _get_keywords(self):
-        if not 'keywords' in self.env.config.sections():
+    ### ITemplateStreamFilter methods
 
+    def filter_stream(self, req, method, filename, stream, data):
+        if filename == 'ticket.html':
+            ticket = data.get('ticket')
+            if self.keywords and ticket and ticket.exists and \
+               'TICKET_CHGPROP' in req.perm(ticket.resource):
+                filter = Transformer('//fieldset[@id="properties"]')
+                data = {'keywords': self.keywords}
+                insert = Chrome(self.env). \
+                    render_template(req, 'keywords.html', data, 'MarkupTemplate', True)
+                stream |= filter.after(insert)
+            elif filename == 'wiki.html':
+                pass
+
+        return stream
+
+    ### Internal methods
+
+    def _get_keywords(self):
+        section = self.env.config.get('keywords', None)
+        if section:
+            keywords = []
+            for keyword in section:
+                keywords.append((keyword, section.get(keyword)))
+        else:
             # return a default set of keywords to show the plug-in works
-            return [
+            keywords = [
                 ('patch', 'has a patch attached'),
                 ('easy',  'easy to fix, good for beginners'),
             ]
 
-        res = []
-        section = self.env.config['keywords']
-        for keyword in section:
-            res.append((keyword, section.get(keyword)))
-
-        return res
+        return keywords
