@@ -1,4 +1,0 @@
-/* overrides */
-#properties table td {white-space: normal;} /* prevent tag cloud or other strings from breaking table layout */
-#properties table ul.tagcloud {margin: 0; padding: 0;max-height:40px;overflow:hidden;} /* tag cloud within properties shouldn't have margin or padding */
-
