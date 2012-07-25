@@ -287,7 +287,7 @@ class ADAuthStore(Component):
         if 'mail' in attrs:
             email = attrs['mail'][0].lower()
         elif 'proxyAddresses' in attrs:
-            for e in attrs['proxyAddress']:
+            for e in attrs['proxyAddresses']:
                 if e.startswith('SMTP:'):
                     email = e[5:]
                 continue
