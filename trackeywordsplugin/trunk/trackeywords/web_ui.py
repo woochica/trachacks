@@ -92,12 +92,11 @@ class TracKeywordsComponent(Component):
             render_template(req, 'keywords.html', data, 'MarkupTemplate', True)
 
     def _get_keywords(self):
-        section = self.env.config.get('keywords', None)
-        if section:
-            keywords = []
-            for keyword in section:
-                keywords.append((keyword, section.get(keyword)))
-        else:
+        keywords = []
+        section = self.env.config['keywords']
+        for keyword in section:
+            keywords.append((keyword, section.get(keyword)))
+        if not keywords:
             # return a default set of keywords to show the plug-in works
             keywords = [
                 ('patch', 'has a patch attached'),
