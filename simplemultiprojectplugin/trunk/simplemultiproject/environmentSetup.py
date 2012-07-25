@@ -16,14 +16,14 @@ db_version_key = 'simplemultiproject_version'
 db_version = 4
 
 tables = [
-    Table('smp_project', key = 'id') [
+    Table('smp_project', key = 'id_project') [
         Column('id_project', type = 'integer', auto_increment = True),
-        Column('name',type = 'varchar'),
-        Column('description',type='varchar')
+        Column('name',type = 'varchar(255)'),
+        Column('description',type='varchar(255)')
     ],
     Table('smp_milestone_project',key = 'id') [
         Column('id', type = 'integer', auto_increment = True),
-        Column('milestone',type = 'varchar'),
+        Column('milestone',type = 'varchar(255)'),
         Column('id_project',type = 'integer')
     ],
 ]
@@ -32,7 +32,7 @@ tables_v2 = [
     # Added with version 2
     Table('smp_version_project',key = 'id') [
         Column('id', type = 'integer', auto_increment = True),
-        Column('version',type = 'varchar'),
+        Column('version',type = 'varchar(255)'),
         Column('id_project',type = 'integer')
     ],
 ]
@@ -41,7 +41,7 @@ tables_v3 = [
     # Added with version 3
     Table('smp_component_project',key = 'id') [
         Column('id', type = 'integer', auto_increment = True),
-        Column('component',type = 'varchar'),
+        Column('component',type = 'varchar(255)'),
         Column('id_project',type = 'integer')
     ],
 ]
@@ -134,7 +134,7 @@ class smpEnvironmentSetupParticipant(Component):
 
         if db_installed_version < 4:
             # Insert new column
-            cursor.execute("ALTER TABLE smp_project ADD summary varchar")
+            cursor.execute("ALTER TABLE smp_project ADD summary varchar(255)")
             
             sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
             cursor.execute(sqlInsertVersion)
