@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import find_packages, setup
 
-version='0.1'
+version='0.2'
 
 setup(name='PDFRedirector',
       version=version,
@@ -15,8 +18,8 @@ setup(name='PDFRedirector',
       package_data={ 'pdfredirector': ['templates/*', 'htdocs/*'] },
       zip_safe=False,
       entry_points = """
-      [trac.plugins]
-      pdfredirector = pdfredirector
+          [trac.plugins]
+          pdfredirector = pdfredirector
       """,
       )
 
