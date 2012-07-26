@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trac.config import BoolOption, Option
-from trac.core import *
+from trac.core import Component, implements
 from trac.mimeview.api import Context, IContentConverter
 from trac.web.chrome import Chrome, ITemplateProvider, add_stylesheet
 from trac.web.main import IRequestHandler
@@ -12,12 +12,21 @@ from trac.wiki.model import WikiPage
 
 import re
 
+macro_doc = """
+Allow the current Wiki page to be viewed as an S5 slideshow.
+
+The theme can be specified using the argument ''theme=<theme>''.
+If the theme is not specified, then the default theme will be
+used. The available themes are blue, default, dokuwiki, flower,
+i18n, pixel, and yatil.
+"""
+
 class SlideShowRenderer(Component):
     
     implements(IContentConverter, IRequestHandler,
                ITemplateProvider, IWikiMacroProvider)
 
-    opt = BoolOption('SlideShow', 'show_content_conversion', 'true')
+    show_content_conversion = BoolOption('SlideShow', 'show_content_conversion', 'true')
     default_theme = Option('SlideShow', 'default_theme', 'default')
 
     heading_re = re.compile(r'^==\s*(?P<slide>.*?)\s*==$|^=\s*(?P<title>.*?)\s*=$')
@@ -35,16 +44,11 @@ class SlideShowRenderer(Component):
 
     def process_request(self, req):
 
-        context = Context.from_request(req, 'wiki', req.args['page'])
-
-        page = req.args.get('page', None)
-        location = req.args.get('location', None)
+        page_name = req.args.get('page')
+        location = req.args.get('location')
         theme = req.args.get('theme', self.default_theme)
 
-        if not page:
-            raise TracError('Invalid SlideShow template')
-
-        page = WikiPage(self.env, name=page)
+        page = WikiPage(self.env, page_name)
         if not page.exists:
             raise TracError('Invalid SlideShow template "%s"' % page.name)
 
@@ -55,6 +59,8 @@ class SlideShowRenderer(Component):
         text = title = html_title = title_page = handout = ''
         slides = []
 
+        context = Context.from_request(req, page)
+        
         for line in page_text.splitlines():
             match = self.heading_re.match(line)
             if match:
@@ -85,16 +91,17 @@ class SlideShowRenderer(Component):
             slides.append({'body': format_to_html(self.env, context, text),
                            'handout': format_to_html(self.env, context, handout)})
 
-        data = {}
-        data['theme'] = theme
-        data['title'] = title
-        data['html_title'] = html_title
-        data['location'] = location
-        data['title_page'] = title_page
-        data['slides'] = slides
-        
         add_stylesheet(req, 'common/css/code.css')
         add_stylesheet(req, 'common/css/diff.css')
+        
+        data = {
+            'html_title': html_title,
+            'location': location,
+            'slides': slides,
+            'theme': theme,
+            'title': title,
+            'title_page': title_page
+            }
 
         return 'slideshow.html', data, 'text/html'
 
@@ -114,12 +121,7 @@ class SlideShowRenderer(Component):
         yield 'SlideShow'
 
     def get_macro_description(self, name):
-        return """Allow the current Wiki page to be viewed as an S5 slideshow.
-                  The theme can be specified using the argument ''theme=<theme>''.
-                  If the theme is not specified, then the default theme will be
-                  used. The available themes are blue, default, dokuwiki, flower,
-                  i18n, pixel, and yatil.
-                """
+        return macro_doc 
 
     def expand_macro(self, formatter, name, content):
         match = re.match(r'/wiki(?:/(.+))?$', formatter.req.path_info)
@@ -134,12 +136,12 @@ class SlideShowRenderer(Component):
     # IContentConverter methods
     
     def get_supported_conversions(self):
-        if self.opt:
+        if self.show_content_conversion:
             yield ('slideshow', 'Slideshow', 'slideshow',
                    'text/x-trac-wiki', 'text/html;style=slideshow', 8)
 
     def convert_content(self, req, mimetype, content, key):
         template, data, content_type = self.process_request(req)
-        output = Chrome(self.env).render_template(req, template, data,
-                                                  'text/html')
+        output = Chrome(self.env). \
+            render_template(req, template, data, 'text/html')
         return output, content_type
