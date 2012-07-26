@@ -1,4 +1,4 @@
-# slideshow plugin
+# -*- coding: utf-8 -*-
 
 import re
 from trac.config import Option
@@ -29,7 +29,8 @@ class SlideShowRenderer(Component):
 
     def process_request(self, req):
 
-        context = Context.from_request(req, 'wiki')
+        print req.args
+        context = Context.from_request(req, 'wiki', req.args['page'])
 
         default_theme = self.config['slideshow'].get('default_theme',
                                                      'default')
@@ -58,7 +59,7 @@ class SlideShowRenderer(Component):
         for line in page_text.splitlines():
             match = self.heading_re.match(line)
             if match:
-                print in_section
+
                 # Insert accumulated text into appropriate location
                 if in_section == 1:
                     title_page = format_to_html(self.env, context, text)
@@ -77,7 +78,7 @@ class SlideShowRenderer(Component):
                 text = ''
 
             text += line + '\n'
-        print slides
+
         if in_section == 1:
             title_page = format_to_html(self.env, context, text)
         elif in_section == 2:
