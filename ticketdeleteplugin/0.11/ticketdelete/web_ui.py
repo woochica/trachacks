@@ -1,4 +1,4 @@
-# Ticket deleting plugins
+# -*- coding: utf-8 -*-
 
 from trac import __version__ as TRAC_VERSION
 from trac import ticket
@@ -13,7 +13,7 @@ from trac.web.chrome import add_warning
 from trac.web.chrome import ITemplateProvider
 from trac.ticket.web_ui import TicketModule 
 from trac.util import sorted
-from trac.util.datefmt import to_datetime, utc, to_timestamp
+from trac.util.datefmt import format_datetime, to_datetime, utc, to_timestamp
 
 import re
 import traceback
@@ -107,7 +107,7 @@ class TicketDeletePlugin(Component):
                         c_data['author'] = author
                         # FIXME: The datetime handling is not working - enable
                         # for traceback
-                        c_data['prettytime'] = strftime('%a, %d %b %Y %H:%M:%S',time.timetuple())
+                        c_data['prettytime'] = format_datetime(time, '%a, %x %X')
                     
                     # Check the boxes next to change number `selected`
                     time_list = list(sorted(ticket_data.iterkeys()))

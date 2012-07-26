@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 
 setup(
     name = 'TracTicketDelete',
-    version = '2.0.1',
+    version = '2.0.2',
     packages = ['ticketdelete'],
     package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
