@@ -43,15 +43,21 @@ class WikiCalendarTicketProvider(WikiCalendarBuilder):
 
     def harvest(self, req, content):
         """TicketQuery provider method."""
-        due_field_name = self.config.get('wikiticketcalendar',
-                                         'ticket.due_field.name')
+        # Options in 'wikicalendar' configuration section take precedence over
+        # those in old 'wikiticketcalendar' section.
+        c = self.config
+        if 'wikicalendar' in c.sections():
+            tkt_due_field = c.get('wikicalendar', 'ticket.due_field')
+        else:
+            tkt_due_field = c.get('wikiticketcalendar',
+                                  'ticket.due_field.name')
 
         # Parse args and kwargs.
         argv, kwargs = parse_args(content, strict=False)
 
         # Define minimal set of values.
         std_fields = ['description', 'owner', 'status', 'summary']
-        kwargs['col'] = "|".join(std_fields + [due_field_name])
+        kwargs['col'] = "|".join(std_fields + [tkt_due_field])
 
         # Construct the querystring.
         query_string = '&'.join(['%s=%s' %
