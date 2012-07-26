@@ -11,6 +11,12 @@
     padding: 0.1em 0.5em;
 }
 
+#batchmod_form fieldset.collapsed {
+ border-width: 0;
+ margin-bottom: 0pt;
+ padding: 0pt .5em;
+}
+
 #batchmod_form th {
     text-align: right;
     white-space: nowrap;
