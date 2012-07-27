@@ -11,24 +11,26 @@ import tempfile
 import unittest
 
 from trac.test import EnvironmentStub, Mock
+from trac.web.chrome import Chrome
 
-from crypto.web_ui import CryptoTemplateProvider
+from crypto.admin import CryptoAdminPanel
+from crypto.web_ui import CommonTemplateProvider
 
 
-class CryptoTemplateProviderTestCase(unittest.TestCase):
+class CommonTemplateProviderTestCase(unittest.TestCase):
 
     def setUp(self):
         self.env = EnvironmentStub(enable=['trac.*', 'crypto.*'])
         self.env.path = tempfile.mkdtemp()
 
-        self.crypto_tp = CryptoTemplateProvider(self.env)
+        # CommonTemplateProvider is rather abstract, test it using a subclass.
+        self.crypto_ap = CryptoAdminPanel(self.env)
 
     def tearDown(self):
         shutil.rmtree(self.env.path)
 
-    def test_init(self):
-        # Empty test just to confirm, that setUp and tearDown work.
-        pass
+    def test_template_dir_added(self):
+        self.assertTrue(self.crypto_ap in Chrome(self.env).template_providers)
 
 
 def test_suite():

@@ -6,8 +6,21 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from trac.core import Component
+from pkg_resources import resource_filename
+
+from trac.core import Component, implements
+from trac.web.chrome import ITemplateProvider
 
 
-class CryptoTemplateProvider(Component):
+class CommonTemplateProvider(Component):
     """Generic template provider."""
+
+    implements(ITemplateProvider)
+
+    # ITemplateProvider methods
+
+    def get_htdocs_dirs(self):
+        return []
+
+    def get_templates_dirs(self):
+        return [resource_filename('crypto', 'templates')]

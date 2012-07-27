@@ -6,8 +6,34 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from trac.core import Component
+from trac.admin import IAdminPanelProvider
+from trac.core import implements
+from trac.perm import IPermissionRequestor
+
+from crypto.web_ui import CommonTemplateProvider
 
 
-class CryptoAdminPanel(Component):
+class CryptoAdminPanel(CommonTemplateProvider):
     """Admin panel for easier setup and configuration changes."""
+
+    implements(IAdminPanelProvider, IPermissionRequestor)
+
+    # IPermissionRequestor method
+    def get_permission_actions(self):
+        actions = ['CRYPTO_ADMIN']
+        return actions
+
+    # IAdminPanelProvider methods
+
+    def get_admin_panels(self, req):
+        if req.perm.has_permission('CRYPTO_ADMIN'):
+            yield ('crypto', 'Cryptography', 'config', 'Configuration')
+
+    def render_admin_panel(self, req, cat, page, path_info):
+        # Get current configuration.
+        if req.method == 'POST':
+            # Save configuration changes.
+            test = 'replace_with_real_code'
+        # Display current configuration.
+        data = {}
+        return 'admin_crypto.html', data
