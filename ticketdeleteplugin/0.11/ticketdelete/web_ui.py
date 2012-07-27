@@ -1,39 +1,31 @@
 # -*- coding: utf-8 -*-
 
 from trac import __version__ as TRAC_VERSION
-from trac import ticket
 from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.ticket.model import Ticket
-from trac.web.api import IRequestFilter
-from trac.web.chrome import add_ctxtnav, add_notice
-from trac.web.chrome import add_script
-from trac.web.chrome import add_stylesheet
-from trac.web.chrome import add_warning
-from trac.web.chrome import ITemplateProvider
-from trac.ticket.web_ui import TicketModule 
+from trac.ticket.web_ui import TicketModule
 from trac.util import sorted
-from trac.util.datefmt import format_datetime, to_datetime, utc, to_timestamp
+from trac.util.datefmt import format_datetime, to_datetime, to_timestamp, utc
+from trac.web.api import IRequestFilter
+from trac.web.chrome import (
+    ITemplateProvider, add_ctxtnav, add_notice, add_script,
+    add_stylesheet, add_warning
+)
 
 import re
-import traceback
-import pprint
-from time import strftime, localtime, mktime
-from datetime import datetime
-
-__all__ = ['TicketDeletePlugin']
 
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
-    
-    implements(ITemplateProvider, IAdminPanelProvider, IRequestFilter)
+
+    implements(IAdminPanelProvider, IRequestFilter, ITemplateProvider)
 
     ### IRequestFilter methods
 
     def pre_process_request(self, req, handler):
-        if isinstance(handler, TicketModule) and 'TICKET_ADMIN' in req.perm: 
-            add_script(req, 'ticketdelete/ticketdelete.js') 
-            add_stylesheet(req, 'ticketdelete/ticketdelete.css') 
+        if isinstance(handler, TicketModule) and 'TICKET_ADMIN' in req.perm:
+            add_script(req, 'ticketdelete/ticketdelete.js')
+            add_stylesheet(req, 'ticketdelete/ticketdelete.css')
         return handler
 
     def post_process_request(self, req, template, data, content_type):
