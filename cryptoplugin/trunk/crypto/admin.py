@@ -10,6 +10,7 @@ from trac.admin import IAdminPanelProvider
 from trac.core import implements
 from trac.perm import IPermissionRequestor
 
+from crypto.api import _, dgettext
 from crypto.web_ui import CommonTemplateProvider
 
 
@@ -27,7 +28,7 @@ class CryptoAdminPanel(CommonTemplateProvider):
 
     def get_admin_panels(self, req):
         if req.perm.has_permission('CRYPTO_ADMIN'):
-            yield ('crypto', 'Cryptography', 'config', 'Configuration')
+            yield ('crypto', _('Cryptography'), 'config', _('Configuration'))
 
     def render_admin_panel(self, req, cat, page, path_info):
         # Get current configuration.
@@ -35,5 +36,5 @@ class CryptoAdminPanel(CommonTemplateProvider):
             # Save configuration changes.
             test = 'replace_with_real_code'
         # Display current configuration.
-        data = {}
+        data = {'_dgettext': dgettext}
         return 'admin_crypto.html', data
