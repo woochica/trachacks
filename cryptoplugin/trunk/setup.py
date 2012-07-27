@@ -18,12 +18,14 @@ setup(
     license = 'BSD',
     url = 'http://trac-hacks.org/wiki/CryptoPlugin',
 
-    packages=find_packages(),
+    packages=find_packages(exclude=['*.tests']),
     package_data={
         'crypto': [
             'htdocs/*', 'templates/*.html'
         ]
     },
+    test_suite = 'crypto.tests',
+    tests_require = [],
     zip_safe=True,
     install_requires = ['Genshi >= 0.5', 'Trac >= 0.11'],
     entry_points = {
