@@ -22,7 +22,7 @@ class CommonTemplateProviderTestCase(unittest.TestCase):
         self.env = EnvironmentStub(enable=['trac.*', 'crypto.*'])
         self.env.path = tempfile.mkdtemp()
 
-        # CommonTemplateProvider is rather abstract, test it using a subclass.
+        # CommonTemplateProvider is abstract, test it using a subclass.
         self.crypto_up = UserCryptoPreferences(self.env)
 
     def tearDown(self):

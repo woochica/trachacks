@@ -16,5 +16,109 @@
 
   <body>
     <h2>Cryptography: Configuration</h2>
+    <form class="mod" id="modcrypto" method="post" action="">
+      <fieldset>
+        <legend>OpenPGP: GnuPG</legend>
+        <div class="field">
+          <label>Binary:<br />
+            <input type="text" id="gpg_binary" name="gpg_binary" size="48"
+                   value="$gpg.binary"/>
+          </label>
+          <p class="help">
+            GnuPG executable name, optionally including full path. For usual
+            installations that location is auto-detected by retaining the
+            default value <code>gpg</code>.
+          </p>
+        </div>
+        <div class="field">
+          <label>Directory:<br />
+            <input type="text" id="gpg_home" name="gpg_home" size="48"
+                   value="$gpg.home"/>
+          </label>
+          <p class="help" i18n:msg="dir">
+            This directory contains keyrings as well as other support files.
+            You could direct to an existing GnuPG home directory, or to a
+            new path so that it will be created upon next environment reload
+            and will be populated with new files including empty keyrings.
+            If you specify a relative path, that directory will reside inside
+            the project environment (<code>$env_dir</code>).
+          </p>
+        </div>
+        <div class="field">
+          <label>Server Key:<br />
+            <select id="priv_key" name="priv_key">
+              <option py:for="key in priv_keys" value="${key.id}"
+                      selected="${key.selected or None}"
+                      disabled="${key.disabled or None}">${key.label}</option>
+            </select>
+          </label>
+          <p class="help">
+            The selected key is used for signing auto-generated content. Such
+            unattended operation currently requires a blank private key
+            password. Directory and keyring file access must be narrowed down
+            carefully to limit exposure of this sensitive information.
+          </p>
+        </div>
+
+      <fieldset>
+        <legend>OpenPGP Key Generation Presets</legend>
+        <table>
+          <tr>
+            <th class="col1">
+              <label for="key_type">Key Type:</label>
+            </th>
+            <td class="col1">
+              <input type="text" id="key_type" name="key_type"
+                     value="$keygen.key_type"/>
+            </td>
+            <th class="col2">
+              <label for="key_length">Key Length:</label>
+            </th>
+            <td class="col2">
+              <input type="text" id="key_length" name="key_length"
+                     value="$keygen.key_length"/>
+            </td>
+          </tr>
+          <tr>
+            <th class="col1">
+              <label for="subkey_type">Subkey Type:</label>
+            </th>
+            <td class="col1">
+              <input type="text" id="subkey_type" name="subkey_type"
+                     value="$keygen.subkey_type"/>
+            </td>
+            <th class="col2">
+              <label for="subkey_length">Subkey Length:</label>
+            </th>
+            <td class="col2">
+              <input type="text" id="subkey_length" name="subkey_length"
+                     value="$keygen.subkey_length"/>
+            </td>
+          </tr>
+          <tr>
+            <th class="col1">
+              <label for="expire_date">Expiration Date:</label>
+            </th>
+            <td class="col1">
+              <input type="text" id="expire_date" name="expire_date"
+                     value="$keygen.expire_date"/>
+            </td>
+            <th class="col2">
+              <input type="checkbox" id="allow_usermod" name="allow_usermod"
+                     checked="${keygen.allow_usermod and 'checked' or None}"/>
+            </th>
+            <td class="col2">
+              <label for="allow_usermod">
+                Allow users to overwrite key generation presets.
+              </label>
+            </td>
+          </tr>
+        </table>
+      </fieldset>
+        <div class="buttons">
+          <input type="submit" value="${_('Apply changes')}"/>
+        </div>
+      </fieldset>
+    </form>
   </body>
 </html>

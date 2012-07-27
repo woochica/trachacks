@@ -20,13 +20,15 @@ class CommonTemplateProvider(Component):
 
     implements(ITemplateProvider)
 
+    abstract = True
+
     # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-        return []
+        return [('crypto', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        return [resource_filename('crypto', 'templates')]
+        return [resource_filename(__name__, 'templates')]
 
 class UserCryptoPreferences(CommonTemplateProvider):
     """Provides related user preferences."""

@@ -31,14 +31,22 @@ class CryptoAdminPanelTestCase(unittest.TestCase):
 
     def test_available_actions(self):
         self.failIf('CRYPTO_ADMIN' not in self.perm.get_actions())
+        self.failIf('CRYPTO_DELETE' not in self.perm.get_actions())
 
     def test_available_actions_no_perms(self):
         self.perm.grant_permission('admin', 'authenticated')
         self.assertFalse(self.perm.check_permission('CRYPTO_ADMIN', 'admin'))
+        self.assertFalse(self.perm.check_permission('CRYPTO_DELETE', 'admin'))
+
+    def test_available_actions_delete_only(self):
+        self.perm.grant_permission('admin', 'CRYPTO_DELETE')
+        self.assertFalse(self.perm.check_permission('CRYPTO_ADMIN', 'admin'))
+        self.assertTrue(self.perm.check_permission('CRYPTO_DELETE', 'admin'))
 
     def test_available_actions_full_perms(self):
         self.perm.grant_permission('admin', 'TRAC_ADMIN')
         self.assertTrue(self.perm.check_permission('CRYPTO_ADMIN', 'admin'))
+        self.assertTrue(self.perm.check_permission('CRYPTO_DELETE', 'admin'))
 
 
 def test_suite():

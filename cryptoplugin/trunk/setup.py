@@ -52,6 +52,7 @@ setup(
         'trac.plugins': [
             'crypto.api = crypto.api',
             'crypto.admin = crypto.admin',
+            'crypto.openpgp = crypto.openpgp',
             'crypto.web_ui = crypto.web_ui'
         ]
     },

@@ -26,3 +26,55 @@ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
 IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+----
+
+For OpenPGP operation this code relies on python-gnupg, a wrapper for the
+'gpg' command. So it's disclaimer follows here for completeness:
+
+Portions of this module are derived from A.M. Kuchling's well-designed
+GPG.py, using Richard Jones' updated version 1.3, which can be found
+in the pycrypto CVS repository on Sourceforge:
+
+http://pycrypto.cvs.sourceforge.net/viewvc/pycrypto/gpg/GPG.py
+
+This module is *not* forward-compatible with amk's; some of the
+old interface has changed.  For instance, since I've added decrypt
+functionality, I elected to initialize with a 'gnupghome' argument
+instead of 'keyring', so that gpg can find both the public and secret
+keyrings.  I've also altered some of the returned objects in order for
+the caller to not have to know as much about the internals of the
+result classes.
+
+While the rest of ISconf is released under the GPL, I am releasing
+this single file under the same terms that A.M. Kuchling used for
+pycrypto.
+
+Steve Traugott, stevegt@terraluna.org
+Thu Jun 23 21:27:20 PDT 2005
+
+This version of the module has been modified from Steve Traugott's version
+(see http://trac.t7a.org/isconf/browser/trunk/lib/python/isconf/GPG.py) by
+Vinay Sajip to make use of the subprocess module (Steve's version uses
+os.fork() and so does not work on Windows). Renamed to gnupg.py to avoid
+confusion with the previous versions.
+
+Modifications Copyright (C) 2008-2012 Vinay Sajip. All rights reserved.
+
+----
+
+Finally, the licensing terms of pycrypto are reproduced here for reference:
+
+===================================================================
+Distribute and use freely; there are no restrictions on further
+dissemination and usage except those imposed by the laws of your
+country of residence.  This software is provided "as is" without
+warranty of fitness for use or suitability for any purpose, express
+or implied. Use at your own risk or not at all.
+===================================================================
+
+Incorporating the code into commercial products is permitted; you do
+not have to make source available or contribute your changes back
+(though that would be nice).
+
+--amk                                                             (www.amk.ca)
