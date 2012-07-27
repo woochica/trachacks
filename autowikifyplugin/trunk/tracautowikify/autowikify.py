@@ -1,8 +1,16 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006-2007 Alec Thomas
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 import re
-from trac.core import *
-from trac.util import escape, Markup, sorted
-from trac.wiki.api import WikiSystem, IWikiSyntaxProvider, IWikiChangeListener
-from trac.config import *
+from trac.config import IntOption, ListOption
+from trac.core import Component, implements
+from trac.util import Markup, escape, sorted
+from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider, WikiSystem
 try:
     set = set
 except:
@@ -15,7 +23,7 @@ class AutoWikify(Component):
     implements(IWikiSyntaxProvider, IWikiChangeListener)
 
     minimum_length = IntOption('autowikify', 'minimum_length', 3,
-        """Minimum page length to perform auto-wikification on.""")
+        """Minimum length of wiki page name to perform auto-wikification on.""")
     explicitly_wikify = ListOption('autowikify', 'explicitly_wikify', doc=
         """List of Wiki pages to always Wikify, regardless of size.""")
     exclude = ListOption('autowikify', 'exclude', doc=
