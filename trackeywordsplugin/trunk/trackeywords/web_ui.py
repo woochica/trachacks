@@ -49,6 +49,13 @@ class TracKeywordsComponent(Component):
     
     def __init__(self):
         self.keywords = self._get_keywords()
+        # Test availability of TagsPlugin and specifically it's wiki page
+        # tagging support.
+        try:
+            from tractags.wiki import WikiTagInterface
+            self.tagsplugin_enabled = self._is_enabled(WikiTagInterface)
+        except ImportError:
+            self.tagsplugin_enabled = False
 
     ### IRequestFilter methods
     
@@ -78,7 +85,7 @@ class TracKeywordsComponent(Component):
                'TICKET_CHGPROP' in req.perm(ticket.resource):
                 filter = Transformer('//fieldset[@id="properties"]')
                 stream |= filter.after(self._render_template(req))
-        elif filename == 'wiki_edit.html':
+        elif filename == 'wiki_edit.html' and self.tagsplugin_enabled:
             filter = Transformer('//fieldset[@id="changeinfo"]')
             stream |= filter.after(self._render_template(req))
 
@@ -104,3 +111,17 @@ class TracKeywordsComponent(Component):
             ]
 
         return sorted(keywords)
+
+    # Compatibility code for `ComponentManager.is_enabled`
+    # (available since Trac 0.12)
+    def _is_enabled(self, cls):
+        """Return whether the given component class is enabled.
+
+           For Trac 0.11 the missing algorithm is included as fallback.
+        """
+        try:
+            return self.env.is_enabled(cls)
+        except AttributeError:
+            if cls not in self.env.enabled:
+                self.env.enabled[cls] = self.env.is_component_enabled(cls)
+            return self.env.enabled[cls]

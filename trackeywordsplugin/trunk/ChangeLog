@@ -1,6 +1,7 @@
 0.3 - Not Yet Release - Ryan J Ollos <ryan.j.ollos@gmail.com> - trunk
 
-    * #8799: Keywords are added to the wiki edit page.
+    * #8799: Keywords are added to the wiki edit page, but only if
+      the TagsPlugin is enabled.
     * Eliminated need for manual install steps that required editing
       Trac source.    
     * #9872: Fixed traceback due to attempt to add to a non-existent
