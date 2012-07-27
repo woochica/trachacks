@@ -30,7 +30,9 @@ setup(
     install_requires = ['Genshi >= 0.5', 'Trac >= 0.11'],
     entry_points = {
         'trac.plugins': [
-            'crypto = crypto'
+            'crypto.api = crypto.api',
+            'crypto.admin = crypto.admin',
+            'crypto.web_ui = crypto.web_ui'
         ]
     }
 )
