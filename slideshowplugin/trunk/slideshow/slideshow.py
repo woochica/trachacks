@@ -50,7 +50,7 @@ class SlideShowRenderer(Component):
 
         page = WikiPage(self.env, page_name)
         if not page.exists:
-            raise TracError('Invalid SlideShow template "%s"' % page.name)
+            raise TracError('Invalid wiki page "%s"' % page.name)
 
         page_text = self.fixup_images_re.sub(r'[[Image(wiki:%s:\1)]]'
                                              % page.name, page.text)
@@ -59,7 +59,7 @@ class SlideShowRenderer(Component):
         text = title = html_title = title_page = handout = ''
         slides = []
 
-        context = Context.from_request(req, page)
+        context = Context.from_request(req, page.resource)
         
         for line in page_text.splitlines():
             match = self.heading_re.match(line)
