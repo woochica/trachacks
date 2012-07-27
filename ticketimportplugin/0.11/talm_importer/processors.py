@@ -99,12 +99,14 @@ class ImportProcessor(object):
             return self.tickettime
 
 
-    def _save_ticket(self, ticket):
-        if self.comment:
-            comment = "''Batch update from file " + self.filename + ":'' " + self.comment
+    def _save_ticket(self, ticket, with_comment=True):
+        if with_comment:
+            if self.comment:
+                comment = "''Batch update from file " + self.filename + ":'' " + self.comment
+            else:
+                comment = "''Batch update from file " + self.filename + "''"
         else:
-            comment = "''Batch update from file " + self.filename + "''"
-
+            comment=None
         ticket.save_changes(get_reporter_id(self.req), 
                             comment, 
                             when=self._tickettime(), 
@@ -232,7 +234,7 @@ class ImportProcessor(object):
                         ticket[f] = ', '.join(s)
 
 
-            self._save_ticket(ticket)
+            self._save_ticket(ticket, with_comment=False)
             row_idx += 1
         
             
@@ -260,7 +262,6 @@ class PreviewProcessor(object):
         self.ticket = None
         self.rowmodified = False
         self.styles = ''
-        self.duplicatessumaries = []
         self.modified = {}
         self.added = {}
 

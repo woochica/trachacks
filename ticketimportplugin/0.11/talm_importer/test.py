@@ -164,7 +164,7 @@ class ImporterTestCase(unittest.TestCase):
         except TracError, e:
            return str(e)
     index = [0]
-    def _setup(self, configuration = None):
+    def _setup(self, configuration = None, plugin_dir=None):
         configuration = configuration or '[ticket-custom]\nmycustomfield = text\nmycustomfield.label = My Custom Field\nmycustomfield.order = 1\n'
 
         configuration += '\n[ticket]\ndefault_type = task\n'
@@ -175,6 +175,12 @@ class ImporterTestCase(unittest.TestCase):
         if os.path.exists(instancedir):
            shutil.rmtree(instancedir, False)
         env = Environment(instancedir, create=True)
+        if plugin_dir:
+            for file in os.listdir(plugin_dir):
+                if file[0] == '.':
+                    continue
+                shutil.copyfile(os.path.join(plugin_dir, file), os.path.join(instancedir, 'plugins', file))
+
         open(os.path.join(os.path.join(instancedir, 'conf'), 'trac.ini'), 'a').write('\n' + configuration + '\n')
         db = env.get_db_cnx()
         _exec(db.cursor(), "INSERT INTO permission VALUES ('anonymous', 'REPORT_ADMIN')        ")
@@ -432,6 +438,33 @@ datetime_format=%Y-%m-%d %H:%M
         self._do_test_diffs(env, 'ticketrefs_missing.csv', self._test_preview) 
         self._do_test_diffs(env, 'ticketrefs_missing_case.csv', self._test_preview) 
 
+    def test_ticket_bug_10188(self): #FAILING
+        if trac.__version__.startswith('0.11'):
+            # TicketMasterPlugin doesn't work on 0.11
+            return
+
+        from os.path import join, abspath, dirname
+        env = self._setup(plugin_dir=join(abspath(dirname(dirname(__file__))), 'test', 'eggs_10188'))
+        env.upgrade()
+        self._do_test_diffs(env, 'test_10188.xls', self._test_import) 
+
+    def test_10188(self): # FAILING
+        if trac.__version__.startswith('0.11'):
+            # TicketMasterPlugin doesn't work on 0.11
+            return
+
+        from os.path import join, abspath, dirname
+        env = self._setup(plugin_dir=join(abspath(dirname(dirname(__file__))), 'test', 'eggs_10188'))
+        env.upgrade()
+        from trac.ticket.web_ui import Ticket
+        from datetime import datetime
+        from trac.util.datefmt import utc
+        ticket = Ticket(env)
+        ticket['summary'] = 'summary'
+        ticket.insert()
+        ticket['blockedby'] = str(ticket.id)
+        ticket.save_changes('someone','Some comments', when=datetime.now(utc))
+        
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
 if __name__ == '__main__':
