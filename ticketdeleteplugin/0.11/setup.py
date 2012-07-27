@@ -7,10 +7,11 @@ setup(
     name = 'TracTicketDelete',
     version = '3.0.0',
     packages = ['ticketdelete'],
-    package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
-
+    package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.css' ] },
     author = "Noah Kantrowitz",
     author_email = "noah@coderanger.net",
+    maintainer= "Ryan J Ollos",
+    maintainer_email = "ryan.j.ollos@gmail.com",
     description = "Remove tickets and ticket changes from Trac.",
     long_description = "Provides a web interface to removing whole tickets and ticket changes in Trac.",
     license = "BSD",
@@ -22,7 +23,7 @@ setup(
     
     entry_points = {
         'trac.plugins': [
-            'ticketdelete.web_ui = ticketdelete.web_ui'
+            'ticketdelete = ticketdelete.web_ui'
         ]
     }
 )

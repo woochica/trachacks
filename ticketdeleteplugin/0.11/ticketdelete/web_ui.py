@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from trac import __version__ as TRAC_VERSION
+from genshi.builder import tag
+from genshi.filters import Transformer
+from genshi.filters.transform import StreamBuffer
 from trac.admin.api import IAdminPanelProvider
 from trac.core import *
 from trac.ticket.model import Ticket
 from trac.ticket.web_ui import TicketModule
 from trac.util import sorted
 from trac.util.datefmt import format_datetime, to_datetime, to_timestamp, utc
-from trac.web.api import IRequestFilter
+from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import (
     ITemplateProvider, add_ctxtnav, add_notice, add_script,
     add_stylesheet, add_warning
@@ -18,19 +20,33 @@ import re
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
 
-    implements(IAdminPanelProvider, IRequestFilter, ITemplateProvider)
+    implements(IAdminPanelProvider, ITemplateProvider, ITemplateStreamFilter)
 
-    ### IRequestFilter methods
+    ### ITemplateStreamFilter methods
 
-    def pre_process_request(self, req, handler):
-        if isinstance(handler, TicketModule) and 'TICKET_ADMIN' in req.perm:
-            add_script(req, 'ticketdelete/ticketdelete.js')
-            add_stylesheet(req, 'ticketdelete/ticketdelete.css')
-        return handler
+    def filter_stream(self, req, method, filename, stream, data):
+        if filename == 'ticket.html' and req.authname != 'anonymous':
+            ticket = data.get('ticket')
+            if 'TICKET_ADMIN' in req.perm(ticket.resource):
+                add_stylesheet(req, 'ticketdelete/ticketdelete.css')
+                buffer = StreamBuffer()
 
-    def post_process_request(self, req, template, data, content_type):
-        return template, data, content_type
- 
+                def insert_delete_link():
+                    try:
+                        cnum = list(buffer)[0][1][1][0][1]
+                        if cnum == "description":
+                            return tag.a("Delete", title="Delete this ticket", href=("../admin/ticket/delete/%s" % ticket.id))
+                        else:
+                            return tag.a("Delete", title="Delete this comment", href=("../admin/ticket/comments/%s?cnum=%s" % (ticket.id, cnum)))
+                    except:
+                        return ""
+
+                filter = Transformer("//div[@class='inlinebuttons']/input[@name='replyto']/@value")
+                return stream | filter.copy(buffer).end() \
+                                      .select("//div[@class='inlinebuttons']") \
+                                      .append(insert_delete_link)
+        return stream
+
 
     ### IAdminPanelProvider methods
 
@@ -43,11 +59,14 @@ class TicketDeletePlugin(Component):
         req.perm.require('TICKET_ADMIN')
         
         data = {}
-        data['href'] = req.href('admin', cat, page)
+        data['href'] = req.args.has_key('referrer') and req.args['referrer'] or req.get_header('Referer') or req.href('admin', cat, page)
         data['page'] = page
         data['redir'] = 1
         data['changes'] = {}
         data['id'] = 0
+        
+        exists = True
+        deleted = False
 
         if req.method == 'POST':
             if page == 'delete':
@@ -55,16 +74,25 @@ class TicketDeletePlugin(Component):
                     t = self._validate(req, req.args.get('ticketid'))
                     if t:
                         self._delete_ticket(t.id)
+                        self.log.debug('Deleted ticket #(%s)', t.id)
                         add_notice(req, "Ticket #%s has been deleted." % t.id)
-                        req.redirect(req.href('admin', cat, 'delete'))
-            elif page == 'comments':                
+                        deleted = True
+                    else:
+                        exists = False
+            elif page == 'comments':
+                print req.args
                 if 'ticketid' in req.args:
-                    ticket_id = req.args.get('ticketid')
-                    req.redirect(req.href.admin(cat, page, ticket_id))
+                    t = self._validate(req, req.args.get('ticketid'))
+                    if t and t.get_changelog():
+                        req.redirect(req.href.admin(cat, page, t.id))
+                    elif not t.get_changelog():
+                        add_warning(req, "Ticket #%s has no change history" % t.id)
+                    else:
+                        exists = False
                 else:
                     t = self._validate(req, path_info)
                     if t:
-                        data['href'] = req.href('admin', cat, page, path_info)
+                        data['href'] = req.args.has_key('referrer') and req.args['referrer'] or req.href('admin', cat, page, path_info) 
                         
                         deletions = None
                         if "multidelete" in req.args:
@@ -77,40 +105,52 @@ class TicketDeletePlugin(Component):
                         if deletions:
                             for field, ts in deletions:
                                 if ts != '':
-                                    self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'%(t.id,ts,field))
+                                    self.log.debug('TicketDelete: Deleting change to ticket %s at %s (%s)'% (t.id, ts, field))
                                     self._delete_change(t.id, ts, field)
                                     add_notice(req, "Change to ticket #%s at %s has been modified" % (t.id, ts))
                                     data['redir'] = 0
+                    else:
+                        exists = False
                     
                 
-        if path_info:
+        if path_info and not deleted and exists:
             t = self._validate(req, path_info)
             if t:
                 if page == 'comments':
                     try:
-                        selected = int(req.args.get('cnum')) - 1
+                        selected = int(req.args.get('cnum'))
                     except (TypeError, ValueError):
                         selected = None
 
                     ticket_data = {}
                     for time, author, field, oldvalue, newvalue, perm in t.get_changelog():
+                        ts = to_timestamp(time)
+                        c_data = ticket_data.setdefault(ts, {})
                         c_data = ticket_data.setdefault(to_timestamp(time), {})
                         c_data.setdefault('fields', {})[field] = {'old': oldvalue, 'new': newvalue}
                         c_data['author'] = author
                         # FIXME: The datetime handling is not working - enable
                         # for traceback
                         c_data['prettytime'] = format_datetime(time, '%a, %x %X')
-                    
+                        c_data['ts'] = ts
+
                     # Check the boxes next to change number `selected`
                     time_list = list(sorted(ticket_data.iterkeys()))
-                    if selected is not None and selected < len(time_list):
-                        ticket_data[time_list[selected]]['checked'] = True
-                    data['changes'] = ticket_data
+                    #selected isn't necessarily the same as the index because of temporary changes
+                    changes = [ticket_data[time_list[i]] for i in range(0, len(time_list))]
+                    if selected is not None:
+                        for change in changes:
+                            if change['fields'].has_key('comment') and change['fields']['comment']['old'] == str(selected):
+                                change['checked'] = True
+                                break
+
+                    data['changes'] = changes
                     data['id'] = t.id
                     
                     # cnum is only in the args dictionary if we navigated from the ticket page
                     if 'cnum' in req.args:
-                        add_ctxtnav(req, "Back to Ticket #%s" % t.id, req.href.ticket(t.id))                    
+                        add_ctxtnav(req, "Back to Ticket #%s" % t.id, req.href.ticket(t.id))
+
                 elif page == 'delete':
                     data['id'] = t.id
  
@@ -120,37 +160,15 @@ class TicketDeletePlugin(Component):
     ### ITemplateProvider methods
 
     def get_templates_dirs(self):
-        """
-        Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-        
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         from pkg_resources import resource_filename
         return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
 
 
     ### Internal methods
-
-    def _get_trac_version(self):
-        md = re.match('(\d+)\.(\d+)',TRAC_VERSION)
-        if md:
-            return (int(md.group(1)),int(md.group(2)))
-        else:
-            return (0,0)
 
     def _validate(self, req, arg):
         """Validate that arg is a string containing a valid ticket ID."""
@@ -163,22 +181,12 @@ class TicketDeletePlugin(Component):
         except ValueError:
             add_warning(req, "Ticket ID '%s' is not valid. Please try again." % arg)
         return False
-                                                                                                                
+
     
     def _delete_ticket(self, id):
         """Delete the given ticket ID."""
-        major, minor = self._get_trac_version()
-        if major > 0 or minor >= 10:
-            ticket = Ticket(self.env,id)
-            ticket.delete()
-        else:
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            cursor.execute("DELETE FROM ticket WHERE id=%s", (id,))
-            cursor.execute("DELETE FROM ticket_change WHERE ticket=%s", (id,))
-            cursor.execute("DELETE FROM attachment WHERE type='ticket' and id=%s", (id,))
-            cursor.execute("DELETE FROM ticket_custom WHERE ticket=%s", (id,))
-            db.commit()
+        ticket = Ticket(self.env, id)
+        ticket.delete()
             
     def _delete_change(self, id, ts, field=None):
         """Delete the change on the given ticket at the given timestamp."""

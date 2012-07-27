@@ -32,79 +32,88 @@
       <form method="post">
         Ticket ID: <input type="text" name="ticketid" value="${ticketdelete.id}"/><br />
           <input type="submit" value="Delete" />
+          <py:if test="req.args['referrer'] or req.get_header('Referer')"> 
+            <input type="hidden" name="referrer" value="${req.args['referrer'] or req.get_header('Referer')}"/> 
+          </py:if> 
       </form>
 
     </py:when>
     <py:when test="ticketdelete.page == 'comments'">
       <py:choose>
         <py:when test="len(ticketdelete.changes)">
-          <p py:if="ticketdelete.message">
-            <b>${ticketdelete.message}</b>
-          </p>
+          <p py:if="ticketdelete.message"><b>${ticketdelete.message}</b></p>
           <p>Please select a change to delete</p>
         
-          <p><form method="post"><table class="listing">
+          <p><form method="post"> 
+            <py:if test="req.args['referrer'] or req.get_header('Referer')"> 
+              <input type="hidden" name="referrer" value="${req.args['referrer'] or req.get_header('Referer')}"/> 
+            </py:if> 
+            <table class="listing">
             <thead><tr><th class="sel" /><th>Field</th><th>Old Value</th><th>New Value</th><th /></tr></thead>
             <tbody>
-              <py:for each="change in sorted(ticketdelete.changes.keys())">
+              <py:for each="change in sorted(ticketdelete.changes)">
                 <tr>
-                  <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_${change}" checked="${change.checked or None}" /></td>
-                  <td colspan="3"><b>Change at ${ticketdelete.changes[change].prettytime} by ${ticketdelete.changes[change].author}</b></td>
-                  <td><input type="submit" name="delete_${change}" value="Delete change" /></td>
-                  <tr>
-                    <py:for each="field in ticketdelete.changes[change].fields">
-                      <tr>
-                        <td><input type="checkbox" id="checkbox${field}_${change}" name="mdelete" value="${field}_${change}" checked="${ticketdelete.changes[change].checked or None}" /></td>
-                        <td>${field}</td>
-                        <td>${ticketdelete.changes[change].fields[field].old}</td>
-                        <td>${ticketdelete.changes[change].fields[field].new}</td>
-                        <td><input type="submit" name="delete${field}_${change}" value="Delete field" /></td>
-                      </tr>
-                    </py:for>
-                  </tr>
+                  <td><input type="checkbox" name="dontcare" value="dontcare" id="checkbox_${change.ts}" checked="${change.checked or None}" /></td>
+                  <td colspan="3"><b>Change at ${change.prettytime} by ${change.author}</b></td>
+                  <td><input type="submit" name="delete_${change.ts}" value="Delete change" /></td>
                 </tr>
+                <py:for each="field in change.fields">
+                  <tr>
+                    <td><input type="checkbox" id="checkbox${field}_${change.ts}" name="mdelete" value="${field}_${change.ts}" checked="${change.checked or None}" /></td>
+                    <td>${field}</td>
+                    <py:choose>
+                      <py:when test="field == 'comment'">
+                        <td colspan="2">${change.fields[field].new}</td>
+                      </py:when>
+                      <py:otherwise>
+                        <td>${change.fields[field].old}</td>
+                        <td>${change.fields[field].new}</td>
+                      </py:otherwise>
+                    </py:choose>
+                    <td><input type="submit" name="delete${field}_${change.ts}" value="Delete field" /></td> 
+                  </tr> 
+                </py:for> 
               </py:for>
             </tbody>
-        </table><br /><input type="submit" name="multidelete" value="Delete Checked" /></form></p>
+            </table>
+            <br />
+            <input type="submit" name="multidelete" value="Delete Checked" />
+          </form>
+          </p>
         
-        <script type="text/javascript">
-        <!--
+          <script type="text/javascript">
             function toggleboxen(me, boxen) 
             {
-                status = document.getElementById("checkbox_" + me).checked;
-                boxen.pop() // Remove the last (blank) entry.
-                for (box in boxen) {
-                    //alert("Changing checkbox"+boxen[box]+"_"+me);
-                    document.getElementById("checkbox"+boxen[box]+"_"+me).checked = status;
-                }
+              status = document.getElementById("checkbox_" + me).checked;
+              boxen.pop() // Remove the last (blank) entry.
+              for (box in boxen) {
+                //alert("Changing checkbox"+boxen[box]+"_"+me);
+                document.getElementById("checkbox"+boxen[box]+"_"+me).checked = status;
+              }
             }
-            
             <py:for each="change in ticketdelete.changes">
-            addEvent(document.getElementById("checkbox_${change}"), "change", function() {
-                var boxen = Array(${py:for each="field in change.fields"${field}",</py:for>"");
-                toggleboxen("${change}", boxen); //Array(<py:for each="field in change.fields">"${field}",</py:for>));
-            });
-            <py:for each="field in change.fields">
-              addEvent(document.getElementById("checkbox${field}_${change}"),"change", function() {
-                  if(!document.getElementById("checkbox${field}_${change}").checked) {
-                  document.getElementById("checkbox${change}").checked = 0;
-                }
-            });
+              addEvent(document.getElementById("checkbox_${change.ts}"), "change", function() {
+                var boxen = Array(<py:for each="field in change.fields">${field}",</py:for>"");
+                toggleboxen("${change.ts}", boxen); //Array(<py:for each="field in change.fields">"${field}",</py:for>));
+              });
+              <py:for each="field in change.fields">
+                addEvent(document.getElementById("checkbox${field}_${change.ts}"),"change", function() {
+                  if(!document.getElementById("checkbox${field}_${change.ts}").checked) {
+                    document.getElementById("checkbox_${change.ts}").checked = 0;
+                  }
+              });
+              </py:for>
             </py:for>
-            </py:for>
-
-
-        //-->
-        </script>
-      </py:when>
-      <py:otherwise>
-        <form method="post">
-          <p>Select a ticket ID to change.</p>
-          <p>Ticket ID: <input type="text" name="ticketid" /><br />
-            <input type="submit" value="Submit" />
-          </p>
-        </form>
-      </py:otherwise>
+          </script>
+        </py:when>
+        <py:otherwise>
+          <form method="post">
+            <p>Select a ticket ID to change.</p>
+            <p>Ticket ID: <input type="text" name="ticketid" /><br />
+              <input type="submit" value="Submit" />
+            </p>
+          </form>
+        </py:otherwise>
       </py:choose>
     </py:when>
   </py:choose>
