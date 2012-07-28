@@ -68,7 +68,7 @@ class AutoWikify(Component):
         pages = set([p for p in self.pages if len(p) >= self.minimum_length])
         pages.update(self.explicitly_wikify)
         pages.difference_update(self.exclude)
-        pattern = r'\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
+        pattern = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
         self.pages_re = pattern
         WikiSystem(self.env)._compiled_rules = None
 
