@@ -7,14 +7,12 @@
 # you should have received as part of this distribution.
 
 import re
+from genshi.builder import tag
 from trac.config import IntOption, ListOption
 from trac.core import Component, implements
 from trac.util import Markup, escape, sorted
+from trac.util.compat import set
 from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider, WikiSystem
-try:
-    set = set
-except:
-    from sets import Set as set
 
 
 class AutoWikify(Component):
@@ -66,7 +64,7 @@ class AutoWikify(Component):
         self.pages = set(WikiSystem(self.env).get_pages())
 
     def _update(self):
-        explicitly_wikified = set([p.strip() for p in (self.env.config.get('autowikify', 'explicitly_wikify') or '').split(',') if p.strip()])
+        explicitly_wikified = set([p.strip() for p in (self.explicitly_wikify or '').split(',') if p.strip()])
         pages = set([p for p in self.pages if len(p) >= self.minimum_length])
         pages.update(self.explicitly_wikify)
         pages.difference_update(self.exclude)
@@ -74,8 +72,6 @@ class AutoWikify(Component):
         self.pages_re = pattern
         WikiSystem(self.env)._compiled_rules = None
 
-    def _page_formatter(self, f, n, match):
+    def _page_formatter(self, formatter, n, match):
         page = match.group('autowiki')
-        return Markup('<a href="%s" class="wiki">%s</a>'
-                      % (self.env.href.wiki(page),
-                         escape(page)))
+        return tag.a(page, href=self.env.href.wiki(page), class_='wiki')

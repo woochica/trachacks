@@ -10,7 +10,7 @@
 from setuptools import setup
 
 setup(name='TracAutoWikify',
-      version='0.1',
+      version='0.2',
       packages=['tracautowikify'],
       author='Alec Thomas',
       description='Automatically create links for all known Wiki pages, even those that are not in CamelCase.',
