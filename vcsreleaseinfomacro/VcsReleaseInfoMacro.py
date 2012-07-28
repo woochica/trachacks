@@ -92,10 +92,9 @@ class VcsReleaseInfoMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         args, kwargs = parse_args(content)
-        args += [None, None, None]
-        path, limit, rev = args[:3]
+        args += [None, None]
+        path, limit = args[:2]
         limit = kwargs.pop('limit', limit)
-        rev = kwargs.pop('rev', None)
 
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
@@ -103,8 +102,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         rm = RepositoryManager(self.env)
         reponame, repo, path = rm.get_repository_by_path(path);
 
-        if rev is None:
-            rev = repo.get_youngest_rev()
+        rev = repo.get_youngest_rev()
         rev = repo.normalize_rev(rev)
         path = repo.normalize_path(path)
         if limit is None:
