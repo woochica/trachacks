@@ -34,7 +34,8 @@ class AutoWikify(Component):
         self._all_pages()
         self._update()
 
-    # IWikiChangeListener methods
+    ### IWikiChangeListener methods
+
     def wiki_page_added(self, page):
         self.pages.add(page.name)
         self._update()
@@ -49,17 +50,25 @@ class AutoWikify(Component):
             self._all_pages()
         self._update()
 
+    def wiki_page_renamed(self, page, old_name):
+        if old_name in self.pages:
+            self.pages.remove(old_name)
+        self.pages.add(page.name)
+        self._update()
+
     def wiki_page_version_deleted(self, page):
         pass
 
-    # IWikiSyntaxProvider methods
+    ### IWikiSyntaxProvider methods
+
     def get_wiki_syntax(self):
         yield (self.pages_re, self._page_formatter)
 
     def get_link_resolvers(self):
         return []
 
-    # Internal methods
+    ### Internal methods
+
     def _all_pages(self):
         self.pages = set(WikiSystem(self.env).get_pages())
 
@@ -69,9 +78,9 @@ class AutoWikify(Component):
         pages.update(self.explicitly_wikify)
         pages.difference_update(self.exclude)
         self.pages_re = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
-        # Force an update of cached WikiParser.rules 
+        # Force an update of cached WikiParser.rules
         WikiParser(self.env)._compiled_rules = None
 
-    def _page_formatter(self, formatter, n, match):
+    def _page_formatter(self, formatter, ns, match):
         page = match.group('autowiki')
         return tag.a(page, href=self.env.href.wiki(page), class_='wiki')
