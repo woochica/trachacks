@@ -12,13 +12,13 @@ from trac.config import IntOption, ListOption
 from trac.core import Component, implements
 from trac.util import Markup, escape, sorted
 from trac.util.compat import set
-from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider, WikiSystem
+from trac.wiki.api import IWikiChangeListener, IWikiSyntaxProvider, WikiParser, WikiSystem
 
 
 class AutoWikify(Component):
     """ Automatically create links for all known Wiki pages, even those that
     are not in CamelCase. """
-    implements(IWikiSyntaxProvider, IWikiChangeListener)
+    implements(IWikiChangeListener, IWikiSyntaxProvider)
 
     minimum_length = IntOption('autowikify', 'minimum_length', 3,
         """Minimum length of wiki page name to perform auto-wikification on.""")
@@ -68,9 +68,9 @@ class AutoWikify(Component):
         pages = set([p for p in self.pages if len(p) >= self.minimum_length])
         pages.update(self.explicitly_wikify)
         pages.difference_update(self.exclude)
-        pattern = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
-        self.pages_re = pattern
-        WikiSystem(self.env)._compiled_rules = None
+        self.pages_re = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
+        # Force an update of cached WikiParser.rules 
+        WikiParser(self.env)._compiled_rules = None
 
     def _page_formatter(self, formatter, n, match):
         page = match.group('autowiki')
