@@ -20,25 +20,25 @@ class AutoWikify(Component):
     are not in CamelCase. """
     implements(IWikiChangeListener, IWikiSyntaxProvider)
 
-    minimum_length = IntOption('autowikify', 'minimum_length', 3,
-        """Minimum length of wiki page name to perform auto-wikification on.""")
-    explicitly_wikify = ListOption('autowikify', 'explicitly_wikify', doc=
-        """List of Wiki pages to always Wikify, regardless of size.""")
     exclude = ListOption('autowikify', 'exclude', doc=
         """List of Wiki pages to exclude from auto-wikification.""")
+    explicitly_wikify = ListOption('autowikify', 'explicitly_wikify', doc=
+        """List of Wiki pages to always Wikify, regardless of size.""")
+    minimum_length = IntOption('autowikify', 'minimum_length', 3,
+        """Minimum length of wiki page name to perform auto-wikification on.""")
 
-    pages = set()
+    page = set()
     pages_re = None
 
     def __init__(self):
-        self._all_pages()
-        self._update()
+        self._update_pages()
+        self._update_pages_re()
 
     ### IWikiChangeListener methods
 
     def wiki_page_added(self, page):
         self.pages.add(page.name)
-        self._update()
+        self._update_pages_re()
 
     def wiki_page_changed(self, page, version, t, comment, author, ipnr):
         pass
@@ -46,15 +46,12 @@ class AutoWikify(Component):
     def wiki_page_deleted(self, page):
         if page.name in self.pages:
             self.pages.remove(page.name)
-        else:
-            self._all_pages()
-        self._update()
+            self._update_pages_re()
 
     def wiki_page_renamed(self, page, old_name):
-        if old_name in self.pages:
-            self.pages.remove(old_name)
+        self.pages.discard(old_name)
         self.pages.add(page.name)
-        self._update()
+        self._update_pages_re()
 
     def wiki_page_version_deleted(self, page):
         pass
@@ -69,18 +66,18 @@ class AutoWikify(Component):
 
     ### Internal methods
 
-    def _all_pages(self):
-        self.pages = set(WikiSystem(self.env).get_pages())
-
-    def _update(self):
-        explicitly_wikified = set([p.strip() for p in (self.explicitly_wikify or '').split(',') if p.strip()])
-        pages = set([p for p in self.pages if len(p) >= self.minimum_length])
-        pages.update(self.explicitly_wikify)
-        pages.difference_update(self.exclude)
-        self.pages_re = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in pages]) + r')\b'
-        # Force an update of cached WikiParser.rules
-        WikiParser(self.env)._compiled_rules = None
-
     def _page_formatter(self, formatter, ns, match):
         page = match.group('autowiki')
         return tag.a(page, href=self.env.href.wiki(page), class_='wiki')
+
+    def _update_pages(self):
+        all_pages = set(WikiSystem(self.env).get_pages())
+        self.pages = set([p for p in all_pages if len(p) >= self.minimum_length])
+        self.pages.difference_update(self.exclude)
+        explicitly_wikified = set([p.strip() for p in (self.explicitly_wikify or '') if p.strip()])
+        self.pages.update(explicitly_wikified)
+
+    def _update_pages_re(self):
+        self.pages_re = r'!?\b(?P<autowiki>' + '|'.join([re.escape(page) for page in self.pages]) + r')\b'
+        # Force an update of cached WikiParser.rules
+        WikiParser(self.env)._compiled_rules = None

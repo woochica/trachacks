@@ -7,13 +7,24 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='TracAutoWikify',
       version='0.2',
-      packages=['tracautowikify'],
+      description='Autowikify non-CamelCase wiki page names',
+      
       author='Alec Thomas',
-      description='Automatically create links for all known Wiki pages, even those that are not in CamelCase.',
+      maintainer='Ryan J Ollos',
+      maintainer_email='ryan.j.ollos@gmail.com',      
       url='http://trac-hacks.org/wiki/AutoWikifyPlugin',
-      license='BSD',
-      entry_points = {'trac.plugins': ['tracautowikify = tracautowikify.autowikify']})
+      license='3-Clause BSD',
+      
+      packages=find_packages(exclude=['*.tests']),
+      test_suite = 'tracautowikify.tests',
+      tests_require = [],
+      entry_points = {
+          'trac.plugins': [
+              'tracautowikify = tracautowikify.autowikify'
+          ]
+      }
+)
