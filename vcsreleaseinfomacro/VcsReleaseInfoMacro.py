@@ -192,6 +192,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     'old_tag' : next['version'],
                     'new_tag' : cur['version'],
                     'author': cur['author'],
+                    'release_link' : release_link,
 
                 })
                 url = self.specurl_annotate(cur);
