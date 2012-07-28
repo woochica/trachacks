@@ -3,6 +3,7 @@ from trac.util import escape, Markup
 from trac.wiki.api import parse_args
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import wiki_to_html
+from trac.wiki.model import WikiPage
 from trac.util import format_datetime, to_unicode
 from StringIO import StringIO
 from operator import itemgetter, attrgetter
@@ -129,6 +130,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         else:
             path = '/' + reponame.rstrip('/') + '/' + path.lstrip('/')
 
+        package = path.split("/")[-1]
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
 
@@ -166,6 +168,13 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                 })
             elif next != None:
                 # regular releases
+                release_page = 'release/%s-%s' % (package, cur['version'])
+                page = WikiPage(self.env, release_page)
+                if page.exists:
+                    release_link = " [wiki:%s release notes]" % (release_page)
+                else:
+                    release_link = ""
+
                 items.append(
                     " * '''%(date)s'''"
                     " [/log%(path)s/tags/%(new_tag)s %(new_tag)s] "
@@ -174,6 +183,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     " ("
                     "[/log%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s diffs]"
+                    "%(release_link)s"
                     ")"
                 % {
                     'reponame' : reponame,
