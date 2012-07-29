@@ -1,0 +1,110 @@
+Index: trac/admin/api.py
+===================================================================
+--- trac/admin/api.py	(revision 7355)
++++ trac/admin/api.py	(working copy)
+@@ -33,3 +33,36 @@
+         where `template` is the name of the template to use and `data` is the
+         data to be passed to the template.
+         """
++        
++class IAdminConsoleProvider(Interface):
++    """
++    Extension point interface for components to provide an administrative
++    interface from within trac-admin.
++    """
++
++    def get_console_commands(self, tracadm):
++        """
++        Return an iterable of (name, help, callable, completer) tuples.
++
++        tracadm is a TracAdmin instance.
++
++        completer can be null. help is in the same format that trac-admin
++        uses.
++        """
++    
++class AdminCommands(Component):
++    """
++    Component end-point for IAdminConsoleProvider extensions
++    """
++    admin_providers = ExtensionPoint(IAdminConsoleProvider)
++
++    def import_providers(self, tracadm):
++        for provider in self.admin_providers:
++            for command in provider.get_console_commands(tracadm):
++                name, help, callback, completer = command
++                if hasattr(tracadm.__class__, 'do_' + name):
++                    raise Exception("Can't use IAdminConsoleProvider %s, console command '%s' already exists" % (provider.__class__.__name__, name))
++                setattr(tracadm.__class__, 'do_' + name, callback)
++                setattr(tracadm.__class__, '_help_' + name, help)
++                if completer:
++                    setattr(tracadm.__class__, 'complete_' + name, completer)
+\ No newline at end of file
+Index: trac/admin/console.py
+===================================================================
+--- trac/admin/console.py	(revision 7355)
++++ trac/admin/console.py	(working copy)
+@@ -28,7 +28,8 @@
+ 
+ from trac import __version__ as VERSION
+ from trac import perm, util, db_default
+-from trac.core import TracError
++from trac.core import *
++from trac.loader import load_components
+ from trac.env import Environment
+ from trac.perm import PermissionSystem
+ from trac.ticket.model import *
+@@ -41,6 +42,7 @@
+ from trac.wiki import WikiPage
+ from trac.wiki.api import WikiSystem
+ from trac.wiki.macros import WikiMacroBase
++from trac.admin import AdminCommands, IAdminConsoleProvider
+ 
+ TRAC_VERSION = pkg_resources.get_distribution('Trac').version
+ 
+@@ -84,6 +87,7 @@
+     _date_format = '%Y-%m-%d'
+     _datetime_format = '%Y-%m-%d %H:%M:%S'
+     _date_format_hint = 'YYYY-MM-DD'
++    _admin_commands = None
+ 
+     def __init__(self, envdir=None):
+         cmd.Cmd.__init__(self)
+@@ -129,6 +133,8 @@
+         self.prompt = "Trac [%s]> " % self.envname
+         if env is not None:
+             self.__env = env
++        else:
++            self.env_open()
+ 
+     def env_check(self):
+         try:
+@@ -141,6 +147,7 @@
+         try:
+             if not self.__env:
+                 self.__env = Environment(self.envname)
++                AdminCommands(self.__env).import_providers(self)
+             return self.__env
+         except Exception, e:
+             print 'Failed to open environment.', e
+@@ -254,13 +261,13 @@
+     _help_help = [('help', 'Show documentation')]
+ 
+     def all_docs(cls):
+-        return (cls._help_help + cls._help_initenv + cls._help_hotcopy +
+-                cls._help_resync + cls._help_upgrade + cls._help_deploy +
+-                cls._help_permission + cls._help_wiki +
+-                cls._help_ticket + cls._help_ticket_type + 
+-                cls._help_priority + cls._help_severity +
+-                cls._help_component + cls._help_version +
+-                cls._help_milestone + cls._help_resolution)
++        # Extract documentation from all _help_* members
++        docs = []
++        doc_strings = [doc for doc in dir(cls) if doc.startswith('_help_') and doc[6:] not in ('EOF', 'exit', 'quit')]
++        for doc in doc_strings:
++            docs.extend(getattr(cls, doc))
++        docs.sort(lambda a, b: cmp(a[0], b[0]))
++        return docs
+     all_docs = classmethod(all_docs)
+ 
+     def do_help(self, line=None):
