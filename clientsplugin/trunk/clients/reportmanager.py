@@ -18,12 +18,12 @@ class CustomReportManager:
     db = self.env.get_read_db()
     cursor = db.cursor()
     cursor.execute("SELECT value FROM system WHERE name=%s", (self.name,))
+    version = 0
     try:
       version = int(cursor.fetchone()[0])
     except:
       @self.env.with_transaction()
       def do_init(db):
-        version = 0
         cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
                        (self.name, version))
         
@@ -57,7 +57,6 @@ class CustomReportManager:
         
         except Exception, e:
           self.log.error("CustomReportManager Exception: %s" % (e,));
-          db.rollback()
   
   def add_report(self, title, author, description, query, uuid, version, maingroup, subgroup=""):
     # First check to see if we can load an existing version of this report
@@ -107,7 +106,6 @@ class CustomReportManager:
             rv = True
         except Exception, e:
           self.log.error("CustomReportManager Exception: %s" % (e,));
-          db.rollback()
     
     return rv
   

@@ -141,12 +141,11 @@ class ClientsSetupParticipant(Component):
             #    print 'Updating clients table (v7)'
             #    cursor.execute('...')
             
-            # Updates complete, set the version
+            # Updates complete, set the version'
             cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
                            (self.db_version, self.db_version_key))
         except Exception, e:
             print ("WorklogPlugin Exception: %s" % (e,));
-            db.rollback()
 
     def do_reports_upgrade(self):
         mgr = CustomReportManager(self.env, self.log)
