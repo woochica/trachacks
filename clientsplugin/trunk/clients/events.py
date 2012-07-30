@@ -1,13 +1,15 @@
-import md5
-import sys
-import time
 
 from trac.core import *
 
 from clients.summary import IClientSummaryProvider
 from clients.action import IClientActionProvider
 
-
+import sys
+import time
+try:
+    from trac.util.compat import md5
+except:
+    import md5
 
 __all__ = ['ClientEvent']
 
