@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 from genshi.builder import tag
 from util import *

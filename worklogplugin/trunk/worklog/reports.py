@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # IF YOU ADD A NEW SECTION OF REPORTS, You will need to make
 # sure that section is also added to the all_reports hashtable
 # near the bottom

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from manager import WorkLogManager
