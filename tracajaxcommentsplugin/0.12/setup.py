@@ -8,8 +8,8 @@ from setuptools import find_packages, setup
 setup(
     name = 'TracAjaxComments',
     author = 'kostialopuhin',
-    maintainer = 'sandinak'
-    maintainer_email = 'branson.matheson@nasa.gov'
+    maintainer = 'sandinak',
+    maintaner_email = 'branson.matheson@nasa.gov',
     version = '0.2',
     url = 'http://trac-hacks.org/wiki/TracAjaxCommentsPlugin',
     description = 'AJAX style editing for ticket comments',

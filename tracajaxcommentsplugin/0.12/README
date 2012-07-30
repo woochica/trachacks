@@ -1,0 +1,24 @@
+========================
+AjaxComments Trac plugin
+========================
+Make trac ticket page more convinient: post, update and merge comments without reloading the page.
+
+Features
+--------
+ * Post comments without reloading the page - all relevant changes are updated in place
+ * New comments and changes from other users are added to the page (polling for comments takes place only when the page is active)
+ * Merging comment in place - new comments are added, user comment is preserved in the form
+ * Preview button works as before - via page reload
+ * Handles connection problems - slow response or no response at all
+ * Per-user configuration - turn plugin on and off
+ 
+TODO
+----
+ * Indicator of updates (maybe floating somewhere near the top, linke in gmail)
+ * Configuration in trac.ini (turn off comment polling and change polling interval)
+ * Test in IE
+
+
+.. -*- Local Variables:
+.. -*- mode: rst
+.. -*- End:

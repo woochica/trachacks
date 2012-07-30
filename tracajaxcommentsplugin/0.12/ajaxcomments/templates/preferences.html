@@ -1,0 +1,33 @@
+<!DOCTYPE
+   html
+   PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="prefs.html" />
+  <head>
+    <title>AjaxComments</title>
+  </head>
+  <body>
+    <table>
+      <tr class="field">
+        <th><label for="enabled">Plugin enabled:</label></th>
+        <td py:choose="">
+	  <py:when test="enabled"> 
+	    <input type="checkbox" id="enabled" name="enabled" checked="true"/>
+	  </py:when>
+	  <py:otherwise>
+	    <input type="checkbox" id="enabled" name="enabled"/>
+	  </py:otherwise>
+	</td>
+      </tr>
+    </table>
+    <p class="hint">
+      Here you can set your personal settings for AjaxComments plugin.
+      It makes trac ticket page more convinient:
+      you can post, update and merge comments without reloading the page.
+    </p>
+  </body>
+</html>
+
