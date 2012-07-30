@@ -62,10 +62,9 @@ class ADAuthStore(Component):
       if userlist:
         return userlist
       
+      filter = '(&(objectClass=person)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))'
       if self.show_disabled_users:
-        filter = "(objectClass=person)",
-      else:
-        filter = "(&(objectClass=person)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))",
+      	filter = '(objectClass=person)'
         
       #-- cache miss.. goto ad
       if self.auth_group:
