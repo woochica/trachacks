@@ -4,7 +4,7 @@ var url = "";
 for (i = 1;i < links.length;i++)
 {
     if (links[i] == "") continue;
-    item = links[i];
+    var item = links[i];
     url += item;
     document.write("<li><a href=\"/"+url+"\">"+item+"</a></li>");
     url += "/";
