@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 #
 # BackLinks plugin for Trac
 # Version: 6.0 - for Trac 0.11
@@ -20,9 +19,17 @@ from trac.util.text import to_unicode
 from trac.wiki.model import WikiPage
 from trac.wiki.web_ui import WikiModule
 
+revision = "$Rev$"
+url = "$URL$"
+
 class BackLinksMacro(WikiMacroBase):
-    revision = "$Rev$"
-    url = "$URL$"
+    """
+    Inserts a list of all wiki pages with links to the page where this
+    macro is used.
+    
+    Accepts a page name as a parameter: if provided, pages that link to the
+    provided page name are listed instead.
+    """
 
     def expand_macro(self, formatter, name, args):
         db = self.env.get_db_cnx()
