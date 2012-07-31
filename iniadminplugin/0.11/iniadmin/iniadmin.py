@@ -7,6 +7,7 @@ from trac.admin.api import IAdminPanelProvider
 from trac.config import Option, ListOption
 from trac.util import Markup
 from trac.util.compat import set, sorted
+from trac.util.text import to_unicode
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import wiki_to_html
 
@@ -71,7 +72,8 @@ class IniAdminPlugin(Component):
 
         options_data = []
         for option in options:
-            doc = wiki_to_html(inspect.getdoc(option), self.env, req)
+            doc = wiki_to_html(to_unicode(inspect.getdoc(option)),
+                               self.env, req)
             value = self.config.get(page, option.name)
             # We assume the classes all end in "Option"
             type = option.__class__.__name__.lower()[:-6] or 'text'

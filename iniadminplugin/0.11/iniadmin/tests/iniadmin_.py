@@ -3,6 +3,7 @@
 import unittest
 
 from trac.test import EnvironmentStub, Mock, MockPerm
+from trac.config import Option
 from trac.util.compat import any
 from trac.web.api import RequestDone
 from trac.web.href import Href
@@ -67,6 +68,11 @@ class IniAdminTestCase(unittest.TestCase):
                           self.iniadmin.render_admin_panel,
                           self.req, 'tracini', 'iniadmin', '')
         self.assertEqual(excludes, config.get('iniadmin', 'excludes'))
+
+    def test_option_doc_nonascii_ticket4179(self):
+        option = Option('iniadmin-test', 'name', '', doc='résumé')
+        self.iniadmin.render_admin_panel(self.req, 'tracini', 'iniadmin-test',
+                                         '')
 
 
 def suite():
