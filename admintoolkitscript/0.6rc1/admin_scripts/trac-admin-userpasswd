@@ -1,0 +1,45 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import sys
+from common import *
+from config import *
+
+# Prompt for the username and password.
+username = prompt_username()
+
+# Get the project list for the user and check if it is empty.
+project_list = get_project_list(username)
+project_list.sort()
+print "User %s is in the following projects: "%username, project_list
+if len(project_list) <= 0:
+	print "User %s does not exist, exiting"%username
+	sys.exit(-1)
+
+
+# Prompt for password and ask for confirmation.
+password = prompt_password(confirm=True)
+if not prompt_confirmation("Are you sure you want to change password on these projects?"):
+	print "Doing nothing"
+	sys.exit(0)
+
+# Change the password on the determined projects.
+if not change_password(username, project_list, password):
+	print "Failed to change password for one or more projects, exiting"
+	sys.exit(-2)
+
+# Promote the user the administrator as needed.
+if prompt_confirmation("Promote user to administrator for these projects?"):
+	if not promote_user(username, project_list, VERIFY_USER_PERMISSIONS):
+		print "Failed to promote user"
+		sys.exit(-3)
+
+#success
+sys.exit(0)
+

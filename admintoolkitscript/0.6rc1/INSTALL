@@ -1,0 +1,58 @@
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+Welcome to the Trac Admin Toolkit. This README.TXT file describes how to
+install  the toolkit.
+
+Refer to the README.TXT file for instructions on how to use the
+toolkit.
+
+**** Apache Configuration:
+
+The toolkit includes two Apache configuration files and a project template:
+
+    - trac.conf
+    - subversion.conf
+    - project.template
+
+Change the setting "AuthName" in the project.template; they should all be
+the same value.
+
+**** Toolkit Configuration
+
+Modify the admin_scripts/config.py script to suit your system and your
+needs.
+
+Note that the default directory for storing Trac environments and
+Subversion repositories is /srv. This is configurable in config.py.
+
+**** Script Installation:
+
+As root the admintoolkit/ directory to a convienent location, such as 
+/usr/local or /root. Make sure that all of the admin_scripts trac-admin-*
+and svn-admin-* scripts are executable.  Then add the admin_scripts directory
+to your path.
+
+    mv admintoolkit /usr/local
+    chmod +x /usr/local/admin_scripts/*-admin-*
+    export PATH=$PATH:/usr/local/admin_scripts
+
+Note: an installation script will be developed in the future.
+
+**** Initialise Server
+
+Use the trac-admin-init script to initialise the server. This creates the
+following directories (assuming the configured default root is /srv) and
+initialized the postgresql database if one does not already exist.
+
+    /srv
+    /srv/svn
+    /srv/trac
+    /srv/conf
+    /srv/pgsql

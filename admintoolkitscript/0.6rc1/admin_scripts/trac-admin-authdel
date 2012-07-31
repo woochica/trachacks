@@ -1,0 +1,39 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import sys
+from common import *
+from config import *
+
+# Prompt for the username
+username = prompt_username()
+
+# Get the list of projects to operate on
+if prompt_confirmation("Remove %s auth group for all projects?" % username):
+	project_list = get_project_list()
+else:
+	project_list = prompt_project_list(show_available=True, restrict_available=True)
+
+# Get the list of auth groups
+if prompt_confirmation("Remove %s from all auth groups?" % username):
+	group_list = get_auth_group_list()
+else:
+	group_list = prompt_auth_group_list(show_available=True, restrict_available=True)
+
+# Remove the auth groups as needed
+for project in project_list:
+	if remove_auth_groups(project, username, group_list):
+		print "Successful remove of %s on %s" % (username, project)
+	else:
+		print "Failed to remove %s on project %s" % (username, project)
+		sys.exit(-2)
+
+#success
+sys.exit(0)
+

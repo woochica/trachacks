@@ -1,0 +1,22 @@
+#!/usr/bin/python
+# Copyright (C) 2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+
+print
+mirror_url = raw_input("Enter the SVN repository mirror URL to remove: ")
+print
+if not svn_remove_mirror(mirror_url):
+	print "Unable to remove mirror from list"
+	sys.exit(-1)
+print
+sys.exit(0)

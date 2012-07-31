@@ -1,0 +1,75 @@
+# Trac per-project webserver configuration.
+
+#
+# Subversion repository access via WebDav.
+#
+<Location /repos/<project_name>>
+   DAV svn
+   SVNPath /srv/svn/<project_name>
+
+   # SSLRequireSSL
+
+   # Restrict read access to known users in the "svn-ro" group.
+   <Limit GET PROPFIND OPTIONS REPORT>
+      AuthType Basic
+      AuthName "Authorized Zone"
+      AuthUserFile /srv/conf/htpasswd
+      AuthGroupFile /srv/conf/<project_name>.group
+      Require group svn-ro
+   </Limit>
+
+   # Restrict write access to known users in the "svn-rw" group.
+   <LimitExcept GET PROPFIND OPTIONS REPORT>
+      AuthType Basic
+      AuthName "Authorized Zone"
+      AuthUserFile /srv/conf/htpasswd
+      AuthGroupFile /srv/conf/<project_name>.group
+      Require group svn-rw
+   </LimitExcept>
+</Location>
+
+#
+# Trac project level configuration.
+#
+<Location /trac/<project_name>>
+   SetHandler mod_python
+   PythonInterpreter main_interpreter
+   PythonHandler trac.web.modpython_frontend
+   PythonOption TracEnv /srv/trac/<project_name>
+   PythonOption TracUriRoot /trac/<project_name>
+
+   AuthType Basic
+   AuthName "Authorized Zone"
+   AuthUserFile /srv/conf/htpasswd
+   AuthGroupFile /srv/conf/<project_name>.group
+   Require group trac-user
+</Location>
+
+#
+# Subversion repository access via Trac.
+#
+<Location /trac/<project_name>/browser>
+   AuthType Basic
+   AuthName "Authorized Zone"
+   AuthUserFile /srv/conf/htpasswd
+   AuthGroupFile /srv/conf/<project_name>.group
+   Require group svn-ro
+</Location>
+
+#
+# Downloadable file access.
+#
+<Directory /srv/download/<project_name>>
+    Options Indexes
+    Order allow,deny
+    Allow from all
+</Directory>
+Alias /download/<project_name> /srv/download/<project_name>
+<Location /download/<project_name>>
+   AuthType Basic
+   AuthName "Authorized Zone"
+   AuthUserFile /srv/conf/htpasswd
+   AuthGroupFile /srv/conf/<project_name>.group
+   Require group download
+</Location> 
+

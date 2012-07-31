@@ -1,0 +1,35 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import sys
+from config import *
+from common import *
+
+# Prompt for the username.
+username = prompt_username()
+
+# Ask for confirmation.
+if not prompt_confirmation("Are you sure you want to delete user %s?" % username):
+	print "Doing nothing"
+	sys.exit(0)
+
+# Do the remove.
+if not remove_user(username):
+	print "Failed to delete user, exiting"
+	sys.exit(-2)
+
+# Demote user as administrator from projects.
+if not demote_user(username, get_project_list()):
+	print "Failed to demote the user from one or more projects, exiting"
+	sys.exit(-3)
+
+#success
+sys.exit(0)
+

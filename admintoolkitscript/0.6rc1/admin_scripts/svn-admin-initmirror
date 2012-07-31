@@ -1,0 +1,27 @@
+#!/usr/bin/python
+# Copyright (C) 2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+
+print
+server_url = raw_input("Enter the SVN repository server root URL: ")
+mirror_url = raw_input("Enter the SVN repository mirror root URL: ")
+project_name = raw_input("Enter the project name: ")
+print
+if not svn_init_mirror(server_url, mirror_url, project_name):
+	print "\tMirror is not initialized"
+	sys.exit(-1)
+
+print
+print "** You should now consider running svn-admin-syncmirror **"
+print
+sys.exit(0)

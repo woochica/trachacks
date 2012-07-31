@@ -1,0 +1,62 @@
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+Welcome to the Trac Admin Toolkit. This README.TXT file describes how to
+install  the toolkit.
+
+Refer to the README.TXT file for instructions on how to use the
+toolkit.
+
+**** Apache Configuration:
+
+The toolkit includes two Apache configuration files:
+
+    - trac.conf
+    - subversion.conf
+
+Change the setting "AuthName" in both files; they should both share
+the same value.
+
+Copy these files as root into /etc/httpd/conf.d (or the appropriate
+directory on your server). Rename if they conflict with any existing
+files.
+
+Restart Apache using one of the following (you may have to modify the
+path to match your system):
+
+    /sbin/apachectl graceful
+    /etc/rc.d/init.d/httpd graceful
+
+**** Toolkit Configuration
+
+Modify the admin_scripts/config.py script to suit your system and your
+needs.
+
+Note that the default directory for storing Trac environments and
+Subversion repositories is /srv. This is configurable in config.py.
+
+**** Script Installation:
+
+As root, manually copy the contents of the admin-scripts directory
+(including the hooks directory) to /root/bin. Make sure that all of the
+trac-admin-* scripts are executable:
+
+    mkdir /root/bin
+    cp -v -R admin_scripts/* /root/bin
+    chmod o+x /root/bin/trac-admin-*
+
+Note: an installation script will be developed in the future.
+
+**** Initialise Server
+
+Use the trac-admin-init script to initialise the server. This creates the
+following directories (assuming the configured default root is /srv):
+
+    /srv
+    /srv/svn
+    /srv/trac

@@ -1,0 +1,22 @@
+#!/usr/bin/python
+# Copyright (C) 2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+
+print
+project_name = raw_input("Enter the project name: ")
+print
+if not svnsync(project_name):
+	print "Repository mirror location was not propertly constructed"
+	sys.exit(-1)
+print
+sys.exit(0)

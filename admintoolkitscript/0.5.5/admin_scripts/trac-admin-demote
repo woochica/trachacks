@@ -1,0 +1,25 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+from common import *
+
+# Check that the password file exists.
+check_password_file()
+
+print
+username = get_unix_username()
+print
+
+ok = get_confirmation("Are you sure you want to demote " + username + "?")
+
+if ok and len(username) > 0:
+	# Demote the user.
+	demote_user(username)
+else:
+	print "User " + username + " won't be demoted, exiting"

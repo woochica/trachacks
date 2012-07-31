@@ -1,0 +1,72 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+import sys, os, pg, shutil
+from config import *
+from common import *
+
+def delete_database(project_name):
+	print "Deleting database " + project_name
+	
+	# Gracefully restart Apache to remove any old/stale connections
+	# that might prevent us from deleting the database.
+	print "Restarting the Apache service to cleanly delete the database"
+	command = SERVICE_BINARY + " httpd graceful"
+	os.system(command)
+	
+	# Establish a connection to Postgresql.
+	db = pg.connect('postgres', 'localhost', user='postgres', passwd='')
+	
+	# Create the project database.
+	try:
+		db.query("drop database " + project_name)
+	except pg.ProgrammingError, e:
+		print "\tDatabase " + project_name + " could not be deleted, ignoring"
+		print "\t", e
+
+def delete_trac_env(project_name, trac_root):
+	fn = trac_root + os.sep + project_name
+	print "Deleting Trac environment from " + fn
+	
+	try:
+		shutil.rmtree(fn)
+	except OSError, e:
+		print "\tTrac environment " + fn + " not found, ignoring"
+
+def delete_svn_repo(project_name, svn_root):
+	fn = svn_root + os.sep + project_name
+	print "Deleting Subversion repository from " + fn
+	
+	try:
+		shutil.rmtree(fn)
+	except OSError, e:
+		print "\tSubversion repository " + fn + " not found, ignoring"
+
+svn_root = ROOT_PATH + os.sep + "svn"
+trac_root = ROOT_PATH + os.sep + "trac"
+
+print
+projects = get_project_list()
+print
+
+for project_name in projects:
+	print
+	print "Are you sure you want to delete project '" + project_name + "'?"
+	print "This will delete also delete the following directories:"
+	print "\t" + svn_root + os.sep + project_name
+	print "\t" + trac_root + os.sep + project_name
+	print
+	if get_confirmation("Are you sure you want to delete this project?"):
+		print
+		delete_database(project_name)
+		delete_trac_env(project_name, trac_root)
+		delete_svn_repo(project_name, svn_root)
+	else:
+		print "Project " + project_name + " will not be deleted, exiting...."
+

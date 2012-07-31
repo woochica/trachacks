@@ -1,0 +1,38 @@
+#!/usr/bin/python
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+#Check to see if there is already a installation,
+#if so, plesently offer to destroy it.
+print
+if os.path.exists(ROOT_PATH):
+	if prompt_confirmation("Destroy the existing installation in %s?" % ROOT_PATH) \
+		and prompt_confirmation("Are you really, really sure?"):
+		destroy_all(ROOT_PATH)
+	else:
+		print "Phew, doing nothing"
+		sys.exit(-1)
+
+#Check to see if they really want a new installation,
+#if so, initialize the default paths.
+if prompt_confirmation("Initialize a new trac/svn/postgres install in %s?" % ROOT_PATH):
+	init_trac(TRAC_ROOT)
+	init_svn(SVN_ROOT)
+	init_conf(CONF_ROOT)
+	init_postgres(DB_ROOT)
+else:
+	print "Exiting"
+	sys.exit(-2)
+
+#assume success
+sys.exit(0)

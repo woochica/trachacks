@@ -1,0 +1,8 @@
+#!/bin/sh
+
+REPOS="$1"
+TXN="$2"
+TRAC_ENV="/srv/trac/<project_name>"
+LOG=`/usr/bin/svnlook log -t "$TXN" "$REPOS"`
+
+/usr/bin/python /srv/svn/<project_name>/hooks/trac-pre-commit-hook "$TRAC_ENV" "$LOG" || exit 1

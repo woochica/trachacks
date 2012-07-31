@@ -1,0 +1,25 @@
+#!/usr/bin/python
+# Copyright (C) 2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+
+print
+mirror_url = raw_input("Enter the SVN repository mirror root URL to add: ")
+print
+if not svn_add_mirror(mirror_url):
+	print "\tAdd mirror failed"
+	sys.exit(-1)
+
+print
+print "** Don't forget to run svn-admin-initmirror on the mirror **"
+print
+sys.exit(0)

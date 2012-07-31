@@ -1,0 +1,192 @@
+#!/usr/bin/python
+# Copyright (C) 2008 - 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+import sys, os, pg, shutil, tempfile
+from stat import *
+from common import *
+from config import *
+
+def create_database(project, db_passwd):
+	
+	print "Creating database %s" % project
+	
+	# Establish a connection to Postgresql.
+	db = pg.connect('postgres', DB_HOST, user=DB_USER, passwd=db_passwd)
+	
+	# Create the project database.
+	try:
+		db.query("CREATE DATABASE " + project)
+	except pg.ProgrammingError, e:
+		print e
+		print "Error - exiting now."
+		sys.exit(-1)
+
+def create_trac_project(project, db_passwd):
+
+	project_dir = TRAC_ROOT + os.sep + project
+	repos_dir = SVN_ROOT + os.sep + project
+
+	print "Creating Trac environment %s\nSubversion repository %s" % (project_dir, repos_dir)
+	
+	# Generate the temporary file that will be used as input to trac-admin.
+	fd = open(TEMP_FILE, "w")
+	
+	# Gather information from user
+	full_name = raw_input("\nEnter a one line description (e.g. My Funky Project): ")
+
+	# Write the responses back to the temp file
+	fd.write(full_name + "\n")
+	fd.write("postgres://%s:%s@%s/%s\n" % (DB_USER, db_passwd, DB_HOST, project))
+	fd.write("svn\n")
+	fd.write(repos_dir + "\n")
+
+	# Close the temporary file.
+	fd.close()
+	
+	# Now invoke trac-admin to create the environment using the temp file as input.
+	cmd = "%s %s initenv < %s" % (TRACADMIN, project_dir, TEMP_FILE)
+	try:
+		os.system(cmd)
+	except OperationalError, e:
+		print e
+		sys.exit(-2)
+	
+	# Remove the temporary file.
+	os.remove(TEMP_FILE)
+	
+	# Change the ownership of the new environment.
+	set_ownership(project_dir)
+
+	# Copy in the http project configuration and configure for this project
+	template_conf = get_project_template()
+	project_conf = get_project_conf(project)
+	shutil.copy2(template_conf, project_conf)
+	sed_file(project_conf, project)
+
+	# Create other per project config files.
+	create_file(get_group_file(project))
+
+	#restart the the web server configuration
+	service_command("httpd", "graceful")
+
+def create_svn_repository(project):
+
+	repos_dir = SVN_ROOT + os.sep + project
+	print "Creating Subversion repository in %s" % repos_dir
+	
+	# Does the repository already exist?
+	if os.path.isdir(repos_dir):
+		print "\tRepository already exists, ignoring..."
+		
+		# Change ownership for the repository to Apache.
+		set_ownership(repos_dir)
+		
+		# Return - remember, we'll still create the Subversion hooks elsewhere.
+		return
+	
+	os.system("svnadmin create %s" % repos_dir)
+	
+	# Change the ownership of the new environment.
+	set_ownership(repos_dir)	
+
+	# Create the initial directory structure if there is one defined.
+	repos_url = "file://%s"%repos_dir
+	skel_dir = REPO_TEMPLATE
+	message = "Initial directory structure import."
+	if os.path.exists(skel_dir) and os.listdir(skel_dir):
+		cmd = "%s import -m \"%s\" %s %s"%(SVN, message, skel_dir, repos_url)
+		os.system(cmd)
+	
+def create_download_directory(project):
+	download_dir =  DOWNLOAD_ROOT + os.sep + project
+	print "Creating download directory in %s" % download_dir
+	mkdirs(download_dir)
+
+def delete_defaults(project, db_passwd):
+
+	if verbose: print "Deleting default milestones, versions and components"
+	project_dir = "%s/%s"%(TRAC_ROOT, project)
+
+	try:
+		# Connecto to the database.
+		db = pg.connect(project, DB_HOST, user=DB_USER, passwd=db_passwd)
+
+		# Delete the default milestones.
+		list = db.query("select name from milestone;").getresult()
+		for tuple in list:
+			item = tuple[0]
+			cmd = "%s %s milestone remove %s"%(TRACADMIN, project_dir, item)
+			if verbose: print cmd
+			os.system(cmd)
+
+		# Delete the default components.
+		list = db.query("select name from component;").getresult()
+		for tuple in list:
+			item = tuple[0]
+			cmd = "%s %s component remove %s" % (TRACADMIN, project_dir, item)
+			if verbose: print cmd
+			os.system(cmd)
+		
+
+		# Delete the default versions.
+		list = db.query("select name from version;").getresult()
+		for tuple in list:
+			item = tuple[0]
+			cmd = "%s %s version remove %s" % (TRACADMIN, project_dir, item)
+			if verbose: print cmd
+			os.system(cmd)
+
+	except Error:
+		print "Failed to delete defaults"
+
+def setup_milestones(project):
+	print "Configuring default EXCDS milestones"
+
+def setup_components(project):
+	print "Configuring default EXCDS components"
+
+def setup_priorities(project):
+	print "Configuring default EXCDS priorities"
+
+def setup_ticket_types(project):
+	print "Configuring default EXCDS ticket types"
+
+def setup_versions(project):
+	print "Configuring default EXCDS versions"
+
+
+
+# Prompt for the name for a project that does not already exists.
+print
+project = prompt_project(restrict_not_available=True)
+print 
+
+#Get a password to use for the database
+if DB_PASSWD != "": db_passwd = DB_PASSWD
+else: db_passwd = prompt_password()
+
+# Create the project database.
+create_database(project, db_passwd)
+
+# Create the Trac environment.
+create_trac_project(project, db_passwd)
+
+# Delete default Trac data (components etc.).
+if prompt_confirmation("\nDelete the default milestones, versions and compontents?"):
+	delete_defaults(project, db_passwd)
+
+# Create the Subversion repository.
+create_svn_repository(project)
+
+# Create download directory
+#create_download_directory(project)
+
+# Shell out to install the svn hooks
+os.system("%s/admin_scripts/svn-admin-hooks %s"%(INSTALL_DIR, project))
+

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+REPOS="$1"
+REV="$2"
+TRAC_ENV="/srv/trac/<project_name>/"
+
+/usr/bin/python /srv/svn/<project_name>/hooks/trac-post-commit-hook -p "$TRAC_ENV" -r "$REV"

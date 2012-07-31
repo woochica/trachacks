@@ -1,0 +1,37 @@
+#!/usr/bin/python
+# Copyright (C) 2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Jeff Dever <deverj@navcanada.ca>
+
+import os
+from common import *
+from config import *
+
+print
+if len(sys.argv) >= 2:
+	project = sys.argv[1]
+else:
+	project = raw_input("Enter the project: ")
+
+if not project_exists(project):
+	print "Project '%s' does not exist" % project
+	sys.exit(-1)
+
+if prompt_confirmation("Remove the svn synchronize hook?"):
+	if not svn_add_sync_hook(project, remove=True):
+		print "\tRemove sync hook to repository failed"
+
+if prompt_confirmation("Remove the svn trac hooks?"):
+	if not svn_add_trac_hooks(project, remove=True):
+		print "\tRemove trac hooks to repository failed"
+
+if prompt_confirmation("Remove the email notification hook?"):
+	if not svn_add_email_hook(project, None, remove=True):
+		print "\tRemove email notification to repository failed"
+
+print
+sys.exit(0)

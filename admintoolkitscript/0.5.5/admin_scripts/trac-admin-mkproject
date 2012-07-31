@@ -1,0 +1,202 @@
+#!/usr/bin/python
+# Copyright (C) 2008 - 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+import sys, os, pg, shutil, tempfile
+from stat import *
+from common import *
+from config import *
+
+def create_database(project_name):
+	print "Creating database " + project_name
+	
+	# Establish a connection to Postgresql.
+	db = pg.connect('template1', 'localhost', user='postgres', passwd='')
+	
+	# Create the project database.
+	try:
+		db.query("create database " + project_name)
+	except pg.ProgrammingError, e:
+		print e
+		print "Error - exiting now."
+		sys.exit(-1)
+
+def create_trac_project(project_name, trac_root, svn_root):
+	fn = trac_root + os.sep + project_name
+	print "Creating Trac environment in " + fn
+	print svn_root
+	
+	# Generate the temporary file that will be used as input to trac-admin.
+	# Open the temp file.
+	fd = open(TEMP_FILE, "w")
+	
+	# Read and store the project's full name.
+	print
+	full_name = raw_input("Enter a one line description (e.g. My Funky Project): ")
+	fd.write(full_name + "\n")
+	print
+
+	# Generate and store the database connection string.	
+	connection = "postgres://postgres:postgres@/" + project_name
+	fd.write(connection + "\n")
+	
+	# Assume Subversion support.
+	fd.write("svn\n")
+	
+	# Automatically create the svn repo path.
+	svn_path = svn_root + os.sep + project_name
+	fd.write(svn_path + "\n")
+	
+	# Close the temporary file.
+	fd.close()
+	
+	# Now invoke trac-admin.
+	s = "trac-admin " + trac_root + os.sep + project_name + " initenv < " + TEMP_FILE
+	try:
+		os.system(s)
+	except OperationalError, e:
+		print e
+		sys,exit(-2)
+	
+	# Remove the temporary file.
+	os.remove(TEMP_FILE)
+	
+	# Change the ownership of the new environment.
+	set_ownership(fn)
+
+def create_svn_repository(project_name, svn_root):
+	fn = svn_root + os.sep + project_name
+	print
+	print "Creating Subversion repository in " + fn
+	print
+	
+	# Does the repository already exist?
+	if os.path.isdir(fn):
+		print "\tRepository already exists, ignoring..."
+		
+		# Change ownership for the repository to Apache.
+		set_ownership(fn)
+		
+		# Return - remember, we'll still create the Subversion hooks elsewhere.
+		return
+	
+	s = "svnadmin create " + fn
+	os.system(s)
+	
+	# Change the ownership of the new environment.
+	set_ownership(fn)	
+
+def install_svn_hooks(project_name, ROOT_PATH, svn_root):
+	print
+	fn = svn_root + os.sep + project_name + os.sep + "hooks"
+	if get_confirmation("Install the Subversion hooks into " + fn + "?"):
+
+		print "Installing Subversion hooks into " + fn	
+		
+		# Install templates from ./hooks.
+		# First copy the templates to the new repo.
+		subversion_hooks = ["pre-commit", "post-commit", "trac-pre-commit-hook", "trac-post-commit-hook"]
+		
+		src = sys.path[0] + os.sep + "hooks"
+		dest = svn_root + os.sep + project_name + os.sep + "hooks"
+		
+		for hook in subversion_hooks:
+			try:
+				src_fn = src + os.sep + hook
+				dest_fn = dest + os.sep + hook
+				print "Copying hook " + hook + " " + src_fn + " to " + dest_fn
+				shutil.copy2(src_fn, dest_fn)
+				
+				# Now insert the project name into the new hook file.
+				sed_file(dest_fn, project_name)
+				
+			except IOError, e:
+				print "Error ", e
+				sys.exit(-3)
+		
+		# Change the ownership of the new environment.
+		set_ownership(fn)
+
+def delete_defaults(project_name, trac_root):
+	print
+	if get_confirmation("Delete the default milestones, versions and compontents?"):
+		print "Deleting default milestones, versions and components"
+		
+		# Generate the project path.
+		fn = trac_root + os.sep + project_name
+	
+		# Delete the default milestones.
+		s = "trac-admin " + fn + " milestone remove milestone1"
+		os.system(s)
+		
+		s = "trac-admin " + fn + " milestone remove milestone2"
+		os.system(s)
+		
+		s = "trac-admin " + fn + " milestone remove milestone3"
+		os.system(s)
+		
+		s = "trac-admin " + fn + " milestone remove milestone4"
+		os.system(s)
+		
+		# Delete the default components.
+		s = "trac-admin " + fn + " component remove component1"
+		os.system(s)
+		
+		s = "trac-admin " + fn + " component remove component2"
+		os.system(s)
+
+		# Delete the default versions.		
+		s = "trac-admin " + fn + " version remove 1.0"
+		os.system(s)
+
+		s = "trac-admin " + fn + " version remove 2.0"
+		os.system(s)
+
+def setup_milestones(project_name, trac_root):
+	print "Configuring default EXCDS milestones"
+
+def setup_components(project_name, trac_root):
+	print "Configuring default EXCDS components"
+
+def setup_priorities(project_name, trac_root):
+	print "Configuring default EXCDS priorities"
+
+def setup_ticket_types(project_name, trac_root):
+	print "Configuring default EXCDS ticket types"
+
+def setup_versions(project_name, trac_root):
+	print "Configuring default EXCDS versions"
+
+
+svn_root = ROOT_PATH + os.sep + "svn"
+trac_root = ROOT_PATH + os.sep + "trac"
+
+print
+project_name = raw_input("Enter the project's unix name: ")
+print
+
+# Check to see if this project already exists. We'll check
+# for the /srv/trac/<project_name> directory.
+fn = trac_root + os.sep + project_name
+if os.path.isdir(fn):
+	print "Error - project already exists. Project not created, exiting"
+	sys.exit(-4)
+
+# Create the project database.
+create_database(project_name)
+
+# Create the Trac environment.
+create_trac_project(project_name, trac_root, svn_root)
+
+# Delete default Trac data (components etc.).
+delete_defaults(project_name, trac_root)
+
+# Create the Subversion repository.
+create_svn_repository(project_name, svn_root)
+install_svn_hooks(project_name, ROOT_PATH, svn_root)
+

@@ -1,0 +1,71 @@
+# Copyright (C) 2008-2009 NAV CANADA (http://www.navcanada.ca)
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Mike Stoddart <stoddam@navcanada.ca>
+
+Welcome to the Trac Admin Toolkit. This README.TXT file describes how to
+use the toolkit.
+
+Refer to the INSTALL.TXT file for instructions on how to install the
+toolkit.
+
+**** Create New Project - trac-admin-mkproject
+
+The Admin Toolkit makes it easy to create a new project. Simply run
+the script and answer a few questions, including a short project name and
+a one line description.
+
+The script creates the following, assuming you enter "project" as the
+short project name:
+
+    Postgresql database called "support"
+    Trac environment in /srv/trac/support
+    Subversion repository "support" in /srv/svn/support
+    
+The script will also ask if it should install the Subversion hooks for
+this project:
+
+    pre-commit      ensures the developer includes a Trac ticket in the
+                    commit comment
+    post-commit     appends the changeset to the Trac ticket as a
+                    comment 
+
+The will ask if the default Trac milestones and versions should be
+deleted.
+
+**** Delete Existing Project - trac-admin-rmproject
+
+Deleting an existing project is also easy - simply run the
+trac-admin-rmproject script. The script deletes:
+
+    the Subversion repository
+    the Trac environment
+    the Postgresql database
+
+**** Add New User / Change User Password -  - trac-admin-useradd
+
+Anonymous users have read-only access for new projects. To gain write
+access, users must be added to the .htpasswd file. This is achieved using
+the trac-admin-useradd script. It lets you add a user to multiple
+projects.
+
+The script can also be used to change a user's password.
+
+**** Delete User  - trac-admin-userdel
+
+The trac-admin-userdel script deletes a user from the .htpasswd file.
+This removes all write privileges for that user for the given Trac
+environments and Subversion repositories.
+
+**** Promote User - trac-admin-promote
+
+The trac-admin-promote script gives a user admin privileges on one or
+more Trac environments.
+
+**** Demote User - trac-admin-demote
+
+The trac-admin-demote script removes admin privileges for a user on one
+or more Trac environments.
