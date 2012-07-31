@@ -39,7 +39,7 @@ class CacheFilter(Component):
                req.args.get('version') is None:
                 page = self.client.get(req.path_info)
                 if page is not None:
-                    self.log.debug('CacheFilte: Cache hit on %s', req.path_info)
+                    self.log.debug('CacheFilter: Cache hit on %s', req.path_info)
                     req.__CACHED_PAGE = page
                     return self
                 else:
