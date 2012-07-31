@@ -2,6 +2,7 @@
 
 import unittest
 
+from trac.core import TracError
 from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.config import Option
 from trac.util.compat import any
@@ -28,10 +29,8 @@ class IniAdminTestCase(unittest.TestCase):
         self.env.reset_db()
 
     def test_excludes(self):
-        template, data = self.iniadmin.render_admin_panel(
-            self.req, 'tracini', 'iniadmin', '')
-        self.assertFalse(any(opt['name'] == 'excludes'
-                             for opt in data['iniadmin']['options']))
+        self.assertRaises(TracError, self.iniadmin.render_admin_panel,
+                          self.req, 'tracini', 'iniadmin', '')
 
         template, data = self.iniadmin.render_admin_panel(
             self.req, 'tracini', 'trac', '')
@@ -64,7 +63,7 @@ class IniAdminTestCase(unittest.TestCase):
 
         self.req.method = 'POST'
         self.req.args['excludes'] = '***'
-        self.assertRaises(RequestDone,
+        self.assertRaises(TracError,
                           self.iniadmin.render_admin_panel,
                           self.req, 'tracini', 'iniadmin', '')
         self.assertEqual(excludes, config.get('iniadmin', 'excludes'))
