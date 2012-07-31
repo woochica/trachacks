@@ -1,15 +1,15 @@
-from trac.core import *
-from trac.wiki.formatter import wiki_to_html
-from trac.web.chrome import ITemplateProvider, add_stylesheet
-from trac.util import escape, Markup, sorted
-from trac.admin.api import IAdminPanelProvider
+# -*- coding: utf-8 -*-
+
 import inspect
-from trac.config import Option, BoolOption, IntOption, ListOption, \
-                        ExtensionOption
-try:
-    set = set
-except:
-    from sets import Set as set
+
+from trac.core import Component, implements, TracError
+from trac.admin.api import IAdminPanelProvider
+from trac.config import Option, ListOption
+from trac.util import Markup
+from trac.util.compat import set, sorted
+from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.wiki.formatter import wiki_to_html
+
 
 class IniAdminPlugin(Component):
 
@@ -53,12 +53,12 @@ class IniAdminPlugin(Component):
             modified = False
             for option, value in req.args.iteritems():
                 if option in options:
-                    if self.env.config.get(page, option) != value:
-                        self.env.config.set(page, option, value)
+                    if self.config.get(page, option) != value:
+                        self.config.set(page, option, value)
                         modified = True
             if modified:
-                self.env.log.debug("Updating trac.ini")
-                self.env.config.save()
+                self.log.debug("Updating trac.ini")
+                self.config.save()
             req.redirect(req.href.admin(cat, page))
 
 
@@ -72,27 +72,22 @@ class IniAdminPlugin(Component):
         options_data = []
         for option in options:
             doc = wiki_to_html(inspect.getdoc(option), self.env, req)
-            value = self.env.config.get(page, option.name)
+            value = self.config.get(page, option.name)
             # We assume the classes all end in "Option"
             type = option.__class__.__name__.lower()[:-6] or 'text'
             if type == 'list' and not isinstance(value,basestring):
                 value = unicode(option.sep).join(list(value))
             option_data  = {'name': option.name, 'default': option.default,
-                           'doc': Markup(doc), 'value': value, 'type': type}
+                            'doc': Markup(doc), 'value': value, 'type': type}
             if type == 'extension':
-                options = []
-                for impl in option.xtnpt.extensions(self):
-                    options.append(impl.__class__.__name__)
-                options.sort()
-                option_data['options'] = options
+                option_data['options'] = sorted(
+                    impl.__class__.__name__
+                    for impl in option.xtnpt.extensions(self))
             elif type == 'text' and option.name in _pwd:
                 option_data['type'] = 'password'
             options_data.append(option_data)
 
-        data = {'iniadmin': {
-          'section': page,
-          'options': options_data
-          } }
+        data = {'iniadmin': {'section': page, 'options': options_data}}
         return 'iniadmin.html', data
 
     # ITemplateProvider methods
