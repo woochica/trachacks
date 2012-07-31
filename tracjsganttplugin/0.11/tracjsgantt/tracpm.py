@@ -525,27 +525,26 @@ class TracPM(Component):
 
         return ids
 
-    # Create a pseudoticket for a Trac milestone with all the fields
-    # needed for PM work.
-    def _pseudoTicket(self, tid, summary, description, milestone):
+    # Create a pseudoticket with all the fields needed for PM work.
+    def _pseudoTicket(self, tid, summary, description, ticketType, milestone):
         ticket = {}
         ticket['id'] = tid
         ticket['summary'] = summary
         ticket['description'] = description
         ticket['milestone'] = milestone
 
-        # Milestones are always shown
+        # Pseudotickets are always shown
         ticket['level'] = 0
 
-        # A milestone has no owner
+        # A pseudoticket has no owner
         ticket['owner'] = ''
-        ticket['type'] = self.milestoneType
+        ticket['type'] = ticketType
         ticket['status'] = ''
 
         if self.isCfg('estimate'):
             ticket[self.fields['estimate']] = 0
 
-        # There is no percent complete for a milestone
+        # There is no percent complete for a pseudoticket
         if self.isCfg('percent'):
             ticket[self.fields['percent']] = 0
 
@@ -554,10 +553,12 @@ class TracPM(Component):
             ticket[self.fields['parent']] = 0
         ticket['children'] = []
 
+        # FIXME - handle pred, succ here?
+
         # Place holder.
         ticket['link'] = ''
 
-        # A milestone has no priority
+        # A pseudoticket has no priority
         ticket['priority'] = 'n/a'
 
         return ticket
@@ -593,7 +594,8 @@ class TracPM(Component):
                 tid = tid - 1
                 milestoneTicket = self._pseudoTicket(tid, 
                                                      row[0],
-                                                     'Milestone %s' % row[0],
+                                                     'Milestone %s due' % row[0],
+                                                     self.milestoneType,
                                                      row[0])
 
                 # If there's no due date, let the scheduler set it.
@@ -641,6 +643,49 @@ class TracPM(Component):
                     milestoneTicket['succ'] = []
                 
                 tickets.append(milestoneTicket)
+
+                # FIXME - For T-H ticket 8947, try to create a
+                # pseudo-group for the milestone and put all tickets
+                # in the milestone that don't have a parent in that
+                # group.
+
+                # Any ticket with this as a milestone and no parent,
+                # has the milestone group as a parent
+                # FIXME - allow configuration: always, only multiple, never
+                if self.isCfg('parent'):
+                    tid = tid -1 
+                    groupTicket = self._pseudoTicket(tid, 
+                                                     row[0],
+                                                     'Milestone %s tickets' % row[0],
+                                                     self.milestoneType + '-group',
+                                                     row[0])
+
+                    for f in [ 'pred', 'succ' ] :
+                        if self.isField(f):
+                            groupTicket[self.fields[self.sources[f]]] = []
+                        elif self.isRelation(f):
+                            groupTicket[f] = []
+
+                    # Get start, finish dates from milestone ticket
+                    for f in ['start', 'finish']:
+                        groupTicket[self.fields[f]] = \
+                            milestoneTicket[self.fields[f]]
+
+                    # Any tickets in this milestone without a parent
+                    # are children of the milestone's group
+                    for t in tickets:
+                        if t['milestone'] == groupTicket['milestone'] and \
+                                self.parent(t) == None:
+
+                            if self.isField('parent'):
+                                t[self.fields['parent']] = [ tid ]
+                            else:
+                                t['parent'] = [ tid ]
+
+                            groupTicket['children'].append(t['id'])
+
+                    tickets.append(groupTicket)
+                    
 
     # Process the tickets to normalize formats, etc. to simplify
     # access functions.
