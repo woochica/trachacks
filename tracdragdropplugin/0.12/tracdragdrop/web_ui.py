@@ -230,9 +230,11 @@ class TracDragDropModule(Component):
 
     def _render_attachments(self, req):
         realm = req.args['realm']
+        path = req.args['path']
         db = self.env.get_read_db()
-        attachments = Attachment.select(self.env, realm, req.args['path'],
-                                        db=db)
+        attachments = [
+            attachment for attachment
+                       in Attachment.select(self.env, realm, path, db=db)]
         data = {}
         data['alist'] = {
             'can_create': False,
