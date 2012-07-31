@@ -1,0 +1,10 @@
+AutoWikify (0.2) (not yet released) - trunk
+ resolved issues:
+  * #10198: Does not track page renames.
+  * #6835: Does not track page adds and deletes.  
+ 
+ new features:
+  * #2104: Allow autowikified words to be escaped.
+
+AutoWikify (0.1) - trunk
+ Initial release

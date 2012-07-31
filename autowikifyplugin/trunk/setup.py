@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006-2007 Alec Thomas
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -11,7 +12,7 @@ from setuptools import setup, find_packages
 
 setup(name='TracAutoWikify',
       version='0.2',
-      description='Autowikify non-CamelCase wiki page names',
+      description='Wikify all wiki page names, including non-CamelCase ones.',
       
       author='Alec Thomas',
       maintainer='Ryan J Ollos',
