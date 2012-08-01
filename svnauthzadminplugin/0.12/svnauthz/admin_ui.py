@@ -1,21 +1,18 @@
-import pkg_resources
-from trac.core import *
-from trac.perm import PermissionSystem
+# -*- coding: utf-8 -*-
 
-from trac.util import sorted
-from trac.config import BoolOption
 from trac.admin.api import IAdminPanelProvider
-
-from model import *
-from io import *
-from trac.web.chrome import ITemplateProvider
-
+from trac.config import BoolOption
+from trac.core import Component, implements
+from trac.perm import PermissionSystem
+from trac.util import sorted
 from trac.versioncontrol import RepositoryManager
-
-from urllib import pathname2url, url2pathname
+from trac.web.chrome import ITemplateProvider, add_warning
 
 import types
-import inspect
+from io import *
+from model import *
+from urllib import pathname2url, url2pathname
+
 
 # Mode constants
 EDIT_NORMAL=0
@@ -35,13 +32,14 @@ class SvnAuthzAdminPage(Component):
         """Enabling this option will prevent the Trac project from
         changing the contents of the SVN trac|authz_file.""")
 
-    def __init__(self):
-        self.authz_file = self.config.get("trac", "authz_file")
+    authz_file = ''
+    project_repos = []
 
+    def __init__(self):
         # Retrieve info for all repositories associated with this project
+        self.authz_file = self.config.get('trac', 'authz_file')
         rm = RepositoryManager(self.env)
         all_repos = rm.get_all_repositories()
-        self.project_repos = []
         for (reponame, info) in all_repos.iteritems():
             self.project_repos.append(reponame)
         self.env.log.debug("SvnAuthzAdminPlugin: project_repos: '%s'" % self.project_repos)
@@ -51,7 +49,8 @@ class SvnAuthzAdminPage(Component):
         return []
 
     def get_templates_dirs(self):
-        return [pkg_resources.resource_filename('svnauthz', 'templates')]
+        from pkg_resources import resource_filename
+        return [resource_filename('svnauthz', 'templates')]
 
     # IAdminPanelProvider
     def get_admin_panels(self, req):
@@ -60,10 +59,14 @@ class SvnAuthzAdminPage(Component):
 
     def render_admin_panel(self, req, cat, page, path_info):
         data = {}
-        perm = PermissionSystem(self.env)
-        self.env.log.debug("SvnAuthzAdminPlugin: cat=%s page=%s path_info=%s"
-                           % (cat, page, path_info))
-        self.authz = self._get_model();
+
+        # Read the authz file
+        if self.authz_file:
+            self.authz = AuthzFileReader().read(self.authz_file)
+        else:
+            add_warning(req, "Path to authz file not defined in trac.ini")
+            return 'admin_authz.html', data
+
         if req.method == 'POST':
            if req.args.get('addgroup'):
                data.update(self._add_group(req))
@@ -132,7 +135,7 @@ class SvnAuthzAdminPage(Component):
 
         self._persist_model(self.authz)
 
-        return 'admin_authz.html',data 
+        return 'admin_authz.html', data 
  
     def _add_group(self, req):
         groupname = req.args.get('groupname')
@@ -407,10 +410,6 @@ class SvnAuthzAdminPage(Component):
  	    return "*:%s" % path 
  	else: 
  	    return "%s:%s" % (repository, path) 
-
-    def _get_model(self):
-       r = AuthzFileReader()
-       return r.read(self.authz_file)
 
     def _persist_model(self, m):
        w = AuthzFileWriter()
