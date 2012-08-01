@@ -43,7 +43,7 @@ class BackLinksMacro(WikiMacroBase):
                 thispage = WikiPage(self.env, resource).name
 
         sql = 'SELECT w1.name FROM wiki w1, ' + \
-                  '(SELECT name, MAX(version) AS VERSION FROM WIKI GROUP BY NAME) w2 ' + \
+                  '(SELECT name, MAX(version) AS VERSION FROM wiki GROUP BY NAME) w2 ' + \
                   'WHERE w1.version = w2.version AND w1.name = w2.name '
         if thispage:
               sql += 'AND (w1.text LIKE \'%%[wiki:%s %%\'' % thispage
