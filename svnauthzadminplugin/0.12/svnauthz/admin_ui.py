@@ -60,11 +60,8 @@ class SvnAuthzAdminPage(Component):
     def render_admin_panel(self, req, cat, page, path_info):
         data = {}
 
-        # Read the authz file
-        if self.authz_file:
-            self.authz = AuthzFileReader().read(self.authz_file)
-        else:
-            add_warning(req, "Path to authz file not defined in trac.ini")
+        self.authz = self._get_authz(req)
+        if not self.authz:
             return 'admin_authz.html', data
 
         if req.method == 'POST':
@@ -90,10 +87,10 @@ class SvnAuthzAdminPage(Component):
         editpath = None               
         if path_info and path_info.startswith("editgroup/"):
             editgroup, d = self._edit_group(req, cat, page, path_info)
-	    data.update(d)
+            data.update(d)
         elif path_info and path_info.startswith("editpath/"):
             editpath, d = self._edit_path(req, cat, page, path_info)
-	    data.update(d)
+            data.update(d)
 
         paths_disp = []
         for repository, path in [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]:
@@ -141,8 +138,9 @@ class SvnAuthzAdminPage(Component):
         groupname = req.args.get('groupname')
         try:
             self.authz.add_group(Group(groupname, []))
-	    return {}
+            return {}
         except Exception, e:
+            add_warning(req, "Group not specified")
             return {'addgroup_error' : e}
         
     def _del_groups(self, req):
@@ -157,7 +155,7 @@ class SvnAuthzAdminPage(Component):
                 return {'delgroup_error' : "Invalid type of group selection"} 
         except Exception, e:
             return {'delgroup_error' : e }
-	return {}
+        return {}
     
     def _del_paths(self, req):
         paths_to_del = req.args.get('selpath')
@@ -172,21 +170,26 @@ class SvnAuthzAdminPage(Component):
         except Exception, e:
             return {'delpath_error' : e }
 
-        return {} 
+        return {}
+
     def _add_path(self, req):
         path = req.args.get('path')
         repository = None
-        tmppath = req.args.get('path') 
- 	if ":" in tmppath: 
- 	    repository, path = tmppath.split(":") 
- 	    repository = repository.strip() 
- 	    path = path.strip() 
- 	else: 
- 	    repository = self.project_repos[0]
- 	    path = tmppath.strip() 
+        tmppath = req.args.get('path')
+
+        if ":" in tmppath:
+            repository, path = tmppath.split(":")
+            repository = repository.strip()
+            path = path.strip()
+        else:
+            repository = self.project_repos[0]
+            path = tmppath.strip()
+        if not path:
+            add_warning(req, "Path not specified")
+            return {} 
         try:
             self.authz.add_path(Path(path, [], repository))
-	    return {}
+            return {}
         except Exception, e:
             return {'addpath_error' :  e}
 
@@ -198,7 +201,7 @@ class SvnAuthzAdminPage(Component):
         if subject == '':
             return {'addgroupmember_error': "No member specified" }
         group = self.authz.find_group(editgroup)
-        if (group == None):
+        if group == None:
             return {'addgroupmember_error': "Group %s does not exist" % editgroup }
         try:
             member = self._get_member(subject)
@@ -206,7 +209,7 @@ class SvnAuthzAdminPage(Component):
             group.append(member)
         except Exception, e:
             return {'addgroupmember_error':e} 
-	return {}
+        return {}
 
     def _add_path_member(self, req):
         editpath = url2pathname(req.args.get('editpath'))
@@ -244,7 +247,7 @@ class SvnAuthzAdminPage(Component):
             path_members.append(PathAcl(s, read, write))
         except Exception, e:
             return {'addpathmember_error' : e }
-	return {}
+        return {}
 
     
     def _del_group_member(self, req):
@@ -264,7 +267,7 @@ class SvnAuthzAdminPage(Component):
         except Exception, e:
             return {'delgroupmember_error': e}
 
-	return {}
+        return {}
 
     def _change_path_members(self, req):
         editpath = url2pathname(req.args.get('editpath'))
@@ -313,14 +316,15 @@ class SvnAuthzAdminPage(Component):
                     member.set_write(write)
         except Exception, e:
             return {'changepathmember_error':e}
-	return {}
+
+        return {}
     
     def _edit_group(self, req, cat, page, path_info):
         """
             Populates the editgroup.* parts of the hdf
             @return the value of editgroup.url or None
         """
-	data = {}
+        data = {}
         editgroup = url2pathname(path_info[path_info.index('/')+1:len(path_info)])            
         group = self.authz.find_group(editgroup)
         if group != None:
@@ -335,7 +339,7 @@ class SvnAuthzAdminPage(Component):
             if candidates != []:
                 data['editgroup_candidates'] = candidates
             return data['editgroup_url'], data
-	self.env.log.debug("SvnAuthzAdminPlugin: Group %s not found." % editgroup)
+        self.env.log.debug("SvnAuthzAdminPlugin: Group %s not found." % editgroup)
         return None, {} 
 
     def _get_all_users(self):
@@ -351,7 +355,17 @@ class SvnAuthzAdminPage(Component):
       for (subject, action) in data:
         if subject not in users and subject not in ["anonymous", "authenticated"]:
           users.append(subject)
-      return users	
+      return users
+
+    def _get_authz(self, req):
+        if self.authz_file and os.path.exists(self.authz_file):
+            return AuthzFileReader().read(self.authz_file)
+        elif self.authz_file:
+            add_warning(req, "Authz file not found at %s", self.authz_file)
+        else:
+            add_warning(req,"Path to authz file not defined in trac.ini.")
+
+        return None
 
     def _get_candidate_subjects(self, not_in_list = []):
         candidates = ['']
@@ -370,7 +384,7 @@ class SvnAuthzAdminPage(Component):
             Populates the editpath.* parts of the hdf
             @return the value of editgroup.url or None
         """
-	data = {}
+        data = {}
         editpath = url2pathname(path_info[path_info.index('/')+1:len(path_info)])            
         paths = [(p.get_repo(), p.get_path()) for p in self.authz.get_paths()]
         validpath = self._get_valid_path(paths, editpath)
@@ -406,10 +420,10 @@ class SvnAuthzAdminPage(Component):
         return (None, path)
     
     def _get_disp_path_name(self, repository, path):
- 	if repository == None: 
- 	    return "*:%s" % path 
- 	else: 
- 	    return "%s:%s" % (repository, path) 
+     if repository == None:
+         return "*:%s" % path
+     else:
+         return "%s:%s" % (repository, path) 
 
     def _persist_model(self, m):
        w = AuthzFileWriter()
