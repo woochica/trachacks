@@ -31,7 +31,7 @@
 '''
 Created on 17 Jun 2010
 
-@author: enmarkp
+@author: penmark
 '''
 from genshi.builder import tag
 from trac.core import Component, ExtensionPoint, implements
@@ -40,9 +40,9 @@ from api import ISourceBrowserContextMenuProvider
 from genshi.filters.transform import Transformer
 from genshi.core import Markup
 from trac.config import Option
+from trac.versioncontrol.api import RepositoryManager
 from trac.web.chrome import add_stylesheet, ITemplateProvider, add_javascript
 from trac.util.translation import _
-from pkg_resources import resource_filename
 import os
 
 
@@ -67,8 +67,6 @@ class SubversionLink(Component):
     """Generate direct link to file in svn repo"""
     implements(ISourceBrowserContextMenuProvider)
 
-    svn_base_url = Option('svn', 'repository_url')
-
     # IContextMenuProvider methods
     def get_order(self, req):
         return 1
@@ -87,11 +85,8 @@ class SubversionLink(Component):
                 path = entry.path
             except AttributeError:
                 path = entry['path']
-        href = self.svn_base_url.rstrip('/')
-        if data['reponame']:
-            href += '/' + data['reponame']
-        href += '/' + path
-        return tag.a('Subversion', href=href)
+        repos = RepositoryManager(self.env).get_repository(data['reponame'])
+        return tag.a(_('Subversion'), href=repos.get_path_url(path, None))
 
 class WikiToBrowserLink(Component):
     """Generate wiki link"""
@@ -118,7 +113,7 @@ class WikiToBrowserLink(Component):
         href += '/' + path
         if data.has_key('rev'):
             href += "@%s" % data['rev']
-        return tag.a('Wiki Link (to copy)', href="source:%s" % href)
+        return tag.a(_('Wiki Link (to copy)'), href="source:%s" % href)
 
 class SendResourceLink(Component):
     """Generate "Share file" menu item"""
@@ -199,6 +194,7 @@ class SourceBrowserContextMenu(Component):
     # ITemplateProvider methods
     
     def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
         return [('contextmenu', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
