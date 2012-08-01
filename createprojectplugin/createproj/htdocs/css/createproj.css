@@ -1,0 +1,15 @@
+/*.createproj_form input[type="text"] {
+	width: 100%;
+}*/
+
+.createprojectform textarea {
+	width: 100%;
+}
+
+.createprojectform .field {
+	padding-bottom: 0.5em;
+}
+
+.createprojectform .arbitrarywidth {
+	width: 100%;
+}
