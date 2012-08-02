@@ -153,9 +153,9 @@ def execute(hdf, template, env):
                 page.text = expand_vars(fetch_page(cursor, template), generate_vars(hdf))
                 out.write('Created wiki page.<br>\n')
                 # Creating SVN paths
-                paths = ['%s%s' % (SVN_LOCAL_PATH, page_name.lower())]
+                paths = ['%s/%s' % (SVN_LOCAL_PATH, page_name.lower())]
                 for release in page_releases:
-                    paths.append("%s%s/%s" % (SVN_LOCAL_PATH, page_name.lower(), release))
+                    paths.append("%s/%s/%s" % (SVN_LOCAL_PATH, page_name.lower(), release))
                 output = os.popen('/usr/bin/op create-hack %s "New hack %s, created by %s" %s 2>&1' % (authname, page_name, authname, ' '.join(paths))).readlines()
                 if output:
                     raise Exception("Failed to create Subversion paths:\n%s" % ''.join(output))
