@@ -11,8 +11,8 @@ import fcntl
 SVN_URL = 'http://trac-hacks.org/svn/'
 
 # Production configuration
-SVN_LOCAL_PATH = 'file:///srv/trac-hacks/svn/'
-SVN_PERMISSIONS = '/srv/trac-hacks/permissions'
+SVN_LOCAL_PATH = 'file:///var/svn/trachacks010' #TODO: get this from [trac]:repository_dir (or [repositories] on Trac 0.12+)
+SVN_PERMISSIONS = '/var/svn/trachacks010-permissions' #TODO: get this from [trac]:authz_file
 BASE_URL = "/"
 
 # Test configuration
