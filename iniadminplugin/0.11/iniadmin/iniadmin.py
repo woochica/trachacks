@@ -17,7 +17,7 @@ class IniAdminPlugin(Component):
 
     implements(ITemplateProvider, IAdminPanelProvider)
 
-    excludes = ListOption('iniadmin', 'excludes', 'iniadmin:*',
+    excludes = ListOption('iniadmin', 'excludes', 'iniadmin:*,inherit:*',
         doc="""Excludes this options.
         Comma separated list as `section:name` with wildcard characters
         (`*`, `?`).
