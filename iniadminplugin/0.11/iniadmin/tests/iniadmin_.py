@@ -28,6 +28,27 @@ class IniAdminTestCase(unittest.TestCase):
     def tearDown(self):
         self.env.reset_db()
 
+    def test_patterns_match_empty(self):
+        match = self.iniadmin._patterns_match([u''])
+        self.assertFalse(match('a'))
+        self.assertFalse(match(u'あ'))
+        self.assertFalse(match(u'sqlite:db/trac.db'))
+
+    def test_patterns_match_wildcard(self):
+        match = self.iniadmin._patterns_match([u'p??sword', u'passw**d'])
+        self.assertFalse(match('a'))
+        self.assertTrue(match('password'))
+        self.assertTrue(match(u'páésword'))
+        self.assertTrue(match('passwd'))
+        self.assertTrue(match(u'passwod'))
+        self.assertTrue(match(u'passwééééEéééééd'))
+
+    def test_patterns_match_meta(self):
+        match = self.iniadmin._patterns_match([u'pas.wo+d'])
+        self.assertFalse(match('a'))
+        self.assertTrue(match('pas.wo+d'))
+        self.assertFalse(match(u'passwood'))
+
     def test_excludes(self):
         self.assertRaises(TracError, self.iniadmin.render_admin_panel,
                           self.req, 'tracini', 'iniadmin', '')

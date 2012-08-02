@@ -107,14 +107,14 @@ class IniAdminPlugin(Component):
         if not patterns:
             return lambda val: False
 
-        wildcard_re = re.compile('([*?]+)|([^*?A-Za-z0-9_]+)')
+        wildcard_re = re.compile('[*?]+|[^*?A-Za-z0-9_]+')
         def replace(match):
-            group = match.group
-            if group(1) == '?':
-                return '[^:]'
-            if group(1) == '*':
+            text = match.group(0)
+            if text.startswith('?'):
+                return '[^:]' * len(text)
+            if text.startswith('*'):
                 return '[^:]*'
-            return re.escape(group(2))
+            return re.escape(text)
 
         patterns_re = r'\A(?:%s)\Z' % \
                       '|'.join([wildcard_re.sub(replace, pattern)
