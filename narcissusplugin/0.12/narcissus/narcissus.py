@@ -18,6 +18,7 @@ import ImageFont
 
 from genshi.builder import tag
 
+from trac.config import Option
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.util.datefmt import format_date
@@ -57,6 +58,17 @@ MICROSECONDS_DAY = 24 * 60 * 60 * MICROSECONDS_SECOND
 
 class NarcissusPlugin(Component):
     implements(IPermissionRequestor, INavigationContributor, IRequestHandler)
+
+    cache_dir = Option('narcissus', 'cache_dir', None)
+    cache_max_count = Option('narcissus', 'cache_max_count', 2000)
+    cache_max_size = Option('narcissus', 'cache_max_size',  10000000)
+    cache_min_count = Option('narcissus', 'cache_min_count', 1500)
+    cache_min_size = Option('narcissus', 'cache_min_size',  5000000)
+    cmd_path = Option('narcissus', 'cmd_path',
+        _CMD_PATHS[sys.platform] if sys.platform in _CMD_PATHS else None)
+    _ttf_path = Option('narcissus', 'ttf_path', None)
+
+    cache_manager = None
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -646,51 +658,33 @@ class NarcissusPlugin(Component):
         if sys.platform == 'win32':
             self.exe_suffix = '.exe'
 
-        if 'narcissus' not in self.config.sections():
-            msg = 'The narcissus section was not found in the trac configuration file.'
+        # check for the cache_dir entry
+        if not self.cache_dir:
+            msg = 'The narcissus section is missing the cache_dir field.'
             buf.write(escape(msg))
             self.log.error(msg)
             trouble = True
-        else:
-            # check for the cache_dir entry
-            self.cache_dir = self.config.get('narcissus', 'cache_dir')
-            if not self.cache_dir:
-                msg = 'The narcissus section is missing the cache_dir field.'
-                buf.write(escape(msg))
-                self.log.error(msg)
-                trouble = True
-            else:
-                if not os.path.exists(self.cache_dir):
-                    msg = 'The cache_dir is set to %s but that path does not exist.'\
-                        % self.cache_dir
-                    buf.write(escape(msg))
-                    self.log.error(msg)
-                    trouble = True
 
-            # check for the cmd_path entry
-            self.cmd_path = None
-            if sys.platform in _CMD_PATHS:
-                self.cmd_path = _CMD_PATHS[sys.platform]
-            self.cmd_path = self.config.get('narcissus', 'cmd_path', self.cmd_path)
-            if not self.cmd_path:
-                msg = '''The narcissus section is missing the cmd_path field and
-                    there is no default for %s.''' % sys.platform
-                buf.write(escape(msg))
-                self.log.error(msg)
-                trouble = True
-            elif not os.path.exists(self.cmd_path):
-                msg = 'The cmd_path is set to %s but that path does not exist.' % self.cmd_path
-                buf.write(escape(msg))
-                self.log.error(msg)
-                trouble = True
+        if self.cache_dir and not os.path.exists(self.cache_dir):
+            msg = 'The cache_dir is set to %s but that path does not exist.'\
+                  % self.cache_dir
+            buf.write(escape(msg))
+            self.log.error(msg)
+            trouble = True
 
-            # check if we should run the cache manager
-            self.cache_manager = self._boolean(self.config.get('narcissus', 'cache_manager', False))
-            if self.cache_manager:
-                self.cache_max_size  = int(self.config.get('narcissus', 'cache_max_size',  10000000))
-                self.cache_min_size  = int(self.config.get('narcissus', 'cache_min_size',  5000000))
-                self.cache_max_count = int(self.config.get('narcissus', 'cache_max_count', 2000))
-                self.cache_min_count = int(self.config.get('narcissus', 'cache_min_count', 1500))
+        # check for the cmd_path entry           
+        if not self.cmd_path:
+            msg = '''The narcissus section is missing the cmd_path field and
+                     there is no default for %s.''' % sys.platform
+            buf.write(escape(msg))
+            self.log.error(msg)
+            trouble = True
+            
+        if self.cmd_path and not os.path.exists(self.cmd_path):
+            msg = 'The cmd_path is set to %s but that path does not exist.' % self.cmd_path
+            buf.write(escape(msg))
+            self.log.error(msg)
+            trouble = True
 
         return trouble, buf
 
@@ -752,30 +746,24 @@ class NarcissusPlugin(Component):
         buf = StringIO()
         trouble = False
 
-        if 'narcissus' not in self.config.sections():
-            msg = 'The narcissus section was not found in the trac configuration file.'
+        # check for the ttf_path entry
+        if not self._ttf_path:
+            self._ttf = None # PIL will use default system font
+            return None, None
+        if not self._ttf_path[-4:].lower() == '.ttf':
+            msg = 'The ttf_path is set to %s which is not a truetype font file.'\
+                  % self._ttf_path
             buf.write(escape(msg))
             self.log.error(msg)
             trouble = True
-        else:
-            # check for the ttf_path entry
-            self._ttf_path = self.config.get('narcissus', 'ttf_path')
-            if not self._ttf_path:
-                self._ttf = None # PIL will use default system font
-                return None, None
-            if not self._ttf_path[-4:].lower() == '.ttf':
-                msg = 'The ttf_path is set to %s which is not a truetype font file.'\
-                    % self._ttf_path
-                buf.write(escape(msg))
-                self.log.error(msg)
-                trouble = True
-            if not os.path.exists(self._ttf_path):
-                msg = 'The ttf_path is set to %s but that path does not exist.'\
-                    % self._ttf_path
-                buf.write(escape(msg))
-                self.log.error(msg)
-                trouble = True
-            self._ttf = ImageFont.truetype(self._ttf_path, 12)
+        if not os.path.exists(self._ttf_path):
+            msg = 'The ttf_path is set to %s but that path does not exist.'\
+                  % self._ttf_path
+            buf.write(escape(msg))
+            self.log.error(msg)
+            trouble = True
+        self._ttf = ImageFont.truetype(self._ttf_path, 12)
+
         return trouble, buf
 
     # Extra helper functions
