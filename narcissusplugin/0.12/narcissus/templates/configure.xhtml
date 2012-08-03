@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+<xi:include href="layout.html" />
+<xi:include href="macros.html" />
+<head>
+	<title py:if="title">Configure - Narcissus - $title</title>
+</head>
+
+<body>
+
+<xi:include href="navigation.xhtml" />
+
+<h1>Configure</h1>
+
+<form py:if="users" id="config" action="${href_configure}" method="post">
+	<h2>Add group member:</h2>
+	<select name="add" width="150" style="width: 150px">
+		<py:for each="item in users">
+			<option value="${item}">${item}</option>
+		</py:for>
+	</select>
+	<input type="submit" value="Add" />
+</form>
+
+<form py:if="members" id="config" action="${href_configure}" method="post">
+	<h2>Remove group member:</h2>
+	<select name="remove" width="150" style="width: 150px">
+		<py:for each="item in members">
+			<option value="${item}">${item}</option>
+		</py:for>
+	</select>
+	<input type="submit" value="Remove" />
+</form>
+
+<form id="config" action="${href_configure}" method="post">
+	<h2>Change score thresholds:</h2>
+	<input type="hidden" name="bounds" />
+	<py:for each="resource in bounds">
+	<p><label>${resource}:&nbsp;
+		<py:for each="threshold in bounds[resource]">
+			<input type="text" size="3" name="${resource}.${threshold}" value="${threshold}" />&nbsp;
+		</py:for>
+	</label></p>
+	</py:for>
+	<p><input type="submit" value="Submit" /></p>
+</form>
+
+<form id="config" action="${href_configure}" method="post">
+	<h2>Change ticket credits:</h2>
+	<input type="hidden" name="credits" />
+	<py:for each="item in credits">
+		<p><label>${item}:&nbsp;<input type="text" size="3" name="${item}" value="${credits[item]}" /></label></p>
+	</py:for>
+	<p><input type="submit" value="Submit" /></p>
+</form>
+
+</body>
+</html>
+

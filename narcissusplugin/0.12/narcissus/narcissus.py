@@ -34,8 +34,6 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-
-
 from settings import NarcissusSettings
 
 _TRUE_VALUES = ('yes', 'true', 'on', 'aye', '1', 1, True)
@@ -53,6 +51,9 @@ _SQUARE_SIZE = 25
 _TICKET_MIN = 6
 _TICKET_MAX = 10
 _SCREEN_SPACE = 500
+
+MICROSECONDS_SECOND = 1000000
+MICROSECONDS_DAY = 24 * 60 * 60 * MICROSECONDS_SECOND
 
 class NarcissusPlugin(Component):
     implements(IPermissionRequestor, INavigationContributor, IRequestHandler)
@@ -83,9 +84,6 @@ class NarcissusPlugin(Component):
             img_path = os.path.join(self.cache_dir, img)
             return req.send_file(img_path, mimeview.get_mimetype(img_path))
         
-###        add_stylesheet(req, 'nar/css/narcissus.css')
-###        add_script(req, 'nar/js/narcissus.js')
-
         params = {}
         params['page'] = 'narcissus'
         params['href_narcissus'] = self.env.href.narcissus()
@@ -161,26 +159,25 @@ class NarcissusPlugin(Component):
                 if int(row[0]) > start_rev:
                     start_rev = int(row[0])
             start_rev += 1
-        last_update = datetime.date.fromtimestamp(last_update)
         members = self._settings.members
         
         # populate table with wiki activity
         cursor.execute('''select name, min(version), count(version), min(time) from wiki
-            where time > %f group by name order by min(time)''' % self._to_time(last_update))
+            where time > %f group by name order by min(time)''' % last_update)
         for page, start_version, versions, _ in cursor:
             versions += start_version
             # page has been added
             if start_version == 1:
                 new_page = WikiPage(self.env, page, 1)
                 add = len(new_page.text.splitlines())
-                if (new_page.author in members) and (new_page.time.date() > last_update):
+                if (new_page.author in members) and (self._to_microseconds(new_page.time) > last_update):
                     self._insert_data(new_page.author, new_page.time, 
                         new_page.name, 'wiki', 'add', add)
                 start_version += 1
             for i in xrange(start_version, versions):
                 # page has been edited
                 old_page, edit_page = WikiPage(self.env, page, i - 1), WikiPage(self.env, page, i)
-                if (edit_page.author in members) and (edit_page.time.date() > last_update):
+                if (edit_page.author in members) and (self._to_microseconds(edit_page.time) > last_update):
                     changes = self._my_diff(old_page.text, edit_page.text)
                     edit = self._edit_newlines(changes)
                     if edit:
@@ -193,11 +190,11 @@ class NarcissusPlugin(Component):
         for row in cursor:
             ticket = Ticket(self.env, row[0])
             # ticket has been opened
-            if ticket['reporter'] in members and ticket.time_created.date() > last_update:
+            if ticket['reporter'] in members and self._to_microseconds(ticket.time_created) > last_update:
                 self._insert_data(ticket['reporter'], ticket.time_created, 
                     ticket.id, 'ticket', 'open', 1) # FIXME
             for dtime, author, field, _, newvalue, _ in ticket.get_changelog():
-                if author in members and dtime.date() > last_update:
+                if author in members and self._to_microseconds(dtime) > last_update:
                     if field == 'comment':
                         # ticket has received comment
                         self._insert_data(author, dtime, ticket.id, 
@@ -236,7 +233,7 @@ class NarcissusPlugin(Component):
         except:
             youngest_rev = 0
 
-        for rev in xrange(start_rev, int(youngest_rev) + 1):
+        for rev in xrange(start_rev, youngest_rev):
             cs = repos.get_changeset(rev)
             add, edit = 0, 0
             for path, _, change, base_path, base_rev in cs.get_changes():
@@ -268,7 +265,7 @@ class NarcissusPlugin(Component):
         # Insert a row into the narcissus_data table
         cursor = self.db.cursor()
         insert = "insert into narcissus_data values ('%s', %d, '%s', '%s', '%s', %d)"\
-            % (member, self._to_time(dtime), str(eid).replace("'", ""), resource, dtype, value)
+            % (member, self._to_microseconds(dtime), str(eid).replace("'", ""), resource, dtype, value)
         #print>>sys.stderr, insert
         cursor.execute(insert)
 
@@ -333,8 +330,8 @@ class NarcissusPlugin(Component):
                 for j, res in enumerate(resources):
                     statement = '''select sum(value) from narcissus_data where
                         member = "%s" and resource = "%s" and dtime >= %s and 
-                        dtime < %s''' % (mem, res, self._to_time(idate), 
-                        self._to_time(idate + datetime.timedelta(days=1)))
+                        dtime < %s''' % (mem, res, idate, 
+                        idate + MICROSECONDS_DAY)
                     cursor.execute(statement)
                     total_value = cursor.fetchone()[0]
                     if total_value:
@@ -348,7 +345,7 @@ class NarcissusPlugin(Component):
                         # add info for the template to render an image map
                         idx = '%s_%s_%s' % (mem, res, idate)
                         href = '%s/details?member=%s&resource=%s&date=%s'\
-                            % (req.base_url, mem, res, self._to_time(idate))
+                            % (req.base_url, mem, res, idate)
 
                         item = {}
                         item['href'] = href
@@ -357,7 +354,7 @@ class NarcissusPlugin(Component):
                         item['x2'] = jx + _SQUARE_SIZE
                         item['y2'] = y
                         map.append(item)
-                idate += datetime.timedelta(days=1)
+                idate += MICROSECONDS_DAY
 
             # print member names
             x, y = memx + 10, name_offset * 0.4
@@ -398,10 +395,10 @@ class NarcissusPlugin(Component):
         for r, res in enumerate(resources):
             idate = start
             for i in range(days):
-                jdate = idate + datetime.timedelta(days=1)
+                jdate = idate + MICROSECONDS_DAY
                 statement = '''select sum(value) from narcissus_data where
                     resource = "%s" and dtime >= %s and dtime < %s'''\
-                    % (res, self._to_time(idate), self._to_time(jdate))
+                    % (res, idate, jdate)
                 cursor.execute(statement)
                 value = cursor.fetchone()[0]
                 if value:
@@ -435,8 +432,7 @@ class NarcissusPlugin(Component):
             x = date_offset
             for j, res in enumerate(resources):
                 statement = '''select sum(value) from narcissus_data where resource = "%s"
-                    and dtime >= %s and dtime < %s''' % (res, self._to_time(idate),
-                    self._to_time(idate + datetime.timedelta(days=1)))
+                    and dtime >= %s and dtime < %s''' % (res, idate, idate + MICROSECONDS_DAY)
                 cursor.execute(statement)
                 total_value = cursor.fetchone()[0]
                 if total_value:
@@ -447,7 +443,7 @@ class NarcissusPlugin(Component):
                     # add info for the template to render an image map
                     idx = '%s_%s' % (res, idate)
                     href = '%s/details?resource=%s&date=%s'\
-                        % (req.base_url, res, self._to_time(idate))
+                        % (req.base_url, res, idate)
                     item = {}
                     item['href'] = href
                     item['x1'] = x
@@ -456,7 +452,7 @@ class NarcissusPlugin(Component):
                     item['y2'] = y
                     map.append(item)
                 x += widths[j]
-            idate += datetime.timedelta(days=1)
+            idate += MICROSECONDS_DAY
         params['mapItems'] = map
 
         img = Image.composite(layer, img, layer)
@@ -479,7 +475,7 @@ class NarcissusPlugin(Component):
         for mem in members:
             statement = '''select id from ticket where owner = "%s" and not 
                 (status = "closed" and changetime <= %s) and not time > %s'''\
-                % (mem, self._to_time(start), self._to_time(end))
+                % (mem, start, end)
             cursor.execute(statement)
             mem_tickets[mem] = [t[0] for t in cursor]
             owned_tickets += len(mem_tickets[mem])
@@ -512,7 +508,7 @@ class NarcissusPlugin(Component):
             draw.rectangle([x, y, x + colw - 1, y - colh + 1], fill=(229, 229, 229, 255))
             for j, tid in enumerate(mem_tickets[mem]):
                 ticket = Ticket(self.env, tid)
-                tcreated = ticket.time_created.date()
+                tcreated = self._to_microseconds(ticket.time_created.date())
 
                 starty = page_height - self._date_y(start, tcreated)
                 x = memx + (j * ticket_width)
@@ -531,7 +527,7 @@ class NarcissusPlugin(Component):
                 width = change_width = ticket_width / 4
                 status = ticket['status']
                 for dtime, _, field, _, newvalue, _ in ticket.get_changelog():
-                    dtime = dtime.date()
+                    dtime = self._to_microseconds(dtime)
                     if dtime <= end:
                         dot = None
                         ttype = field
@@ -551,7 +547,7 @@ class NarcissusPlugin(Component):
                             dot = midx[ticket['reporter']] + 1
                             status = 'new'
                         if draw_to > draw_from:
-                            draw_days = (draw_to - draw_from).days
+                            draw_days = self._date_days(draw_to - draw_from)
                             y = page_height - self._date_y(start, draw_from) - (_SQUARE_SIZE / 2)
                             draw.line([x + (ticket_width / 2), y,
                                 x + (ticket_width / 2), y - draw_days * _SQUARE_SIZE],
@@ -562,7 +558,7 @@ class NarcissusPlugin(Component):
                         draw_from = draw_to
                         width = change_width
                 if status != 'closed' or draw_to > end:
-                    draw_days = (end - draw_from).days
+                    draw_days = self._date_days(end - draw_from)
                     y = page_height - self._date_y(start, draw_from) - (_SQUARE_SIZE / 2)
                     draw.line([x + (ticket_width / 2), y, x + (ticket_width / 2),
                         y - (draw_days * _SQUARE_SIZE + (_SQUARE_SIZE / 2))], 
@@ -576,10 +572,10 @@ class NarcissusPlugin(Component):
                 last_change = end
                 if ticket['status'] == 'closed':
                     for dtime, _, _, _, _, _ in ticket.get_changelog():
-                        dtime = dtime.date()
+                        dtime = self._to_microseconds(dtime)
                         if dtime <= end:
                             last_change = dtime
-                ticket_length = (last_change - tcreated).days + 1
+                ticket_length = self._date_days(last_change - tcreated) + 1
 
                 # add info for the template to render an image map
                 idx = 'ticket_%s' % (tid)
@@ -606,9 +602,9 @@ class NarcissusPlugin(Component):
         # Write dates along left of image
         x, y = start_pos
         for i in range(days):
-            draw.text((x, y - _SQUARE_SIZE/1.5), str(idate), fill=(0, 0, 0, 255), font=self._ttf)
+            draw.text((x, y - _SQUARE_SIZE/1.5), str(self._from_db_time(idate)), fill=(0, 0, 0, 255), font=self._ttf)
             y -= _SQUARE_SIZE
-            idate += datetime.timedelta(days=1)
+            idate += MICROSECONDS_DAY
         return draw
 
     # Utility methods
@@ -793,21 +789,31 @@ class NarcissusPlugin(Component):
     def _get_dates(self, params):
         # Determine the dates and number of days to be visualised
         days = int(params['date_daysback']) + 1 # inclusive of start and end dates
-        end = self._to_date(float(params['date_end']))
-        start = end - datetime.timedelta(days=(days - 1))
+        #end = self._to_date(float(params['date_end']))
+        #start = end - datetime.timedelta(days=(days - 1))
+        end = int(float(params['date_end']) * MICROSECONDS_SECOND)
+        start = end - (days * MICROSECONDS_DAY)
         return start, end, days
 
     def _to_date(self, timestamp):
         # Given a timestamp, return the datetime object
         return datetime.date.fromtimestamp(timestamp)
 
-    def _to_time(self, datetime):
-        # Given a datetime object, return the timestamp
-        return time.mktime(datetime.timetuple())
+    def _from_db_time(self, timestamp):
+        # Given a timestamp from the datbase, return a corressponding datetime object
+        return datetime.date.fromtimestamp(timestamp / MICROSECONDS_SECOND);
     
     def _date_y(self, start, idate):
         # Determine the y potision relative the the start date
-        return (idate - start).days * _SQUARE_SIZE
+        #return (idate - start).days * _SQUARE_SIZE
+        #return datetime.timedelta(microseconds=(idate - start)).days * _SQUARE_SIZE
+        return self._date_days(idate-start) * _SQUARE_SIZE
+
+    def _date_days(self, idate):
+        return datetime.timedelta(microseconds=idate).days
+    
+    def _to_microseconds(self, idate):
+        return time.mktime(idate.timetuple()) * MICROSECONDS_SECOND
 
     def _is_binary(self, data):
         # Detect binary content by checking the first thousand bytes for zeroes.

@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+<xi:include href="layout.html" />
+<xi:include href="macros.html" />
+<head>
+	<title py:if="title">Narcissus - $title</title>
+	<script type="text/javascript" src="chrome/nar/js/narcissus.js"></script>
+	<link rel="stylesheet" type="text/css" href="chrome/nar/css/narcissus.css"/>
+</head>
+
+<body>
+
+<xi:include href="navigation.xhtml" />
+
+<py:choose test="error">
+<py:when test="None">
+
+<h1>Narcissus</h1>
+
+<p>
+<a href="${href_narcissus}?view=group">Group View</a> | 
+<a href="${href_narcissus}?view=project">Project View</a> | 
+<a href="${href_narcissus}?view=ticket">Ticket View</a>
+</p>
+
+<div id="nar-legend">
+	<form method="get" action="${href_narcissus}">
+		<div class="date">
+			<input type="hidden" name="view" value="${view}" />
+			<label>View from <input type="text" size="10" name="from" value="${date_from}" /></label> to
+			<label><input type="text" size="3" name="daysback" value="${date_daysback}" /> days back</label>
+			<input type="submit" name="update" value="Update" />
+		</div>
+	</form>
+	<h4>Legend</h4>
+	<py:for each="item in legend">
+	<p><img src="${item['href']}" width="${item['width']}" height="${item['height']}" align="absmiddle" />&nbsp;${item['name']}</p>
+	</py:for>
+</div>
+
+<div id="nar-detail">
+</div>
+
+<div id="nar-visualisation">
+	<py:choose test="msg">
+		<py:when test="''">
+			<map name="vis">
+				<py:for each="item in mapItems">
+				<area href="${item['href']}" shape="rect" coords="${item['x1']},${item['y1']},${item['x2']},${item['y2']}" border="1" />
+				</py:for>
+			</map>
+			<img src="${vis['href']}" border="0" width="${vis['width']}" height="${vis['height']}" usemap="#vis" />
+		</py:when><py:otherwise>
+			<p>${msg}</p>
+		</py:otherwise>
+	</py:choose>
+</div>
+
+</py:when>
+
+<py:otherwise>
+<h1>Oops&hellip;</h1>
+<div id="content" class="error"><div class="message">
+<strong>Narcissus plugin has detected an error. Please fix the problem before continuing.</strong>
+<pre><p>${error}</p></pre>
+</div></div>
+</py:otherwise>
+
+</py:choose>
+
+</body>
+</html>
+

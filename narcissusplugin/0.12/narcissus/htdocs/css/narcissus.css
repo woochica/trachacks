@@ -1,0 +1,54 @@
+p {
+	margin: 0.5em 0;
+}
+
+a {
+	color: #116699;
+	text-decoration: none;
+}
+
+a:hover {
+	color: #666666;
+	text-decoration: underline;
+}
+
+input {
+	padding: 0.2em;
+	font: 1em/1.5 sans-serif;
+	border: 0.1em solid black;
+}
+
+em {
+	color: #E69105;
+	font-style: normal;
+}
+
+.date {
+	font-size: 80%;
+	margin-bottom: 1.2em;
+}
+
+.nar-time {
+	font-size: 80%;
+	color: #999999;
+}
+
+#nar-visualisation {
+	width: 98%;
+}
+
+#nar-legend, #nar-detail {
+	max-width: 25em;
+	background: #F7F7F7;
+	padding: 1em;
+	border: 0.1em solid #D7D7D7;
+}
+
+#nar-detail {
+	position: absolute;
+}
+
+#nar-detail, #score, #bounds {
+	display: none;
+}
+

@@ -1,0 +1,30 @@
+<div xmlns:py="http://genshi.edgewall.org/" id="ctxtnav" class="nav">
+	<ul>
+		<li class="first">
+		<py:choose test="page == 'narcissus'">
+			<py:when test="True">Visualisation</py:when>
+			<py:otherwise>
+			<a href="${href_narcissus}">Visualisation</a>
+			</py:otherwise>
+		</py:choose>
+		</li>
+		<li>
+		<py:choose test="page == 'configure'">
+			<py:when test="True">Configure</py:when>
+			<py:otherwise>
+			<a href="${href_configure}">Configure</a>
+			</py:otherwise>
+		</py:choose>
+		</li>
+		<li class="last">
+		<py:choose test="page == 'user_guide'">
+			<py:when test="True">User Guide</py:when>
+			<py:otherwise>
+			<a href="${href_user_guide}">User Guide</a>
+			</py:otherwise>
+		</py:choose>
+		</li>
+	</ul>
+	<hr />
+</div>
+

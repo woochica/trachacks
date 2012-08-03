@@ -1,0 +1,46 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+<body>
+
+<h4><a href="javascript:ToggleShow('#nar-detail')">Close</a></h4>
+
+<h4>Details <a href="javascript:ToggleShow('#details')">[+/-]</a></h4>
+<div id="details">
+	<py:for each="item in ticket">
+	<p><span class="nar-time">${item['time']}</span> Ticket <a href="${item['url']}">
+		#${item['tid']}</a> ${item['action']} by ${item['author']}</p>
+	</py:for>
+
+	<py:for each="item in wiki">
+	<p><span class="nar-time">${item['time']}</span> <a href="${item['url']}">
+		${item['name']}</a> edited by ${item['author']}
+	<py:if test="item['diff']">
+	(<a href="${item['url']}${item['diff']}">diff</a>)
+	</py:if>
+	</p>
+	</py:for>
+
+	<py:for each="item in svn">
+	<p><span class="nar-time">${item['time']}</span> Changeset <a href="${item['url']}">
+		[${item['rev']}]</a> by ${item['author']}</p>
+	</py:for>
+</div>
+
+<h4>Score <a href="javascript:ToggleShow('#score')">[+/-]</a></h4>
+<div id="score">
+	<p>The following activity was detected:</p>
+	<p py:for="item in scores">${item['eid']} ${item['type']}: ${item['activity']}</p>
+	<p>Activity level thresholds for ${resource}: <a href="javascript:ToggleShow('#bounds')">[+/-]</a></p>
+	<div id="bounds">
+		<ul>
+			<li py:for="item in bounds">${item}</li>
+		</ul>
+		<p>This score is used to calculate the brightness of the square.</p>
+	</div>
+</div>
+
+</body>
+</html>
