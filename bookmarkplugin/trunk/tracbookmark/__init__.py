@@ -32,9 +32,6 @@ class BookmarkSystem(Component):
     bookmark_path = re.compile(r'/bookmark')
     path_match = re.compile(r'/bookmark/(add|delete|delete_in_page)/(.*)')
 
-    image_map = { 'on'  : 'bookmark_on.png',
-                  'off' : 'bookmark_off.png', }
-
     ### public methods
 
     def get_bookmarks(self, req):
@@ -64,9 +61,9 @@ class BookmarkSystem(Component):
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('INSERT INTO bookmarks (resource, username) '
-                       'VALUES (%s, %s)',
-                       (resource, get_reporter_id(req)))
+        cursor.execute(
+            "INSERT INTO bookmarks (resource,name,username) VALUES (%s,%s,%s)",
+            (resource, '', get_reporter_id(req)))
         db.commit()
 
     def delete_bookmark(self, req, resource):
