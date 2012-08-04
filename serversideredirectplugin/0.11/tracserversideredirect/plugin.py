@@ -19,7 +19,7 @@ from  trac.wiki.model    import  WikiPage
 from  genshi.builder     import  tag
 import re
 
-from  tracextracturl     import  extract_url
+from  tracextracturl.extracturl import  extract_url
 
 MACRO = re.compile(r'.*\[\[[rR]edirect\((.*)\)\]\]')
 

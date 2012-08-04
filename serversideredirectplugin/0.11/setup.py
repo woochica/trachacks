@@ -21,7 +21,6 @@ setup(
     zip_safe     = False,
     keywords     = 'trac plugin server redirect',
     classifiers  = ['Framework :: Trac'],
-    setup_requires = ['TracExtractUrl>=0.2.7030'],
     install_requires = ['TracExtractUrl>=0.2.7030'],
     entry_points = {'trac.plugins': ['tracserversideredirect.plugin = tracserversideredirect.plugin']}
 )
