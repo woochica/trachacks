@@ -155,7 +155,8 @@ class BookmarkSystem(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if 'BOOKMARK_VIEW' in req.perm:
+        # Show bookmarks context menu except when on the bookmark page
+        if 'BOOKMARK_VIEW' in req.perm and not self.match_request(req):
             for path in self.bookmarkable_paths:
                 if re.match(path, req.path_info):
                     self.render_bookmarker(req)
@@ -200,6 +201,8 @@ class BookmarkSystem(Component):
                 if realm == 'ticket':
                     linkname = get_resource_shortname(self.env, resource)
                     name = get_resource_summary(self.env, resource)
+                    from trac.ticket.model import Ticket
+                    realm = Ticket(self.env, resource.id)['status'] + ' ' + realm
                 elif realm == 'milestone':
                     linkname = get_resource_shortname(self.env, resource)
                 elif realm == 'wiki':
