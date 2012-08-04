@@ -10,7 +10,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet, \
                             add_script, add_notice, add_ctxtnav
 from trac.resource import Resource, get_resource_description, get_resource_shortname, get_resource_summary
 from trac.db import DatabaseManager, Table, Column
-from trac.perm import IPermissionRequestor
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import get_reporter_id
 from genshi.builder import tag
 
@@ -95,10 +95,11 @@ class BookmarkSystem(Component):
     ### IRequestHandler methods
 
     def match_request(self, req):
-        return 'BOOKMARK_VIEW' in req.perm and self.bookmark_path.match(req.path_info)
+        return self._authorize(req) and self.bookmark_path.match(req.path_info)
 
     def process_request(self, req):
-        req.perm.require('BOOKMARK_VIEW')
+        if not self._authorize(req):
+            raise PermissionError('BOOKMARK_VIEW')
         match = self.path_match.match(self._get_resource_uri(req))
 
         if match:
@@ -156,7 +157,7 @@ class BookmarkSystem(Component):
 
     def post_process_request(self, req, template, data, content_type):
         # Show bookmarks context menu except when on the bookmark page
-        if 'BOOKMARK_VIEW' in req.perm and not self.match_request(req):
+        if self._authorize(req) and not self.match_request(req):
             for path in self.bookmarkable_paths:
                 if re.match(path, req.path_info):
                     self.render_bookmarker(req)
@@ -301,3 +302,6 @@ class BookmarkSystem(Component):
 
     def _is_ajax(self, req):
         return req.get_header('X-Requested-With') == 'XMLHttpRequest'
+
+    def _authorize(self, req):
+        return req.authname != 'anonymous' and 'BOOKMARK_VIEW' in req.perm
