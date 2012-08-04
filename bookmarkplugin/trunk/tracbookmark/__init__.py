@@ -145,11 +145,9 @@ class BookmarkSystem(Component):
             content = tag(tag.a('Bookmarks', href=req.href.bookmark()), menu)
             req.send(unicode(content).encode('utf-8'))
 
-        bookmarks = []
-        for url, name, username in self.get_bookmarks(req):
-            bookmarks.append(self._format_name(req, url))
-
-        return 'list.html', { 'bookmarks': bookmarks }, None
+        bookmarks = [self._format_name(req, url)
+                     for url, name, username in self.get_bookmarks(req)]
+        return 'bookmark_list.html', {'bookmarks': bookmarks}, None
 
     ### IRequestFilter methods
 
