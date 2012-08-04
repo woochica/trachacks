@@ -289,7 +289,7 @@ class BookmarkSystem(Component):
                 label = '%s %s' % (params['linkname'], params['name'])
             else:
                 label = params['linkname']
-            anchor = tag.a(label, href=req.href(url), title=label)
+            anchor = tag.a(label, href=params['url'], title=label)
             menu.append(tag.li(anchor))
         return menu
 
