@@ -201,8 +201,6 @@ class BookmarkSystem(Component):
                 if realm == 'ticket':
                     linkname = get_resource_shortname(self.env, resource)
                     name = get_resource_summary(self.env, resource)
-                    from trac.ticket.model import Ticket
-                    realm = Ticket(self.env, resource.id)['status'] + ' ' + realm
                 elif realm == 'milestone':
                     linkname = get_resource_shortname(self.env, resource)
                 elif realm == 'wiki':
