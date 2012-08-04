@@ -1,14 +1,4 @@
-$(document).ready(function() {
-var bindBookmarkMenu = function() {
-    $('#bookmark_menu, #bookmark_menu li').mouseover(function() {
-        $(this).find('li').css('display', 'block');
-        $(this).find('li:first').css('display', 'inline-block');
-    });
-    $('#bookmark_menu').mouseout(function() {
-        $(this).find('li').hide();
-        $(this).find('li:first').show();
-    });
-}
+jQuery(document).ready(function($) {
     $('#bookmark_this').click(function() {
         var button = $(this);
 
@@ -18,13 +8,11 @@ var bindBookmarkMenu = function() {
             button.attr('href', params[1]);
             button.attr('title', params[2]);
 
-            var bookmark_path = $('#bookmark_menu li:first a:first').attr('href');
+            var bookmark_path = button.attr('data-list');
             $.get(bookmark_path, function(result) {
-                $('#bookmark_placeholder').html(result);
-                bindBookmarkMenu();
+                $('#bookmark_menu').html(result);
             });
         });
         return false;
     });
-    bindBookmarkMenu();
 });

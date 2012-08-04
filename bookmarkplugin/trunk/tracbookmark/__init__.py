@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
+
 import re
-from trac.core import *
+
+from trac.core import Component, implements
 from trac.config import ListOption
 from trac.env import IEnvironmentSetupParticipant
-from trac.web.api import IRequestFilter, IRequestHandler, Href
+from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, \
-                            add_script, add_notice
+                            add_script, add_notice, add_ctxtnav
 from trac.resource import Resource, get_resource_description, get_resource_shortname, get_resource_summary
 from trac.db import DatabaseManager, Table, Column
 from trac.perm import IPermissionRequestor
@@ -38,9 +41,10 @@ class BookmarkSystem(Component):
         """Return the current users bookmarks."""
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute('SELECT resource, name, username FROM bookmarks WHERE username=%s ',
-                         (get_reporter_id(req), ))
-        return cursor.fetchall()
+        cursor.execute(
+            "SELECT resource, name, username FROM bookmarks WHERE username=%s",
+            (get_reporter_id(req),))
+        return cursor
 
     def get_bookmark(self, req, resource):
         """Return the current users bookmark for a resource."""
@@ -106,10 +110,10 @@ class BookmarkSystem(Component):
                 self.set_bookmark(req, resource)
 
                 if self._is_ajax(req):
-                    content = "&".join((req.href.chrome('bookmark/' + self.image_map['on']),
-                                    req.href.bookmark('delete', resource),
-                                    'Delete bookmark'))
-
+                    content = '&'.join((
+                        req.href.chrome('bookmark/' + self.image_map['on']),
+                        req.href.bookmark('delete', resource),
+                        'Delete bookmark'))
                     if isinstance(content, unicode):
                         content = content.encode('utf-8')
                     req.send(content)
@@ -125,35 +129,21 @@ class BookmarkSystem(Component):
                     req.redirect(req.href.bookmark())
 
                 if self._is_ajax(req):
-                    content = "&".join((req.href.chrome('bookmark/' + self.image_map['off']),
-                                    req.href.bookmark('add', resource),
-                                    'Bookmark this page'))
-
+                    content = '&'.join((
+                        req.href.chrome('bookmark/' + self.image_map['off']),
+                        req.href.bookmark('add', resource),
+                        'Bookmark this page'))
                     if isinstance(content, unicode):
                         content = content.encode('utf-8')
                     req.send(content)
 
                 req.redirect(resource)
 
-        base_path = req.base_path
-
         # listing bookmarks
         if self._is_ajax(req):
-            menu = tag.ul('', id='bookmark_menu', title='')
-
-            anc = tag.a("Bookmarks", href=req.href.bookmark())
-            menu.append(tag.li(anc))
-
-            for url, name, username in self.get_bookmarks(req):
-                resource = url
-                anc = tag.a(resource, href=base_path + resource)
-                menu.append(tag.li(anc))
-
-            content = "%s" % menu
-
-            if isinstance(content, unicode):
-                content = content.encode('utf-8')
-            req.send(content)
+            menu = self._get_bookmarks_menu(req)
+            content = tag(tag.a('Bookmarks', href=req.href.bookmark()), menu)
+            req.send(unicode(content).encode('utf-8'))
 
         bookmarks = []
         for url, name, username in self.get_bookmarks(req):
@@ -273,37 +263,38 @@ class BookmarkSystem(Component):
         bookmark = self.get_bookmark(req, resource)
 
         if bookmark:
-            img = tag.img(src=req.href.chrome('bookmark/' + self.image_map['on']))
-            anchor = tag.a(img, id='bookmark_this',
-                    href=req.href.bookmark('delete', resource), title='Delete Bookmark')
+            img = 'on'
+            title = 'Delete Bookmark'
+            href = req.href.bookmark('delete', resource)
         else:
-            img = tag.img(src=req.href.chrome('bookmark/' + self.image_map['off']))
-            anchor = tag.a(img, id='bookmark_this',
-                    href=req.href.bookmark('add', resource), title='Bookmark this page')
+            img = 'off'
+            title = 'Bookmark this page'
+            href = req.href.bookmark('add', resource)
+        img = tag.img(src=req.href.chrome('bookmark/' + self.image_map[img]))
+        anchor = tag.a(img, id='bookmark_this', title=title, href=href,
+                       data_list=req.href.bookmark())
 
         add_script(req, 'bookmark/js/tracbookmark.js')
         add_stylesheet(req, 'bookmark/css/tracbookmark.css')
-        elm = tag.span(anchor, id='bookmark', title='')
+        elm = tag.span(anchor, id='bookmark')
         req.chrome.setdefault('ctxtnav', []).insert(0, elm)
 
-        menu = tag.ul('', id='bookmark_menu', title='')
+        menu = self._get_bookmarks_menu(req)
+        item = tag.span(tag.a('Bookmarks', href=req.href.bookmark()),
+                        menu, id='bookmark_menu')
+        add_ctxtnav(req, item)
 
-        anc = tag.a("Bookmarks", href=req.href.bookmark())
-        menu.append(tag.li(anc))
-
-
+    def _get_bookmarks_menu(self, req):
+        menu = tag.ul()
         for url, name, username in self.get_bookmarks(req):
-            base_path = req.base_path
             params = self._format_name(req, url)
             if params['name']:
-                name = ' '.join([params['linkname'], params['name']])
+                label = '%s %s' % (params['linkname'], params['name'])
             else:
-                name = params['linkname']
-            anc = tag.a(name, href=base_path + url)
-            menu.append(tag.li(anc))
-
-        placeholder = tag.span(menu, id='bookmark_placeholder')
-        req.chrome.setdefault('ctxtnav', []).append(placeholder)
+                label = params['linkname']
+            anchor = tag.a(label, href=req.href(url), title=label)
+            menu.append(tag.li(anchor))
+        return menu
 
     def _get_resource_uri(self, req):
         if req.environ.get('QUERY_STRING'):

@@ -1,33 +1,27 @@
-#bookmark_menu {
-    position: absolute;
-    width: 10em;
-    left: 0;
-    top: -1em;
-    border-width: 0 !important;
-    z-index: 100;
-}
-#bookmark_menu li {
+#ctxtnav #bookmark_menu > ul {
     display: none;
-    text-align: left;
-    width: 100%;
 }
-
-#bookmark_menu li:first-child {
-    display: inline-block;
-    border-width: 0;
-}
-
-#bookmark_menu li a {
+#ctxtnav #bookmark_menu > ul li {
     display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    padding: 0 .2em !important;
+    margin: 0;
+    padding: 0;
 }
-
-#bookmark_placeholder {
-    display: inline-block;
-    width: 10em;
-    position: relative;
+#ctxtnav #bookmark_menu > ul a {
+    display: block;
+    text-align: left;
+    padding: 0 3px;
+    font-size: 100%;
+    line-height: 1.8;
+    text-overflow: ellipsis;
+}
+#ctxtnav #bookmark_menu:hover > ul {
+    display: block;
+    min-width: 10em;
+    max-width: 40em;
+    overflow: hidden;
+    position: absolute;
+    z-index: 2;
+    right: 0.75em;
 }
 
 #bookmark_this {
