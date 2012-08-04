@@ -111,7 +111,7 @@ class BookmarkSystem(Component):
 
                 if self._is_ajax(req):
                     content = '&'.join((
-                        req.href.chrome('bookmark/' + self.image_map['on']),
+                        'on',
                         req.href.bookmark('delete', resource),
                         'Delete bookmark'))
                     if isinstance(content, unicode):
@@ -130,7 +130,7 @@ class BookmarkSystem(Component):
 
                 if self._is_ajax(req):
                     content = '&'.join((
-                        req.href.chrome('bookmark/' + self.image_map['off']),
+                        'off',
                         req.href.bookmark('add', resource),
                         'Bookmark this page'))
                     if isinstance(content, unicode):
@@ -262,21 +262,19 @@ class BookmarkSystem(Component):
         bookmark = self.get_bookmark(req, resource)
 
         if bookmark:
-            img = 'on'
+            class_ = 'bookmark_on'
             title = 'Delete Bookmark'
             href = req.href.bookmark('delete', resource)
         else:
-            img = 'off'
+            class_ = 'bookmark_off'
             title = 'Bookmark this page'
             href = req.href.bookmark('add', resource)
-        img = tag.img(src=req.href.chrome('bookmark/' + self.image_map[img]))
-        anchor = tag.a(img, id='bookmark_this', title=title, href=href,
-                       data_list=req.href.bookmark())
+        anchor = tag.a(u'\u200b', id='bookmark_this', class_=class_,
+                       title=title, href=href, data_list=req.href.bookmark())
+        req.chrome.setdefault('ctxtnav', []).insert(0, anchor)
 
         add_script(req, 'bookmark/js/tracbookmark.js')
         add_stylesheet(req, 'bookmark/css/tracbookmark.css')
-        elm = tag.span(anchor, id='bookmark')
-        req.chrome.setdefault('ctxtnav', []).insert(0, elm)
 
         menu = self._get_bookmarks_menu(req)
         item = tag.span(tag.a('Bookmarks', href=req.href.bookmark()),

@@ -25,11 +25,18 @@
 }
 
 #bookmark_this {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+    width: 12px;
+    height: 12px;
+    background-image: url(../bookmark.png);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    vertical-align: middle;
     border-width: 0;
 }
-#bookmark_this img {
-    vertical-align: middle;
-}
+#bookmark_this.bookmark_off { background-position: -12px 100% }
 
 ul.bookmarks li {
     padding-left: 1.5em;

@@ -4,7 +4,10 @@ jQuery(document).ready(function($) {
 
         $.get($(this).attr('href'), function(result) {
             var params = result.split('&');
-            button.find('img:first').attr('src', params[0]);
+            if (params[0] == 'off')
+                button.addClass('bookmark_off');
+            else
+                button.removeClass('bookmark_off');
             button.attr('href', params[1]);
             button.attr('title', params[2]);
 
@@ -13,6 +16,8 @@ jQuery(document).ready(function($) {
                 $('#bookmark_menu').html(result);
             });
         });
+
+        button.blur();
         return false;
     });
 });
