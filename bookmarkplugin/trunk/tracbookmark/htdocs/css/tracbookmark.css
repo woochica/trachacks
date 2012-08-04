@@ -1,3 +1,6 @@
+#ctxtnav #bookmark_menu {
+    *position: relative;
+}
 #ctxtnav #bookmark_menu > ul {
     display: none;
 }
@@ -22,6 +25,8 @@
     position: absolute;
     z-index: 2;
     right: 0.75em;
+    *top: 1.2em;
+    *right: 0;
 }
 
 #bookmark_this {
