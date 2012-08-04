@@ -6,6 +6,8 @@ Author: David Roussel
 Author: andyhan
 """
 
+from genshi.builder import tag
+from trac.wiki.formatter import format_to_oneliner
 from trac.wiki.macros import WikiMacroBase
 
 revision="$Rev$"
@@ -14,17 +16,17 @@ url="http://trac-hacks.org/wiki/ColorMacro"
 class ColorMacro(WikiMacroBase):
     """Usage:
     {{{
-      [[Color( background-color, color , text )]]
+      [[Color(background-color, color, text)]]
     }}}
     or
     {{{
-      [[Color( color , text )]]
+      [[Color(color, text)]]
     }}}
     Where: 
     color::
-      is a color keyword or hex color number recognised by your browser
+      is a color keyword or hex color number recognized by your browser
     text::
-      any text or html you like
+      any wiki markup you like
     
     Example:
     {{{
@@ -33,8 +35,10 @@ class ColorMacro(WikiMacroBase):
     }}}
     """
     def expand_macro(self, formatter, name, args):
-        args = tuple(args.split(","))
+        args = tuple(args.split(','))
         if len(args) == 2 :
-          return '<span style="background-color:%s;padding: 0.1ex 0.4em;">%s</span>' % args
+          return tag.span(format_to_oneliner(self.env, formatter.context, args[1]),
+                          style='background-color: %s' % args[0])
         else:
-          return '<span style="background-color:%s;padding: 0.1ex 0.4em;color:%s;">%s</span>' % (args[0], args[1], ','.join(args[2:]))
+          return tag.span(format_to_oneliner(self.env, formatter.context, args[2]),
+                          style='background-color: %s; color: %s' % args[0:2])
