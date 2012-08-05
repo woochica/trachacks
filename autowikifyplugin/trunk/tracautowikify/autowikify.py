@@ -49,7 +49,7 @@ def _get_breakable_pattern():
             char_ranges.append(u'%s-%s' % (low, high))
         except ValueError:
             # Narrow build, `re` cannot use characters >= 0x10000
-            char_ranges.append(u'\\U%08x-\\U%08x' % (val[0], val[1]))
+            pass
     return u'[%s]' % u''.join(char_ranges)
 
 _breakable_pattern = _get_breakable_pattern()
