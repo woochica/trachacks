@@ -226,4 +226,4 @@ This prevents users from marking the tickets of other users as "sensitive".''')
             return False
         return (self.allow_owner and (ticket['owner'] == username)) or \
             (self.allow_reporter and (ticket['reporter'] == username)) or \
-            (self.allow_cc and (username in [x.strip() for x in ticket['cc'].split(',')]))
+            (self.allow_cc and (username in NotifyEmail.addrsep_re.split(ticket['cc'])))
