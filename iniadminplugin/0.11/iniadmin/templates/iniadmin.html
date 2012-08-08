@@ -17,29 +17,29 @@
   </head>
   <body>
     <h2>[${iniadmin.section}]</h2>
-    
+
     <div class="ini">
       <form method="post">
         <ul>
           <li py:for="idx, option in enumerate(iniadmin.options)" class="align${idx % 3}">
             <fieldset class="col${idx % 2}">
               <legend>${option.name}</legend>
-              <py:choose>
-                <div class="select" py:when="option.type == 'extension'">
+              <py:choose test="option.type">
+                <div class="select" py:when="'extension'">
                   <select name="${option.name}">
-                    <py:for each="opt in option.options">
-                      <py:choose>
-                        <option value="${opt}" selected="selected" py:when="option.value == opt">${opt}</option>
-                        <option value="${opt}" py:otherwise="">${opt}</option>
-                      </py:choose>
-                    </py:for>
+                    <option py:for="val in option.options"
+                            value="$val"
+                            selected="${option.value == val and 'selected' or None}"
+                      >$val</option>
                   </select>
                 </div>
-                <div class="bool" py:when="option.type == 'bool'">
-                  <label><input type="radio" name="${option.name}" value="true" checked="${option.value == 'true' or None}" /> true</label>
-                  <label><input type="radio" name="${option.name}" value="false" checked="${option.value == 'false' or None}" /> false</label>
+                <div class="bool" py:when="'bool'">
+                  <label py:for="val in ('true', 'false')">
+                    <input type="radio" name="${option.name}" value="$val"
+                           checked="${option.value == val or None}"
+                      />$val</label>
                 </div>
-                <div class="text" py:when="option.type == 'password'">
+                <div class="text" py:when="'password'">
                   <input type="password" name="${option.name}" value="${option.value}" />
                 </div>
                 <div class="text" py:otherwise="">
