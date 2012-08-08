@@ -5,7 +5,7 @@ import unittest
 from trac.core import TracError
 from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.config import Option
-from trac.util.compat import any
+from trac.util.compat import any, all
 from trac.web.api import RequestDone
 from trac.web.href import Href
 
@@ -91,8 +91,11 @@ class IniAdminTestCase(unittest.TestCase):
 
     def test_option_doc_nonascii_ticket4179(self):
         option = Option('iniadmin-test', 'name', '', doc='résumé')
-        self.iniadmin.render_admin_panel(self.req, 'tracini', 'iniadmin-test',
-                                         '')
+        template, data = self.iniadmin.render_admin_panel(
+            self.req, 'tracini', 'iniadmin-test', '')
+        self.assertTrue(all(type(opt['doc']) is unicode
+                            for opt in data['iniadmin']['options']
+                            if opt['name'] == 'name'))
 
 
 def suite():

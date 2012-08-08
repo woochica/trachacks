@@ -46,8 +46,8 @@
                   <input type="text" name="${option.name}" value="${option.value}" />
                 </div>
               </py:choose>
-              <div class="help">
-                ${option.doc}
+              <div class="help" xml:space="preserve">
+                ${wiki_to_html(context, option.doc)}
               </div>
             </fieldset>
           </li>
