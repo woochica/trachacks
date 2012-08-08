@@ -95,6 +95,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         args += [None, None]
         path, limit = args[:2]
         limit = kwargs.pop('limit', limit)
+        package = kwargs.pop('package', None)
 
         if 'CHANGESET_VIEW' not in req.perm:
             return Markup('<i>Releases not available</i>')
@@ -128,7 +129,9 @@ class VcsReleaseInfoMacro(WikiMacroBase):
         else:
             path = '/' + reponame.rstrip('/') + '/' + path.lstrip('/')
 
-        package = path.split("/")[-1]
+        if not package:
+            package = path.split("/")[-1]
+
         for i in xrange(len(releases) - 2):
             prev, cur, next = releases[i : i + 3]
 
