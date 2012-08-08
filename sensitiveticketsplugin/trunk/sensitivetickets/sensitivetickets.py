@@ -18,6 +18,7 @@ from datetime import datetime
 from trac.util.datefmt import format_datetime, from_utimestamp, \
                               to_utimestamp, utc
 from trac.util import as_bool
+from trac.notification import NotifyEmail
 
 class SensitiveTicketsPolicy(Component):
     """Prevent public access to security sensitive tickets.
