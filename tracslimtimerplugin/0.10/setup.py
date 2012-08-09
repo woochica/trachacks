@@ -9,7 +9,10 @@ setup(
     version=VERSION,
 
     packages=['tracslimtimer'],
-    package_data = {'tracslimtimer': ['templates/*', 'htdocs/*']},
+    package_data = {'tracslimtimer': ['templates/*',
+	'htdocs/css/*.css',
+	'htdocs/js/*.js'
+	]},
     install_requires = ['elementtree>=1.2.6-20050316','MySQL-python>=1.2.2'],
     entry_points = {
         'trac.plugins': 'tracslimtimer = tracslimtimer'
