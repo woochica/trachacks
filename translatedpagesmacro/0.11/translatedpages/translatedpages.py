@@ -50,7 +50,9 @@ The Macro accepts arguments as well:
  * '''showproblems'''     to show all pages which have problems
  * '''showuntranslated''' to show all untranslated pages
  * '''showstatus'''       to show one big status table
- * '''lang=<code>'''      to restrict output of show outdated, status or missing to a specific language"""
+ * '''lang=<code>'''      to restrict output of show outdated, status or missing to a specific language
+ 
+ * '''label_outdated'''   label to display when using the showoutdated option"""
 
     def parse_macro(self, parser, name, content):
         raise NotImplementedError
@@ -70,7 +72,7 @@ The Macro accepts arguments as well:
 
     macro_re = re.compile(u"\[\[TranslatedPages(?:\((.+)\))?\]\]")
     revision_re = re.compile(u"\[\[TranslatedPages(?:\(.*?revision=(-?\d+).*?\))?\]\]")
-    outdated_re = re.compile(u"\[\[TranslatedPages(?:\(.*?outdated=(.*)\))?\]\]")
+    outdated_re = re.compile(u"\[\[TranslatedPages(?:\((?:.*,)?outdated=(.*)\))?\]\]")
 
     def __init__(self):
         self.langpage_re = re.compile(u"^\|\|"+ self.langcode_re + u"\|\|(.+?)\|\|(.+?)\|\|(.+?)\|\|$")
@@ -151,8 +153,10 @@ The Macro accepts arguments as well:
                 res.append(l)
         return res
 
-    def _get_outdated(self, lang):
-        if lang != None:
+    def _get_outdated(self, lang, label):
+        if label != None:
+            res = u"== %s ==\n" % label
+        elif lang != None:
             langd = lang
             if self.languagesbase.has_key(lang):
                 langd = self.languagesbase[lang]
@@ -426,7 +430,10 @@ The Macro accepts arguments as well:
         if u'showstatus' in args:
             show += self._get_status(lang)
         if u'showoutdated' in args:
-            show += self._get_outdated(lang)
+            label = None
+            if u'label_outdated' in kw:
+              label = kw[u'label_outdated']
+            show += self._get_outdated(lang, label)
         if u'showmissing' in args:
             show += self._get_missing(lang)
         if u'showuntranslated' in args:
