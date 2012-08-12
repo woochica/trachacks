@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name = 'TracCodeReview',
-    version = '2.0dev',
+    version = '2.0',
     packages = ['codereview'],
     package_data={ 'codereview' : [ 'templates/*.cs', 'htdocs/images/*.*', 'htdocs/js/*.js' ] },
     author = "Team5",
