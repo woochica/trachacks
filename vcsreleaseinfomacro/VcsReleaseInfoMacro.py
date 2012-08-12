@@ -34,16 +34,15 @@ class VcsReleaseInfoMacro(WikiMacroBase):
             if node.kind != Node.DIRECTORY:
                 continue
 
-            cs = repo.get_changeset(node.rev)
+            cs = repo.get_changeset(node.created_rev)
             releases.append({
                 'version' : node.get_name(),
                 'time' : node.get_last_modified(),
-                'rev' : node.rev,
+                'rev' : node.created_rev,
                 'author' : cs.author or 'anonymous',
                 'message' : cs.message,
                 'props' : cs.get_properties(),
             })
-
         releases = sorted(releases, key=itemgetter('time'), reverse=True)
 
         # insert trunk info
