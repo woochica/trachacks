@@ -207,10 +207,7 @@ class TagWikiMacros(TagTemplateProvider):
     def expand_macro(self, formatter, name, content):
         req = formatter.req
         if name == 'TagCloud':
-            if not content:
-                args = []
-            else:
-                args, kw = parse_args(content)
+            args, kw = content and parse_args(content) or ([], {})
             realms = 'realm' in kw and kw['realm'].split('|') or []
             args.append(' or '.join(['realm:%s' % r for r in realms]))
             all_tags = TagSystem(self.env).get_all_tags(req, ' '.join(args))
