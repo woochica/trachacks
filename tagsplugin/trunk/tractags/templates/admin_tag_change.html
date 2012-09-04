@@ -20,10 +20,10 @@
           <p>${error}</p>
         </div>
         <legend>Replace</legend>
-        <p>Select an existing tag to replace with another one; two or more
-          to consolidate into one. The <em>required</em> new tag may actually
-          be an existing tag or a new one. A change comment will be added
-          if supported by the tag storage for the resource's realm.
+        <p i18n:msg="">Select an existing tag to replace with another one;
+          two or more to consolidate into one. The <em>required</em> new tag
+          may actually be an existing tag or a new one. A change comment will
+          be added if supported by the tag storage for the resource's realm.
         </p>
         <div class="field">
           <label>Current Tag:<br />
@@ -48,15 +48,17 @@
             <textarea name="comment" class="trac-resizable"
                       cols="50" rows="3"></textarea>
           </label>
-          <p class="help"><b>Beware:</b> Attempting to replace one or more
-            tags will always add the new tag, but <b>removal could fail</b>
+          <p class="help" i18n:msg="">
+            <b>Beware:</b> Attempting to replace one or more tags will
+            always add the new tag, but <b>removal could fail</b>
             for some tags, because tags might be immutable depending
             on internals of the tag provider they've been derived from.
           </p>
-          <p class="hint">You'll need to investigate further on how to
-            change/remove these remaining tags closer to the tagged resource,
-            i.e. in your <code>trac.ini</code> see <code>ticket_fields</code>
-            option that lists fields to expose as tags for tag realm:ticket.
+          <p class="hint" i18n:msg="">
+            You'll need to investigate further on how to change/remove these
+            remaining tags closer to the tagged resource, i.e. in your
+            <code>trac.ini</code> see <code>ticket_fields</code> option
+            that lists fields to expose as tags for tag realm:ticket.
           </p>
         </div>
       </fieldset>

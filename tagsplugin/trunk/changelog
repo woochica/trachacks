@@ -43,6 +43,7 @@ tractags-0.7 (not yet released)
  * add plugin author email to display something at Trac 0.11 plugin admin page
  * fix an AttributeError specific to the 0.6 release since [2953]
  * fix an Error for `TagCloud` macro when being called without arguments
+ * improve formatting of header for `tag_view.html` page template
 
  new features
  * #2509: Create wiki page from /tags/<tag> page

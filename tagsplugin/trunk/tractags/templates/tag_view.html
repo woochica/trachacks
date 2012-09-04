@@ -13,7 +13,7 @@
   ?>
 
   <head>
-    <title py:if="title">$title</title>
+    <title py:if="page_title">$page_title</title>
   </head>
 
   <body>
@@ -48,28 +48,32 @@
       </form>
 
       <div id="tag_body">
-        <h1 py:if="tag_title">
-          ${tag_title}
-          <py:if test="tag_page and 'WIKI_VIEW' in perm">
-            <py:choose test="tag_page.exists">
-              <py:when test="True"><span i18n:msg="name>">(go to <a
-                href="${href.wiki(tag_page.name)}">Wiki page</a>)</span>
-              </py:when>
-              <py:when test="False">
-                <py:if test="'WIKI_CREATE' in perm"><span i18n:msg="name">
-                  (<a href="${href.wiki(tag_page.name, action='edit',
-                    text='= %s =\n\n[[ListTagged(%s)]]' % (tag_page.name,
-                    tag_page.name))}">Create Wiki page</a> for this tag)
-                  </span>
-                </py:if>
-              </py:when>
-            </py:choose>
-          </py:if>
-        </h1>
+        <py:choose test="">
+          <h1 py:when="tag_query and tag_page and tag_page.exists and
+                       'WIKI_VIEW' in perm('wiki', tag_page.resource)"
+              i18n:msg="query">
+            Showing objects matching
+            <a href="${href.wiki(tag_page.name)}" title="Go to wiki page">
+              '${tag_query}'
+            </a>
+          </h1>
+          <h1 py:when="tag_query" i18n:msg="query">
+            Showing objects matching '${tag_query}'
+          </h1>
+        </py:choose>
+        <p py:if="tag_page and not tag_page.exists and
+                  'WIKI_CREATE' in perm" class="hint" i18n:msg="">
+          <a href="${href.wiki(tag_page.name, action='edit',
+                   text='= %s =\n\n[[ListTagged(%s)]]'
+                   % (tag_page.name, tag_page.name))}">
+            Create Wiki page
+          </a>
+          for this tag
+        </p>
         ${tag_body}
         <p py:if="mincount > 1" i18n:msg="mincount">
-              Showing only tags with ${mincount} or more occurrences
-              (<a href="${href.tags(mincount=1)}">view all tags</a>).
+          Showing only tags with ${mincount} or more occurrences
+          (<a href="${href.tags(mincount=1)}">view all tags</a>)
         </p>
       </div>
     </div>

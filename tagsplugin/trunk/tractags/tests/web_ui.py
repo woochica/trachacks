@@ -67,7 +67,7 @@ class TagRequestHandlerTestCase(unittest.TestCase):
                    perm=self.reader,
                    href=self.href,
                    method='GET',
-                   chrome={},
+                   chrome=dict(static_hash='hashme!'),
                    session=DetachedSession(self.env, 'reader'),
                    locale='',
                    tz=''
@@ -75,8 +75,8 @@ class TagRequestHandlerTestCase(unittest.TestCase):
         template, data, content_type = self.tag_rh.process_request(req)
         self.assertEquals('tag_view.html', template)
         self.assertEquals(None, content_type)
-        self.assertEquals(['mincount', 'tag_body', 'tag_query', 'tag_realms',
-                           'title'], sorted(data.keys()))
+        self.assertEquals(['mincount', 'page_title', 'tag_body', 'tag_query',
+                           'tag_realms'], sorted(data.keys()))
     
     def test_get_main_page_no_permission(self):
         req = Mock(path_info='/tags',

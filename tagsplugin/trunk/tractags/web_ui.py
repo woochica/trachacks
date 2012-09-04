@@ -78,15 +78,6 @@ class TagRequestHandler(TagTemplateProvider):
         match = re.match(r'/tags/?(.*)', req.path_info)
         if match.group(1):
             req.redirect(req.href('tags', q=match.group(1)))
-        add_stylesheet(req, 'tags/css/tractags.css')
-        query = req.args.get('q', '')
-        if query:
-            # TRANSLATOR: The meta-nav link label.
-            add_ctxtnav(req, _("Back to Cloud"), req.href.tags())
-        data = {'title': _("Tags")}
-        formatter = Formatter(
-            self.env, Context.from_request(req, Resource('tag'))
-            )
 
         realms = [p.get_taggable_realm() for p in self.tag_providers
                   if (not hasattr(p, 'check_permission') or \
@@ -97,6 +88,9 @@ class TagRequestHandler(TagTemplateProvider):
                 if not realm in self.exclude_realms:
                     req.args[realm] = 'on'
         checked_realms = [r for r in realms if r in req.args]
+
+        query = req.args.get('q', '')
+        data = dict(page_title=_("Tags"), tag_query=query)
         data['tag_realms'] = [{'name': realm,
                                'checked': realm in checked_realms}
                               for realm in realms]
@@ -107,10 +101,6 @@ class TagRequestHandler(TagTemplateProvider):
             page = WikiPage(self.env, page_name)
             data['tag_page'] = page
 
-        if query:
-            data['tag_title'] = _("Showing objects matching '%s'") % query
-        data['tag_query'] = query
-
         macros = TagWikiMacros(self.env)
         if not query:
             macro = 'TagCloud'
@@ -120,12 +110,16 @@ class TagRequestHandler(TagTemplateProvider):
                                              '|'.join(checked_realms))
             data['mincount'] = mincount
         else:
+            # TRANSLATOR: The meta-nav link label.
+            add_ctxtnav(req, _("Back to Cloud"), req.href.tags())
             macro = 'ListTagged'
             args = '%s,format=%s,cols=%s,realm=%s' % (query,
                                                       self.default_format,
                                                       self.default_cols,
                                                       '|'.join(checked_realms))
             data['mincount'] = None
+        formatter = Formatter(self.env, Context.from_request(req,
+                                                             Resource('tag')))
         self.env.log.debug('Tag macro arguments: %s', args)
         try:
             # Query string without realm throws 'NotImplementedError'.
@@ -135,5 +129,6 @@ class TagRequestHandler(TagTemplateProvider):
         except InvalidQuery, e:
             data['tag_query_error'] = to_unicode(e)
             data['tag_body'] = macros.expand_macro(formatter, 'TagCloud', '')
+        add_stylesheet(req, 'tags/css/tractags.css')
         return 'tag_view.html', data, None
 

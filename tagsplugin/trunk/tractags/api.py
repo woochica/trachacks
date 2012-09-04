@@ -25,15 +25,31 @@ from genshi import Markup
 # Import translation functions.
 # Fallbacks make Babel still optional and provide for Trac 0.11.
 try:
-    from  trac.util.translation  import  domain_functions
-    add_domain, _, tag_ = \
-        domain_functions('tractags', ('add_domain', '_', 'tag_'))
+    from trac.util.translation  import domain_functions
+    add_domain, _, N_, gettext, ngettext, tag_ = \
+        domain_functions('tractags', ('add_domain', '_', 'N_', 'gettext',
+                                      'ngettext', 'tag_'))
+    dgettext = None
 except ImportError:
-    from  genshi.builder         import  tag as tag_
-    from  trac.util.translation  import  gettext
+    from genshi.builder  import tag as tag_
+    from trac.util.translation  import gettext
     _ = gettext
+    N_ = lambda text: text
     def add_domain(a,b,c=None):
         pass
+    def dgettext(domain, string, **kwargs):
+        return safefmt(string, kwargs)
+    def ngettext(singular, plural, num, **kwargs):
+        string = num == 1 and singular or plural
+        kwargs.setdefault('num', num)
+        return safefmt(string, kwargs)
+    def safefmt(string, kwargs):
+        if kwargs:
+            try:
+                return string % kwargs
+            except KeyError:
+                pass
+        return string
 
 # now call module importing i18n methods from here
 from tractags.query import *
