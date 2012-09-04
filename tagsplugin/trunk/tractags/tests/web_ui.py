@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011 Odd Simon Simonsen <oddsimons@gmail.com>
+# Copyright (C) 2012 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -75,9 +76,10 @@ class TagRequestHandlerTestCase(unittest.TestCase):
         template, data, content_type = self.tag_rh.process_request(req)
         self.assertEquals('tag_view.html', template)
         self.assertEquals(None, content_type)
-        self.assertEquals(['mincount', 'page_title', 'tag_body', 'tag_query',
-                           'tag_realms'], sorted(data.keys()))
-    
+        self.assertEquals(['checked_realms', 'mincount', 'page_title',
+                           'tag_body', 'tag_query', 'tag_realms'],
+                           sorted(data.keys()))
+
     def test_get_main_page_no_permission(self):
         req = Mock(path_info='/tags',
                    authname='anonymous',

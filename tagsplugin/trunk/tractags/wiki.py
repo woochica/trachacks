@@ -210,6 +210,17 @@ class TagWikiSyntaxProvider(Component):
         return []
 
     def _format_tagged(self, formatter, target, label):
+        RE = re.compile(r'^(\\[\'"]*\'|\\[\'"]*\"|"|\')(.*)(\1)')
+        iter_max = 5
+        iter_run = 0
+        for iter_run in range(0, iter_max):
+            # Reduce outer quotations.
+            ctarget = RE.sub(r'\2', target)
+            iter_run += 1
+            if ctarget == target or iter_run > iter_max:
+                self.env.log.debug(' ,'.join([target, ctarget, str(iter_run)]))
+                break
+            target = ctarget
         if label:
             href = formatter.context.href
             url = get_resource_url(self.env, Resource('tag', target), href)

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
-# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2011,2012 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -405,8 +405,7 @@ class TagSystem(Component):
             if page.exists:
                 return get_resource_url(self.env, page.resource, href,
                                         **kwargs)
-        query = "'%s'" % unicode(resource.id).replace("'", "\\'")
-        return href.tags(form_realms, q=query, **kwargs)
+        return href.tags(form_realms, q=unicode(resource.id), **kwargs)
 
     def get_resource_description(self, resource, format='default',
                                  context=None, **kwargs):
