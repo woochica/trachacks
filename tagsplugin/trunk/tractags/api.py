@@ -399,14 +399,14 @@ class TagSystem(Component):
     def get_resource_realms(self):
         yield 'tag'
 
-    def get_resource_url(self, resource, href, **kwargs):
+    def get_resource_url(self, resource, href, form_realms=None, **kwargs):
         if self.wiki_page_link:
             page = WikiPage(self.env, resource.id)
             if page.exists:
                 return get_resource_url(self.env, page.resource, href,
                                         **kwargs)
-        return href("tags/'%s'" % unicode(resource.id).replace("'", "\\'"))
-
+        query = "'%s'" % unicode(resource.id).replace("'", "\\'")
+        return href.tags(form_realms, q=query, **kwargs)
 
     def get_resource_description(self, resource, format='default',
                                  context=None, **kwargs):

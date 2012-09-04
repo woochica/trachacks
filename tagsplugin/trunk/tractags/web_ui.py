@@ -76,6 +76,7 @@ class TagRequestHandler(TagTemplateProvider):
     def process_request(self, req):
         req.perm.require('TAGS_VIEW')
         match = re.match(r'/tags/?(.*)', req.path_info)
+        self.env.log.debug('MATCHGROUP1: ' + str(match.group(1)))
         if match.group(1):
             req.redirect(req.href('tags', q=match.group(1)))
 
@@ -90,10 +91,11 @@ class TagRequestHandler(TagTemplateProvider):
         checked_realms = [r for r in realms if r in req.args]
 
         query = req.args.get('q', '')
-        data = dict(page_title=_("Tags"), tag_query=query)
-        data['tag_realms'] = [{'name': realm,
-                               'checked': realm in checked_realms}
-                              for realm in realms]
+        data = dict(page_title=_("Tags"), checked_realms=checked_realms,
+                    tag_query=query)
+        data['tag_realms'] = list(dict(name=realm,
+                                       checked=realm in checked_realms)
+                                  for realm in realms)
 
         single_page = re.match(r"""(['"]?)(\w+)\1$""", query)
         if single_page:

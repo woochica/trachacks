@@ -52,14 +52,15 @@ class ListTaggedMacroTestCase(unittest.TestCase):
         shutil.rmtree(self.env.path)
     
     def test_empty_content(self):
-        formatter = Mock(
-            req = Mock(args={},
-                       authname='user',
-                       perm=PermissionCache(self.env, 'user'),
-                       href=Href('/'),
-                       abs_href='http://example.org/trac/',
-                       chrome={},
-            ))
+        req = Mock(args={},
+                   authname='user',
+                   perm=PermissionCache(self.env, 'user'),
+                   href=Href('/'),
+                   abs_href='http://example.org/trac/',
+                   chrome={},
+            )
+        context = Mock(env=self.env, href=Href('/'), req=req)
+        formatter = Mock(context=context, req=req)
         self.assertEquals('',
                 str(self.tag_twm.expand_macro(formatter, 'ListTagged', '')))
 

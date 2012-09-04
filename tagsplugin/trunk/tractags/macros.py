@@ -2,7 +2,7 @@
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
 # Copyright (C) 2011 Itamar Ostricher <itamarost@gmail.com>
-# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2011,2012 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -50,64 +50,6 @@ except ImportError:
 _OBSOLETE_ARGS_RE = re.compile(r"""
     (expression|operation|showheadings|tagspace|tagspaces)=
     """, re.VERBOSE)
-
-
-def render_cloud(env, req, cloud, renderer=None, caseless_sort=False,
-                 mincount=None):
-    """Render a tag cloud.
-
-    :cloud: Dictionary of {object: count} representing the cloud.
-    :param renderer: A callable with signature (tag, count, percent) used to
-                     render the cloud objects.
-    :param caseless_sort: Boolean, whether tag cloud should be sorted
-                          case-sensitive.
-    :param mincount: Integer threshold to hide tags with smaller count.
-    """
-    min_px = 10.0
-    max_px = 30.0
-    scale = 1.0
-
-    add_stylesheet(req, 'tags/css/tractags.css')
-
-    if renderer is None:
-        def default_renderer(tag, count, percent):
-            href = get_resource_url(env, Resource('tag', tag), req.href)
-            return builder.a(tag, rel='tag', title='%i' % count, href=href,
-                             style='font-size: %ipx' %
-                                   int(min_px + percent * (max_px - min_px)))
-        renderer = default_renderer
-
-    # A LUT from count to n/len(cloud)
-    size_lut = dict([(c, float(i)) for i, c in
-                     enumerate(sorted(set([r for r in cloud.values()])))])
-    if size_lut:
-        scale = 1.0 / len(size_lut)
-
-    if caseless_sort:
-        # Preserve upper-case precedence within similar tags.
-        items = reversed(sorted(cloud.iteritems(), key=lambda t: t[0].lower(),
-                                reverse=True))
-    else:
-        items = sorted(cloud.iteritems())
-    ul = li = None
-    for i, (tag, count) in enumerate(items):
-        percent = size_lut[count] * scale
-        if mincount and count < as_int(mincount, 1):
-            # Tag count is too low.
-            continue
-        if ul:
-            # Found new tag for cloud; now add previously prepared one. 
-            ul('\n', li)
-        else:
-            # Found first tag for cloud; now create the list.
-            ul = builder.ul(class_='tagcloud')
-        # Prepare current tag entry.
-        li = builder.li(renderer(tag, count, percent))
-    if li:
-        # All tags checked; mark latest tag as last one (no tailing colon).
-        li(class_='last')
-        ul('\n', li, '\n')
-    return ul and ul or _("No tags found")
 
 
 class TagTemplateProvider(Component):
@@ -205,76 +147,82 @@ class TagWikiMacros(TagTemplateProvider):
             return self.doc_cloud
 
     def expand_macro(self, formatter, name, content):
+        env = self.env
         req = formatter.req
-        if name == 'TagCloud':
-            args, kw = content and parse_args(content) or ([], {})
-            realms = 'realm' in kw and kw['realm'].split('|') or []
-            args.append(' or '.join(['realm:%s' % r for r in realms]))
-            all_tags = TagSystem(self.env).get_all_tags(req, ' '.join(args))
-            mincount = 'mincount' in kw and kw['mincount'] or None
-            return render_cloud(self.env, req, all_tags,
-                                caseless_sort=self.caseless_sort,
-                                mincount=mincount)
+        args, kw = parse_args(content)
 
+        # Use macro arguments (most likely wiki macro calls).
+        realms = 'realm' in kw and kw['realm'].split('|') or []
+        tag_system = TagSystem(env)
+        all_realms = [p.get_taggable_realm()
+                      for p in tag_system.tag_providers]
+        self.all_realms = all_realms
+        self.realms = realms
+
+        if name == 'TagCloud':
+            args.append(' or '.join(['realm:%s' % r for r in realms]))
+            all_tags = tag_system.get_all_tags(req, ' '.join(args))
+            mincount = 'mincount' in kw and kw['mincount'] or None
+            return self.render_cloud(req, all_tags,
+                                     caseless_sort=self.caseless_sort,
+                                     mincount=mincount)
         elif name == 'ListTagged':
             if _OBSOLETE_ARGS_RE.search(content):
                 data = {'warning': 'obsolete_args'}
             else:
                 data = {'warning': None}
-            args, kw = parse_args(content)
+            context=formatter.context
+            # Use TagsQuery arguments (most likely wiki macro calls).
             cols = 'cols' in kw and kw['cols'] or self.default_cols
             format = 'format' in kw and kw['format'] or self.default_format
             query = args and args[0].strip() or None
-            # Use TagsQuery arguments, if serving a web-UI call.
-            realms = 'realm' in kw and kw['realm'].split('|') or None
-            tag_system = TagSystem(self.env)
-            all_realms = [p.get_taggable_realm()
-                          for p in tag_system.tag_providers]
             if query and not realms:
-                # First read query arguments (most likely wiki macro calls).
+                # First read query arguments (most likely a web-UI call).
                 for realm in all_realms:
                     if re.search('(^|\W)realm:%s(\W|$)' % (realm), query):
                         realms = realms and realms.append(realm) or [realm]
                 if not realms:
-                    # Apply ListTagged defaults to wiki macro call w/o realm.
-                    realms = set(all_realms)-set(self.exclude_realms)
+                    # Apply ListTagged defaults to macro call w/o realm.
+                    realms = list(set(all_realms)-set(self.exclude_realms))
             if not realms:
                 return ''
             else:
-                self.all_realms = all_realms
                 self.query = query
-                self.realms = list(realms)
+                self.realms = realms
             query = '(%s) (%s)' % (query, ' or '.join(['realm:%s' % (r)
                                                        for r in realms]))
-            self.env.log.debug('LISTTAGGED_QUERY: ' + query)
+            env.log.debug('LISTTAGGED_QUERY: ' + query)
             query_result = tag_system.query(req, query)
 
             def _link(resource):
-                if resource.realm == 'ticket':
-                    ticket = Ticket(self.env, resource.id)
-                    return _ticket_anchor(ticket)
-                else:
-                    return render_resource_link(self.env, formatter.context,
-                                                resource, 'compact')
-
-            def _ticket_anchor(ticket):
-                return builder.a('#%s' % ticket.id, class_=ticket['status'],
-                                 href=formatter.href.ticket(ticket.id),
-                                 title=shorten_line(ticket['summary']))
+                if resource.realm == 'tag':
+                    # Keep realm selection in tag links.
+                    #if context.resource.realm == 'tag':
+                    return builder.a(resource.id,
+                                     href=self.get_href(req, tag=resource))
+                    #else:
+                elif resource.realm == 'ticket':
+                    # Return resource link including ticket status dependend
+                    #   class to allow for common Trac ticket link style.
+                    ticket = Ticket(env, resource.id)
+                    return builder.a('#%s' % ticket.id,
+                                     class_=ticket['status'],
+                                     href=formatter.href.ticket(ticket.id),
+                                     title=shorten_line(ticket['summary']))
+                return render_resource_link(env, context, resource, 'compact')
 
             if format == 'table':
                 cols = [col for col in cols.split('|')
                         if col in self.supported_cols]
                 # Use available translations from Trac core.
                 try:
-                    labels = TicketSystem(self.env).get_ticket_field_labels()
+                    labels = TicketSystem(env).get_ticket_field_labels()
                     labels['id'] = _('Id')
                 except AttributeError:
                     # Trac 0.11 neither has the attribute nor uses i18n.
                     labels = {'id': 'Id', 'description': 'Description'}
                 labels['realm'] = _('Realm')
                 labels['tags'] = _('Tags')
-                self.env.log.debug(str(labels))
                 headers = [{'label': labels.get(col)}
                            for col in cols]
                 data.update({'cols': cols,
@@ -288,17 +236,16 @@ class TagWikiMacros(TagTemplateProvider):
                 desc = tag_system.describe_tagged_resource(req, resource)
                 tags = sorted(tags)
                 if tags:
-                    rendered_tags = [_link(resource('tag', tag))
+                    rendered_tags = [_link(Resource('tag', tag))
                                      for tag in tags]
                     if 'oldlist' == format:
                         resource_link = _link(resource)
                     else:
-                        context=formatter.context
                         desc = desc or \
-                               get_resource_description(self.env, resource,
+                               get_resource_description(env, resource,
                                                         context=context)
                         resource_link = builder.a(desc, href=get_resource_url(
-                                            self.env, resource, context.href))
+                                                  env, resource, context.href))
                         if 'table' == format:
                             cells = []
                             for col in cols:
@@ -329,32 +276,91 @@ class TagWikiMacros(TagTemplateProvider):
             # TypeError for the wiki macro call, if we use add_link() alone.
             add_stylesheet(req, 'common/css/search.css')
 
-            return Chrome(self.env).render_template(
+            return Chrome(env).render_template(
                 req, 'listtagged_results.html', data, 'text/html', True)
 
-    def get_href(self, req, per_page=None, page=None):
-        """Prepare href objects for pager links.
+    def get_href(self, req, per_page=None, page=None, tag=None, **kwargs):
+        """Prepare href objects for tag links and pager navigation.
 
         Generate form-related arguments, strip arguments with default values.
         """
-        form_realms = None
-        if req.path_info == '/tags':
-            form_realms = {}
-            # Prepare realm arguments to keep form data consistent.
-            for realm in self.realms:
-                form_realms[realm] = 'on'
-            realms = None
-        elif set(self.realms) == set(self.all_realms):
-            realms = None
-        else:
-            realms = self.realms
-        if per_page == self.items_per_page:
-            per_page = None
+#        form_realms = None
+#        if req.path_info == '/tags':
+        form_realms = {}
+        # Prepare realm arguments to keep form data consistent.
+        for realm in self.realms:
+            form_realms[realm] = 'on'
+#        realms = None
+#        elif set(self.realms) == set(self.all_realms):
+#            realms = None
+#        else:
+        realms = self.realms
+        if not page and not per_page:
+            # We're not serving pager navigation here.
+            return get_resource_url(self.env, tag, req.href,
+                                    form_realms=form_realms, **kwargs)
         if page == 1:
             page = None
+        if per_page == self.items_per_page:
+            per_page = None
         return req.href(req.path_info, form_realms, q=self.query,
                         realms=realms, listtagged_per_page=per_page,
-                        listtagged_page=page)
+                        listtagged_page=page, **kwargs)
+
+    def render_cloud(self, req, cloud, renderer=None, caseless_sort=False,
+                     mincount=None):
+        """Render a tag cloud.
+
+        :cloud: Dictionary of {object: count} representing the cloud.
+        :param renderer: A callable with signature (tag, count, percent)
+                         used to render the cloud objects.
+        :param caseless_sort: Boolean, whether tag cloud should be sorted
+                              case-sensitive.
+        :param mincount: Integer threshold to hide tags with smaller count.
+        """
+        min_px = 10.0
+        max_px = 30.0
+        scale = 1.0
+
+        if renderer is None:
+            def default_renderer(tag, count, percent):
+                href = self.get_href(req, tag=Resource('tag', tag))
+                return builder.a(tag, rel='tag', title='%i' % count,
+                                 href=href, style='font-size: %ipx'
+                                 % int(min_px + percent * (max_px - min_px)))
+            renderer = default_renderer
+
+        # A LUT from count to n/len(cloud)
+        size_lut = dict([(c, float(i)) for i, c in
+                         enumerate(sorted(set([r for r in cloud.values()])))])
+        if size_lut:
+            scale = 1.0 / len(size_lut)
+
+        if caseless_sort:
+            # Preserve upper-case precedence within similar tags.
+            items = reversed(sorted(cloud.iteritems(),
+                                    key=lambda t: t[0].lower(), reverse=True))
+        else:
+            items = sorted(cloud.iteritems())
+        ul = li = None
+        for i, (tag, count) in enumerate(items):
+            percent = size_lut[count] * scale
+            if mincount and count < as_int(mincount, 1):
+                # Tag count is too low.
+                continue
+            if ul:
+                # Found new tag for cloud; now add previously prepared one. 
+                ul('\n', li)
+            else:
+                # Found first tag for cloud; now create the list.
+                ul = builder.ul(class_='tagcloud')
+            # Prepare current tag entry.
+            li = builder.li(renderer(tag, count, percent))
+        if li:
+            # All tags checked; mark latest tag as last one (no tailing colon).
+            li(class_='last')
+            ul('\n', li, '\n')
+        return ul and ul or _("No tags found")
 
     def _paginate(self, req, results):
         self.query = req.args.get('q', None)
