@@ -23,6 +23,7 @@ from trac.perm import IPermissionGroupProvider
 from tracext.adauth.api import IPermissionUserProvider
 
 GROUP_PREFIX = '@'
+NOCACHE = 0
 
 __all__ = ['ADAuthStore']
 
@@ -55,18 +56,19 @@ class ADAuthStore(Component):
     def config_key(self):
         """Deprecated"""
 
-    def get_users(self, populate_session=True):
+    def get_users(self, use_cache=True):
       """Grab a list of users from Active Directory"""
       #-- check memcache
-      userlist = self._cache_get('allusers')
-      if userlist:
-        return userlist
+      if use_cache:
+          userlist = self._cache_get('allusers')
+          if userlist:
+             return userlist
       
       filter = '(&(objectClass=person)(!(userAccountControl:1.2.840.113556.1.4.803:=2)))'
       if self.show_disabled_users:
       	filter = '(objectClass=person)'
         
-      #-- cache miss.. goto ad
+      #-- search
       if self.auth_group:
           userinfo = self.expand_group_users(self.auth_group)
       else:
@@ -74,25 +76,24 @@ class ADAuthStore(Component):
                                     ['sAMAccountName', 'mail',
                                      'proxyAddresses', 'displayName'])
           userinfo = [self._get_userinfo(u[1]) for u in users 
-                      if is_valid(u[1])]
+                      if u[1].has_key('displayName') ]
           
-      if populate_session and userinfo:
-          self._populate_user_session(userinfo)
       userlist = list(set([u[0] for u in userinfo]))
       if userlist: 
           self.log.debug('userlist: %s ' % ",".join(userlist))
       
+      #-- set memcache
       self._cache_set('allusers', userlist)
       return userlist
 
     def expand_group_users(self, group_dn):
+      """Given a group name, enumerate all members"""
       #-- check memcache
       users = self._cache_get(group_dn)
       if users:
          return users
               
       groupfilter = '(%s)' % (group_dn.split(',')[0])
-      """Given a group name, enumerate all members"""
       g = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, groupfilter, ['member'])
       if g and g[0][1].has_key('member'):
           users = []
@@ -129,7 +130,8 @@ class ADAuthStore(Component):
       hasuser = user.lower() in users
       self._cache_set('hasuser: %s' % user, hasuser)
       return hasuser
-
+    
+    #-- we do several things with this step to clear the caches and update session attributes
     def check_password(self, user, password):
         """Checks the password against LDAP"""
         dn =  self._cache_get(':dn: %s' % user)
@@ -138,8 +140,10 @@ class ADAuthStore(Component):
             self._cache_set('dn: %s' % user, dn)
         success = None
         msg = "User Login: %s" % str(user)
+        
         if dn:
             success = self._bind_ad(dn, password) or False
+                
         if success:
             msg += " Password Verified"
             success = True
@@ -147,7 +151,22 @@ class ADAuthStore(Component):
             msg += " Password Failed"
         else:
             msg += " does not exist in AD, deferring authentication"
-        self.log.debug(msg)
+        self.log.info(msg)
+        
+        #-- update the session data at each login, 
+        #   note the use of NoCache to force the update(s)
+        filter = "(&(sAMAccountName=%s)(objectClass=person))" % user
+        users = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, filter,
+                                    ['sAMAccountName', 'mail',
+                                     'proxyAddresses', 'displayName'], NOCACHE)
+        
+        userinfo = self._get_userinfo(users[0][1])
+        self._populate_user_session(userinfo)
+        
+        #-- update the users and groups by doing a search w/o cache
+        groups = self.get_permission_groups(user, NOCACHE)
+        users=self.get_users(NOCACHE)
+        
         return success
 
     def delete_user(self, user):
@@ -167,13 +186,14 @@ class ADAuthStore(Component):
         return []
       
     # IPermissionGroupProvider
-    def get_permission_groups(self, username):
+    def get_permission_groups(self, username, use_cache=1):
         """Return a list of names of the groups that the user with the 
         specified name is a member of."""
         
-        groups = self._cache_get(username)
-        if groups:
-          return groups
+        if use_cache:
+            groups = self._cache_get('groups:%s' % username)
+            if groups:
+              return groups
         
         # get dn
         dn = self._get_user_dn(username)
@@ -185,7 +205,7 @@ class ADAuthStore(Component):
             else:
                 self.env.log.debug('username %s (%s) has no groups', username, dn)
                 
-            self._cache_set(username, groups)
+            self._cache_set('groups:%s' % username, groups)
             return groups
                 
         else:
@@ -193,36 +213,51 @@ class ADAuthStore(Component):
             return []
       
     # Internal methods
-
     def _bind_ad(self, user_dn=None, passwd=None):
-        user = user_dn or self.bind_dn
-        password = passwd or self.bind_pw
-
-        if self._ldap:
-            return self._ldap
-            
+      
+        #-- what do we connect to
+        if not self.ads:
+            raise TracError('The ads ini option must be set')
+          
         if not self.ads.lower().startswith('ldap://'):
             ads = 'ldap://%s' % self.ads
         else:
             ads = self.ads
-
-        # setup the ldap connection.. init does NOT attempt a connection, but search does.
-        self._ldap = ldap.ldapobject.ReconnectLDAPObject(ads, retry_max=5)
-
-        if not user:
+                  
+        #-- if user auth .. only return success
+        if user_dn and passwd: 
+            # setup the ldap connection.. init does NOT attempt a connection, but search does.
+            user_ldap = ldap.ldapobject.ReconnectLDAPObject(ads, retry_max=5, retry_delay=1)
+        
+            self.log.info('attempting binding to %s as %s' % (ads, user_dn))
+            try:
+                user_ldap.simple_bind_s(user_dn, passwd)
+            except Exception, e:
+                self.log.info(' binding failed. %s ' % (e))
+                return None
+            return 1
+            
+        #-- return cached handle for default users if we have it
+        if self._ldap:
+            return self._ldap
+            
+        #-- we assume if configured .. values must be there
+        if not self.bind_dn:
             raise TracError('The bind_dn ini option must be set')
-        if not password:
+        if not self.bind_pw:
             raise TracError('The bind_pw ini option must be set')
 
+        # setup the ldap connection.. init does NOT attempt a connection, but search does.
+        self._ldap = ldap.ldapobject.ReconnectLDAPObject(ads, retry_max=5, retry_delay=1)
         
-        self.log.debug('Bindng to %s as %s' % (ads, user))
+        self.log.debug('attempting binding to %s as %s' % (ads, self.bind_dn))
         try:
-            self._ldap.simple_bind_s(user, password)
+            self._ldap.simple_bind_s(self.bind_dn, self.bind_pw)
         except Exception, e:
-            self.log.debug('Unable to bind to %s : %s' % ads, exc_info=e)
-            return None 
+            raise TracError('cannot bind to %s' % ads, exc_info=e)
+            # self.log.error('Unable to bind to %s : %s' % ads, exc_info=e)
           
-        self.log.debug('Bound to %s as %s' % (ads, user))
+        self.log.info('Bound to %s as %s' % (ads, self.bind_dn))
           
         #-- allow restarting
         self._ldap.set_option(ldap.OPT_RESTART, 1)
@@ -240,7 +275,9 @@ class ADAuthStore(Component):
               return dn
             
             try:
-               u = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, "(&(objectClass=person)(sAMAccountName=%s))" % user, ['sAMAccountName'])
+               u = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, 
+                                   "(&(objectClass=person)(sAMAccountName=%s))" % user, 
+                                   ['sAMAccountName'])
             except Exception, e:
                self.log.debug('user not found: %s' % user, exc_info=e)
                dn = None
@@ -259,7 +296,9 @@ class ADAuthStore(Component):
           return groups
         
         groups = []
-        ldapgroups = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, '(&(objectClass=group)(member=%s))' % dn, ["sAMAccountName"])
+        ldapgroups = self._ad_search(self.base_dn, ldap.SCOPE_SUBTREE, 
+                                     '(&(objectClass=group)(member=%s))' % dn, 
+                                     ["sAMAccountName"])
               
         # append and recurse 
         for group in ldapgroups:
@@ -299,42 +338,40 @@ class ADAuthStore(Component):
         # fails, don't worry, means it's already there.  Second, insert the
         # email address session attribute.  If it fails, don't worry, it's
         # already there.
-        db = self.env.get_db_cnx()
-        lastvisit = 0
-        for uname, displayname, email in userinfo:
-            try:
-                cur = cnx.cursor()
-                cur.execute('INSERT INTO session (sid, authenticated, '
-                            'last_visit) VALUES (%s, 1, %s)',
-                            (uname, lastvisit))
-                db.commit()
-            except:
-                db.rollback()
-            if email:
-                try:
-                    cur = cnx.cursor()
-                    cur.execute("INSERT INTO session_attribute"
-                                "    (sid, authenticated, name, value)"
-                                " VALUES (%s, 1, 'email', %s)",
-                                (uname, to_unicode(email)))
-                    db.commit()
-                except:
-                    db.rollback()
-            if displayname:
-                try:
-                    cur = cnx.cursor()
-                    cur.execute("INSERT INTO session_attribute"
-                                "    (sid, authenticated, name, value)"
-                                " VALUES (%s, 1, 'name', %s)",
-                                (uname, to_unicode(displayname)))
-                    db.commit()
-                except:
-                    db.rollback()
-            continue
-        db.close()
+        (uname,displayname,email) = userinfo
         
-    def _cache_get(self, key=None):
+        db = self.env.get_db_cnx()
+        cur = db.cursor()
+        try:
+            cur.execute('INSERT INTO session (sid, authenticated, last_visit) VALUES (%s, 1, %s)' % (uname, 0))
+        except:
+            self.log.debug('session for %s exists.' % uname)
+            
+        #-- assume enabled if we get this far
+        cur = db.cursor()
+        try:
+            cur.execute("INSERT INTO session_attribute (sid, authenticated, name, value) VALUES ('%s', 1, 'enabled', '1')" % (uname))
+        except:
+            self.log.debug('session for %s exists.' % uname)
+        
+            
+        #-- we want to update these regardless.
+        if email:
+            cur = db.cursor()
+            cur.execute("INSERT OR REPLACE INTO session_attribute (sid, authenticated, name, value) "
+                            "VALUES ('%s', 1, 'email', '%s')" % (uname, to_unicode(email)))
+            self.log.debug('updating user session email info for %s (%s)' % (uname,to_unicode(email)))
+        if displayname:
+            cur = db.cursor()
+            cur.execute("INSERT OR REPLACE INTO session_attribute "
+                            "(sid, authenticated, name, value) VALUES ('%s', 1, 'name', '%s')" % (uname, to_unicode(displayname)))
+            self.log.debug('updating user session displayname info for %s (%s)' % (uname,to_unicode(displayname)))
+        db.commit()
+        return db.close()
+        
+    def _cache_get(self, key=None, ttl=None):
         """Get an item from memory cache"""
+        cache_ttl = ttl or self.cache_ttl
         if not self.memcache_size:
           return None;
         
@@ -342,7 +379,7 @@ class ADAuthStore(Component):
             
         if key in self._cache:
             lut, data = self._cache[key]            
-            if lut+int(self.cache_ttl) >= now:
+            if lut+int(cache_ttl) >= now:
               self.env.log.debug('memcache hit for %s' % key)
               return data
             else: 
@@ -377,9 +414,9 @@ class ADAuthStore(Component):
             
       self._cache[key] = [ cache_time, data ]
       return data
+    
         
-        
-    def _ad_search(self, base_dn=None, scope=ldap.SCOPE_BASE, filter=None, attrs=[]):
+    def _ad_search(self, base_dn=None, scope=ldap.SCOPE_BASE, filter=None, attrs=[], check_cache=1):
       #self.env.log.debug('searching for: %s' % filter)
       #-- get current time for cache
       current_time = time.time()
@@ -391,27 +428,28 @@ class ADAuthStore(Component):
       
       #-- check memcache
       #   we do this to reduce network usage.
-      ret = self._cache_get(key)
-      if ret:
-         return ret
-      
-      #--  Check database
       db=self.env.get_db_cnx()
-      cur = db.cursor()
-      cur.execute('SELECT lut,data FROM ad_cache WHERE id="%s"' % key)
-      row = cur.fetchone()
-      if row:      
-         lut,data = row
+      if check_cache: 
+          ret = self._cache_get(key)
+          if ret:
+             return ret
+      
+          #--  Check database
+          cur = db.cursor()
+          cur.execute('SELECT lut,data FROM ad_cache WHERE id="%s"' % key)
+          row = cur.fetchone()
+          if row:      
+             lut,data = row
          
-         if current_time < lut+int(self.cache_ttl):
-            self.env.log.debug('dbcache hit for %s' % filter)
-            ret = cPickle.loads(str(data))
-            self._cache_set(key,ret,lut)
-            return ret
-         else: 
-           #-- old data, delete it and anything else that's old.
-           cur.execute('DELETE FROM ad_cache WHERE lut < %s' % (current_time-int(self.cache_ttl)) )
-           db.commit()
+             if current_time < lut+int(self.cache_ttl):
+                self.env.log.debug('dbcache hit for %s' % filter)
+                ret = cPickle.loads(str(data))
+                self._cache_set(key,ret,lut)
+                return ret
+             else: 
+               #-- old data, delete it and anything else that's old.
+               cur.execute('DELETE FROM ad_cache WHERE lut < %s' % (current_time-int(self.cache_ttl)) )
+               db.commit()
       
       #-- check AD
       ad = self._bind_ad()
@@ -420,11 +458,11 @@ class ADAuthStore(Component):
       if adr:
         self.log.debug('AD hit for %s', filter)
         
-      #-- set the data in the cache for the next search, even empty results
+      #-- set the data in the db cache for the next search, even empty results
       adr_str=cPickle.dumps(adr,0)
       try:
           cur=db.cursor()
-          cur.execute('INSERT INTO ad_cache (id, lut, data) VALUES (%s, %s, %s)', [str(key), int(current_time), buffer(adr_str)])
+          cur.execute('INSERT OR REPLACE INTO ad_cache (id, lut, data) VALUES (%s, %s, %s)', [str(key), int(current_time), buffer(adr_str)])
           db.commit()
            
       except Exception, e:
