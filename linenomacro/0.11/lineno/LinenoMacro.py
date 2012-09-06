@@ -1,17 +1,16 @@
+# -*- coding: utf-8 -*-
+
+from genshi.builder import tag
 from trac.core import *
+from trac.mimeview.api import IHTMLPreviewAnnotator, Mimeview
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.formatter import Formatter
-from trac.mimeview.api import Mimeview, IHTMLPreviewAnnotator
- 
-from genshi.builder import tag
 
 import inspect
 import re
 
-__all__ = ['LinenoMacro', 'LinenoAnnotator']
 
-SB_RB = re.compile(r"^#{1}!\w+\n", re.M)
+_processor_re = re.compile('#\!([\w+-][\w+-/]*)')
 
 class LinenoMacro(Component):
     """Prints line numbered code listings"""
@@ -35,28 +34,27 @@ class LinenoMacro(Component):
     # ITemplateProvider
     def get_templates_dirs(self):
         return []
-        
+    
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('lineno', resource_filename(__name__, 'htdocs'))]
     
     def expand_macro(self, formatter, name, content):
-        #return 'lineno macro name=%s content=%s' % (name, content)        
-        add_stylesheet(formatter.req, 'lineno/css/lineno.css')        
+        add_stylesheet(formatter.req, 'lineno/css/lineno.css')
         mt = 'txt'
-        match = SB_RB.search(content)
-        if match:            
+        match = _processor_re.search(content)
+        if match:
             mt = match.group().strip()[2:]
             content = content[match.end():]
-                            
-        mimetype = Mimeview(formatter.env).get_mimetype(mt)  
+        
+        mimetype = Mimeview(formatter.env).get_mimetype(mt)
         if not mimetype:
             mimetype = Mimeview(formatter.env).get_mimetype('txt')
         
         annotations = ['linenomacro']
         return Mimeview(self.env).render(formatter.context,
-                                         mimetype, content, None, None, annotations)    
-        
+                                         mimetype, content, None, None, annotations)
+
 class LinenoAnnotator(Component):
     
     implements(IHTMLPreviewAnnotator)
@@ -71,5 +69,3 @@ class LinenoAnnotator(Component):
         row.append(tag.th(id='L%s' % lineno)(
             lineno
         ))
-        
-        
