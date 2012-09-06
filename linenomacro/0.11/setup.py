@@ -1,8 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import find_packages, setup
 
 setup(
-    name='Lineno', version='1.0',   
-    author = 'Adamansky Anton', 
+    name='Lineno', version='1.1',
+    author = 'Adamansky Anton',
     author_email = 'anton@adamansky.com',
     description = 'Prints line numbered code listings',
     license = 'Apache License, Version 2.0',
@@ -13,7 +16,4 @@ setup(
         [trac.plugins]
         lineno = lineno.LinenoMacro
     """,
-    install_requires = [
-        #'trac>=0.11',
-    ]
 )
