@@ -15,7 +15,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
 
     Usage:
     {{{
-       [[VcsReleaseInfoMacro(path[,limit])]]
+       [[VcsReleaseInfoMacro(path[, limit, package = PACKAGE])]]
     }}}
 
     """
