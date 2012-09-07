@@ -12,7 +12,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'Lineno',
-    version = '1.1',
+    version = '1.2',
     author = 'Adamansky Anton',
     author_email = 'anton@adamansky.com',
     description = 'Prints line numbered code listings',
