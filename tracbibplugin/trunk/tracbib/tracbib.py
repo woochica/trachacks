@@ -93,27 +93,34 @@ except ImportError:  # for trac 0.10:
 
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
-
-
-class Cite(Component, dict):
-    """Storage for cited references, this class must be enabled """
-    pass
-
-
-class AutoLoaded(Component, dict):
-    """
-    Storage for automatically loaded references, this class must be
-    enabled
-    """
-
-    pass
-
 from trac.web.api import IRequestFilter
+
+
+def getLoaded(request):
+    loaded = request.args.get("loaded",None)
+    if not loaded:
+        loaded = []
+        request.args["loaded"] = loaded
+    return loaded
+
+
+def getCited(request):
+    cite = request.args.get("cite",None)
+    if not cite:
+        cite = {}
+        request.args["cite"] = cite
+    return cite
+
+def getAuto(request):
+    auto = request.args.get("auto",None)
+    if not auto:
+        auto = {}
+        request.args["auto"] = auto
+    return auto
 
 
 class TracBibRequestFilter(Component):
     """ Loads entries from the special wikipage 'BibTeX'"""
-    sources = ExtensionPoint(IBibSourceProvider)
     implements(IRequestFilter)
 
     def pre_process_request(self, req, handler):
@@ -122,10 +129,7 @@ class TracBibRequestFilter(Component):
         if match:
             source = BibtexSourceWiki(self.env)
             if WikiPage(self.env, "BibTex").exists:
-                source.source_init(req, "wiki:BibTex")
-                auto = AutoLoaded(self.env)
-                for key in source:
-                    auto[key] = ''
+                req.args["auto"] = source.source(req, "wiki:BibTex")
         return handler
 
     #Trac 0.11
@@ -156,9 +160,12 @@ class BibAddMacro(WikiMacroBase):
 
         arg = re.compile(":").split(args[0])
         type = arg[0]
+
+        loaded = getLoaded(formatter.req)
+
         for source in self.sources:
-            if source.source_type() == type:
-                source.source_init(formatter.req, args[0])
+            if re.match(source.source_type(),type):
+                loaded.append(source.source(formatter.req, args[0]))
                 return
         raise TracError("Unknown container type: '" + type + "'")
 
@@ -166,7 +173,6 @@ class BibAddMacro(WikiMacroBase):
 class BibCiteMacro(WikiMacroBase):
     """Macro to cite BibTeX entries"""
     implements(IWikiMacroProvider)
-    sources = ExtensionPoint(IBibSourceProvider)
     formatter = ExtensionPoint(IBibRefFormatter)
 
     # Trac 0.10
@@ -189,21 +195,23 @@ class BibCiteMacro(WikiMacroBase):
         if len(args) == 2:
             page = args[1]
 
-        cite = Cite(self.env)
-        auto = AutoLoaded(self.env)
+        cite = getCited(formatter.req)
+        auto = getAuto(formatter.req)
 
         if key not in cite:
             found = False
-            for source in self.sources:
+            for source in getLoaded(formatter.req):
                 if key in source:
                     found = True
                     cite[key] = source[key]
-                    if key in auto:
-                        del auto[key]
-                    for format in self.formatter:
-                        format.pre_process_entry(key, cite)
-            if not found:
+                    break
+            if not found and key in auto:
+                cite[key] = auto[key]
+            elif not found:
                 raise TracError("Unknown key '" + key + "'")
+
+        for format in self.formatter:
+            format.pre_process_entry(key, cite)
 
         for format in self.formatter:
             entry = format.format_cite(key, cite[key], page)
@@ -214,7 +222,6 @@ class BibCiteMacro(WikiMacroBase):
 class BibNoCiteMacro(WikiMacroBase):
     """Macro to add BibTeX entries to the references, which are not cited"""
     implements(IWikiMacroProvider)
-    sources = ExtensionPoint(IBibSourceProvider)
 
     # Trac 0.10
     def render_macro(self, request, name, content):
@@ -232,18 +239,19 @@ class BibNoCiteMacro(WikiMacroBase):
 
         key = args[0]
 
-        cite = Cite(self.env)
-        auto = AutoLoaded(self.env)
+        cite = getCited(formatter.req)
+        auto = getAuto(formatter.req)
 
         if key not in cite:
             found = False
-            for source in self.sources:
+            for source in getLoaded(formatter.req):
                 if key in source:
                     found = True
-                    if key in auto:
-                        del auto[key]
                     cite[key] = source[key]
-            if not found:
+                    break
+            if not found and key in auto:
+                cite[key] = auto[key]
+            elif not found:
                 raise TracError("Unknown key '" + key + "'")
         return
 
@@ -255,7 +263,6 @@ class BibRefMacro(WikiMacroBase):
     """
 
     formatter = ExtensionPoint(IBibRefFormatter)
-    sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)
 
     # Trac 0.10
@@ -264,18 +271,10 @@ class BibRefMacro(WikiMacroBase):
 
     # Trac 0.11
     def expand_macro(self, formatter, name, content):
-        cite = Cite(self.env)
-        items = cite.items()
+        cite = getCited(formatter.req)
 
-        try:
-            for format in self.formatter:
-                div = format.format_ref(items, 'References')
-        finally:
-            # CLEANUP: outdated entries might survive in memory,
-            # so clear the container
-            cite.clear()
-            for source in self.sources:
-                source.clear()
+        for format in self.formatter:
+            div = format.format_ref(cite, 'References')
 
         return div
 
@@ -287,7 +286,6 @@ class BibFullRefMacro(WikiMacroBase):
     """
 
     formatter = ExtensionPoint(IBibRefFormatter)
-    sources = ExtensionPoint(IBibSourceProvider)
     implements(IWikiMacroProvider)
 
     # Trac 0.10
@@ -307,23 +305,17 @@ class BibFullRefMacro(WikiMacroBase):
         if (showAuto != "false" and showAuto != "true"):
             raise TracError("Usage: [[BibFullRef(auto=true|false)]]")
 
-        cite = Cite(self.env)
-        auto = AutoLoaded(self.env)
+        cite = getCited(formatter.req)
+        auto = getAuto(formatter.req)
 
-        try:
-            for source in self.sources:
-                for key, value in source.items():
-                    if key in auto and key not in cite and showAuto == "false":
-                        continue
+        for source in getLoaded(formatter.req):
+            for key, value in source.iteritems():
+                cite[key] = value
+            if showAuto == "true":
+                for key, value in auto.iteritems():
                     cite[key] = value
 
-            for format in self.formatter:
-                div = format.format_fullref(cite.items(), 'References')
-        finally:
-            # CLEANUP: outdated entries might survive in memory, so clear the
-            # container. Caching is still a TODO
-            cite.clear()
-            for source in self.sources:
-                source.clear()
+        for format in self.formatter:
+            div = format.format_fullref(cite, 'References')
 
         return div

@@ -493,7 +493,7 @@ class BibRefFormatterIEEELike(Component):
         cited = []
         notcited = []
         #first let's render cited articles
-        for key, value in entries:
+        for key, value in entries.iteritems():
             if ':index' in value:
                 cited.append((key, value))
             else:

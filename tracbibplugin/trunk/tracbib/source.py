@@ -34,36 +34,32 @@ from helper import def_strings
 import re
 
 
-class BibtexSourceBase(dict):
-    """
-    The bibtex base class handles the utf-8 conversion and the bibtex parsing.
-    """
 
-    def extract(self, text):
-        # convert to utf8 and generate a dictionary
+def _extract(text):
+    # convert to utf8 and generate a dictionary
+    try:
         try:
-            try:
-                strings, entries = bibtexparse.bibtexload(
-                    unicode(text, "utf-8").splitlines())
-            except TypeError:
-                strings, entries = bibtexparse.bibtexload(text.splitlines())
-        except UnicodeDecodeError:
-            raise TracError("A UnicodeDecodeError occured while loading the"
-                            "data. Try to save the file in UTF-8 encoding.")
-        crossRef = []
-        for k, bib in entries.iteritems():
-            bibtexparse.replace_abbrev(bib, def_strings)
-            bibtexparse.replace_abbrev(bib, strings)
-            if bib.get('crossref'):
-                crossRef.append(k)
-        self.update(entries)
-        # merging the entry and its cross-reference into one dictionary
-        for k in crossRef:
-            if self[k]['crossref'] in self:
-                ref = self[self[k]['crossref']].copy()
-                ref.update(self[k])
-                self[k] = ref
-                print self[k]
+            strings, entries = bibtexparse.bibtexload(
+                unicode(text, "utf-8").splitlines())
+        except TypeError:
+            strings, entries = bibtexparse.bibtexload(text.splitlines())
+    except UnicodeDecodeError:
+        raise TracError("A UnicodeDecodeError occured while loading the"
+                        "data. Try to save the file in UTF-8 encoding.")
+    crossRef = []
+    for k, bib in entries.iteritems():
+        bibtexparse.replace_abbrev(bib, def_strings)
+        bibtexparse.replace_abbrev(bib, strings)
+        if bib.get('crossref'):
+            crossRef.append(k)
+    # merging the entry and its cross-reference into one dictionary
+    for k in crossRef:
+        if entries[k]['crossref'] in entries:
+            ref = entries[entries[k]['crossref']].copy()
+            ref.update(entries[k])
+            entries[k] = ref
+            print entries[k]
+    return entries
 
 
 class BibtexSourceSource(Component):
@@ -72,14 +68,13 @@ class BibtexSourceSource(Component):
     """
 
     implements(IBibSourceProvider)
-    bibtex = BibtexSourceBase()
 
     #IBibSourceProvider Methods
 
     def source_type(self):
         return "source"
 
-    def source_init(self, req, args):
+    def source(self, req, args):
         arg = re.compile(":|@").split(args)
 
         if len(arg) < 2:
@@ -98,39 +93,20 @@ class BibtexSourceSource(Component):
         file = bib.get_content()
         text = file.read()
 
-        self.bibtex.extract(text)
-
-    def has_key(self, key):
-        return key in self.bibtex
-
-    def clear(self):
-        self.bibtex.clear()
-
-    def __iter__(self):
-        return self.bibtex.__iter__()
-
-    def __getitem__(self, key):
-        return self.bibtex.__getitem__(key)
-
-    def items(self):
-        return self.bibtex.items()
-
+        return _extract(text)
 
 from trac.attachment import Attachment
-
 
 class BibtexSourceAttachment(Component):
     """
     This class loads bibtex files from wiki attachments.
     """
-    bibtex = BibtexSourceBase()
-
     implements(IBibSourceProvider)
 
     def source_type(self):
         return 'attachment'
 
-    def source_init(self, req, args):
+    def source(self, req, args):
         arg = re.compile(":").split(args)
         if (len(arg) != 2):
             raise TracError('Usage: BibAdd(attachment:[path/to/]file)')
@@ -158,23 +134,7 @@ class BibtexSourceAttachment(Component):
         text = file.read()
         file.close()
 
-        self.bibtex.extract(text)
-
-    def has_key(self, key):
-        return key in self.bibtex
-
-    def clear(self):
-        self.bibtex.clear()
-
-    def __iter__(self):
-        return self.bibtex.__iter__()
-
-    def __getitem__(self, key):
-        return self.bibtex.__getitem__(key)
-
-    def items(self):
-        return self.bibtex.items()
-
+        return _extract(text)
 
 from trac.wiki.model import WikiPage
 
@@ -185,12 +145,11 @@ class BibtexSourceWiki(Component):
     """
 
     implements(IBibSourceProvider)
-    bibtex = BibtexSourceBase()
 
     def source_type(self):
         return 'wiki'
 
-    def source_init(self, req, args):
+    def source(self, req, args):
         arg = re.compile(":").split(args)
         if (len(arg) != 2):
             raise TracError('Usage BibAdd(wiki:page)')
@@ -206,59 +165,29 @@ class BibtexSourceWiki(Component):
         else:
             raise TracError('No wiki page named \'' + name + '\' found.')
 
-        self.bibtex.extract(text)
-
-    def has_key(self, key):
-        return key in self.bibtex
-
-    def clear(self):
-        self.bibtex.clear()
-
-    def __iter__(self):
-        return self.bibtex.__iter__()
-
-    def __getitem__(self, key):
-        return self.bibtex.__getitem__(key)
-
-    def items(self):
-        return self.bibtex.items()
+        return _extract(text)
 
 import urllib
-
 
 class BibtexSourceHttp(Component):
     """
     This class loads bibtex files from external websites.
     """
-    bibtex = BibtexSourceBase()
 
     implements(IBibSourceProvider)
 
     def source_type(self):
-        return 'http'
+        return 'http[s]?'
 
-    def source_init(self, req, args):
+    def source(self, req, args):
         url = args
         try:
             file = urllib.urlopen(url)
             text = file.read()
             file.close()
         except:
-            raise TracError('Usage BibAdd(http://url)')
+            raise TracError('Usage BibAdd(http[s]://url). Is the provided URL'
+                    ' correct?')
 
-        self.bibtex.extract(text)
+        return _extract(text)
 
-    def has_key(self, key):
-        return key in self.bibtex
-
-    def clear(self):
-        self.bibtex.clear()
-
-    def __iter__(self):
-        return self.bibtex.__iter__()
-
-    def __getitem__(self, key):
-        return self.bibtex.__getitem__(key)
-
-    def items(self):
-        return self.bibtex.items()

@@ -10,7 +10,7 @@ setup(
     author_email='roman@fenkhuber.at',
     description="Macro to allow the usage of bibtex files in the "
     "versioncontrol system to cite ressources in the wiki pages",
-    url='http://www.trac-hacks.org/wiki/TracBib',
+    url='http://www.trac-hacks.org/wiki/TracBibPlugin',
     license='gpl',
     keywords='trac plugin cite macro bibtex',
     classifiers=['Framework :: Trac'],

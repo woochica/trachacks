@@ -31,28 +31,8 @@ class IBibSourceProvider(Interface):
     def source_type():
         """return the keyword to identify the source of the bibtex entries"""
 
-    def source_init(req, args):
-        """do what ever you have to do to initialize the source"""
-
-    # these methods can be derived from 'dict'
-
-    def clear():
-        """delete all previously loaded or cached entries, only do this if it
-        is necessary to avoid sideffects. This is especially usefull if the
-        entries are loaded from static files at once."""
-
-    def has_key(key):
-        """ckeck if the specified key is in the library """
-
-    def __iter__():
-        """return iterator"""
-
-    def __getitem__(key):
-        """return the dictionary of the entries of the specified key """
-
-    def items():
-        """return items [(key,value),...] """
-
+    def source(req, args):
+        """return a dictionary of loaded entries"""
 
 class IBibRefFormatter(Interface):
 
