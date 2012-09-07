@@ -48,8 +48,12 @@ class LinenoMacro(WikiMacroBase):
         mt = 'txt'
         match = WikiParser._processor_re.match(content)
         if match:
-            mt = match.group(1)
-            content = content[match.end(1)+1:]
+            try: #Trac 0.12+
+                mt = match.group(2)
+                content = content[match.end(2)+1:]
+            except IndexError: #Trac 0.11
+                mt = match.group(1)
+                content = content[match.end(1)+1:]
         
         mimeview = Mimeview(formatter.env)
         mimetype = mimeview.get_mimetype(mt) or mimeview.get_mimetype('txt')        
