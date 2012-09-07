@@ -268,13 +268,12 @@ class BibFullRefMacro(WikiMacroBase):
     def expand_macro(self,formatter,name,content):
         cite = Cite(self.env)
         auto = AutoLoaded(self.env)
-        items = cite.items()
 
         try:
             for source in self.sources:
                 for key,value in source.items():
                     if auto.has_key(key) and not cite.has_key(key):
-                        next
+                        continue
                     cite[key]=value
 
             for format in self.formatter:
