@@ -266,13 +266,23 @@ class BibFullRefMacro(WikiMacroBase):
     
     # Trac 0.11
     def expand_macro(self,formatter,name,content):
+
+        args, kwargs = parse_args(content, strict=False)
+
+        if len(args) > 0 or len(kwargs) > 1:
+            raise TracError('Usage: [[BibFullRef]] or [[BibFullRef(auto=true|false)]]')
+
+        showAuto = kwargs.get("auto","false");
+        if (showAuto != "false" and showAuto != "true"):
+            raise TracError("Usage: [[BibFullRef(auto=true|false)]]")
+
         cite = Cite(self.env)
         auto = AutoLoaded(self.env)
 
         try:
             for source in self.sources:
                 for key,value in source.items():
-                    if auto.has_key(key) and not cite.has_key(key):
+                    if auto.has_key(key) and not cite.has_key(key) and showAuto == "false":
                         continue
                     cite[key]=value
 
