@@ -542,9 +542,18 @@ class BibRefFormatterIEEELike(Component):
     def pre_process_request(self, req, handler):
         return handler
 
-    def post_process_request(self, req, template, data, content_type):
+    def post_process_request_old(self, req, template, content_type):
+        add_stylesheet(req, "tracbib/base.css")
+        return (template, content_type)
+
+    def post_process_request_new(self, req, template, data, content_type):
         add_stylesheet(req, "tracbib/base.css")
         return (template, data, content_type)
+
+    if version == ">0.10":
+        post_process_request = post_process_request_new
+    else:
+        post_process_request = post_process_request_old
 
     #ITemplateProvider
     def get_htdocs_dirs(self):
