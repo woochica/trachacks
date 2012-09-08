@@ -29,10 +29,11 @@ from trac.core import Interface
 class IBibSourceProvider(Interface):
 
     def source_type():
-        """return the keyword to identify the source of the bibtex entries"""
+        """return a regex to identify the source of the bibtex entries"""
 
     def source(req, args):
         """return a dictionary of loaded entries"""
+
 
 class IBibRefFormatter(Interface):
 

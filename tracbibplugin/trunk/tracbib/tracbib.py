@@ -97,7 +97,7 @@ from trac.web.api import IRequestFilter
 
 
 def getLoaded(request):
-    loaded = request.args.get("loaded",None)
+    loaded = request.args.get("loaded", None)
     if not loaded:
         loaded = []
         request.args["loaded"] = loaded
@@ -105,14 +105,15 @@ def getLoaded(request):
 
 
 def getCited(request):
-    cite = request.args.get("cite",None)
+    cite = request.args.get("cite", None)
     if not cite:
         cite = {}
         request.args["cite"] = cite
     return cite
 
+
 def getAuto(request):
-    auto = request.args.get("auto",None)
+    auto = request.args.get("auto", None)
     if not auto:
         auto = {}
         request.args["auto"] = auto
@@ -164,7 +165,7 @@ class BibAddMacro(WikiMacroBase):
         loaded = getLoaded(formatter.req)
 
         for source in self.sources:
-            if re.match(source.source_type(),type):
+            if re.match(source.source_type(), type):
                 loaded.append(source.source(formatter.req, args[0]))
                 return
         raise TracError("Unknown container type: '" + type + "'")

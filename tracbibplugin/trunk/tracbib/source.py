@@ -34,7 +34,6 @@ from helper import def_strings
 import re
 
 
-
 def _extract(text):
     # convert to utf8 and generate a dictionary
     try:
@@ -96,6 +95,7 @@ class BibtexSourceSource(Component):
         return _extract(text)
 
 from trac.attachment import Attachment
+
 
 class BibtexSourceAttachment(Component):
     """
@@ -169,6 +169,7 @@ class BibtexSourceWiki(Component):
 
 import urllib
 
+
 class BibtexSourceHttp(Component):
     """
     This class loads bibtex files from external websites.
@@ -187,7 +188,6 @@ class BibtexSourceHttp(Component):
             file.close()
         except:
             raise TracError('Usage BibAdd(http[s]://url). Is the provided URL'
-                    ' correct?')
+                            ' correct?')
 
         return _extract(text)
-
