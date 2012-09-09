@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
 from time import time
-from trac.log import logger_factory
 from trac.core import *
 from trac.web import IRequestHandler, ITemplateStreamFilter
 from trac.util.datefmt import format_date, format_time
