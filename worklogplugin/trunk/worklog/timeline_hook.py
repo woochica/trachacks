@@ -3,7 +3,6 @@
 import re
 from genshi.builder import tag
 from util import *
-from trac.log import logger_factory
 from trac.core import *
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.text import shorten_line

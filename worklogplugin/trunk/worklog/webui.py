@@ -9,7 +9,6 @@ from time import time
 from datetime import tzinfo, timedelta, datetime
 from usermanual import *
 from manager import WorkLogManager
-from trac.log import logger_factory
 from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.web import IRequestHandler, IRequestFilter
