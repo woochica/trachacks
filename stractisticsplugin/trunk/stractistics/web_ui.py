@@ -20,24 +20,27 @@
 # $Id: web_ui.py 432 2008-07-11 12:58:49Z ddgb $
 #
 
+from genshi.builder import tag
 from trac.core import *
-from trac.config import Option
 from trac.perm import IPermissionRequestor
-from trac.util import escape
-from trac.util.html import html, Markup
 from trac.web.api import IRequestHandler
-from trac.web.chrome import add_ctxtnav, add_script, add_stylesheet, \
-                            INavigationContributor, ITemplateProvider        
-import trac
+from trac.web.chrome import (
+    INavigationContributor, ITemplateProvider,
+    add_ctxtnav, add_script, add_stylesheet
+)
 
-import simplejson
-import util 
-import global_reports
-import user_reports
+try:
+    import json
+except ImportError:
+    import simplejson as json
+
+from util import read_config_options
+from global_reports import global_reports
+from user_reports import user_reports
 
 class StractisticsModule(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider,
-                IPermissionRequestor)
+               IPermissionRequestor)
     
     # INavigationContributor methods
     def get_active_navigation_item(self, req):
@@ -45,37 +48,21 @@ class StractisticsModule(Component):
 
     def get_navigation_items(self, req):
         if req.perm.has_permission('STRACTISTICS_VIEW'):
-            yield 'mainnav', 'stractistics', html.A("Stractistics",
-                                                     href=req.href.stractistics())
-        
+            yield 'mainnav', 'stractistics', tag.a('Stractistics',
+                                                   href=req.href.stractistics())
+
     #IPermissionRequestor methods
     def get_permission_actions(self):
         return ['STRACTISTICS_VIEW']
-    
+
     # ITemplateProvider methods
     def get_templates_dirs(self):
-        """
-        Return a list of directories containing the provided ClearSilver
-        templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """
-        Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         from pkg_resources import resource_filename
         return [('hw', resource_filename(__name__, 'htdocs'))]
-    
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -105,20 +92,17 @@ class StractisticsModule(Component):
         add_ctxtnav(req, 'User Reports', req.href.stractistics("/user_reports"))
 
         #Reading options from trac.ini
-        config = util.read_config_options(self.env.config)
+        config = read_config_options(self.env.config)
 
         db = self.env.get_db_cnx()
         module = req.args.get('module', None)
         if module is not None and module == 'user_reports':
-            template, data = user_reports.user_reports(req, config, db)
+            template, data = user_reports(req, config, db)
         else:
-            template, data = global_reports.global_reports(req, config, db)
+            template, data = global_reports(req, config, db)
         data['json'] = {
-            'repository_activity': simplejson.dumps(data['repository_activity'].get_data()),
-            'ticket_activity': simplejson.dumps(data['ticket_activity'].get_data()),
-            'wiki_activity': simplejson.dumps(data['wiki_activity'].get_data()),
+            'repository_activity': json.dumps(data['repository_activity'].get_data()),
+            'ticket_activity': json.dumps(data['ticket_activity'].get_data()),
+            'wiki_activity': json.dumps(data['wiki_activity'].get_data()),
         }
         return template, data, None
-
-    
-                

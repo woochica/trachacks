@@ -19,6 +19,7 @@
 #
 # $Id: util.py 432 2008-07-11 12:58:49Z ddgb $
 #
+
 import OpenFlashChart
 
 def read_config_options(config):

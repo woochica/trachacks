@@ -41,8 +41,6 @@ def user_reports(req, config, db):
                                          weeks_back, db)
     return 'user_reports.html', data
 
-
-
 def _user_ticket_activity(req, user, config, start, end, weeks_back, db):
     """
     This function calculates: 
@@ -138,7 +136,6 @@ def _get_closed_or_reopened_tickets(db, user, start, end):
     return closed_or_reopened_tickets
 
 
-
 def _user_wiki_activity(req, user, config, start, end, weeks_back, db):
     """
     Computes the number of pages created and the number of pages edited by the
@@ -198,7 +195,6 @@ def _group_wiki_pages(wiki_pages, weeks_dic):
         wiki_data[action] = sort_values_by_key(wiki_data[action])
     return wiki_data
 
-
 def _user_svn_activity(req, user, config, start, end, weeks_back, db):
     """
     Computes the number of commits per week done by the user between start
@@ -241,8 +237,6 @@ def _user_svn_activity(req, user, config, start, end, weeks_back, db):
     chart.data = restructure_data(commits_per_week)
     chart.set_tool_tip("#key#<br>week:#x_label#<br>commits:#val#")
     return query_response
-    
-
            
 def _count_commits(user, commits, weeks_dic):
     """
@@ -266,8 +260,6 @@ def _get_default_user(args, trac_users):
         if url_user in trac_users:
             default_user = url_user
     return default_user
-    
-
 
 #If I figure a database independent query to do this, this function code
 #will go the way of the dodo.

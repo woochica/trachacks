@@ -1,0 +1,6 @@
+Stractistics 0.5 (not yet release) - trunk
+ resolved issues
+ * #9086: simplejson was required in all version of Python. Removed simplejson
+   dependency when json package is availabe (Python 2.6+).
+ 
+ new feautures

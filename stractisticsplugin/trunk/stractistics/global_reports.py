@@ -37,12 +37,8 @@ def global_reports(req, config, db):
     data['wiki_activity'] = _wiki_activity(req, config, 
                                             start_date, end_date, 
                                             weeks_back, db)
-    return 'global_reports.html', data 
-            
-    
-    
-        
-    
+    return 'global_reports.html', data
+
 def _repository_activity(req, config, start_date, end_date, weeks_back, db):
     """
     Displays commits per week of the AUTHORS_LIMIT most active authors in 
