@@ -1,27 +1,20 @@
 Name: BackLinks
-Version: 5.5
-Released: 2008-01-31
 Type: Trac Macro
 Author: Trapanator
-Homepage: http://www.trapanator.com/blog/archives/category/trac
-
 
 ==============
 HOW TO INSTALL
 ==============
 
-1. Rename BackLinks.5.py to BackLinks.py
-2. Put it into: 
-  PROJECTENVIRONMENT/plugins
-
-   (for example, in debian is:  /var/lib/trac/PROJECTENVIRONMENT/plugins )
-
-3. Restart Apache2/Tracd server if needed.
+See http://trac.edgewall.org/wiki/TracPlugins.
 
 
 =============
 CHANGELOG
 =============
+
+7.0 (not yet released)
+ #3773: Macro is now packaged for installation as an egg.
 
 6.0 2010-02-08
  * Fixed many bugs (thanks to many reporters!)
@@ -30,5 +23,4 @@ CHANGELOG
  * Support for Trac 0.11
 
 5.0 2008-01-31
-
  * Initial Release
