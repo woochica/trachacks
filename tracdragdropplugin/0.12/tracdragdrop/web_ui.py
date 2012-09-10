@@ -108,6 +108,8 @@ class TracDragDropModule(Component):
         if not attachments and model and resource:
             context = web_context(req, resource)
             attachments = AttachmentModule(self.env).attachment_data(context)
+            # mark appending list of attachments in filter_stream
+            attachments['tracdragdrop'] = True
             data['attachments'] = attachments
 
         if template in ('wiki_edit.html', 'milestone_edit.html'):
@@ -134,15 +136,18 @@ class TracDragDropModule(Component):
 
     def filter_stream(self, req, method, filename, stream, data):
         if method == 'xhtml' and \
-           filename in ('wiki_edit.html', 'milestone_edit.html') and \
-           data.get('attachments', {}).get('can_create'):
-            def render():
-                d = {'alist': data['attachments'].copy()}
-                d['compact'] = True
-                d['foldable'] = True
-                return Chrome(self.env).render_template(
-                    req, 'list_of_attachments.html', d, fragment=True)
-            stream |= Transformer('//form[@id="edit"]').after(render)
+           filename in ('wiki_edit.html', 'milestone_edit.html'):
+            attachments = data.get('attachments')
+            if attachments and attachments.get('can_create') and \
+               'tracdragdrop' in attachments:
+                del attachments['tracdragdrop']
+                def render():
+                    d = {'alist': attachments.copy()}
+                    d['compact'] = True
+                    d['foldable'] = True
+                    return Chrome(self.env).render_template(
+                        req, 'list_of_attachments.html', d, fragment=True)
+                stream |= Transformer('//form[@id="edit"]').after(render)
 
         return stream
 
