@@ -131,6 +131,7 @@ jQuery(document).ready(function($) {
         src = $('<div />').html(src);
         var list = containers.list;
         var srcList = src.find(compact ? 'ul' : 'dl.attachments');
+        var n = srcList.children(compact ? 'li' : 'dt').length;
         if (list !== null) {
             containers.dropdown.appendTo(document.body);
             list.empty().append(srcList.contents());
@@ -145,6 +146,11 @@ jQuery(document).ready(function($) {
                 containers.queue.before(srcList);
             }
             setContainerList(srcList);
+        }
+        var count = attachments.find('span.trac-count');
+        var countText = count.text();
+        if (/[0-9]/.test(countText)) {
+            count.text(countText.replace(/[0-9]+/, n));
         }
         attachments.removeClass('collapsed');
     }
@@ -528,6 +534,7 @@ jQuery(document).ready(function($) {
         var fieldset = $('<fieldset />').append(legend, file);
         var form = $('<form enctype="multipart/form-data" />')
                    .attr({method: 'post', action: tracdragdrop['new_url']})
+                   .addClass('tracdragdrop-form')
                    .append(fieldset);
         var queue;
         var hidden = false;
@@ -682,6 +689,13 @@ jQuery(document).ready(function($) {
                     data: '__FORM_TOKEN=' + form_token,
                     success: function() {
                         dropdown.appendTo(document.body);
+                        var count = attachments.find('span.trac-count');
+                        var countText = count.text();
+                        if (/[0-9]/.test(countText)) {
+                            var n = item.parent().find(item[0].tagName).length;
+                            count.text(countText.replace(/[0-9]+/,
+                                                         Math.max(n - 1, 0)));
+                        }
                         item.add(item.next('dd')).remove();
                     },
                     error: function(xhr, status, error) {

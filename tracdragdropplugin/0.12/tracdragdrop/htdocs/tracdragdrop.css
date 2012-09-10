@@ -36,6 +36,9 @@
  background-position: 1px center;
  background-repeat: no-repeat;
 }
+.tracdragdrop-form {
+ clear: both;
+}
 .tracdragdrop-paste {
  display: inline-block;
  overflow: hidden;
