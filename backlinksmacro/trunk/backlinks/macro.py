@@ -8,17 +8,11 @@
 #
 
 from genshi.builder import tag
-from trac.core import *
-from trac.wiki.formatter import format_to_html
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
-from trac.util import TracError
-from trac.util.text import to_unicode
 
 from StringIO import StringIO
-
-revision = "$Rev: 11875 $"
-url = "$URL: http://trac-hacks.org/svn/backlinksmacro/trunk/BackLinks.py $"
+import re
 
 class BackLinksMacro(WikiMacroBase):
     """
@@ -31,58 +25,66 @@ class BackLinksMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, args):
 
-        thispage = None
-        if args:
-            thispage = args.replace('\'', '\'\'')
-        else:
-            thispage = WikiPage(self.env, formatter.context.resource).name
-
-        sql = 'SELECT w1.name FROM wiki w1, ' + \
-              '(SELECT name, MAX(version) AS VERSION FROM wiki GROUP BY NAME) w2 ' + \
-              'WHERE w1.version = w2.version AND w1.name = w2.name '
-
-        if thispage:
-              sql += 'AND (w1.text LIKE \'%%[wiki:%s %%\'' % thispage
-              sql += ' OR w1.text LIKE \'%%[wiki:%s]%%\'' % thispage
-              if self._check_unicode_camelcase(thispage):   
-                      sql += ' OR w1.text LIKE \'%%\n%s %%\'' % thispage 
-                      sql += ' OR w1.text LIKE \'%% %s %%\'' % thispage 
-                      sql += ' OR w1.text LIKE \'%%\n%s\r%%\'' % thispage 
-                      sql += ' OR w1.text LIKE \'%% %s\r%%\'' % thispage 
-              sql += ')' 
-
+        caller_page = WikiPage(self.env, formatter.context.resource).name
+        backlinks_page = args or caller_page
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute(sql)
+
+        backlinked_pages = _get_backlinked_pages(db, caller_page, backlinks_page)
+
         buf = StringIO()
         buf.write('<hr style="width: 10%; padding: 0; margin: 2em 0 1em 0;"/>')
-        buf.write('Pages linking to %s:\n' % thispage)
+        buf.write('Pages linking to %s:\n' % backlinks_page)
         buf.write('<ul>')
-        while 1:
-            row = cursor.fetchone()
-            if row == None:
-                break
-            s2 = thispage
-            if row[0] == s2:
-                pass
-            else:
-                buf.write('<li><a href="%s">' % self.env.href.wiki(row[0]))
-                buf.write(row[0])
-                buf.write('</a></li>\n')
+        for page in backlinked_pages:
+            buf.write('<li><a href="%s">' % self.env.href.wiki(page))
+            buf.write(page)
+            buf.write('</a></li>\n')
         buf.write('</ul>')
+
         return buf.getvalue()
 
-    def _check_unicode_camelcase(self, pagename): 
-        if not pagename[0].isupper():   
-            return False
-        pagename = pagename.split('@', 1)[0].split('#', 1)[0]  
-        if not pagename[-1].islower():  
-            return False  
-        humps = 0  
-        for i in xrange(1, len(pagename)):  
-            if pagename[i-1].isupper():   
-                 if pagename[i].islower():  
-                        humps += 1  
-                 else:  
-                        return False  
-        return humps > 1
+
+class BackLinksMenuMacro(WikiMacroBase):
+    """
+    Inserts a menu with a list of all wiki pages with links to the page where
+    this macro is used.
+    
+    Accepts a page name as a parameter: if provided, pages that link to the
+    provided page name are listed instead.
+    """
+
+    def expand_macro(self, formatter, name, args):
+
+        caller_page = WikiPage(self.env, formatter.context.resource).name
+        backlinks_page = args or caller_page
+        db = self.env.get_db_cnx()
+        
+        backlinked_pages = _get_backlinked_pages(db, caller_page, backlinks_page)
+
+        buf = StringIO()
+        buf.write('<div class="wiki-toc">')
+        buf.write('Pages linking to %s:<br />\n' % backlinks_page)
+        for page in backlinked_pages:
+            buf.write('<a href="%s">' % self.env.href.wiki(page))
+            buf.write(page)
+            buf.write('</a><br />\n')
+        buf.write('</div>')
+
+        return buf.getvalue()
+
+
+def _get_backlinked_pages(db, caller_page, backlinks_page):
+
+    cursor = db.cursor()
+    cursor.execute("""SELECT w1.name, w1.text FROM wiki AS w1,
+        (SELECT name, MAX(version) AS version FROM wiki GROUP BY name) AS w2
+        WHERE w1.version = w2.version AND w1.name = w2.name AND
+        (w1.text %s)""" % db.like(), ('%' + db.like_escape(backlinks_page) + '%',))
+
+    backlinked_pages = []
+    for page, text in cursor:
+        if page != backlinks_page and page != caller_page and \
+           re.search(r'\b%s\b' % backlinks_page, text):
+            backlinked_pages.append(page)
+
+    return backlinked_pages
