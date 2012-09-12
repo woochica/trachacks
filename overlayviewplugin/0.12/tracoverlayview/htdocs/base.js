@@ -177,7 +177,11 @@ jQuery(document).ready(function($) {
 
     $('div#content a.trac-rawlink').each(rawlink);
     $('div.timeline#content dt.attachment a').each(timeline);
-    $('div#content .searchable a > img').each(imageMacro);
+    $('div#content .searchable a > img')
+        .filter(function() {
+            return $(this).parent(':not(.trac-rawlink)').length !== 0;
+        })
+        .each(imageMacro);
 
     attachments.delegate(
         'div > dl.attachments > dt > a, ul > li > a',
