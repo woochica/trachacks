@@ -18,32 +18,34 @@
     <p i18n:msg="">Please refer to <a href="${req.href.wiki('TracWorkflow')}">TracWorkflow</a> for the setting method of a workflow. </p>
     <form method="post" id="dummy-form" action="${panel_href()}">
     <py:if test="editor_mode == 'gui'">
-    <fieldset>
-      <legend>Actions</legend>
-      <p>
-        <button id="line-up">Move up</button>
-        <button id="line-down">Move down</button>
-        <button id="line-remove">Remove</button>
-      </p>
-    </fieldset>
-    <fieldset>
-      <legend>Columns</legend>
-      <p id="setview">
-        <label for="setview-logname">
-          <input type="checkbox" id="setview-logname" checked="checked" />Display name
-        </label>
-        <label for="setview-operations">
-          <input type="checkbox" id="setview-operations" />Operations
-        </label>
-        <label for="setview-permissions">
-          <input type="checkbox" id="setview-permissions" />Permissions
-        </label>
-        <label for="setview-next-status">
-          <input type="checkbox" id="setview-next-status" checked="checked" />Next status
-        </label>
-      </p>
-    </fieldset>
-    <div id="table-wrapper">
+    <div>
+      <fieldset>
+        <legend>Actions</legend>
+        <p>
+          <button id="line-up">Move up</button>
+          <button id="line-down">Move down</button>
+          <button id="line-remove">Remove</button>
+        </p>
+      </fieldset>
+      <fieldset>
+        <legend>Columns</legend>
+        <p id="setview">
+          <label for="setview-logname">
+            <input type="checkbox" id="setview-logname" checked="checked" />Display name
+          </label>
+          <label for="setview-operations">
+            <input type="checkbox" id="setview-operations" />Operations
+          </label>
+          <label for="setview-permissions">
+            <input type="checkbox" id="setview-permissions" />Permissions
+          </label>
+          <label for="setview-next-status">
+            <input type="checkbox" id="setview-next-status" checked="checked" />Next status
+          </label>
+        </p>
+      </fieldset>
+    </div>
+    <div id="table-wrapper" style="display:none">
       <table id="elements">
         <thead>
           <tr>
@@ -143,11 +145,11 @@
           </tr>
         </tbody>
       </table>
-      </div>
-      </py:if>
-      <p py:if="editor_mode == 'text'">
-        <textarea id="text-data" name="text-data" cols="80" rows="15">${text}</textarea>
-      </p>
+    </div>
+    </py:if>
+    <p py:if="editor_mode == 'text'">
+      <textarea id="text-data" name="text-data" cols="80" rows="15">${text}</textarea>
+    </p>
     <p>
       <input id="submit-button" type="submit" value="${dgettext('tracworkflowadmin', 'Save changes')}" />
       <input id="reset-button" type="submit" value="${dgettext('tracworkflowadmin', 'Cancel')}" />

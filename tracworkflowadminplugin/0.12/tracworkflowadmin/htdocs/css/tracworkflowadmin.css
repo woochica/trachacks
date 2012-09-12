@@ -3,9 +3,7 @@ a {
 }
 
 #table-wrapper {
- clear: both;
  overflow: auto;
- display: none;
 }
 
 #table-wrapper input {
@@ -239,7 +237,9 @@ table#elements tbody tr:hover button {
 }
 
 #dummy-form fieldset {
- float: left;
+ display: inline-block;
+ *display: inline;
+ *zoom: 1;
  height: 4em;
  padding: 0 0.5em 0.5em 0.5em;
  margin-right: 1em;
