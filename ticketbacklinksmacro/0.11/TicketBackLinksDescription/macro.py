@@ -10,7 +10,6 @@ from genshi.filters import Transformer
 from trac.core import Component, implements
 from trac.mimeview.api import Context, WikiTextRenderer
 from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.model import WikiPage
 
@@ -21,18 +20,15 @@ class TicketBackLinksMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, args):
         """Shows links to pages referring to a ticket in a ticket's description.
         You can call it from anywhere, like TicketBackLinks[ticketid] .
-        """
-        thispage = None
-        context = formatter.context
-        resource = context.resource
+        """ 
         if args:
-                thispage = args.replace('\'', '\'\'')
+            thispage = args.replace('\'', '\'\'')
         else:
-                thispage = WikiPage(self.env, resource).name
+            thispage = WikiPage(self.env, formatter.context.resource).name
 
-        sql = 'SELECT w1.name FROM wiki w1, ' + \
-                  '(SELECT name, MAX(version) AS VERSION FROM wiki GROUP BY NAME) w2 ' + \
-                  'WHERE w1.version = w2.version AND w1.name = w2.name '
+        sql = """SELECT w1.name FROM wiki w1,
+                (SELECT name, MAX(version) AS VERSION FROM wiki GROUP BY NAME) w2
+                 WHERE w1.version = w2.version AND w1.name = w2.name """
         sql += 'AND ( w1.text LIKE \'%%[ticket:%s]%%\' ' % thispage
         sql += 'OR w1.text LIKE \'%%#%s %%\' )' % thispage
         sql += 'AND ( w1.text LIKE \'%%[ticket:%s]%%\' ' % thispage
@@ -53,24 +49,18 @@ class TicketBackLinksMacro(WikiMacroBase):
         cursor.execute(sql)
 
         buf = StringIO()
-        firsttime = 1
 
-        for page in cursor.fetchall():
-            if page == None:
-                break
-            if page == thispage:
-                pass
-            else:
-                if firsttime != 0:
-                    buf.write('<h3 id="comment:description"> Mentioned in:</h3><ul>')
-                    buf.write('<li><a href="%s">%s</a></li>' % (self.env.href.wiki(page[0]),page[0]))
-                    firsttime = 0
+        buf.write('<h3 id="comment:description"> Mentioned in:</h3><ul>')
+        for page, in cursor:
+            if page and page != thispage:
+                buf.write('<li><a href="%s">%s</a></li>' % (self.env.href.wiki(page), page))
         buf.write('</ul>')
+        
         return buf.getvalue()
 
 class TicketBackLinksDescription(Component):
 
-    implements(ITemplateStreamFilter, ITemplateProvider)
+    implements(ITemplateStreamFilter)
 
     def filter_stream(self, req, method, filename, stream, data):
         if filename != 'ticket.html' and (filename != 'typedticket.html'):
@@ -89,9 +79,3 @@ class TicketBackLinksDescription(Component):
             stream |= Transformer("//div[@class='description']").after(tag.div(content, **{'class': "description" }))
 
         return stream
-
-    def get_templates_dirs(self):
-        return []
-
-    def get_htdocs_dirs(self):
-        return []
