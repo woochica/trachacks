@@ -1,4 +1,4 @@
-"""utilities for TracHours"""
+# -*- coding: utf-8 -*-
 
 import calendar
 import datetime

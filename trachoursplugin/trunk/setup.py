@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import find_packages, setup
 
-version='0.5.2'
+version='0.6.0'
 
 setup(name='TracHoursPlugin',
       version=version,
@@ -8,7 +11,7 @@ setup(name='TracHoursPlugin',
       author='David Turner and Jeff Hammel',
       author_email='jhammel@openplans.org',
       maintainer='Ryan J Ollos',
-      maintainer_email='ryano@physiosonics.com',
+      maintainer_email='ryan.j.ollos@gmail.com',
       url='http://trac-hacks.org/wiki/TracHoursPlugin',
       keywords='trac plugin',
       license="GPL",

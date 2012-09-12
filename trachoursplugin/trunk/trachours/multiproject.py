@@ -1,13 +1,4 @@
-"""
-cross-project hours querying
-"""
-
-import calendar
-import datetime
-import feedparser
-import os
-import sys
-import urllib2
+# -*- coding: utf-8 -*-
 
 from genshi.builder import tag
 from trac.core import *
@@ -17,8 +8,14 @@ from trac.web.chrome import add_ctxtnav
 from trac.web.href import Href
 from trachours.api import hours_format
 from trachours.feed import total_hours
-from trachours.utils import get_date
-from trachours.utils import urljoin
+from trachours.utils import get_date, urljoin
+
+import calendar
+import datetime
+import feedparser
+import os
+import sys
+import urllib2
 
 try:
     import lxml.html
@@ -32,6 +29,7 @@ try:
         return projects
 except ImportError:
     pass
+
 
 def projects_from_directory(directory):
     """returns list of projects from a directory"""

@@ -1,15 +1,17 @@
-import re
+# -*- coding: utf-8 -*-
+
+from trac.core import *
+from trac.perm import PermissionCache
+from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 
 from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
-from trac.core import * 
-from trac.perm import PermissionCache
-from trac.ticket.api import ITicketManipulator
-from trac.ticket.api import ITicketChangeListener
+
+import re
 
 try:
-    from mail2trac.interface import IEmailHandler
     from mail2trac.email2ticket import ReplyToTicket
+    from mail2trac.interface import IEmailHandler
     from mail2trac.utils import emailaddr2user
 except ImportError:
     IEmailHandler = None
@@ -22,7 +24,7 @@ class TracHoursByComment(Component):
         implements(IRequireComponents, ITicketManipulator, ITicketChangeListener)
 
     # for ticket comments: 1.5 hours or 1:30 hours
-    hours_regex = '(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
+    hours_regex = r'(([0-9]+(\.[0-9]+)?)|([0-9]+:[0-5][0-9])) *hours'
 
     # for singular hours: 1 hour
     singular_hour_regex = r'((^)|(\s))1 *hour((\W)|($))' 

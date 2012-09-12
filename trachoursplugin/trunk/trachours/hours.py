@@ -1,51 +1,37 @@
-"""
-TracHoursPlugin:
-a time-tracking plugin for Trac (http://trac.edgewall.org)
-
-See: http://trac-hacks.org/wiki/TracHoursPlugin
-"""
-
-import calendar
-import csv
-from datetime import datetime, timedelta
-import dateutil.parser
-import re
-import time
-
-from api import hours_format # local import
-
-from tracsqlhelper import *
-
-from componentdependencies.interface import IRequireComponents
+# -*- coding: utf-8 -*-
 
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
-
-from multiproject import MultiprojectHours # local import
-
 from trac.core import *
 from trac.mimeview.api import Mimeview, IContentConverter, Context
 from trac.perm import IPermissionRequestor
 from trac.ticket import Ticket
-from trac.ticket.api import TicketSystem
-from trac.ticket.api import ITicketManipulator
+from trac.ticket.api import ITicketManipulator, TicketSystem
 from trac.ticket.query import Query
 from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
-from trac.web.chrome import add_ctxtnav, add_link, add_script, add_stylesheet, add_warning, \
-                            Chrome, INavigationContributor, ITemplateProvider, prevnext_nav
+from trac.web.chrome import (
+    Chrome, INavigationContributor, ITemplateProvider, add_ctxtnav,
+    add_link, add_script, add_stylesheet, add_warning, prevnext_nav
+)
+
+from api import hours_format
+from componentdependencies.interface import IRequireComponents
+from tracsqlhelper import *
+from multiproject import MultiprojectHours
+from setup import SetupTracHours
+from utils import get_all_users, get_date, truncate_to_month
 
 from StringIO import StringIO
+from datetime import datetime, timedelta
+import calendar
+import csv
+import dateutil.parser
+import re
+import time
 
-# local imports
-from setup import SetupTracHours
-from utils import get_all_users
-from utils import get_date
-from utils import truncate_to_month
-
-### unbound methods
 
 def query_to_query_string(query):
     """return a URL query string from a dictionary"""

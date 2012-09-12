@@ -1,15 +1,10 @@
-"""
-SetupTracHours:
-plugin to enable the environment for TracHours.
-This plugin must be initialized prior to using TracHours
-"""
-
-from api import custom_fields
+# -*- coding: utf-8 -*-
 
 from trac.core import *
-from trac.db import Table, Column, Index, DatabaseManager
+from trac.db import Column, DatabaseManager, Index, Table
 from trac.env import IEnvironmentSetupParticipant
 
+from api import custom_fields
 from tracsqlhelper import *
 
 
@@ -18,11 +13,6 @@ class SetupTracHours(Component):
     implements(IEnvironmentSetupParticipant)
 
     ### methods for IEnvironmentSetupParticipant
-
-    """Extension point interface for components that need to participate in the
-    creation and upgrading of Trac environments, for example to create
-    additional database tables."""
-        
 
     def environment_created(self):
         """Called when a new Trac environment is created."""
@@ -105,12 +95,11 @@ class SetupTracHours(Component):
         create_table(self.env, time_query_table)
 
     def initialize_old_tickets(self):
-        execute_non_query(self.env, """INSERT INTO ticket_custom (ticket, name, value)
-  SELECT id, 'totalhours', '0' FROM ticket WHERE id NOT IN (
-    SELECT ticket from ticket_custom WHERE name='totalhours'
-  );
-""")
-        
+        execute_non_query(self.env, """
+            INSERT INTO ticket_custom (ticket, name, value)
+            SELECT id, 'totalhours', '0' FROM ticket WHERE id NOT IN (
+            SELECT ticket from ticket_custom WHERE name='totalhours');""")
+
     # ordered steps for upgrading
     steps = [ [ create_db, update_custom_fields ], # version 1
               [ add_query_table ], # version 2

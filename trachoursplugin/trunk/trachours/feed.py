@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 def total_hours(feed):
     """return a dictionary in the form of {worker: hours_worked}"""
     hours_dict = {}

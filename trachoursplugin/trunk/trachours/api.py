@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 hours_format = '%.2f'
 
 custom_fields = { 'estimatedhours': 
