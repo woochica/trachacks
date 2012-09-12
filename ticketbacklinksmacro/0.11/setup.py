@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+
 from setuptools import find_packages, setup
 
-version='0.1'
+version='0.2'
 
 setup(name='TicketBackLinksDescription',
       version=version,
@@ -17,9 +18,5 @@ setup(name='TicketBackLinksDescription',
       entry_points = """
       [trac.plugins]
       TicketBackLinksDescription.macro = TicketBackLinksDescription.macro
-      """,
+      """
       )
-#
-#           'TicketBackLinks.macro = TicketBackLinks.macro'
-
-
