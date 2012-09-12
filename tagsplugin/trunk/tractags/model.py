@@ -62,8 +62,20 @@ class TagModelProvider(Component):
         self._upgrade_db(db)
 
     def _need_migration(self, db):
+        cursor = db.cursor()
+        # Special handling for the PostgreSQL Trac db backend.
+        if self.env.config.get('trac', 'database').startswith('postgres'):
+            cursor.execute("""
+                SELECT relname
+                  FROM pg_class
+                 WHERE relname = 'wiki_namespace'
+            """)
+            if cursor.fetchone() is not None:
+                self.env.log.debug("tractags needs to migrate old data")
+                return True
+            else:
+                return False
         try:
-            cursor = db.cursor()
             cursor.execute("SELECT COUNT(*) FROM wiki_namespace")
             cursor.fetchone()
             self.env.log.debug("tractags needs to migrate old data")
