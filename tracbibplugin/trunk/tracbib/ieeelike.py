@@ -517,7 +517,7 @@ class BibRefFormatterIEEELike(Component):
             return ''.join(['[', str(tag.a(name='cite_%s' % key)),
                             str(tag.a(href='#ref_%s' %
                                 key)('%d' % value[":index"])),
-                            ',', page, ']'])
+                            ':', page, ']'])
 
     def pre_process_entry(self, key, cite):
         if ":index" not in cite[key]:

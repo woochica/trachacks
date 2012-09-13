@@ -28,6 +28,7 @@ from api import *
 from source import *
 import re
 from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.api import IWikiSyntaxProvider
 
 try:
     from genshi.builder import tag
@@ -321,11 +322,38 @@ class BibFullRefMacro(WikiMacroBase):
         for source in getLoaded(formatter.req):
             for key, value in source.iteritems():
                 cite[key] = value
-            if showAuto == "true":
-                for key, value in auto.iteritems():
-                    cite[key] = value
+        if showAuto == "true":
+            for key, value in auto.iteritems():
+                cite[key] = value
 
         for format in self.formatter:
             div = format.format_fullref(cite, 'References')
 
         return div
+
+
+class DboeTagWikiSyntaxProvider(Component):
+    """Provide cite:<key>[:<page>]"""
+
+    implements(IWikiSyntaxProvider)
+
+    regexp = r'''cite:(?P<key>[^:\s]+)(:(?P<page>[0-9\-]+))?'''
+
+    # IWikiSyntaxProvider methods
+    def get_wiki_syntax(self):
+        yield (self.regexp,
+               lambda f, n, m: self._format_tagged(f,
+                                                   m.group('key'),
+                                                   m.group('page')))
+
+    def get_link_resolvers(self):
+        return []
+
+    def _format_tagged(self, formatter, key, page):
+        content = key
+        self.log.debug(key)
+        self.log.debug(page)
+        if page:
+            content = content + "," + page
+        return BibCiteMacro(self.env).expand_macro(formatter, name=None,
+                                                   content=content)
