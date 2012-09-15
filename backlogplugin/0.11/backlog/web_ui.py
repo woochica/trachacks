@@ -112,19 +112,18 @@ class BacklogModule(Component):
                 ticket['sumdesc'] += '\n' +  ticket['description']
                 if(len(ticket['sumdesc'])) > 250:
                     ticket['sumdesc'] = ticket['sumdesc'][:250] + '...'
-        
+
         # jquery-ui stylesheet and JS
-        add_stylesheet(req, 'bl/css/jquery-ui-1.7.2.custom.css')
-        add_javascript(req, 'bl/js/jquery-ui-1.7.2.custom.min.js')
+        add_stylesheet(req, 'backlog/css/jquery-ui-1.7.2.custom.css')
+        add_javascript(req, 'backlog/js/jquery-ui-1.7.2.custom.min.js')
         
         #backlog custom stylesheet and JS     
-        add_stylesheet(req, 'bl/css/backlog.css')    
-        
-        if(rw):    
-            add_javascript(req, 'bl/js/backlog.rw.js')
+        add_stylesheet(req, 'backlog/css/backlog.css')
+        if rw:
+            add_javascript(req, 'backlog/js/backlog.rw.js')
         else:
-            add_javascript(req, 'bl/js/backlog.ro.js')
-        
+            add_javascript(req, 'backlog/js/backlog.ro.js')
+
         
         # This tuple is for Genshi (template_name, data, content_type)
         # Without data the trac layout will not appear.
@@ -181,35 +180,25 @@ class BacklogModule(Component):
             data['backlogs'][id]['status_%s'%status] = total
 
         # jquery-ui stylesheet and JS
-        add_stylesheet(req, 'bl/css/jquery-ui-1.7.2.custom.css')
-        add_javascript(req, 'bl/js/jquery-ui-1.7.2.custom.min.js')
+        add_stylesheet(req, 'backlog/css/jquery-ui-1.7.2.custom.css')
+        add_javascript(req, 'backlog/js/jquery-ui-1.7.2.custom.min.js')
         
         #backlog custom stylesheet and JS     
-        add_stylesheet(req, 'bl/css/backlog.css')        
+        add_stylesheet(req, 'backlog/css/backlog.css')        
    
         # This tuple is for Genshi (template_name, data, content_type)
         # Without data the trac layout will not appear.
         return 'backlog_list.html', data, None    
-    
+
     # ITemplateProvider methods
-    # Used to add the plugin's templates and htdocs 
+ 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
-        """Return a list of directories with static resources (such as style
-        sheets, images, etc.)
-
-        Each item in the list must be a `(prefix, abspath)` tuple. The
-        `prefix` part defines the path in the URL that requests to these
-        resources are prefixed with.
-
-        The `abspath` is the absolute path to the directory containing the
-        resources on the local file system.
-        """
         from pkg_resources import resource_filename
-        return [('bl', resource_filename(__name__, 'htdocs'))]
+        return [('backlog', resource_filename(__name__, 'htdocs'))]
 
     def _save_order(self, req):
         bklg_id = req.args.get('bklg_id',0)        
@@ -242,7 +231,7 @@ class BacklogModule(Component):
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
-        bl = BacklogList(self.env)
+        backlog = BacklogList(self.env)
         perms = []
         bl_perms = [b.name2perm() for b in bl]        
         modifyandview = ['BACKLOGS_VIEW']    
