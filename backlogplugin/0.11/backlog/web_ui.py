@@ -233,7 +233,7 @@ class BacklogModule(Component):
     def get_permission_actions(self):
         backlog = BacklogList(self.env)
         perms = []
-        bl_perms = [b.name2perm() for b in bl]        
+        bl_perms = [b.name2perm() for b in backlog]
         modifyandview = ['BACKLOGS_VIEW']    
         modifyandview.extend(['BACKLOG_MODIFY_%s'%bp for bp in bl_perms])      
         owners = [('BACKLOG_OWNER_%s'%bp,['BACKLOGS_VIEW', 'BACKLOG_MODIFY_%s'%bp]) for bp in bl_perms]
