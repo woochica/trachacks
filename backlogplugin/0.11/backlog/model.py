@@ -263,6 +263,7 @@ class BacklogList(object):
         Initializes object with data fetched from the DB
         @param env: Trac environment  
         """
+        self.env= env
         db = env.get_db_cnx()
         sql = "SELECT id FROM backlog ORDER BY id"
         try:

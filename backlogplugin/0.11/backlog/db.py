@@ -18,7 +18,7 @@ schema = [
     # Backlogs
     Table('backlog', key=('id'))[
         Column('id', type='int', auto_increment=True),
-        Column('name',unique=True),
+        Column('name'),
         Column('owner'),
         Column('description')],
     #Tickets in backlogs

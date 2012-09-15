@@ -19,6 +19,16 @@ from trac.ticket.api import TicketSystem
 
 TicketSystem.get_custom_fields_orig = TicketSystem.get_custom_fields
 
+def _create_ordering_table(db):
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT count(*) FROM backlog_ticket")
+    except:
+        cursor.execute("""
+            CREATE TABLE backlog_ticket (bklg_id INTEGER NOT NULL,
+              tkt_id INTEGER NOT NULL, tkt_order REAL,
+            PRIMARY KEY(bklg_id, tkt_id))""")
+
 def custom_enum_fields(self):    
     fields = self.get_custom_fields_orig()
     config = self.config['ticket-custom']
@@ -75,13 +85,11 @@ class BacklogModule(Component):
     def process_request(self, req):
         req.perm.require('BACKLOGS_VIEW')
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        self._create_ordering_table()        
+        _create_ordering_table(db)
         bklg_id = req.args.get('bklg_id')
         if bklg_id is None:
             return self._show_backlog_list(req)         
         if req.method == 'POST':
-            print req.args
             return self._save_order(req)
         
         return self._show_backlog(req)
@@ -124,8 +132,7 @@ class BacklogModule(Component):
     
     def _show_backlog_list(self, req):
         db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        self._create_ordering_table()        
+        _create_ordering_table(db)
         bklg_id = req.args.get('bklg_id',None)    
                                                     
         data = {}
@@ -135,7 +142,8 @@ class BacklogModule(Component):
         sql = """SELECT %s, 0 as total, 0 as active
                  FROM  backlog
                  """%(','.join(columns))
-    
+
+        cursor = db.cursor()
         cursor.execute(sql)
         columns.extend(['total', 'active'])
         # creating dictionary with id as key of columnt:value dictionaries
@@ -170,17 +178,8 @@ class BacklogModule(Component):
                 data['backlogs'][id]['closed'] += total
             else:
                 data['backlogs'][id]['active'] += total
-            data['backlogs'][id]['status_%s'%status] = total 
-       
+            data['backlogs'][id]['status_%s'%status] = total
 
-            
-           
-                            
-              
-        data['req'] = str(dir(req));
-        data['args'] = str(req.args);
-        
-        
         # jquery-ui stylesheet and JS
         add_stylesheet(req, 'bl/css/jquery-ui-1.7.2.custom.css')
         add_javascript(req, 'bl/js/jquery-ui-1.7.2.custom.min.js')
@@ -211,19 +210,7 @@ class BacklogModule(Component):
         """
         from pkg_resources import resource_filename
         return [('bl', resource_filename(__name__, 'htdocs'))]
-    
-    def _create_ordering_table(self):
-        db = self.env.get_db_cnx()        
-        cursor = db.cursor()
-        try:
-            cursor.execute("SELECT count(*) FROM backlog_ticket")
-            
-        except:
-            cursor.execute("CREATE TABLE backlog_ticket (bklg_id INTEGER NOT NULL,"
-                                                " tkt_id INTEGER NOT NULL," 
-                                                " tkt_order REAL,"
-                                                " PRIMARY KEY(bklg_id, tkt_id))")
-            
+
     def _save_order(self, req):
         bklg_id = req.args.get('bklg_id',0)        
         backlog = Backlog(self.env, bklg_id)

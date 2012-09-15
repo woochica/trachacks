@@ -10,7 +10,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='BacklogPlugin', 
-    version='0.1.33',
+    version='0.1.34',
     packages=['backlog'],
     author='Bart Ogryczak',
     author_email='bartlomiej.ogryczak@hyves.nl',
