@@ -33,23 +33,24 @@ class ADAuthStore(Component):
 
     ldap_uri = Option('account-manager', 'ldap_uri', 'ldap://localhost', 'URI of the LDAP or Active Directory Server')
     ldap_charset = Option('account-manager', 'ldap_charset', 'utf-8', 'Text encoding used by the LDAP or Active Directory Server') 
-    ldap_basedn = Option('account-manager', 'ldap_basedn', None, 'Base DN used for account searches')
     ldap_scope = Option('account-manager', 'ldap_scope', 1, '0=Base, 1=OneLevel, 2=Subtree')
     ldap_binddn = Option('account-manager', 'ldap_binddn', '', 'DN used to bind to AD, leave blank for anonymous bind')
     ldap_bindpw = Option('account-manager', 'ldap_bindpw', '', 'Password used when binding to AD, leave blank for anonymous bind')
     ldap_timeout = Option('account-manager', 'ldap_timeout', 5, 'ldap response timeout in seconds')
+    ldap_user_basedn = Option('account-manager', 'ldap_user_basedn', None, 'Base DN used for account searches')
     user_attr = Option('account-manager', 'user_attr', 'sAMAccountName', 'attribute of the user in the directory')
     name_attr = Option('account-manager', 'name_attr', 'displayName', 'attribute of the users name in the directory')
     email_attr = Option('account-manager', 'email_attr', 'mail', 'attribute of the users email in the directory')
+    ldap_group_basedn = Option('account-manager', 'ldap_group_basedn', None, 'Base DN used for group searches')
     group_validusers = Option('account-manager', 'group_validusers', None, 'DN of group containing valid users. If None, any AD user is valid')
     group_tracadmin = Option('account-manager', 'group_tracadmin', None, 'DN of group containing TRAC_ADMIN users (can also assign TRAC_ADMIN to an LDAP group.)')
     group_expandldap = Option('account-manager', 'group_expandldap', 1, 'binary: expand ldap_groups into trac groups.')
     group_member_attr = Option('account-manager', 'group_member_attr', 'member', 'attribute group members')
+    group_member_uses_dn = Option('account-manager', 'group_member_attr', 'member', '0=member uses uid, 1=member uses the full DN')
     cache_ttl = Option('account-manager', 'cache_timeout', 60, 'cache timeout in seconds')
     cache_memsize = Option('account-manager', 'cache_memsize', 400, 'size of memcache in entries, zero to disable')
     cache_memprune = Option('account-manager', 'cache_memprune', 5, 'percent of entries to prune')
     cache_memsize_warn = Option('account-manager', 'cache_memsize_warn', 300, 'warning message for cache pruning in seconds')
-    
     
     def __init__(self, ldap=None):
         #-- cache my ldap handle
@@ -89,19 +90,22 @@ class ADAuthStore(Component):
       users = self._cache_get(group_dn)
       if users:
          return users
+       
+      #-- where to look
+      base_dn = self.ldap_group_basedn or self.ldap_user_basedn
               
       users = []
       if self.group_expandldap:
         group_member_attr = self.group_member_attr.decode('ascii')
         groupfilter = '(%s)' % (group_dn.split(',')[0])
-        g = self._ad_search(self.ldap_basedn, self.ldap_scope, groupfilter, [group_member_attr])
+        g = self._dir_search(basedn, self.ldap_scope, groupfilter, [group_member_attr])
         if g and g[0][1].has_key(group_member_attr):
             users = []
             for m in g[0][1][group_member_attr]:
               m_filter = '(%s)' % (m.split(',')[0])
               e = self._cache_get(m_filter)
               if not e:
-                 e = self._ad_search(self.ldap_basedn, self.ldap_scope, m_filter)
+                 e = self._dir_search(basedn, self.ldap_scope, m_filter)
                  self._cache_set(m_filter, e)
                  if e:
                    if 'person' in e[0][1]['objectClass']:
@@ -142,7 +146,7 @@ class ADAuthStore(Component):
         
         dn = self._get_user_dn(user, NOCACHE)
         if dn:
-            success = self._bind_ad(dn, password) or False
+            success = self._bind_dir(dn, password) or False
             if success:
               msg += " Password Verified"
               success = True
@@ -158,7 +162,7 @@ class ADAuthStore(Component):
         #   note the use of NoCache to force the update(s)
         attrs = [ self.user_attr, 'mail', 'proxyAddress','displayName']
         filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user )
-        users = self._ad_search(self.ldap_basedn, self.ldap_scope, filter, attrs, NOCACHE)
+        users = self._dir_search(self.ldap_user_basedn, self.ldap_scope, filter, attrs, NOCACHE)
         
         if not users:
             raise TracError('Weird! authenticated, but didnt find the user with filter : %s (%s)' % (filter, users))
@@ -217,7 +221,7 @@ class ADAuthStore(Component):
             return []
       
     # Internal methods
-    def _bind_ad(self, user_dn=None, passwd=None):
+    def _bind_dir(self, user_dn=None, passwd=None):
       
         #-- what do we connect to
         if not self.ldap_uri:
@@ -232,11 +236,11 @@ class ADAuthStore(Component):
             # ldap.ReconnectLDAPObject(uri [, trace_level=0 [, trace_file=sys.stdout [, trace_stack_limit=5] [, retry_max=1 [, retry_delay=60.0]]]])
             user_ldap = ldap.ldapobject.ReconnectLDAPObject(self.ldap_uri,0, '', 0, 2, 1)
         
-            self.log.debug('_bind_ad: attempting specific bind to %s as %s' % (self.ldap_uri, user_dn))
+            self.log.debug('_bind_dir: attempting specific bind to %s as %s' % (self.ldap_uri, user_dn))
             try:
                 user_ldap.simple_bind_s(user_dn, passwd)
             except Exception, e:
-                self.log.error('_bind_ad: binding failed. %s ' % (e))
+                self.log.error('_bind_dir: binding failed. %s ' % (e))
                 return None
             return 1
             
@@ -248,9 +252,9 @@ class ADAuthStore(Component):
         self._ldap = ldap.ldapobject.ReconnectLDAPObject(self.ldap_uri, retry_max=5, retry_delay=1)
         
         if self.ldap_binddn:
-          self.log.debug('_bind_ad: attempting general bind to %s as %s' % (self.ldap_uri, self.ldap_binddn))
+          self.log.debug('_bind_dir: attempting general bind to %s as %s' % (self.ldap_uri, self.ldap_binddn))
         else: 
-          self.log.debug('_bind_ad: attempting general bind to %s anonymously' % self.ldap_uri)
+          self.log.debug('_bind_dir: attempting general bind to %s anonymously' % self.ldap_uri)
           
         try:
             self._ldap.simple_bind_s(self.ldap_binddn, self.ldap_bindpw)
@@ -274,7 +278,7 @@ class ADAuthStore(Component):
         if dn:
           return dn
             
-        u = self._ad_search(self.ldap_basedn, self.ldap_scope,
+        u = self._dir_search(self.ldap_user_basedn, self.ldap_scope,
                                 "(&(%s=%s)(objectClass=person))" % (self.user_attr,user), 
                                 [self.user_attr], cache )
         if not u:
@@ -289,12 +293,13 @@ class ADAuthStore(Component):
     def _get_user_groups(self, dn):
         """Returns a list of all groups a user belongs to"""
         
+        basedn = self.ldap_group_basedn or self.ldap_user_basedn
         groups = self._cache_get('groups: %s' % dn)
         if groups:
           return groups
         
         groups = []
-        ldapgroups = self._ad_search(self.ldap_basedn, self.ldap_scope,
+        ldapgroups = self._dir_search(basedn, self.ldap_scope,
                                      '(&(%s=%s)(objectClass=group))' % (self.group_member_attr.decode('ascii'), dn), 
                                      [self.user_attr])
               
@@ -424,17 +429,23 @@ class ADAuthStore(Component):
           newlist.append(val.encode('ascii','ignore'))
       return newlist        
     
-    def _ad_search(self, ldap_basedn=None, ldap_scope=1, filter=None, attrs=[], check_cache=1):
+    def _dir_search(self, basedn=None, scope=1, filter=None, attrs=[], check_cache=1):
       #self.env.log.debug('searching for: %s' % filter)
       #-- get current time for cache
       current_time = time.time()
       
       attrs = self._decode_list(attrs)
       
+      #-- sanity
+      if not basedn:
+        raise TracError('basedn not defined!')
+      if not filter:
+        raise TracError('filter not defined!')
+      
       #-- create unique key from the filter and the
-      keystr = ",".join([ ldap_basedn, str(ldap_scope), filter, ":".join(attrs) ])
+      keystr = ",".join([ basedn, str(scope), filter, ":".join(attrs) ])
       key = hashlib.md5(keystr).hexdigest()
-      self.log.debug('_ad_search: searching %s for %s(%s)' % (ldap_basedn, filter, key))
+      self.log.debug('_dir_search: searching %s for %s(%s)' % (basedn, filter, key))
       
       db = self.env.get_db_cnx()
       
@@ -462,22 +473,22 @@ class ADAuthStore(Component):
                cur.execute('DELETE FROM ad_cache WHERE lut < %s' % (current_time - int(self.cache_ttl)))
                db.commit()
       else:
-        self.log.debug('_ad_search: skipping cache.')
+        self.log.debug('_dir_search: skipping cache.')
       
       #-- check Directory
-      dir = self._bind_ad()
-      self.log.debug('_ad_search: starting LDAP search of %s %s using %s for %s ' % (self.ldap_uri, ldap_basedn, filter, attrs))
+      dir = self._bind_dir()
+      self.log.debug('_dir_search: starting LDAP search of %s %s using %s for %s ' % (self.ldap_uri, basedn, filter, attrs))
       
       try:
-        res = dir.search_s(ldap_basedn.encode(self.ldap_charset), ldap_scope, filter, attrs)
+        res = dir.search_s(basedn.encode(self.ldap_charset), scope, filter, attrs)
       except ldap.LDAPError, e:
         self.log.error('Error searching : %s', e)
         
       #-- did we get a result?
       if res:
-        self.log.debug('_ad_search: AD hit, %d entries.', len(res) )
+        self.log.debug('_dir_search: AD hit, %d entries.', len(res) )
       else:
-        self.log.debug('_ad_search: AD miss.')
+        self.log.debug('_dir_search: AD miss.')
         
       #-- return if not caching
       if not check_cache:
@@ -492,7 +503,7 @@ class ADAuthStore(Component):
            
       except Exception, e:
         db.rollback()
-        self.log.warn('_ad_search: db cache update failed. %s' % e)
+        self.log.warn('_dir_search: db cache update failed. %s' % e)
       
       #-- set the data in the memcache 
       self._cache_set(key, res)
