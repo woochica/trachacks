@@ -1,0 +1,19 @@
+backlog-0.2 (not yet released) - trunk
+ resolved issues:
+ * #10330: Out of range timestamp errors were being generated due to change
+   in storage of timestamps to microsecond format in Trac 0.12.
+ * #8653: The `env` object was not being assigned as a member variable of
+   the BacklogList class, but was later being called.
+ * #10326: The `unique` attribute is no longer a Column attribute
+   (since [t 9406]), and was never utilized within the trac.db.api.Column
+   class anyway.
+ * #10326: The `req` object was being overwritten in the template space.
+ * #10326: Fixed 'cannot operate on closed cursor' error.
+ 
+ * TODO: Review r6448 through r9802 and document changes
+ 
+ new features:
+ 
+ 
+backlog-0.1 - tags/0.1
+ * Initial release.

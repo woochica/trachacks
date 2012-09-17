@@ -1,33 +1,38 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" 
-	  xmlns:py="http://genshi.edgewall.org/"
-      xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="layout.html" />
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-		<title>Backlog</title>
-	</head>
-	<body>
+<html xmlns="http://www.w3.org/1999/xhtml"
+xmlns:py="http://genshi.edgewall.org/"
+xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Backlog</title>
+  </head>
+  <body>
 
-	    <div id="content" class="backlog">
-	      <h1>Backlogs</h1>
-		  <div py:for="backlog in backlogs.values()" onClick="document.location='${href.backlog(backlog.id)}'">
-		  <a href="${href.backlog(backlog.id)}"><h2 style="border-bottom: solid 1px gray; background: rgb(230,230,230);">Backlog:  <em>${backlog.name}</em></h2></a>
-		  <h3 py:if="backlog.owner">Owner: ${backlog.owner}</h3>
-		  <p py:if="backlog.description" class="backlog_description">${backlog.description}</p>
-		  <py:choose>
-		  	<p py:when="backlog.total > 0">
-		  	<div class="progressbar"><div style="width: ${round(100*backlog.closed/float(backlog.total))}%" class="progressbar_closed">
-		  	</div><div style="width: ${round(100*(backlog.get('status_new',0) + backlog.get('status_reopened',0))/float(backlog.total))}%" class="progressbar_new"></div></div>
-		  	 active: ${round(100.0*backlog.active/backlog.total)}% closed: ${round(100.0*backlog.closed/backlog.total)}% <py:if test="backlog.active > 0" > /  unassigned: ${round(100.0*(backlog.get('status_new',0) + backlog.get('status_reopened',0))/backlog.active)}%</py:if></p>
-		  	<p py:otherwise=""> this backlogs has no tickets </p> 
-		  </py:choose>
-
-		  </div>  
-				
-		</div>
-		
-
-	</body>
-</html>		    
+    <div id="content" class="backlog">
+      <h1>Backlogs</h1>
+      <div py:for="backlog in backlogs.values()" onClick="document.location='${href.backlog(backlog.id)}'">
+        <a href="${href.backlog(backlog.id)}"><h2 style="border-bottom: solid 1px gray; background: rgb(230,230,230);">Backlog: <em>${backlog.name}</em></h2></a>
+        <h3 py:if="backlog.owner">Owner: ${backlog.owner}</h3>
+        <p py:if="backlog.description" class="backlog_description">
+          ${backlog.description}
+        </p>
+        <py:choose>
+          <p py:when="backlog.total > 0">
+            <div class="progressbar">
+              <div style="width: ${round(100*backlog.closed/float(backlog.total))}%" class="progressbar_closed"></div><div style="width: ${round(100*(backlog.get('status_new',0) + backlog.get('status_reopened',0))/float(backlog.total))}%" class="progressbar_new"></div>
+            </div>
+            active: ${round(100.0*backlog.active/backlog.total)}% closed: ${round(100.0*backlog.closed/backlog.total)}%
+            <py:if test="backlog.active > 0" >
+              /  unassigned: ${round(100.0*(backlog.get('status_new',0) + backlog.get('status_reopened',0))/backlog.active)}%
+            </py:if>
+          </p>
+          <p py:otherwise="">
+            this backlog has no tickets
+          </p>
+        </py:choose>
+      </div>
+    </div>
+  </body>
+</html>

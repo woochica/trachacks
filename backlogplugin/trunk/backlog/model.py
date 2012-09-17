@@ -1,8 +1,12 @@
-'''
-Created on Aug 17, 2009
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009-2011 Bart Ogryczak
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
-@author: Bart Ogryczak
-'''
+import sys, traceback
 
 HARD_DEADLINE_FIELD = 'hard_deadline1'
 IMPACT_FIELD = 'impact'
@@ -10,30 +14,26 @@ NO_BACKLOG = 'no backlog'
 
 class BacklogException(Exception): pass
 
-import sys, traceback
-
 class Backlog(object):
-    '''
-    Class representing an Backlog 
-    '''
+    "Class representing an Backlog"
 
-    def __init__(self, env, id = None, name = None):
-        '''
+    def __init__(self, env, id=None, name=None):
+        """
         Constructor
         @param env: Trac environment
         @param id:  numeric id of the backlog
         @param name: textual name of the backlog
-                
+        
         Retrieves backlog either by id or name;
         Initializes empty object is nither is set.
-        '''
+        """
         self.env = env
         self.db = self.env.get_db_cnx()
-        
-        if(name == NO_BACKLOG): name = None        
-        if(id):
-            self._fetch_backlog(id)
-        elif(name):
+
+        if name == NO_BACKLOG: name = None
+        if id:
+            self._fetch_by_id(id)
+        elif name:
             self._fetch_by_name(name)
 
     def create(self, name):
@@ -41,31 +41,28 @@ class Backlog(object):
         Creates new backlog entry in DB.
         @param name: textual name of the backlog   
         """
-        if(not name or name.strip()==''): 
-            raise BacklogException("backlog needs to have non-empty name")       
-        
+        if not name or not name.strip():
+            raise BacklogException("Backlog needs to have non-empty name")
+
         self.name = name
         self.id = self._get_free_id()
         if(not self.id): return None
         return self._create()
-        
-        
+
     def _create(self):
-        """
-        Performs actual insert in DB 
-        """                
+        "Performs actual insert in DB"
         try:
             cursor = self.db.cursor()
             id = self._get_free_id()
-            sql = "INSERT INTO backlog (id, name) VALUES (%s, %s)" 
-            cursor.execute(sql,(self.id, self.name,))
+            sql = "INSERT INTO backlog (id, name) VALUES (%s, %s)"
+            cursor.execute(sql, (self.id, self.name,))
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
             raise BacklogException("Failed to create new backlog")
-        
-        return self  
-    
+
+        return self
+
     def _get_free_id(self):
         """
         Auto-increment emulation, as some DBs don't have it.
@@ -80,7 +77,7 @@ class Backlog(object):
             raise BacklogException("Failed to obtain next free id")    
         return id
     
-    def _fetch_backlog(self, id):
+    def _fetch_by_id(self, id):
         """
         Retrieves backlog data by id
         @param id:  numeric id of the backlog        
@@ -89,15 +86,12 @@ class Backlog(object):
         self.id = int(id)
         try:
             cursor = self.db.cursor()
-            #get name
             sql = "SELECT name, owner, description FROM backlog WHERE id = %s"
             cursor.execute(sql, (self.id,))
-           #print cursor.fetchone()
             self.name, self.owner, self.description = cursor.fetchone()
-                             
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to retrieve backlog with id=%s"%self.id)  
+            raise BacklogException("Failed to retrieve backlog with id=%s" % self.id)  
         
     def _fetch_by_name(self, name):
         """
@@ -106,15 +100,13 @@ class Backlog(object):
         """
         try:
             cursor = self.db.cursor()
-            #get id
             sql = "SELECT id FROM backlog WHERE name = %s" 
             cursor.execute(sql, (name,))
             self.id = cursor.fetchone()[0]                                
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to retrieve backlog with name=%s"%name)  
-        self._fetch_backlog(self.id)
-            
+            raise BacklogException("Failed to retrieve backlog with name=%s" % name)
+        self._fetch_by_id(self.id)
         
     def get_tickets(self, all_in_one=False):
         assert self.id, 'id not set'
@@ -138,16 +130,16 @@ class Backlog(object):
                      WHERE t.id = b.tkt_id 
                      AND b.bklg_id = %%s 
                      AND (b.tkt_order IS NULL OR b.tkt_order > -1)
-                     ORDER BY b.tkt_order, t.time DESC"""%(','.join(columns), HARD_DEADLINE_FIELD, IMPACT_FIELD)
-            columns.extend(('hard_deadline','impact'))
-            self.env.log.info('GET_TICKETS sql = """%s"""'%sql)      
+                     ORDER BY b.tkt_order, t.time DESC""" % (','.join(columns), HARD_DEADLINE_FIELD, IMPACT_FIELD)
+            columns.extend(('hard_deadline', 'impact'))
+            self.env.log.info('GET_TICKETS sql = """%s"""' % sql)      
             cursor.execute(sql, (self.id,))            
             all_tickets = [dict(zip(columns, ticket)) for ticket in cursor]  #creating list of column:value dictionaries
             #self.env.log.info('ALL_TICKETS = %s'%all_tickets)
            
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to retrieve ticket data for backlog %s"%self.name) 
+            raise BacklogException("Failed to retrieve ticket data for backlog %s" % self.name) 
         
         if(all_in_one):  
                 return all_tickets
@@ -164,7 +156,7 @@ class Backlog(object):
         @param order: sequence of ticket IDs 
         """
         assert self.id, 'id not set'
-        order = [ (self.id, int(tkt_id), tkt_order+1) for (tkt_order, tkt_id) in enumerate(order)]                        
+        order = [ (self.id, int(tkt_id), tkt_order + 1) for (tkt_order, tkt_id) in enumerate(order)]                        
         # print 'order', order        
         try:
             cursor = self.db.cursor()       
@@ -172,7 +164,7 @@ class Backlog(object):
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to save order for backlog %s"%self.name) 
+            raise BacklogException("Failed to save order for backlog %s" % self.name) 
             
     def add_ticket(self, tkt_id):
         """ 
@@ -186,16 +178,16 @@ class Backlog(object):
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to add ticket %s to backlog %s"%(tkt_id, self.name)) 
-            
+            raise BacklogException("Failed to add ticket %s to backlog %s" % (tkt_id, self.name)) 
+
     def reset_priority(self, tkt_id, only_if_deleted=False):
-        """ 
-        resets the ticket's priority to NULL (unordered) 
+        """
+        resets the ticket's priority to NULL (unordered)
         @param tkt_id: ID or sequence of IDs of ticket(s)
-        @param only_if_deleted: reset the priority only if ticket was deleted as closed (archived)  
+        @param only_if_deleted: reset the priority only if ticket was deleted as closed (archived)
         """
         try:
-            cursor = self.db.cursor()                 
+            cursor = self.db.cursor()
             sql = 'UPDATE backlog_ticket SET tkt_order = NULL WHERE tkt_id = %s'
             if(only_if_deleted):
                 sql += ' AND tkt_order = -1'               
@@ -207,14 +199,14 @@ class Backlog(object):
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to reset priority for ticket(s) %s "%(tkt_id,))          
+            raise BacklogException("Failed to reset priority for ticket(s) %s " % (tkt_id,))          
         
     def delete_ticket(self, tkt_id):
         """ 
         removes ticket from this backlog
         @param tkt_id: ID of ticket
         """
-        if(not getattr(self,'id')): 
+        if(not getattr(self, 'id')): 
             self.env.log.warn('trying to delete ticket from uninitialized backlog')
             return
         try:
@@ -223,68 +215,51 @@ class Backlog(object):
             self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to delete ticket %s from backlog"%(tkt_id,))          
+            raise BacklogException("Failed to delete ticket %s from backlog" % (tkt_id,))          
 
-        
     def remove_closed_tickets(self):
         """
-        hides (archives) all closed tickets in the current backlog           
+        hides (archives) all closed tickets in the current backlog
         """
         assert self.id, 'id not set'
-        sql = """ UPDATE backlog_ticket SET tkt_order = -1
-              WHERE bklg_id = %s
-              AND tkt_id IN 
-              (SELECT id FROM ticket
-               WHERE status = 'closed')              
-              """
+        sql = """UPDATE backlog_ticket SET tkt_order = -1
+                 WHERE bklg_id = %s
+                 AND tkt_id IN (SELECT id FROM ticket
+                  WHERE status = 'closed')"""
         try:
-            #print sql
-            cursor = self.db.cursor()               
-            cursor.execute(sql, (self.id, ))
+            cursor = self.db.cursor()
+            cursor.execute(sql, (self.id,))
             self.db.commit() 
         except:
             self.env.log.error(traceback.format_exc())
-            raise BacklogException("Failed to clean up closed tickets in backlog %s"%(tkt_id, self.name)) 
+            raise BacklogException("Failed to clean up closed tickets in backlog %s" % (tkt_id, self.name))
             
     def name2perm(self):
         """
         creates string appropriate for Trac's permission system from current backlog's name 
         """
         import re
-        return re.sub('[^A-Z0-9]','_',self.name.upper())
+        return re.sub('[^A-Z0-9]', '_', self.name.upper())
 
         
 class BacklogList(object):
-    """
-    Class representing a sequence of all backlogs available in Trac
-    """
+    "Class representing a sequence of all backlogs available in Trac"
+
     def __init__(self, env):
+        """Initializes object with data fetched from the DB
+        @param env: Trac environment
         """
-        Initializes object with data fetched from the DB
-        @param env: Trac environment  
-        """
-        self.env= env
-        db = env.get_db_cnx()
-        sql = "SELECT id FROM backlog ORDER BY id"
+        self.env = env
         try:
-            cursor = db.cursor()   
-            cursor.execute(sql,)
-            self.backlogs = (Backlog(env, row[0]) for row in cursor)             
+            db = env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT id FROM backlog ORDER BY id")
+            self.backlogs = (Backlog(env, row[0]) for row in cursor)
         except:
             self.env.log.error(traceback.format_exc())
             self.backlogs = ()
+
     def __iter__(self):
-        """
-        Returns iterator
-        """
+        "Returns iterator"
         return self.backlogs.__iter__()
-    
-        
-        
-            
-        
-        
-            
-        
-        
-        
+

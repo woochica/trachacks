@@ -1,8 +1,10 @@
-'''
-Created on Aug 21, 2009
-@author: Bart Ogryczak
-'''
-
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009-2011 Bart Ogryczak
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 from trac.core import *
 from trac.db.schema import Table, Column
@@ -10,11 +12,11 @@ from trac.env import IEnvironmentSetupParticipant
 
 __all__ = ['BacklogSetup']
 
-# Database version identifier for upgrades.
+# Database version identifier for upgrades
 db_version = 1
 
 # Database schema
-schema = [
+SCHEMA = [
     # Backlogs
     Table('backlog', key=('id'))[
         Column('id', type='int', auto_increment=True),
@@ -23,7 +25,7 @@ schema = [
         Column('description')],
     #Tickets in backlogs
     Table('backlog_ticket', key=('bklg_id', 'tkt_id'))[
-        Column('bklg_id', type='int'),        
+        Column('bklg_id', type='int'),
         Column('tkt_id', type='int'),
         Column('tkt_order', type='int')],
 ]
@@ -32,37 +34,48 @@ schema = [
 def to_sql(env, table):
     """ Convenience function to get the to_sql for the active connector."""
     from trac.db.api import DatabaseManager
-    dm = env.components[DatabaseManager]
-    dc = dm._get_connector()[0]
+    dc = DatabaseManager(env)._get_connector()[0]
     return dc.to_sql(table)
 
-def create_tables(cursor, env):
-    """ Creates the basic tables as defined by schema.
+def create_ordering_table(db):
+    cursor = db.cursor()
+    try:
+        cursor.execute("SELECT count(*) FROM backlog_ticket")
+    except:
+        cursor.execute("""
+            CREATE TABLE backlog_ticket (bklg_id INTEGER NOT NULL,
+              tkt_id INTEGER NOT NULL, tkt_order REAL,
+            PRIMARY KEY(bklg_id, tkt_id))""")
+
+def create_tables(env, db):
+    """ Creates the basic tables as defined by SCHEMA.
     using the active database connector. """
-    for table in schema:
+    cursor = db.cursor()
+    for table in SCHEMA:
         for stmt in to_sql(env, table):
             cursor.execute(stmt)    
-    populate_tables(cursor, env)
-    
-  
+    populate_tables(db)
+    cursor.execute("INSERT into system values ('backlog_version', %s)", (db_version,))
+
 #just an hack until admin interface is done
-def populate_tables(cursor, env):
+def populate_tables(db):
+    cursor = db.cursor()
     bls = ((1, 'Product and Community'),
-            (2, 'Sales and Business Intelligence'),
-            (3, 'Business Development'),
-            (4, 'System Engineering'))
-    cursor.executemany('INSERT INTO backlog (id, name) VALUES (%s, %s)',bls)
-    
+           (2, 'Sales and Business Intelligence'),
+           (3, 'Business Development'),
+           (4, 'System Engineering'))
+    cursor.executemany('INSERT INTO backlog (id, name) VALUES (%s, %s)', bls)
+
 def add_custom_fields(env):
     config = env.config
-    config.set('ticket-custom','backlog','backlog')
-    config.set('ticket-custom','backlog.label','backlog')
-    config.set('ticket-custom','hard_deadline1','text')
-    config.set('ticket-custom','hard_deadline1.label','hard deadline')
-    config.set('ticket-custom','hard_deadline2','text')
-    config.set('ticket-custom','hard_deadline2.label','reason for hard deadline')
+    config.set('ticket-custom', 'backlog', 'backlog')
+    config.set('ticket-custom', 'backlog.label', 'backlog')
+    config.set('ticket-custom', 'hard_deadline1', 'text')
+    config.set('ticket-custom', 'hard_deadline1.label', 'hard deadline')
+    config.set('ticket-custom', 'hard_deadline2', 'text')
+    config.set('ticket-custom', 'hard_deadline2.label', 'reason for hard deadline')
     config.save()
-        
+
 # Upgrades
 
 pass
@@ -81,25 +94,20 @@ class BacklogSetup(Component):
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
         Returns `True` if upgrade is needed, `False` otherwise."""
-        cursor = db.cursor()
-        return self._get_version(cursor) < db_version
+        return self._get_version(db) < db_version
 
     def upgrade_environment(self, db):
         """Actually perform an environment upgrade, but don't commit as
         that is done by the common upgrade procedure when all plugins are done."""
-        cursor = db.cursor()
-        if self._get_version(cursor) == 0:
-           print "creating backlog tables"
-           create_tables(cursor, self.env)           
-           cursor.execute("INSERT into system values ('backlog_version', %s)",(db_version,))
-           print "adding custom ticket fields"
-           add_custom_fields(self.env) 
-           
+        if self._get_version(db) == 0:
+           create_tables(self.env, db)
+           add_custom_fields(self.env)
         else:
-            # do upgrades here when we get to that...
+            # do upgrades here when they are needed
             pass
 
-    def _get_version(self, cursor):
+    def _get_version(self, db):
+        cursor = db.cursor()
         try:
             sql = "SELECT value FROM system WHERE name='backlog_version'"
             self.log.debug(sql)
