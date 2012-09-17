@@ -57,10 +57,7 @@
 		    				<td style="width: 60px;">${ticket.milestone}</td>					    				    	
 		    				<td style="width: 90px;"> <div style="width: 85px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a></div></td>			
 		    				<td style="width: 60px;">${ticket.status}</td>	
-			    			<td style="width: 60px;" py:choose="">
-			    			  <py:when test="from_utimestamp">${pretty_timedelta(from_utimestamp(ticket.time))}</py:when>
-			    				<py:otherwise>${pretty_timedelta(from_timestamp(ticket.time))}</py:otherwise>
-			    			</td>
+                <td style="width: 60px;" py:choose="">${pretty_timedelta(ticket.time)}</td>
 		    				
 							<py:choose>								
 								 <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>								 								 
@@ -116,11 +113,7 @@
 			    				<td style="width: 60px;">${ticket.milestone}</td>					    				    	
 			    				<td style="width: 90px;"> <div style="width: 85px; height: 1.5em; overflow: hidden;"><a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a></div></td>			
 			    				<td style="width: 60px;">${ticket.status}</td>
-			    				<td style="width: 60px;" py:choose="">
-			    					<py:when test="from_utimestamp">${pretty_timedelta(from_utimestamp(ticket.time))}</py:when>
-			    					<py:otherwise>${pretty_timedelta(from_timestamp(ticket.time))}</py:otherwise>
-			    				</td>
-			    				
+			    				<td style="width: 60px;" py:choose="">${pretty_timedelta(ticket.time)}</td>
 								<py:choose>								
 									 <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>								 								 
 									 <td py:otherwise="" style="width: 80px;" class="hard_deadline">${ticket.hard_deadline}</td>																
