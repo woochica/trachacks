@@ -10,8 +10,6 @@ from trac.core import *
 from trac.db.schema import Table, Column
 from trac.env import IEnvironmentSetupParticipant
 
-__all__ = ['BacklogSetup']
-
 # Database version identifier for upgrades
 db_version = 1
 
@@ -30,6 +28,11 @@ SCHEMA = [
         Column('tkt_order', type='int')],
 ]
 
+# Hard-coded backlogs, which will be replaced by an Admin panel
+BACKLOGS =  [(1, 'Product and Community'),
+             (2, 'Sales and Business Intelligence'),
+             (3, 'Business Development'),
+             (4, 'System Engineering')]
 
 def to_sql(env, table):
     """ Convenience function to get the to_sql for the active connector."""
@@ -54,26 +57,18 @@ def create_tables(env, db):
     for table in SCHEMA:
         for stmt in to_sql(env, table):
             cursor.execute(stmt)    
-    populate_tables(db)
+    cursor.executemany('INSERT INTO backlog (id, name) VALUES (%s, %s)', BACKLOGS)
     cursor.execute("INSERT into system values ('backlog_version', %s)", (db_version,))
-
-#just an hack until admin interface is done
-def populate_tables(db):
-    cursor = db.cursor()
-    bls = ((1, 'Product and Community'),
-           (2, 'Sales and Business Intelligence'),
-           (3, 'Business Development'),
-           (4, 'System Engineering'))
-    cursor.executemany('INSERT INTO backlog (id, name) VALUES (%s, %s)', bls)
 
 def add_custom_fields(env):
     config = env.config
-    config.set('ticket-custom', 'backlog', 'backlog')
-    config.set('ticket-custom', 'backlog.label', 'backlog')
+    config.set('ticket-custom', 'backlog', 'select')
+    config.set('ticket-custom', 'backlog.label', 'Backlog')
+    config.set('ticket-custom', 'backlog.options', '|'.join([b[1] for b in BACKLOGS]))
     config.set('ticket-custom', 'hard_deadline1', 'text')
-    config.set('ticket-custom', 'hard_deadline1.label', 'hard deadline')
+    config.set('ticket-custom', 'hard_deadline1.label', 'Hard deadline')
     config.set('ticket-custom', 'hard_deadline2', 'text')
-    config.set('ticket-custom', 'hard_deadline2.label', 'reason for hard deadline')
+    config.set('ticket-custom', 'hard_deadline2.label', 'Reason for deadline')
     config.save()
 
 # Upgrades
