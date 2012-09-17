@@ -64,6 +64,7 @@ class SmpAdminPanel(Component):
 
     def render_admin_panel(self, req, category, page, path_info):
         """Return the template and data used to render our administration page."""
+        data = {}
         req.perm.require('PROJECT_SETTINGS_VIEW')
         projects_rows  = self.__SmpModel.get_all_projects()
         projects = []
