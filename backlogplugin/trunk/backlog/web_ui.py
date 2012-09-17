@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 #
 # Copyright (C) 2009-2011 Bart Ogryczak
 # All rights reserved.
@@ -61,6 +62,7 @@ class BacklogModule(Component):
 
     # INavigationContributor methods
 
+
     def get_active_navigation_item(self, req):
         return 'backlog'
 
@@ -87,6 +89,10 @@ class BacklogModule(Component):
             self._save_order(req, backlog_id)
             req.redirect(req.href.backlog(backlog_id))
 
+        add_script(req, 'backlog/js/jquery-ui-1.7.3.custom.min.js')
+        add_stylesheet(req, 'backlog/css/jquery-ui-1.7.3.custom.css')
+        add_stylesheet(req, 'backlog/css/backlog.css')
+
         if backlog_id:
             # TODO: check if backlog with ID exists
             return self._show_backlog(req, backlog_id)
@@ -100,11 +106,7 @@ class BacklogModule(Component):
         data['backlog'] = backlog
         data['tickets'], data['tickets2'] = backlog.get_tickets()
 
-        add_stylesheet(req, 'backlog/css/jquery-ui-1.7.2.custom.css')
-        add_script(req, 'backlog/js/jquery-ui-1.7.2.custom.min.js')
-        add_stylesheet(req, 'backlog/css/backlog.css')
-        has_modify_perm = 'BACKLOG_MODIFY_%s' % backlog.name2perm() in req.perm
-        if has_modify_perm:
+        if 'BACKLOG_MODIFY' in req.perm:
             add_script(req, 'backlog/js/backlog.rw.js')
         else:
             add_script(req, 'backlog/js/backlog.ro.js')
@@ -157,15 +159,11 @@ class BacklogModule(Component):
                 data['backlogs'][id]['active'] += total
             data['backlogs'][id]['status_%s' % status] = total
 
-        add_script(req, 'backlog/js/jquery-ui-1.7.2.custom.min.js')
-        add_stylesheet(req, 'backlog/css/jquery-ui-1.7.2.custom.css')
-        add_stylesheet(req, 'backlog/css/backlog.css')
-
         return 'backlog_list.html', data, None
 
     def _save_order(self, req, backlog_id):
         backlog = Backlog(self.env, backlog_id)
-        req.perm.require('BACKLOG_MODIFY_%s ' % backlog.name2perm())
+        req.perm.require('BACKLOG_MODIFY')
         #db = self.env.get_db_cnx()
         #cursor = db.cursor()
         if req.args.get('delete_closed', '') != '':
@@ -186,17 +184,10 @@ class BacklogModule(Component):
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
-        backlogs = BacklogList(self.env)
-        bl_perms = [b.name2perm() for b in backlogs]
-        view = ['BACKLOGS_VIEW']
-        modify = [('BACKLOG_MODIFY_%s' % bp, ['BACKLOGS_VIEW']) for bp in bl_perms]
-        owner = [('BACKLOG_OWNER_%s' % bp, ['BACKLOG_MODIFY_%s' % bp]) for bp in bl_perms]
-        admin = [('BACKLOGS_ADMIN', ['BACKLOG_MODIFY_%s' % bp for bp in bl_perms])]
-        perms = view
-        perms.extend(modify)
-        perms.extend(owner)
-        perms.extend(admin)
-        return perms
+        return ['BACKLOGS_VIEW',
+                ('BACKLOG_MODIFY', ['BACKLOG_VIEW']),
+                ('BACKLOG_OWNER', ['BACKLOG_MODIFY']),
+                ('BACKLOG_ADMIN', ['BACKLOG_OWNER'])]
 
     # ITemplateProvider methods
  

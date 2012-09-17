@@ -3,21 +3,12 @@ var changes_saved = true;
 $(function() {
 	$('.save_order').attr('disabled', true);
 	$('.reset_order').attr('disabled', true);
-	$(".backlog").sortable({
+	$(".backlog_tickets").sortable({
 		update : function() {
 			list_changed();
-
 		},
-		connectWith : '.backlog'
+		connectWith : '.backlog_tickets'
 	}).disableSelection();
-	// $("#notbacklog").sortable({
-	// update : function () {
-	// list_changed();
-	//		      
-	// },
-	// connectWith: '#backlog'
-	// }).disableSelection();
-
 });
 
 function showOrder() {
@@ -37,7 +28,7 @@ function updateOrder() {
 }
 
 function resetOrder() {
-	changes_saved = true; // not really, just to fool the waring ;-)
+	changes_saved = true;
 	$('#ticket_order').attr('value', '');
 	$('#tickets_out').attr('value', '');
 	return true;
@@ -62,7 +53,6 @@ function deleteClosed() {
 		$('#delete_closed').attr('value', 'true');
 		return true;
 	}
-	// else
 
 	if (confirm('You have unsaved changes to the ticket order. Do you want to save these changes now?')) {
 		$('#delete_closed').attr('value', 'true');

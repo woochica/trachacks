@@ -140,10 +140,10 @@ class Backlog(object):
         except:
             self.env.log.error(traceback.format_exc())
             raise BacklogException("Failed to retrieve ticket data for backlog %s" % self.name) 
-        
-        if(all_in_one):  
+
+        if all_in_one:
                 return all_tickets
-            
+
         #splitting ordered and unordered
         ordered_tickets, unordered_tickets = [], []
         for ticket in all_tickets:

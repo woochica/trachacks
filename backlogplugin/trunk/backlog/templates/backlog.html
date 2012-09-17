@@ -9,7 +9,6 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
     <title>Backlog</title>
   </head>
   <body>
-
     <div id="content" class="backlog">
       <h1>Backlog: <em>${backlog.name}</em></h1>
       <h3 py:if="backlog.owner">Owner: ${backlog.owner}</h3>
@@ -17,69 +16,61 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
         ${backlog.description}
       </p>
       <div class="toplistdiv">
-        <form id="change_ticket_order" method="post" action="#">
-          <input type="hidden" id="ticket_order" name="ticket_order" value="" >
-          </input>
-          <input type="hidden" id="delete_closed" name="delete_closed" value="" >
-          </input>
-          <input type="hidden" id="tickets_out" name="tickets_out" value="" >
-          </input>
-          <div class="toplist">
-            <ul id="backloghdr" >
-              <li>
-                <table width="100%">
-                  <th style="width: 20px;">#</th>
-                  <th style="width: 60px;">ticket</th>
-                  <th style="width: 300px;">
-                  <div style="width: 280px; height: 1.2em; overflow: hidden;">
-                    summary
-                  </div></th>
-                  <th style="width: 120px;">owner</th>
-                  <th style="width: 60px;">milestone</th>
-                  <th style="width: 90px;">impact</th>
-                  <th style="width: 60px;">status</th>
-                  <th style="width: 60px;">time open</th>
-                  <th style="width: 80px;">deadline</th>
-                  <th style="width: 100px;">
-                  <div style="width: 90px; height: 1.2em; overflow: hidden;">
-                    keywords
-                  </div></th>
-                </table>
-              </li>
-            </ul>
-            <ol id="backlog" class="backlog">
-              <li py:for="ticket in tickets" id="ticket_${ticket.id}" class="ticket_${ticket.status}" >
-                <table width="100%">
-                  <td style="width: 20px;">
-                  <py:if test="ticket.tkt_order is not None">
-                    ${ticket.tkt_order}
-                  </py:if></td>
-                  <td style="width: 60px;"><a href="${href.ticket(ticket.id)}"> #${ticket.id}</a></td>
-                  <td style="width: 300px">
-                  <div style="width: 280px; height: 1.5em; overflow: hidden;">
-                    <a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a>
-                  </div></td>
-                  <td style="width: 120px;">${ticket.owner}</td>
-                  <td style="width: 60px;">${ticket.milestone}</td>
-                  <td style="width: 90px;">
-                  <div style="width: 85px; height: 1.5em; overflow: hidden;">
-                    <a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a>
-                  </div></td>
-                  <td style="width: 60px;">${ticket.status}</td>
-                  <td style="width: 60px;" py:choose="">${pretty_timedelta(ticket.time)}</td>
-                  <py:choose>
-                    <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>
-                    <td py:otherwise="" style="width: 80px;" class="hard_deadline">${ticket.hard_deadline}</td>
-                  </py:choose>
-                  <td style="width: 100px">
-                  <div style="width: 90px; height: 1.5em; overflow: hidden;">
-                    ${ticket.keywords}
-                  </div></td>
-                </table>
-              </li>
-            </ol>
-          </div>
-        </form>
+        <div class="toplist">
+          <ul id="backloghdr" >
+            <li>
+              <table width="100%">
+                <th style="width: 20px;">#</th>
+                <th style="width: 60px;">ticket</th>
+                <th style="width: 300px;">
+                <div style="width: 280px; height: 1.2em; overflow: hidden;">
+                  summary
+                </div></th>
+                <th style="width: 120px;">owner</th>
+                <th style="width: 60px;">milestone</th>
+                <th style="width: 90px;">impact</th>
+                <th style="width: 60px;">status</th>
+                <th style="width: 60px;">time open</th>
+                <th style="width: 80px;">deadline</th>
+                <th style="width: 100px;">
+                <div style="width: 90px; height: 1.2em; overflow: hidden;">
+                  keywords
+                </div></th>
+              </table>
+            </li>
+          </ul>
+          <ol id="backlog" class="backlog_tickets">
+            <li py:for="ticket in tickets" id="ticket_${ticket.id}" class="ticket_${ticket.status}" >
+              <table width="100%">
+                <td style="width: 20px;">
+                <py:if test="ticket.tkt_order is not None">
+                  ${ticket.tkt_order}
+                </py:if></td>
+                <td style="width: 60px;"><a href="${href.ticket(ticket.id)}"> #${ticket.id}</a></td>
+                <td style="width: 300px">
+                <div style="width: 280px; height: 1.5em; overflow: hidden;">
+                  <a href="${href.ticket(ticket.id)}" title="${ticket.summary}">${ticket.summary}</a>
+                </div></td>
+                <td style="width: 120px;">${ticket.owner}</td>
+                <td style="width: 60px;">${ticket.milestone}</td>
+                <td style="width: 90px;">
+                <div style="width: 85px; height: 1.5em; overflow: hidden;">
+                  <a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a>
+                </div></td>
+                <td style="width: 60px;">${ticket.status}</td>
+                <td style="width: 60px;" py:choose="">${pretty_timedelta(ticket.time)}</td>
+                <py:choose>
+                  <td py:when="ticket.hard_deadline is None or ticket.hard_deadline.strip()== '' " style="width: 80px;"></td>
+                  <td py:otherwise="" style="width: 80px;" class="hard_deadline">${ticket.hard_deadline}</td>
+                </py:choose>
+                <td style="width: 100px">
+                <div style="width: 90px; height: 1.5em; overflow: hidden;">
+                  ${ticket.keywords}
+                </div></td>
+              </table>
+            </li>
+          </ol>
+        </div>
       </div>
       <hr/>
       <div>
@@ -107,9 +98,8 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
               </table>
             </li>
           </ul>
-          <ol id="notbacklog" class="backlog">
+          <ol id="notbacklog" class="backlog_tickets">
             <li py:for="ticket in tickets2" id="ticket_${ticket.id}" class="ticket_${ticket.status}" >
-
               <table width="100%">
                 <td style="width: 20px;"></td>
                 <td style="width: 60px;"><a href="${href.ticket(ticket.id)}"> #${ticket.id}</a></td>
@@ -120,10 +110,9 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
                 <td style="width: 120px;">${ticket.owner}</td>
                 <td style="width: 60px;">${ticket.milestone}</td>
                 <td style="width: 90px;">
-                  <div style="width: 85px; height: 1.5em; overflow: hidden;">
-                    <a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a>
-                  </div>
-                </td>
+                <div style="width: 85px; height: 1.5em; overflow: hidden;">
+                  <a href="${href.ticket(ticket.id)}" title="${ticket.impact}">${ticket.impact}</a>
+                </div></td>
                 <td style="width: 60px;">${ticket.status}</td>
                 <td style="width: 60px;" py:choose="">${pretty_timedelta(ticket.time)}</td>
                 <py:choose>
@@ -139,14 +128,16 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
           </ol>
         </div>
       </div>
-      <div class="submit_form">
-        <input type="submit" class="save_order" value="save order" onclick="updateOrder();">
-        </input>
-        <input type="submit" class="reset_order" value="reset" onclick="resetOrder();">
-        </input>
-        <input type="submit" class="delete_closed" value="delete closed" onclick="deleteClosed();">
-        </input>
-      </div>
+      <form id="change_ticket_order" method="post" action="#">
+        <div class="submit_form">
+          <input type="hidden" id="ticket_order" name="ticket_order" value="" ></input>
+          <input type="hidden" id="delete_closed" name="delete_closed" value="" ></input>
+          <input type="hidden" id="tickets_out" name="tickets_out" value="" ></input>
+          <input type="submit" class="save_order" value="save order" onclick="updateOrder();"></input>
+          <input type="submit" class="reset_order" value="reset" onclick="resetOrder();"></input>
+          <input type="submit" class="delete_closed" value="delete closed" onclick="deleteClosed();"></input>
+        </div>
+      </form>
     </div>
   </body>
 </html>
