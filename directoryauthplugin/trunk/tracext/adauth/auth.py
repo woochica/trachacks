@@ -106,12 +106,12 @@ class ADAuthStore(Component):
               m_filter = '(%s)' % (m.split(',')[0])
               e = self._dir_search(basedn, self.dir_scope, m_filter)
               if e:
-                 if 'person' in e[0][1]['objectClass']:
-                   users.append(self._get_userinfo(e[0][1]))
-                 elif 'group' in e[0][1]['objectClass']:
-                   users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
-                 else:
-                   self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
+                if 'person' in e[0][1]['objectClass']:
+                  users.append(self._get_userinfo(e[0][1]))
+                elif 'group' in e[0][1]['objectClass']:
+                  users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
+                else:
+                  self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
               else:
                 self.log.debug('Unable to find user %s listed in group: %s' % str(m))
                 self.log.debug('This is very strange and you should probably check '
@@ -462,7 +462,7 @@ class ADAuthStore(Component):
       #-- create unique key from the filter and the
       keystr = ",".join([ basedn, str(scope), filter, ":".join(attrs) ])
       key = hashlib.md5(keystr).hexdigest()
-      self.log.debug('_dir_search: searching %s for %s(%s)' % (basedn, filter, key))
+      self.log.debug('_dir_search: searching %s for %s hash:%s' % (basedn, filter, key))
       
       db = self.env.get_db_cnx()
       
@@ -487,7 +487,7 @@ class ADAuthStore(Component):
                 return ret
              else: 
                #-- old data, delete it and anything else that's old.
-               cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", (current_time - int(self.cache_ttl)))
+               cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", int(current_time - int(self.cache_ttl)))
                db.commit()
       else:
         self.log.debug('_dir_search: skipping cache.')
