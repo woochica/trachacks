@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 from setuptools import setup
 
@@ -17,7 +18,7 @@ then reference it as htdocs://site/filename.flv
 
 setup(
     name = 'MovieMacro',
-    version = '0.1',
+    version = '0.2',
     packages = ['movie'],
     package_data = {'movie': ['htdocs/img/*.jpg',
                               'htdocs/js/*.js',

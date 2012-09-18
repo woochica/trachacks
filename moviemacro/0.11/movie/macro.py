@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Movie plugin for Trac.
     
     Embeds various online movies.
@@ -5,61 +6,13 @@
 from urlparse import urlparse, urlunparse
 from genshi.builder import tag
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider, parse_args
+from trac.resource import Resource, get_resource_url
 from trac.web.chrome import ITemplateProvider, add_script
+from trac.wiki.api import IWikiMacroProvider, parse_args
 from trac.wiki.macros import WikiMacroBase
-
 
 EMBED_COUNT = '_moviemacro_embed_count'
 FLOWPLAYER_EMBEDDED = '_moviemacro_flowplayer_embedded'
-
-def get_absolute_url(base, url):
-    """ Generate an absolute url from the url with the special schemes
-        {htdocs,chrome,ticket,wiki,source} simply return the url if given with
-        {http,https,ftp} schemes.
-        
-        Examples:
-            http://example.com/filename.ext
-                ie. http://www.google.com/logo.jpg
-            
-            chrome://site/filename.ext
-            htdocs://img/filename.ext
-                note: `chrome` is an alias for `htdocs`
-            
-            ticket://number/attachment.pdf
-                ie. ticket://123/specification.pdf
-            
-            wiki://WikiWord/attachment.jpg
-            
-            source://changeset/path/filename.ext
-                ie. source://1024/trunk/docs/README
-    """
-    def ujoin(*parts):
-        """ Remove double slashes.
-        """
-        parts = [part.strip('/') for part in parts]
-        url = '/' + '/'.join(parts)
-        url = url.replace('//', '/')
-        return url
-    
-    scheme, netloc, path, query, params, fragment = urlparse(url)
-    
-    if scheme in ('ftp', 'http', 'https'):
-        return url
-    
-    if scheme in ('htdocs', 'chrome'):
-        return ujoin(base, 'chrome', path)
-    
-    if scheme in ('source',):
-        return ujoin(base, 'export', path)
-    
-    if scheme in ('ticket',):
-        return ujoin(base, 'raw-attachment/ticket', path)
-    
-    if scheme in ('wiki',):
-        return ujoin(base, 'raw-attachment/wiki', path)
-    
-    return url
 
 def string_keys(d):
     """ Convert unicode keys into string keys, suiable for func(**d) use.
@@ -124,8 +77,8 @@ class MovieMacro(WikiMacroBase):
         
         flowplayer_embedded = getattr(formatter, FLOWPLAYER_EMBEDDED, False)
         
-        url = get_absolute_url(formatter.href.base, url)
-        src = get_absolute_url(formatter.href.base, kwargs.pop('splash','htdocs://movie/img/black.jpg'))
+        url = self._get_absolute_url(formatter.req, url)
+        src = self._get_absolute_url(formatter.req, kwargs.pop('splash', 'htdocs://movie/img/black.jpg'))
         
         scheme, netloc, path, params, query, fragment = urlparse(url)
         
@@ -239,9 +192,10 @@ class MovieMacro(WikiMacroBase):
             
             script = '''
                 $(function() {
+                
                     $("a.flowplayer").flowembed("%s",  {initialScale:'scale'});
                 });
-            ''' % get_absolute_url(formatter.href.base, 'htdocs://movie/swf/FlowPlayerDark.swf')
+            ''' % self._get_absolute_url(formatter.req, 'htdocs://movie/swf/FlowPlayerDark.swf')
             
             tags.append(tag.script(script))
             
@@ -263,13 +217,49 @@ class MovieMacro(WikiMacroBase):
         tags.append(tag.a(tag.img(src=src, **kwargs), class_='flowplayer', href=url, **kwargs))
         
         return ''.join([str(i) for i in tags])
-    
+
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
         """ Makes the 'htdocs' folder inside the egg available.
         """
         from pkg_resources import resource_filename
         return [('movie', resource_filename('movie', 'htdocs'))]
-    
+
     def get_templates_dirs(self):
-        return []  # must return an iterable
+        return []
+
+    def _get_absolute_url(self, req, url):
+        """ Generate an absolute url from the url with the special schemes
+        {htdocs,chrome,ticket,wiki,source} simply return the url if given with
+        {http,https,ftp} schemes.
+        
+        Examples:
+            http://example.com/filename.ext
+                ie. http://www.google.com/logo.jpg
+            
+            chrome://site/filename.ext
+            htdocs://img/filename.ext
+                note: `chrome` is an alias for `htdocs`
+            
+            ticket://number/attachment.pdf
+                ie. ticket://123/specification.pdf
+            
+            wiki://WikiWord/attachment.jpg
+            
+            source://changeset/path/filename.ext
+                ie. source://1024/trunk/docs/README
+        """
+
+        scheme, netloc, path, query, params, fragment = urlparse(url)
+
+        if scheme in ('htdocs', 'chrome'):
+            return req.abs_href.chrome(netloc + path)
+
+        if scheme in ('source',):
+            return req.abs_href.export(netloc + path)
+
+        if scheme in ('wiki','ticket'):
+            resource = Resource(scheme, netloc).child('attachment', path)
+            return get_resource_url(self.env, resource, req.abs_href, format='raw')
+
+        return url
