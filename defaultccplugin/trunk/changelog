@@ -1,4 +1,4 @@
-DefaultCc (0.3) (not yet released) - trunk
+DefaultCc (0.3) (not yet released) - trunk (3-Clause BSD license)
  resolved issues:
  * #4767: Email notification would always be sent to Plugin@domain.com.
  * #4919: Comment would be added and notification sent on ticket creation.
@@ -6,7 +6,7 @@ DefaultCc (0.3) (not yet released) - trunk
  new features:
  * #10173: CC list can now be set when the Component is added.
 
-DefaultCc (0.2) - trunk
+DefaultCc (0.2) - trunk (GPLv2 license)
  resolved issues:
  * Plugin would not be loaded due to missing __init__.py in package directory.
  * #10156: Database upgrade would fail in Trac 1.0 since `rollback` was being called
