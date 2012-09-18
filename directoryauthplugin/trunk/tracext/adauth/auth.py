@@ -93,7 +93,7 @@ class ADAuthStore(Component):
          return users
        
       #-- where to look
-      base_dn = self.group_basedn or self.dir_basedn
+      basedn = self.group_basedn or self.dir_basedn
               
       users = []
       if self.group_expand:
@@ -104,22 +104,21 @@ class ADAuthStore(Component):
             users = []
             for m in g[0][1][group_member_attr]:
               m_filter = '(%s)' % (m.split(',')[0])
-              e = self._cache_get(m_filter)
-              if not e:
-                 e = self._dir_search(basedn, self.dir_scope, m_filter)
-                 self._cache_set(m_filter, e)
-                 if e:
-                   if 'person' in e[0][1]['objectClass']:
-                     users.append(self._get_userinfo(e[0][1]))
-                   elif 'group' in e[0][1]['objectClass']:
-                     users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
-                   else:
-                     self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
+              e = self._dir_search(basedn, self.dir_scope, m_filter)
+              if e:
+                 if 'person' in e[0][1]['objectClass']:
+                   users.append(self._get_userinfo(e[0][1]))
+                 elif 'group' in e[0][1]['objectClass']:
+                   users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
+                 else:
+                   self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
               else:
-                self.log.debug('Unable to find user listed in group: %s' % str(m))
+                self.log.debug('Unable to find user %s listed in group: %s' % str(m))
                 self.log.debug('This is very strange and you should probably check '
                                  'the consistency of your LDAP directory.' % str(m))
           
+        #-- dedupe and sort list
+        users = sorted(list(set(users)))
         self._cache_set(group_dn, users)
         return users
       else:
@@ -155,14 +154,22 @@ class ADAuthStore(Component):
               msg += " Password Failed"
             self.log.info(msg)
         else:
-            msg += " does not exist in AD, deferring authentication"
+            msg += " does not exist, deferring authentication"
             self.log.info(msg)
             return success
-        
+          
+        #-- check the group_validusers if used
+        if self.group_validusers:
+          valid_users = [u[0] for u in self.expand_group_users(self.group_validusers)]
+          if not user in valid_users:
+            msg += " but user is not in %s" % self.group_validusers
+            self.log.info(msg)
+            return False
+             
         #-- update the session data at each login, 
         #   note the use of NoCache to force the update(s)
-        attrs = [ self.user_attr, 'mail', 'proxyAddress','displayName']
-        filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user )
+        attrs = [ self.user_attr, 'mail', 'proxyAddress', 'displayName']
+        filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
         users = self._dir_search(self.dir_basedn, self.dir_scope, filter, attrs, NOCACHE)
         
         if not users:
@@ -208,7 +215,7 @@ class ADAuthStore(Component):
         dn = self._get_user_dn(username)
         if not self.group_member_attr or self.group_member_attr == 'dn': 
        
-           filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user )
+           filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
            users = self._dir_search(self.dir_basedn, self.dir_scope, filter, [self.group_member_dn.encode('ascii')], NOCACHE)
            group_value = users[0][1][self.user_attr.encode('ascii')]
         else: 
@@ -216,7 +223,7 @@ class ADAuthStore(Component):
         
         if group_value: 
             # retrieves the user groups from LDAP
-            groups = self._get_user_groups(self.group_member_attr,group_value)
+            groups = self._get_user_groups(self.group_member_attr, group_value)
             if groups:
                 self.env.log.debug('%s has LDAP groups: %s' % (username, ','.join(groups)))
             else:
@@ -243,7 +250,7 @@ class ADAuthStore(Component):
         if user_dn and passwd: 
             # setup the ldap connection.. init does NOT attempt a connection, but search does.
             # ldap.ReconnectLDAPObject(uri [, trace_level=0 [, trace_file=sys.stdout [, trace_stack_limit=5] [, retry_max=1 [, retry_delay=60.0]]]])
-            user_ldap = ldap.ldapobject.ReconnectLDAPObject(self.dir_uri,0, '', 0, 2, 1)
+            user_ldap = ldap.ldapobject.ReconnectLDAPObject(self.dir_uri, 0, '', 0, 2, 1)
         
             self.log.debug('_bind_dir: attempting specific bind to %s as %s' % (self.dir_uri, user_dn))
             try:
@@ -288,15 +295,16 @@ class ADAuthStore(Component):
           return dn
             
         u = self._dir_search(self.dir_basedn, self.dir_scope,
-                                "(&(%s=%s)(objectClass=person))" % (self.user_attr,user), 
-                                [self.user_attr], cache )
+                                "(&(%s=%s)(objectClass=person))" % (self.user_attr, user),
+                                [self.user_attr], cache)
+
         if not u:
            self.log.debug('user not found: %s' % user)
            dn = None
         else:
            dn = u[0][0]
            self._cache_set('dn: %s' % user, dn)
-           self.log.debug('user %s has dn: %s' % (user,dn))
+           self.log.debug('user %s has dn: %s' % (user, dn))
         return dn
       
     def _get_user_groups(self, attr, value):
@@ -310,7 +318,7 @@ class ADAuthStore(Component):
         groups = []
         group_name_attr = self.group_attr.encode('ascii') or self.user_attr.encode('ascii')
         dir_groups = self._dir_search(basedn, self.dir_scope,
-                                     '(&(%s=%s)(objectClass=group))' % (attr, value), 
+                                     '(&(%s=%s)(objectClass=group))' % (attr, value),
                                      [group_name_attr])
         
         # TODO - write this to handle memberOf as well
@@ -321,6 +329,8 @@ class ADAuthStore(Component):
             if tgroup not in groups:
               groups.append(tgroup)
                                
+        groups.sort()
+        
         self.log.debug('user:%s groups: %s' % (value, ",".join(groups)))
         self._cache_set('groups: %s' % value, groups)
         return groups
@@ -429,11 +439,11 @@ class ADAuthStore(Component):
       return data
     
     def _decode_list(self, list=None):
-      newlist=[]
+      newlist = []
       if not list:
         return list
       for val in list:
-          newlist.append(val.encode('ascii','ignore'))
+          newlist.append(val.encode('ascii', 'ignore'))
       return newlist        
     
     def _dir_search(self, basedn=None, scope=1, filter=None, attrs=[], check_cache=1):
@@ -465,7 +475,7 @@ class ADAuthStore(Component):
       
           #--  Check database
           cur = db.cursor()
-          cur.execute('SELECT lut,data FROM ad_cache WHERE id="%s"' % key)
+          cur.execute("""SELECT lut,data FROM ad_cache WHERE id=%s""", [key])
           row = cur.fetchone()
           if row:      
              lut, data = row
@@ -477,7 +487,7 @@ class ADAuthStore(Component):
                 return ret
              else: 
                #-- old data, delete it and anything else that's old.
-               cur.execute('DELETE FROM ad_cache WHERE lut < %s' % (current_time - int(self.cache_ttl)))
+               cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", (current_time - int(self.cache_ttl)))
                db.commit()
       else:
         self.log.debug('_dir_search: skipping cache.')
@@ -493,7 +503,7 @@ class ADAuthStore(Component):
         
       #-- did we get a result?
       if res:
-        self.log.debug('_dir_search: AD hit, %d entries.', len(res) )
+        self.log.debug('_dir_search: AD hit, %d entries.', len(res))
       else:
         self.log.debug('_dir_search: AD miss.')
         
@@ -505,7 +515,8 @@ class ADAuthStore(Component):
       res_str = cPickle.dumps(res, 0)
       try:
           cur = db.cursor()
-          cur.execute('INSERT OR REPLACE INTO ad_cache (id, lut, data) VALUES (%s, %s, %s)', [str(key), int(current_time), buffer(res_str)])
+          cur.execute("""INSERT OR REPLACE INTO ad_cache (id, lut, data) 
+                         VALUES (%s, %s, %s)""", ( str(key), int(current_time), buffer(res_str)))
           db.commit()
            
       except Exception, e:

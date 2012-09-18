@@ -12,16 +12,16 @@
 
 from setuptools import setup, find_packages
 
-PACKAGE = 'TracActiveDirectoryAuth'
-VERSION = '0.4.2'
+PACKAGE = 'TracDirectoryAuth'
+VERSION = '0.5'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',
         author_email = 'pacopablo@pacopablo.com',
         maintainer = 'Branson Matheson',
         maintainer_email = 'branson.matheson@nasa.gov',
-        description = 'Trac Authentication against Active Directory ',
-        url = 'http://trac-hacks.org/wiki/ActiveDirectoryAuthPlugin',
+        description = 'Trac Authentication against LDAP or AD ',
+        url = 'http://trac-hacks.org/wiki/DirectoryAuthPlugin',
         license='BSD',
         zip_safe = True,
         packages = ['tracext', 'tracext.adauth'],
