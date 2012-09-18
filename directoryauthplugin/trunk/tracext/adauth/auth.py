@@ -517,7 +517,7 @@ class ADAuthStore(Component):
       try:
           cur = db.cursor()
           cur.execute("""INSERT OR REPLACE INTO ad_cache (id, lut, data) 
-                         VALUES (%s, %i, %s)""", ( str(key), int(current_time), buffer(res_str)))
+                         VALUES (%s, %s, %s)""", [str(key), int(current_time), buffer(res_str)])
           db.commit()
            
       except Exception, e:
