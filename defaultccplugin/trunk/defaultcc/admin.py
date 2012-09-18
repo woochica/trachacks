@@ -1,19 +1,14 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2009 ERCIM
+# Copyright (C) 2009 Jean-Guilhem Rouel <jean-guilhem.rouel@ercim.org>
+# Copyright (C) 2009 Vivien Lacourba <vivien.lacourba@ercim.org>
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; version 2 of the License.
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# Authors: Jean-Guilhem Rouel <jean-guilhem.rouel@ercim.org>
-#          Vivien Lacourba <vivien.lacourba@ercim.org>
 
 from genshi.builder import tag
 from genshi.filters import Transformer

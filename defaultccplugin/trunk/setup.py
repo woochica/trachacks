@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
+# Copyright (C) 2009 ERCIM
 # Copyright (C) 2009 Jean-Guilhem Rouel <jean-guilhem.rouel@ercim.org>
 # Copyright (C) 2009 Vivien Lacourba <vivien.lacourba@ercim.org>
 # Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
