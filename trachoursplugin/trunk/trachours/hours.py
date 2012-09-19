@@ -223,7 +223,7 @@ class TracHoursPlugin(Component):
         ### assume a ticket if the other handlers don't work
         return self.process_ticket(req)
 
-    # INavigationContributor methods
+    ### INavigationContributor methods
 
     def get_active_navigation_item(self, req):
         """This method is only called for the `IRequestHandler` processing the
@@ -242,7 +242,7 @@ class TracHoursPlugin(Component):
                tag.a(_("Hours"), href=req.href.hours(), accesskey='H'))
 
 
-    ### methods for ITemplateProvider
+    ### ITemplateProvider methods
 
     """Extension point interface for components that provide their own
     ClearSilver templates and accompanying static resources.
@@ -280,16 +280,24 @@ class TracHoursPlugin(Component):
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
-        # enforce estimatedhours to be a floating point
+        if not 'estimatedhours' in ticket.fields:
+            return [('estimatedhours', _("""The custom field 'estimatedhours'
+                does not exist. Please check your configuration."""))]
+
         if not ticket['estimatedhours']:
             ticket['estimatedhours'] = '0'
+        if float(ticket['estimatedhours']) < 0.:
+            return [('estimatedhours',
+                     _("Please enter a positive value for Estimated Hours"))]
         try:
+            # enforce estimatedhours to be a floating point
             float(ticket['estimatedhours'])
         except ValueError:
-            return [ ('estimatedhours', 'Please enter a number for Estimated Hours') ]
-        if float(ticket['estimatedhours']) < 0.:
-            return [ ('estimatedhours', 'Please enter a positive value for Estimated Hours') ]
-        return [] # OK
+            return [('estimatedhours',
+                     _("Please enter a number for Estimated Hours"))]
+        
+        return []
+
 
     ### method for ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):

@@ -1,0 +1,7 @@
+TracHours (0.6) (not yet released) - trunk
+ resolved issues:
+ * #10327: Issue a warning when validating the ticket if 'estimatedhours' is
+   not defined in the ticket-custom section of trac.ini, to avoid a traceback
+   on ticket submit.   
+
+ new features:

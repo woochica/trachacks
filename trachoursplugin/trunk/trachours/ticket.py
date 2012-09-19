@@ -88,7 +88,7 @@ class TracHoursByComment(Component):
         return message
 
 
-    ### methods for ITicketChangeListener
+    ### ITicketChangeListener methods
 
     """Extension point interface for components that require notification
     when tickets are created, modified, or deleted."""
