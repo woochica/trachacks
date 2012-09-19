@@ -17,12 +17,11 @@ from trac.web.chrome import (
     add_link, add_script, add_stylesheet, add_warning, prevnext_nav
 )
 
-from api import hours_format
 from componentdependencies.interface import IRequireComponents
 from tracsqlhelper import *
 from multiproject import MultiprojectHours
 from setup import SetupTracHours
-from utils import get_all_users, get_date, truncate_to_month
+from utils import get_all_users, get_date, hours_format, truncate_to_month
 
 from StringIO import StringIO
 from datetime import datetime, timedelta

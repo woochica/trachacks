@@ -12,13 +12,12 @@ from trac.web.chrome import (
     add_link, add_stylesheet, prevnext_nav
 )
 
-from api import hours_format # local import
 from componentdependencies.interface import IRequireComponents
 from hours import TracHoursPlugin
 from ticketsidebarprovider.interface import ITicketSidebarProvider
 from ticketsidebarprovider.ticketsidebar import TicketSidebarProvider
 from tracsqlhelper import get_all_dict, get_column
-from utils import get_date
+from utils import get_date, hours_format
 
 from StringIO import StringIO
 import calendar

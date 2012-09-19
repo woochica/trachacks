@@ -4,9 +4,20 @@ from trac.core import *
 from trac.db import Column, DatabaseManager, Index, Table
 from trac.env import IEnvironmentSetupParticipant
 
-from api import custom_fields
 from tracsqlhelper import *
 
+custom_fields = \
+    {'estimatedhours':
+        {'type': 'text',
+         'label': 'Estimated Hours',
+         'value': '0'
+        },
+     'totalhours':
+        {'type': 'text', # should be a computed field, but computed fields don't yet exist for trac
+         'label': 'Total Hours',
+         'value': '0'
+        }
+    }
 
 class SetupTracHours(Component):
 

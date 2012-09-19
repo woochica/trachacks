@@ -3,6 +3,8 @@
 import calendar
 import datetime
 
+hours_format = '%.2f'
+
 def get_all_users(env):
     """return the names of all known users in the trac environment"""
     return [ i[0] for i in env.get_known_users() ]

@@ -6,9 +6,9 @@ from trac.env import open_environment
 from trac.web.api import IRequestHandler
 from trac.web.chrome import add_ctxtnav
 from trac.web.href import Href
-from trachours.api import hours_format
+
 from trachours.feed import total_hours
-from trachours.utils import get_date, urljoin
+from trachours.utils import get_date, hours_format, urljoin
 
 import calendar
 import datetime
