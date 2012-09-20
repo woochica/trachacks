@@ -280,22 +280,24 @@ class TracHoursPlugin(Component):
         detected. `field` can be `None` to indicate an overall problem with the
         ticket. Therefore, a return value of `[]` means everything is OK."""
 
-        if not 'estimatedhours' in ticket.fields:
-            return [('estimatedhours', _("""The custom field 'estimatedhours'
-                does not exist. Please check your configuration."""))]
+        # Check that 'estimatedhours' is a custom-field
+        if ticket.get_value_or_default('estimatedhours') is None:
+            msg = _("""The field is not defined. Please check your configuration.""")
+            return [('estimatedhours', msg)]
 
-        if not ticket['estimatedhours']:
+        # Check that user entered a positive number
+        if ticket['estimatedhours']:
+            try:
+                float(ticket['estimatedhours'])
+            except ValueError:
+                msg = _("Please enter a number for Estimated Hours")
+                return [('estimatedhours', msg)]
+            if float(ticket['estimatedhours']) < 0:
+                msg = _("Please enter a positive value for Estimated Hours")
+                return [('estimatedhours', msg)]
+        else:
             ticket['estimatedhours'] = '0'
-        if float(ticket['estimatedhours']) < 0.:
-            return [('estimatedhours',
-                     _("Please enter a positive value for Estimated Hours"))]
-        try:
-            # enforce estimatedhours to be a floating point
-            float(ticket['estimatedhours'])
-        except ValueError:
-            return [('estimatedhours',
-                     _("Please enter a number for Estimated Hours"))]
-        
+
         return []
 
 
