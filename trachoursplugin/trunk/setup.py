@@ -1,5 +1,13 @@
 #!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 from setuptools import find_packages, setup
 
@@ -14,7 +22,7 @@ setup(name='TracHoursPlugin',
       maintainer_email="ryan.j.ollos@gmail.com",
       url="http://trac-hacks.org/wiki/TracHoursPlugin",
       keywords='trac plugin',
-      license="GPL",
+      license="3-Clause BSD",
       packages=find_packages(exclude=['*.tests']),
       include_package_data=True,
       package_data={'trachours': ['templates/*']},
