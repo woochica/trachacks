@@ -26,6 +26,16 @@ jQuery(document).ready(function($) {
             };
         })();
     }
+    var _ = (function() {
+        var tx = babel.Translations;
+        if (tx && tx.get) {
+            var rv = tx.get('tracdragdrop-js');
+            return function() {
+                return rv.gettext.apply(rv, arguments);
+            };
+        }
+        return window.gettext;
+    })();
 
     if (window.Clipboard || false) {
         $('#content').delegate('a.trac-rawlink', 'dragstart', function(event) {
