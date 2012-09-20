@@ -1,6 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 from setuptools import find_packages, setup
 
-version='0.0'
+version='0.1'
 
 setup(name='ExtendedVersionTracPlugin',
       version=version,
@@ -10,16 +13,16 @@ setup(name='ExtendedVersionTracPlugin',
       url='',
       keywords='trac plugin',
       license="",
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
+      packages=find_packages(exclude=['*.tests']),
       include_package_data=True,
-      package_data={ 'extendedversion': ['templates/*', 'htdocs/css/*'] },
+      package_data={ 'extendedversion': ['templates/*.html', 'htdocs/css/*.css'] },
       zip_safe=False,
       entry_points = """
-      [trac.plugins]
-      extendedversion.environment = extendedversion.environment
-      extendedversion.milestone = extendedversion.milestone
-      extendedversion.roadmap = extendedversion.roadmap
-      extendedversion.version = extendedversion.version
+          [trac.plugins]
+          extendedversion.environment = extendedversion.environment
+          extendedversion.milestone = extendedversion.milestone
+          extendedversion.roadmap = extendedversion.roadmap
+          extendedversion.version = extendedversion.version
       """,
       )
 
