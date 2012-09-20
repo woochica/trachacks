@@ -50,7 +50,7 @@ class InternalTicketsPolicy(Component):
         try:
             tkt = Ticket(self.env, res.id)
         except Exception, e:
-            self.log.warning("Internal: TandE ticket_policy failed to find a ticket for %s : error: %s" %  (res, e))
+            self.log.warning("Internal: TandE ticket_policy failed to find a ticket for %s : error: %s" %  (res, unicode(e)))
             return None # Ticket doesn't exist / ticket id was invalid
         private_tkt = tkt['internal'] == '1'
 
