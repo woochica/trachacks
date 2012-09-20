@@ -56,9 +56,29 @@ jQuery(document).ready(function($) {
     var hasFileReader = !!window.FileReader;
     var hasFormData = !!window.FormData;
     var hasDragAndDrop = xhrHasUpload && hasFileReader;
-    var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder ||
-                      window.MozBlobBuilder || window.MSBlobBuilder ||
-                      undefined;
+    var toBlob = (function() {
+        try {
+            new Blob(['data'], {type: 'application/octet-stream'});
+            return function(parts, mimetype) {
+                return new Blob(parts, {type: mimetype});
+            };
+        }
+        catch (e) { }
+        var BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder ||
+                          window.MozBlobBuilder || window.MSBlobBuilder ||
+                          undefined;
+        if (BlobBuilder) {
+            return function(parts, mimetype) {
+                var builder = new BlobBuilder();
+                var length = parts.length;
+                for (var i = 0; i < length; i++) {
+                    builder.append(parts[i].buffer);
+                }
+                return builder.getBlob(mimetype);
+            };
+        }
+        return undefined;
+    })();
     var containers = {list: null, queue: null, dropdown: null};
     var queueItems = [];
     var queueCount = 0;
@@ -808,9 +828,8 @@ jQuery(document).ready(function($) {
             for (var i = 0; i < length; i++) {
                 buffer[i] = body.charCodeAt(i);
             }
-            var builder = new BlobBuilder();
-            builder.append(buffer.buffer);
-            items.push(builder.getBlob(mimetype));
+            var blob = toBlob([buffer], mimetype);
+            items.push(blob);
         });
         return items;
     }
@@ -843,7 +862,7 @@ jQuery(document).ready(function($) {
                         found = type;
                         return false;
                     case 'text/uri-list':
-                        if (BlobBuilder) {
+                        if (toBlob) {
                             found = type;
                         }
                         break;
