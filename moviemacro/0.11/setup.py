@@ -30,5 +30,9 @@ setup(
     license = 'BSD',
     keywords = 'trac plugin movie macro',
     classifiers = ['Framework :: Trac'],
-    entry_points = {'trac.plugins': ['movie.macro = movie.macro']}
+    entry_points = {'trac.plugins': [
+        'movie.macro = movie.macro',
+        'movie.web_ui = movie.web_ui'
+        ]
+    },
 )

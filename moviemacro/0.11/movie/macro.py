@@ -5,7 +5,7 @@
 """
 from urlparse import urlparse, urlunparse
 from genshi.builder import tag
-from trac.core import *
+from trac.core import Component, implements
 from trac.resource import Resource, get_resource_url
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.api import IWikiMacroProvider, parse_args
@@ -58,7 +58,7 @@ class MovieMacro(WikiMacroBase):
     """ Embed online movies from YouTube, GoogleVideo and MetaCafe, and local
         movies via FlowPlayer.
     """
-    
+
     implements(ITemplateProvider)
     
     # IWikiMacroProvider methods
@@ -218,15 +218,16 @@ class MovieMacro(WikiMacroBase):
         
         return ''.join([str(i) for i in tags])
 
-    # ITemplateProvider methods
+    ### ITemplateProvider methods
+
     def get_htdocs_dirs(self):
-        """ Makes the 'htdocs' folder inside the egg available.
-        """
         from pkg_resources import resource_filename
         return [('movie', resource_filename('movie', 'htdocs'))]
 
     def get_templates_dirs(self):
         return []
+
+    ### Private methods
 
     def _get_absolute_url(self, req, url):
         """ Generate an absolute url from the url with the special schemes
