@@ -42,7 +42,7 @@ except ImportError:
                       '\t': r'\t', '"': r'\"', '\\': r'\\',
                       '&': r'\u0026', '>': r'\u003E', '<': r'\u003C'}
     def _jsquote_repl(match):
-        return _escape_chars[match.group(0)]
+        return _jsquote_chars[match.group(0)]
 
     def to_json(value):
         """From 0.12-stable/trac/util/presentation.py"""
