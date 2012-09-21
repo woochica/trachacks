@@ -103,7 +103,7 @@ function addBudgetRow() {
 		case 6:
 			// Comment
 			columnElement = document.createElement('input');
-			columnElement.size = 20;
+			columnElement.size = 60;
 
 			break;
 		default:
@@ -114,9 +114,9 @@ function addBudgetRow() {
 	}
 	// Adding a Delete Button to the end of the row
 	deleteButtonElement = document.createElement('td');
-	deleteButtonElement.innerHTML = "<button type='button' name='deleteRow"
-			+ rowCounter + "' onclick='deleteRow(" + rowCounter
-			+ ")'>[-]</button>";
+	deleteButtonElement.innerHTML = '<div class="inlinebuttons">'
+			+ '<input type="button" style="border-radius: 1em 1em 1em 1em;" name="deleteRow'
+			+ rowCounter + '" onclick="deleteRow(%s)" value = "-"/></div>';
 	tableRow.appendChild(deleteButtonElement);
 }
 

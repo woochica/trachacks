@@ -1,21 +1,22 @@
-import re
-import time
-import locale
-
+from genshi import HTML
+from genshi.builder import tag
+from genshi.filters import Transformer
 from pkg_resources import resource_filename #@UnresolvedImport
+from trac.config import Option
+from trac.core import Component, implements
+from trac.db.api import DatabaseManager
+from trac.db.schema import Table, Column
+from trac.perm import IPermissionRequestor
+from trac.ticket.api import ITicketManipulator
+from trac.ticket.model import Ticket
 from trac.util.translation import domain_functions
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from genshi.filters import Transformer
-from genshi import HTML
 from trac.web.chrome import ITemplateProvider, add_script
-from trac.ticket.api import ITicketManipulator
+import locale
+import re
+import time
 
-from trac.db.schema import Table, Column
-from trac.db.api import DatabaseManager
-from trac.config import Option
-from trac.ticket.model import Ticket
-from trac.perm import IPermissionRequestor
-from trac.core import Component, implements
+
 
 _, tag_, N_, add_domain = domain_functions('ticketbudgeting', '_', 'tag_', 'N_', 'add_domain')
 
@@ -34,21 +35,21 @@ BUDGETING_TABLE = Table('budgeting', key=('ticket', 'position'))[
 
 BUDGET_REPORT_ALL_ID = 90
 
-authorizedToModify = ['TICKET_MODIFY','TRAC_ADMIN','TICKET_BUDGETING_MODIFY']
+authorizedToModify = ['TICKET_MODIFY', 'TRAC_ADMIN', 'TICKET_BUDGETING_MODIFY']
 
 class Budget:
     """ Container class for budgeting info"""
     _budget_dict = None
     _action = None
     _VALUE_LIST = ['username', 'type', 'estimation', 'cost', 'status', 'comment']
-    
+
     def __init__(self):
         self._budget_dict = {}
-    
+
     def set(self, number, value):
         if number == None:
             return
-        
+
         number = int (number)
         if number > 0 and number < self._VALUE_LIST.__len__() + 1:
             fld = self._VALUE_LIST[number - 1]
@@ -79,19 +80,19 @@ class Budget:
             else:
                 self._budget_dict[fld] = value
 #        print "[Budget.set] budget_dict: %s" % (self._budget_dict)
-    
+
     def do_action(self, env, ticket_id, position):
         if not self._action:
             env.log.warn('no action defined!')
             return
-        
+
 #        print "[do_action] ticket_id: %s, position: %s" % (ticket_id, position)
         with env.db_transaction as db:
             cursor = db.cursor()
-            
+
             flds = None
             vals = None
-            
+
             if not ticket_id or not position:
                 env.log.error('no ticket-id or position available!')
             elif self._action == 1:
@@ -99,13 +100,13 @@ class Budget:
                 for key, value in self._budget_dict.iteritems():
                     if not flds:    flds = key
                     else:           flds += "," + key
-                    
+
                     if key in ('username', 'type', 'comment'): value = "'%s'" % value
 
                     if not vals:    vals = str(value)
                     else:           vals += ",%s" % value
-                    
-                sql = 'insert into %s (ticket, position, %s) values (%s, %s, %s)' % ( BUDGETING_TABLE.name, flds, ticket_id, position, vals ) 
+
+                sql = 'insert into %s (ticket, position, %s) values (%s, %s, %s)' % (BUDGETING_TABLE.name, flds, ticket_id, position, vals)
 #           	print "[action:insert] sql: %s" % sql
                 env.log.debug(sql)
                 cursor.execute(sql)
@@ -117,29 +118,29 @@ class Budget:
                 for key, value in self._budget_dict.iteritems():
                     if i > 0: sql += ","
                     if key in ('username', 'type', 'comment'): value = "'%s'" % value
-                    
+
                     sql += "%s=%s" % (key, value)
-                    i += 1 
-                sql = 'update %s set %s where ticket=%s and position=%s' % ( BUDGETING_TABLE.name, sql, ticket_id, position ) 
+                    i += 1
+                sql = 'update %s set %s where ticket=%s and position=%s' % (BUDGETING_TABLE.name, sql, ticket_id, position)
     #            print "[action:update] sql: %s" % sql
                 cursor.execute(sql)
                 db.commit()
             elif self._action == 3:
     #            print "do action 'delete' with budget_dict: %s" % self._budget_dict
-                sql = 'delete from %s where ticket=%s and position=%s' % ( BUDGETING_TABLE.name, ticket_id, position ) 
+                sql = 'delete from %s where ticket=%s and position=%s' % (BUDGETING_TABLE.name, ticket_id, position)
     #            print "[action:delete] sql: %s" % sql
                 cursor.execute(sql)
                 db.commit()
             else:
                 env.log.error('no appropriate action found! _action is: %s' % self._action)
-    
+
     def get_values(self):
         return self._budget_dict
-    
+
     def get_value(self, number):
         if number == None:
             return ""
-        
+
         number = int (number)
         if number > 0 and number < self._VALUE_LIST.__len__() + 1:
             fld = self._VALUE_LIST[number - 1]
@@ -150,7 +151,7 @@ class Budget:
 
     def get_action(self):
         return self._action
-    
+
     def get_action_name(self):
         if self._action == 1:
             return "insert"
@@ -160,23 +161,23 @@ class Budget:
             return "delete"
         else:
             return "unknown"
-        
+
     def set_as_insert(self):
         self._action = 1
-        
+
     def set_as_update(self):
         self._action = 2
-        
+
     def set_as_delete(self):
         self._action = 3
-        
+
 """
 Main Api Module for Plugin ticketbudgeting
 """
 class TicketBudgetingView(Component):
     implements(ITemplateProvider, IRequestFilter, ITemplateStreamFilter, ITicketManipulator)
     #  ITicketChangeListener
-    
+
     _CONFIG_SECTION = 'budgeting-plugin'
     # these options won't be saved to trac.ini
     _types = Option(_CONFIG_SECTION, 'types', 'Implementation|Documentation|Specification|Test',
@@ -191,14 +192,14 @@ class TicketBudgetingView(Component):
     _name_list_str = None
     _budgets = None
     _changed_by_author = None
-    
 
-    
+
+
     #===============================================================================
     # see trac/db_default.py, method get_reports (line 175)
     #===============================================================================
 #    BUDGET_REPORT_ALL_MINE_ID = self.BUDGET_REPORT_ALL_ID + 1
-    
+
     BUDGET_REPORTS = [(BUDGET_REPORT_ALL_ID, 'report_title_90', 'report_description_90',
     u"""SELECT t.id, t.summary, t.milestone AS __group__, '../milestone/' || t.milestone AS __grouplink__, 
     t.owner, t.reporter, t.status, t.type, t.priority, t.component,
@@ -228,7 +229,7 @@ class TicketBudgetingView(Component):
     having count(b.ticket) > 0
     order by t.milestone desc, t.status, t.id desc""")
     ]
-  
+
 #===============================================================================
 # SELECT t.id, t.summary, t.milestone AS __group__, t.owner, t.reporter, t.type, t.priority, t.component,
 #    count(b.ticket) AS Anz, sum(b.cost) AS Aufwand, sum(b.estimation) AS Schätzung, floor(avg(b.status)) AS "Status in %%",
@@ -269,62 +270,66 @@ class TicketBudgetingView(Component):
 #    left join budgeting b ON b.ticket = t.id
 #    where b.username = $USER or t.owner = $USER or t.reporter = $USER
 #    group by t.id, t.type, t.priority, t.summary, t.owner, t.reporter, t.component, t.milestone""")    
-    
+
     def __init__(self):
-        locale_dir = resource_filename(__name__, 'locale') 
+        locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
-        
+
     def filter_stream(self, req, method, filename, stream, data):
         """ overloaded from ITemplateStreamFilter """
 #        print "-------- >  filename: %s" % filename
         if filename == 'ticket.html' and data:
             if self._check_init() == False:
                 self.create_table()
-                self.log.info("table successfully initialized")    
+                self.log.info("table successfully initialized")
             tkt = data['ticket']
             if tkt and tkt.id:
                 self._load_budget(tkt.id)
             else:
                 self._budgets = {}
-            
+
             input_html, preview_html = self._get_ticket_html()
-            
+
             modifyAllowed = False
             for authorizedPerm in authorizedToModify:
                 modifyAllowed = modifyAllowed or authorizedPerm in req.perm(tkt.resource)
-                
+
             if modifyAllowed:
                 visibility = ' style="visibility:hidden"'
                 if self._budgets:
                     visibility = ''
-                
+
+                fieldset = self._get_budget_fieldset() % (visibility, input_html)
+                stream |= Transformer('.//fieldset [@id="properties"]').after(HTML(fieldset))
+
+
+
                 # Load default values for Type, Estimation, Cost an State from trac.ini
-                def_type = self.config.get('budgeting-plugin', 'default_type')
+                def_type = self._get_budget_attr('default_type')
                 if not def_type:
                     # If the configured default-type is not available, submit -1 ==> first element in type list will be selected 
                     def_type = '-1'
-                def_est = self.config.get('budgeting-plugin', 'default_estimation')
+                def_est = self._get_budget_attr('default_estimation')
                 if not def_est:
                     def_est = '0.0'
-                def_cost = self.config.get('budgeting-plugin', 'default_cost')
+                def_cost = self._get_budget_attr('default_cost')
                 if not def_cost:
                     def_est = '0.0'
-                def_state = self.config.get('budgeting-plugin', 'default_state')
+                def_state = self._get_budget_attr('default_state')
                 if not def_state:
                     def_state = '0'
-                                            
-                fieldset_str = self._get_budget_fieldset() % (visibility, input_html)
-                html = HTML('<div style="display: none" id="selectTypes">%s</div>' \
-                           '<div style="display: none" id="selectNames">%s</div>' \
-                           '<div style="display: none" id="def_name">%s</div>' \
-                           '<div style="display: none" id="def_type">%s</div>' \
-                           '<div style="display: none" id="def_est">%s</div>' \
-                           '<div style="display: none" id="def_cost">%s</div>' \
-                           '<div style="display: none" id="def_state">%s</div>' \
-                           '%s' % (self._type_list, self._name_list_str, req.authname, def_type , def_est, def_cost, def_state, fieldset_str))
-                
-                stream |= Transformer('.//fieldset [@id="properties"]').after(html)
-            
+
+                defaults = tag.div(tag.a(self._type_list, id="selectTypes"),
+                                    tag.a(self._name_list_str, id="selectNames"),
+                                    tag.a(req.authname, id="def_name"),
+                                    tag.a(def_type, id="def_type"),
+                                    tag.a(def_est, id="def_est"),
+                                    tag.a(def_cost, id="def_cost"),
+                                    tag.a(def_state, id="def_state"),
+                                    style="display: none")
+
+                stream |= Transformer('.//fieldset [@id="budget"]').append(defaults)
+
             if preview_html:
 #                print "preview_html: %s" % preview_html 
                 fieldset_str = self._get_budget_preview() % preview_html
@@ -343,13 +348,18 @@ class TicketBudgetingView(Component):
             stream |= Transformer('//div[@class="info"]').append(HTML(budget_stats))
             # print input / preview 
         return stream
-    
+
+    def _get_budget_attr(self, name):
+        return self.config.get('budgeting-plugin', name)
+
     def _get_budget_fieldset(self):
         title = _('in hours')
-        fieldset = '<fieldset id="budget">' \
-                       '<legend>' + _('Budget Estimation') + '</legend>' \
-                       '<button type="button" onclick="addBudgetRow()">[+]</button>&nbsp;' \
-                       '<label>' + _('Add a new row') + '</label>' \
+        fieldset = ('<fieldset id="budget">'
+                    '<legend>' + _('Budget Estimation') + '</legend>'
+                    '<div class="inlinebuttons">'
+                    '<label>' + _('Add a new row') + '</label>'
+                    '<input type="button" name="addRow" style="border-radius: 1em 1em 1em 1em;" onclick="addBudgetRow()" value = "+"/>'
+                    '</div>'
                        '<span id="hiddenbudgettable"%s>' \
                        '<table>' \
                        '<thead id="budgethead">' \
@@ -359,16 +369,16 @@ class TicketBudgetingView(Component):
                             '<th title="' + title + '">' + _('Estimation') + '</th>' \
                             '<th title="' + title + '">' + _('Cost') + '</th>' \
                             '<th>' + _('State') + '</th>' \
-                            '<th>' + _('Comment') + '</th>' \
+                            '<th style="width:300px">' + _('Comment') + '</th>' \
                         '</tr>' \
                         '</thead>' \
                         '<tbody id="budget_container">%s</tbody>' \
                         '</table>' \
                         '</span>' \
-                        '</fieldset>'
+                        '</fieldset>')
 
         return fieldset
-    
+
     def _get_budget_preview(self):
         fieldset = '<div id="budgetpreview">' \
                 '<h2 class="foldable">' + _('Budget Estimation') + '</h2>' \
@@ -380,7 +390,7 @@ class TicketBudgetingView(Component):
                         '<th>' + _('Estimation') + '</th>' \
                         '<th>' + _('Cost') + '</th>' \
                         '<th>' + _('State') + '</th>' \
-                        '<th>' + _('Comment') + '</th>' \
+                        '<th style="width:300px">' + _('Comment') + '</th>' \
                     '</tr>' \
                     '</thead>' \
                 '<tbody id="previewContainer">%s' \
@@ -388,11 +398,11 @@ class TicketBudgetingView(Component):
                 '</table>' \
                 '</div>'
         return fieldset
-        
+
     def pre_process_request(self, req, handler):
         """ overridden from IRequestFilter"""
         return handler
-        
+
     def post_process_request(self, req, template, data, content_type):
         """ overridden from IRequestFilter"""
         if req.path_info.startswith('/newticket') or \
@@ -407,7 +417,7 @@ class TicketBudgetingView(Component):
                     self._save_budget(tkt)
                 self._budgets = None
         return template, data, content_type
-    
+
     def _get_fields(self, req):
         budget_dict = {}
         budget_obj = None
@@ -423,7 +433,7 @@ class TicketBudgetingView(Component):
                     budget_obj = Budget()
                     budget_dict[row_no] = budget_obj
                 budget_obj.set(list[2], req.args.get(arg))
-                
+
                 # New created field, should be insered 
                 if list[0] == "GSfield":
                     budget_obj.set_as_insert()
@@ -431,17 +441,17 @@ class TicketBudgetingView(Component):
                     budget_obj.set_as_update()
                 elif list[0] == "DELGSDBfield":
                     budget_obj.set_as_delete()
-                    
+
         return budget_dict
-    
+
     def _get_milestone_html(self, req, group_by):
         html = ''
         stats_by = ''
         ms = req.args['id']
-        
+
         sql = "select sum(b.cost),sum(b.estimation), avg(b.status) from budgeting b, ticket t" \
               " where b.ticket=t.id and t.milestone='%s'" % ms
-        
+
         try:
 #            print "milestone sql: %s" % sql
             with self.env.db_query as db:
@@ -458,14 +468,14 @@ class TicketBudgetingView(Component):
                     html = self._get_progress_html(row[0], row[1], row[2]) + html
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
-        
+
         if not group_by:
             return html, stats_by
-        
+
         sql = "select t.%s, sum(b.cost), sum(b.estimation), avg(b.status) from budgeting b, ticket t" \
               " where b.ticket=t.id and t.milestone='%s'" \
-              " group by t.%s order by t.%s" % (group_by, ms, group_by, group_by) 
-        
+              " group by t.%s order by t.%s" % (group_by, ms, group_by, group_by)
+
         try:
 #            print "sql: %s" % sql
             with self.env.db_query as db:
@@ -476,16 +486,16 @@ class TicketBudgetingView(Component):
                     link = req.href.query({'milestone': ms, group_by: row[0]})
                     if group_by == 'component':
                         link = req.href.report(BUDGET_REPORT_ALL_ID, {'MILESTONE': ms, 'COMPONENT': row[0], 'OWNER': '%'})
-                        
+
                     stats_by += '<tr><th scope="row"><a href="%s">' \
                         '%s</a></th>' % (link, row[0])
                     stats_by += '<td>%s</td></tr>' % status_bar
         except Exception, e:
             self.log.error("Error executing SQL Statement \n %s" % e)
- 
-        
+
+
         return html, stats_by
-    
+
     def _get_progress_html(self, cost, estimation, status, width=None):
         ratio = int (0)
         if estimation > 0 and cost:
@@ -500,21 +510,21 @@ class TicketBudgetingView(Component):
         else:
             leftBarValue = int(0)
             rightBarValue = int(100)
-        
+
 #        print "leftBarValue: %s , rightBarValue: %s" % (leftBarValue, rightBarValue)
         style_cost = "width: " + str(leftBarValue) + "%"
         style_est = "width: " + str(rightBarValue) + "%"
         title = ' title="' + _('Cost') + ' / ' + _('Estimation') + ': %.1f / %.1f (%.0f %%); ' + _('Status') + ': %.1f%%"'
         title = title % (cost, estimation, ratio, status)
         right_legend = "%.0f %%" % ratio
-        
+
         if int(status) == 100:
             style_cost += ";background:none repeat scroll 0 0 #3300FF;"
 #            style_est += ";background:none repeat scroll 0 0 #C3C3C3;"
             style_est += ";background:none repeat scroll 0 0 #00BB00;"
         elif ratio > 100:
             style_cost += ";background:none repeat scroll 0 0 #BB0000;"
-        
+
         status_bar = '<table class="progress"'
         if width:
             status_bar += ' style="width: ' + str(width) + '%"'
@@ -524,21 +534,21 @@ class TicketBudgetingView(Component):
                </td><td style="' + style_est + '" class="open">\
                <a' + title + '></a> \
                </td></tr></table><p class="percent"' + title + '>' + right_legend + '</p>'
-        
+
 #        print "status_bar: %s" % (status_bar)
         return status_bar
-        
+
     def _get_ticket_html(self):
 #        print "[filter_stream] self._budgets: %s" % self._budgets
         input_html = ''
         preview_html = ''
-        
+
         if not self._type_list:
             types_str = self.config.get(self._CONFIG_SECTION, 'types')
             self._type_list = re.sub(r'\|', ';', types_str)
             self.log.debug("INIT self._type_list: %s" % self._type_list)
         types = self._type_list.split(';')
-        
+
         if not self._name_list:
             self._name_list = self.get_user_list()
             self.log.debug("INIT self._name_list: %s" % self._name_list)
@@ -547,7 +557,7 @@ class TicketBudgetingView(Component):
                     self._name_list_str = str(user)
                 else:
                     self._name_list_str += ';' + str(user)
-        
+
         if self._budgets:
             for pos, budget in self._budgets.iteritems():
                 user_options = ''
@@ -556,7 +566,7 @@ class TicketBudgetingView(Component):
                 input_html += '<tr id="row:%s">' % pos
                 preview_html += '<tr>'
                 el_in_list = False
-    
+
                 if self._name_list:
                     for opt in self._name_list:
                         selected = ''
@@ -567,7 +577,7 @@ class TicketBudgetingView(Component):
                         user_options += '<option%s>%s</option>' % (selected, opt)
                 if not el_in_list:
                     user_options += '<option selected>%s</option>' % (values['username'])
-                
+
                 el_in_list = False
                 for t in types:
                     selected = ''
@@ -578,7 +588,7 @@ class TicketBudgetingView(Component):
                     type_options += '<option%s>%s</option>' % (selected, t)
                 if not el_in_list:
                     type_options += '<option selected>%s</option>' % (values['type'])
-                        
+
                 input_html += '<td><select name="GSDBfield:%s:1" >%s</select></td>' % (pos, user_options)
                 preview_html += '<td>%s</td>' % values['username']
                 input_html += '<td><select name="GSDBfield:%s:2">%s</select></td>' % (pos, type_options)
@@ -594,18 +604,18 @@ class TicketBudgetingView(Component):
                             col_val = '0'
                         else:
                             col_val = ''
-                            size = 20
+                            size = 60
                     input_html += '<td><input size="%s" name="GSDBfield:%s:%s" value="%s"></td>' % (size, pos, col, col_val)
                     preview_html += '<td>%s' % col_val
                     if col == 5:
                         preview_html += '&nbsp;%'
                     preview_html += '</td>'
-                input_html += '<td><button type="button" name="deleteRow%s" onclick="deleteRow(%s)">[-]</button></td>' % (pos, pos)
+                input_html += '<td><div class="inlinebuttons"><input type="button" style="border-radius: 1em 1em 1em 1em;" name="deleteRow%s" onclick="deleteRow(%s)" value = "-"/></div></td>' % (pos, pos)
                 input_html += '</tr>'
                 preview_html += '</tr>'
 #        print "input_html: %s \n\n preview_html: %s" % (input_html, preview_html)
         return input_html, preview_html
-        
+
     def _check_init(self):
         """First setup or initentities deleted
             check initialization, like db setup etc."""
@@ -616,7 +626,7 @@ class TicketBudgetingView(Component):
             self.log.debug ("check database")
             sql = "select ticket from %s" % BUDGETING_TABLE.name
             try:
-                with self.env.db_query as db:                
+                with self.env.db_query as db:
                     myCursor = db.cursor()
                     myCursor.execute(sql)
                 self.config.set(self._CONFIG_SECTION, 'version', '1')
@@ -626,7 +636,7 @@ class TicketBudgetingView(Component):
                 return True
             except Exception:
                 self.log.warn ("[_check_init] error while checking database; table 'budgeting' is probably not present")
-    
+
         return False
 
     #===============================================================================
@@ -635,19 +645,19 @@ class TicketBudgetingView(Component):
     #===============================================================================
     def get_templates_dirs(self):
         return [resource_filename(__name__, 'htdocs')]
-    
+
     def get_htdocs_dirs(self):
-        return [('hw', resource_filename(__name__, 'htdocs'))]    
+        return [('hw', resource_filename(__name__, 'htdocs'))]
 
 
     def _load_budget(self, ticket_id):
         self._budgets = {}
         if not ticket_id:
             return
-        
+
         sql = "SELECT position, username, type, estimation, cost, status, comment" \
               " FROM budgeting where ticket=%s order by position" % ticket_id
-        
+
 #        print "[_load_budget] sql: %s " % sql
         try:
             with self.env.db_query as db:
@@ -668,7 +678,7 @@ class TicketBudgetingView(Component):
         except Exception, e:
             self.log.error("Error executing SQL Statement %s \n Error: %s" % (sql, e))
 #        print "[_load_budget] loaded self._budgets: %s for ticket %s" % (self._budgets, ticket_id)
-        
+
     def _save_budget(self, tkt):
         if self._budgets and tkt and tkt.id:
             user = self._changed_by_author
@@ -680,12 +690,12 @@ class TicketBudgetingView(Component):
                 self.log.debug("saved budget of position: %s" % pos)
             self._log_changes(tkt, user)
             self._budgets = None
-    
+
     def _log_changes(self, tkt, change_user):
         if not tkt or not tkt.id:
             return
         cur_time = self._get_current_time()
-        
+
         try:
             with self.env.db_transaction as db:
                 for pos, budget in self._budgets.iteritems():
@@ -698,18 +708,18 @@ class TicketBudgetingView(Component):
                         old_value = "%s, %s: %s" % (budget.get_value(1), budget.get_value(2), budget.get_value(6))
                     elif action == 'update':
                         continue
-                    
+
                     sql = "INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)" \
                                    " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')" % (tkt.id, cur_time, change_user, pos, old_value, new_value)
                     db.cursor().execute(sql)
-                    self.log.debug( "successfully logged budget, pos %s for ticket %s" % (pos, tkt.id) )
-                
+                    self.log.debug("successfully logged budget, pos %s for ticket %s" % (pos, tkt.id))
+
         except Exception, ex:
             self.log.error("Error while logging change: %s" % ex)
-    
+
     def _get_current_time(self):
         return (time.time() - 1) * 1000000
-    
+
     #===========================================================================
     # If a valid validation check was performed, the budgeting data will
     # be stored to database
@@ -727,7 +737,7 @@ class TicketBudgetingView(Component):
             errors.append([fld, str(e)])
 
         return errors
-    
+
 
     def create_table(self):
         '''
@@ -739,38 +749,38 @@ class TicketBudgetingView(Component):
                 cursor = db.cursor()
                 for stmt in conn.to_sql(BUDGETING_TABLE):
                     if db.schema:
-                        stmt = re.sub(r'CREATE TABLE ','CREATE TABLE "' 
-                                      + db.schema + '".', stmt) 
+                        stmt = re.sub(r'CREATE TABLE ', 'CREATE TABLE "'
+                                      + db.schema + '".', stmt)
                     stmt = re.sub(r'(?i)bigint', 'NUMERIC(10,2)', stmt)
                     stmt += ";"
-                    self.log.info( "[INIT table] executing sql: %s" % stmt )
+                    self.log.info("[INIT table] executing sql: %s" % stmt)
                     cursor.execute(stmt)
-                    self.log.info( "[INIT table] successfully created table %s" % BUDGETING_TABLE.name )
+                    self.log.info("[INIT table] successfully created table %s" % BUDGETING_TABLE.name)
         except Exception, e:
             self.log.error("[INIT table] Error executing SQL Statement \n %s" % e)
         self.create_reports()
-        
+
     def create_reports(self):
 #        print "[INIT report] create_reports: %s" % self.BUDGET_REPORTS
         for report in self.BUDGET_REPORTS:
             try:
                 with self.env.db_transaction as db:
                     myCursor = db.cursor()
-                    self.log.info( "having myCursor" )
+                    self.log.info("having myCursor")
                     descr = _(report[2])
-                    self.log.info( "descr: %s" % descr)
+                    self.log.info("descr: %s" % descr)
                     descr = re.sub(r"'", "''", descr)
-                    self.log.info( "report[3]: %s" % report[3])
-                    self.log.info( " VALUES: %s, '%s', '%s'" % (report[0], _(report[1]), report[3]))
+                    self.log.info("report[3]: %s" % report[3])
+                    self.log.info(" VALUES: %s, '%s', '%s'" % (report[0], _(report[1]), report[3]))
                     sql = "INSERT INTO report (id, author, title, query, description) "
-                    sql += " VALUES(%s, null, '%s', '%s', '%s');" % (report[0], _(report[1]), report[3],  descr)
-                    self.log.info( "[INIT reports] executing sql: %s" % sql )
+                    sql += " VALUES(%s, null, '%s', '%s', '%s');" % (report[0], _(report[1]), report[3], descr)
+                    self.log.info("[INIT reports] executing sql: %s" % sql)
                     myCursor.execute(sql)
-                self.log.info( "[INIT reports] successfully created report with id %s" % report[0] )
+                self.log.info("[INIT reports] successfully created report with id %s" % report[0])
             except Exception, e:
                 self.log.error("[INIT reports] Error executing SQL Statement \n %s" % e)
                 raise e
-                    
+
     def get_col_list(self, ignore_cols=None):
         """ return col list as string; usable for selecting all cols 
         from budgeting table """
@@ -780,20 +790,20 @@ class TicketBudgetingView(Component):
             try:
                 if ignore_cols and ignore_cols.index(col.name) > -1: continue
             except: pass
-            
+
             if (i > 0):
                 col_list += ","
             col_list += col.name
             i += 1
         return col_list
-    
-    
+
+
     def get_user_list(self):
         sqlResult = []
-        
+
         sql = "select distinct sid from session where authenticated > 0 order by sid"
-        
-        
+
+
         if self.config.get(self._CONFIG_SECTION, 'retrieve_users') == "permission":
             sql = "select distinct username from permission"
             if self.config.get(self._CONFIG_SECTION, 'exclude_users'):
@@ -822,4 +832,4 @@ class TicketBudgetingPermission(Component):
     #IPermissionRequestor
     def get_permission_actions(self):
         yield self.definedPermissions
-    
+
