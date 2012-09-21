@@ -598,7 +598,7 @@ class TicketBudgetingView(Component):
                     col_val = budget.get_value(col)
                     if col == 6 and col_val: # comment
                         col_val = col_val.replace('"', "&quot;")
-                        size = 20
+                        size = 60
                     elif not col_val:
                         if col < 6:
                             col_val = '0'
