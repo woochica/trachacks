@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2009-2011 Bart Ogryczak
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -147,7 +148,10 @@ class Backlog(object):
         #splitting ordered and unordered
         ordered_tickets, unordered_tickets = [], []
         for ticket in all_tickets:
-            (ordered_tickets if ticket['tkt_order'] is not None else unordered_tickets).append(ticket)            
+            if ticket['tkt_order'] is not None:
+                ordered_tickets.append(ticket)
+            else:
+                unordered_tickets.append(ticket)
         return ordered_tickets, unordered_tickets
     
     def set_ticket_order(self, order):

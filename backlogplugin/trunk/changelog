@@ -1,5 +1,6 @@
 backlog-0.2 (not yet released) - trunk
  resolved issues:
+ * #8653: Restored Python 2.4 compatibility.
  * #10330: Out of range timestamp errors were being generated due to change
    in storage of timestamps to microsecond format in Trac 0.12.
  * #8653: The `env` object was not being assigned as a member variable of
