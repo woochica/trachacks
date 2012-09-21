@@ -3,6 +3,7 @@ from trac.perm import PermissionCache, IPermissionRequestor, IPermissionGroupPro
 from trac.ticket.model import Ticket
 from trac.config import IntOption, ListOption
 from trac.util.compat import set
+import traceback
 
 class InternalTicketsPolicy(Component):
     """Hide internal tickets."""
@@ -68,6 +69,5 @@ class InternalTicketsPolicy(Component):
             groups = self._get_groups(user)
             perm_or_group = self.config.get('ticket', 'internalgroup', 'TIME_ADMIN' )
             it = perm_or_group in groups or perm.has_permission(perm_or_group)
-            if not it: raise PermissionError(perm_or_group, res, self.env)
             return it
         return None
