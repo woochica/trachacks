@@ -37,11 +37,17 @@ try:
     from trac.web.chrome import add_script_data
 except ImportError:
     add_script_data = None
+    _jsquote_re = re.compile(r'[\010\f\n\r\t"><&\\]')
+    _jsquote_chars = {'\010': r'\b', '\f': r'\f', '\n': r'\n', '\r': r'\r',
+                      '\t': r'\t', '"': r'\"', '\\': r'\\',
+                      '&': r'\u0026', '>': r'\u003E', '<': r'\u003C'}
+    def _jsquote_repl(match):
+        return _escape_chars[match.group(0)]
+
     def to_json(value):
         """From 0.12-stable/trac/util/presentation.py"""
-        from trac.util.text import javascript_quote
         if isinstance(value, basestring):
-            return '"%s"' % javascript_quote(value)
+            return '"%s"' % _jsquote_re.sub(_jsquote_repl, value)
         elif value is None:
             return 'null'
         elif value is False:
@@ -223,7 +229,12 @@ class TracDragDropModule(Component):
 
     def _delegate_request(self, req, action):
         # XXX dirty hack
-        req.redirect_listeners.insert(0, self._redirect_listener)
+        if hasattr(req, 'redirect_listeners'):
+            req.redirect_listeners.insert(0, self._redirect_listener)
+        else:
+            def redirect(url, permanent=False):
+                raise RedirectListened
+            req.redirect = redirect
         try:
             if action == 'new':
                 return self._delegate_new_request(req)
