@@ -29,8 +29,9 @@ class CodeReview(object):
         self.changeset = changeset
         self.req = req
         self.db = self.env.get_db_cnx()
-        statuses = self.env.config.get('codereviewer','status_choices')
-        self.statuses = statuses.split(',') if statuses else self.STATUSES
+        self.statuses = self.env.config.get('codereviewer','status_choices')
+        if not isinstance(self.statuses,list):
+            self.statuses = self.statuses.split(',')
         self._clear()
     
     def _clear(self):
