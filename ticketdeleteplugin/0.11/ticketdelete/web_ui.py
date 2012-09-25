@@ -9,7 +9,7 @@ from trac.ticket.model import Ticket
 from trac.ticket.web_ui import TicketModule
 from trac.util import sorted
 from trac.util.datefmt import format_datetime, to_datetime, to_timestamp, utc
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import (
     ITemplateProvider, add_ctxtnav, add_notice, add_script,
     add_stylesheet, add_warning
@@ -20,31 +20,50 @@ import re
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
 
-    implements(IAdminPanelProvider, ITemplateProvider, ITemplateStreamFilter)
+    implements(IAdminPanelProvider, ITemplateProvider, IRequestFilter,
+               ITemplateStreamFilter)
+
+    ### IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        if req.args.get('delete'):
+            id = req.args.get('id')
+            cnum = req.args.get('replyto')
+            if not cnum or cnum == 'description':
+                href = req.href('/admin/ticket/delete') + '/' + id
+            else:
+                href = req.href('/admin/ticket/comments') + '/%s?cnum=%s' % (id, cnum)
+            req.redirect(href)
+        return handler
+
+    def post_process_request(self, req, template, content_type):
+        return template, content_type
+
 
     ### ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'ticket.html' and req.authname != 'anonymous':
-            ticket = data.get('ticket')
-            if 'TICKET_ADMIN' in req.perm(ticket.resource):
-                add_stylesheet(req, 'ticketdelete/ticketdelete.css')
-                buffer = StreamBuffer()
+        ticket = data.get('ticket')
+        if filename == 'ticket.html' and 'TICKET_ADMIN' in req.perm(ticket.resource):
+            if data['ticket'].values['description']:
+                filter = Transformer("//div[@class='description']//div[@class='inlinebuttons']")
+                stream |= filter.append(tag.input(type='hidden', name='delete', value='1')) \
+                                .append(tag.input(type='submit', title="Delete this ticket", value='Delete'))
+            else:
+                filter = Transformer("//div[@class='description']/h3")
+                stream |= filter.after( \
+                    tag.form(tag.div(tag.input(type='hidden', name='delete', value='1'),
+                                     tag.input(type='submit', title="Delete this ticket", value='Delete'),
+                                     class_='inlinebuttons'
+                                     ),
+                             name='addreply', method='get', action='#comment')
+                             )
 
-                def insert_delete_link():
-                    try:
-                        cnum = list(buffer)[0][1][1][0][1]
-                        if cnum == "description":
-                            return tag.a("Delete", title="Delete this ticket", href=("../admin/ticket/delete/%s" % ticket.id))
-                        else:
-                            return tag.a("Delete", title="Delete this comment", href=("../admin/ticket/comments/%s?cnum=%s" % (ticket.id, cnum)))
-                    except:
-                        return ""
+            # Add Delete buttons to ticket comments
+            stream |= Transformer("//div[@id='changelog']//div[@class='inlinebuttons']") \
+                          .append(tag.input(type='hidden', name='delete', value='1')) \
+                          .append(tag.input(type='submit', title="Delete this comment", value='Delete'))
 
-                filter = Transformer("//div[@class='inlinebuttons']/input[@name='replyto']/@value")
-                return stream | filter.copy(buffer).end() \
-                                      .select("//div[@class='inlinebuttons']") \
-                                      .append(insert_delete_link)
         return stream
 
 
@@ -165,7 +184,7 @@ class TicketDeletePlugin(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('ticketdelete', resource_filename(__name__, 'htdocs'))]
+        return []
 
 
     ### Internal methods
@@ -182,7 +201,6 @@ class TicketDeletePlugin(Component):
             add_warning(req, "Ticket ID '%s' is not valid. Please try again." % arg)
         return False
 
-    
     def _delete_ticket(self, id):
         """Delete the given ticket ID."""
         ticket = Ticket(self.env, id)
@@ -208,5 +226,5 @@ class TicketDeletePlugin(Component):
         else:
             for _, _, field, _, _, _ in ticket.get_changelog(to_datetime(int(ts), utc)):
                 self._delete_change(id, ts, field)
-            
+
         db.commit()

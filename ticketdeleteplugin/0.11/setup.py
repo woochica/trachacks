@@ -7,7 +7,7 @@ setup(
     name = 'TracTicketDelete',
     version = '3.0.0',
     packages = ['ticketdelete'],
-    package_data = { 'ticketdelete': ['templates/*.html', 'htdocs/*.css' ] },
+    package_data = { 'ticketdelete': ['templates/*.html'] },
     author = "Noah Kantrowitz",
     author_email = "noah@coderanger.net",
     maintainer= "Ryan J Ollos",
@@ -20,7 +20,6 @@ setup(
     classifiers = [
         'Framework :: Trac',
     ],
-    
     entry_points = {
         'trac.plugins': [
             'ticketdelete = ticketdelete.web_ui'
