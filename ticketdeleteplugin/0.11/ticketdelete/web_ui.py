@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006-2008 Noah Kantrowitz <noah@coderanger.net>
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 from genshi.builder import tag
 from genshi.filters import Transformer
@@ -20,7 +27,7 @@ import re
 class TicketDeletePlugin(Component):
     """A small ticket deletion plugin."""
 
-    implements(IAdminPanelProvider, ITemplateProvider, IRequestFilter,
+    implements(IAdminPanelProvider, IRequestFilter, ITemplateProvider,
                ITemplateStreamFilter)
 
     ### IRequestFilter methods
@@ -46,10 +53,12 @@ class TicketDeletePlugin(Component):
         ticket = data.get('ticket')
         if filename == 'ticket.html' and 'TICKET_ADMIN' in req.perm(ticket.resource):
             if data['ticket'].values['description']:
+                # Reply button and associated elements are present
                 filter = Transformer("//div[@class='description']//div[@class='inlinebuttons']")
                 stream |= filter.append(tag.input(type='hidden', name='delete', value='1')) \
                                 .append(tag.input(type='submit', title="Delete this ticket", value='Delete'))
             else:
+                # Reply button and associated elements not present
                 filter = Transformer("//div[@class='description']/h3")
                 stream |= filter.after( \
                     tag.form(tag.div(tag.input(type='hidden', name='delete', value='1'),
