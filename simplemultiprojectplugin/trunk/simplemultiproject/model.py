@@ -56,8 +56,10 @@ class SmpModel(Component):
         return self.db.cursor()
     
     def __start_transacction(self):
-        self.db.commit()
-        self.db.close()
+        if VERSION < '0.12':
+            # deprecated in newer versions
+            self.db.commit()
+            self.db.close()
 
     # Commons Methods
     def get_project_info(self, name):
