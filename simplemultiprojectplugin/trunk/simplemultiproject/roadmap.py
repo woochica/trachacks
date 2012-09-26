@@ -175,7 +175,7 @@ class SmpRoadmapProject(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if filename.startswith("roadmap"):
             stream_roadmap = HTML(to_unicode(stream))
-            stream_milestones = HTML(stream_roadmap.select('//div[@class="roadmap"]/div[@class="milestones"]'))
+            stream_milestones = HTML(to_unicode(stream_roadmap.select('//div[@class="roadmap"]/div[@class="milestones"]')))
             
             milestones = data.get('milestones')
             milestones = [milestone.name for milestone in milestones]
