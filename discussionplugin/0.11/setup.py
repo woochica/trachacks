@@ -2,6 +2,15 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup
+import sys
+
+min_python = (2, 5)
+if sys.version_info < min_python:
+    print "DiscussionPlugin requires Python %d.%d or later" % min_python
+    sys.exit(1)
+if sys.version_info >= (3,):
+    print "DiscussionPlugin doesn't support Python 3 (yet)"
+    sys.exit(1)
 
 setup(
   name = 'TracDiscussion',
