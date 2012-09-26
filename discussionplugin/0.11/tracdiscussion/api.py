@@ -870,7 +870,7 @@ class DiscussionApi(Component):
 
                         # Notify change listeners.
                         for listener in self.forum_change_listeners:
-                            listener.forum_deleted(context, context.forum)
+                            listener.forum_deleted(context, int(forum_id))
 
                 # Redirect request to prevent re-submit.
                 context.redirect_url = (context.req.path_info, '')

@@ -66,10 +66,10 @@ class DiscussionTags(Component):
         new_tags = self._get_forum_tags(forum)
         self._update_tags(context.req, resource, new_tags)
 
-    def forum_deleted(self, context, forum):
+    def forum_deleted(self, context, forum_id):
         # Create temporary resource.
         resource = Resource(DiscussionTagProvider.realm, 'forum/%s' % (
-          forum['id']))
+          forum_id))
 
         # Remove tags.
         self._delete_tags(context.req, resource)
