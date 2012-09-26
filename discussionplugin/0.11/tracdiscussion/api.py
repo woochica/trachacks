@@ -155,9 +155,10 @@ class DiscussionApi(Component):
 
     def check_attachment_permission(self, action, username, resource, perm):
         if resource.parent.realm == 'discussion':
-            if action in ['ATTACHMENT_VIEW', 'ATTACHMENT_CREATE',
-              'ATTACHMENT_DELETE']:
+            if action in ('ATTACHMENT_CREATE', 'ATTACHMENT_DELETE'):
                 return 'DISCUSSION_ATTACH' in perm(resource.parent)
+            elif action in ('ATTACHMENT_VIEW'):
+                return 'DISCUSSION_VIEW' in perm(resource.parent)
 
     # IResourceManager methods.
 
