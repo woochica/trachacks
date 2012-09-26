@@ -118,8 +118,6 @@ class DiscussionTags(Component):
         return False
 
     def _delete_tags(self, req, resource):
-        self.log.debug("deleting tags: %s" % (new_tags,))
-
         # Delete tags of the resource.
         tag_system = TagSystem(self.env)
         tag_system.delete_tags(req, resource)
