@@ -1,6 +1,6 @@
 Originally created by Muness Alrubaie, totally rewritten by
 Author: Alec Thomas <alec@swapoff.org>
-Maintainer: n.n.
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
 tractags-0.7 (not yet released)
  resolved issues
@@ -35,6 +35,8 @@ tractags-0.7 (not yet released)
  * #9060: Query results are duplicated when realm-selection is repeated
  * #9062: Wiki-page level-1-title broken on 0.12
  * #9210: /tags page should not have a contextual navigation link 'Cloud'
+ * #9521: New install impossible on Trac 0.13dev
+   by adding generic db schema upgrade support
  * TagsQuery now supports a context object
  * refactor cloud rendering so it can be used by other plugins
  * fix regression related to missing IWikiChangeListener

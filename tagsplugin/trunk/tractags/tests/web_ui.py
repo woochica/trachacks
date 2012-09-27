@@ -7,9 +7,9 @@
 # you should have received as part of this distribution.
 #
 
-import unittest
 import shutil
 import tempfile
+import unittest
 
 from trac.test import EnvironmentStub, Mock
 from trac.perm import PermissionSystem, PermissionCache, PermissionError
@@ -17,21 +17,19 @@ from trac.web.href import Href
 from trac.web.session import DetachedSession
 
 from tractags.api import TagSystem
-from tractags.model import TagModelProvider
 from tractags.web_ui import TagRequestHandler
 
 
 class TagRequestHandlerTestCase(unittest.TestCase):
-    
+
     def setUp(self):
         self.env = EnvironmentStub(
                 enable=['trac.*', 'tractags.*'])
         self.env.path = tempfile.mkdtemp()
-        TagModelProvider(self.env).environment_created()
-        
+
         self.tag_s = TagSystem(self.env)
         self.tag_rh = TagRequestHandler(self.env)
-        
+
         perm_system = PermissionSystem(self.env)
         self.anonymous = PermissionCache(self.env, 'anonymous')
         self.reader = PermissionCache(self.env, 'reader')
@@ -40,27 +38,27 @@ class TagRequestHandlerTestCase(unittest.TestCase):
         perm_system.grant_permission('writer', 'TAGS_MODIFY')
         self.admin = PermissionCache(self.env, 'admin')
         perm_system.grant_permission('admin', 'TAGS_ADMIN')
-        
+
         self.href = Href('/trac')
         self.abs_href = Href('http://example.org/trac')
-    
+
     def tearDown(self):
         shutil.rmtree(self.env.path)
-    
+
     def test_matches(self):
         req = Mock(path_info='/tags',
                    authname='reader',
                    perm=self.reader
                   )
         self.assertEquals(True, self.tag_rh.match_request(req))
-    
+
     def test_matches_no_permission(self):
         req = Mock(path_info='/tags',
                    authname='anonymous',
                    perm=self.anonymous
                   )
         self.assertEquals(False, self.tag_rh.match_request(req))
-    
+
     def test_get_main_page(self):
         req = Mock(path_info='/tags',
                    args={},
