@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="downloads-macros.html"/>
+  <xi:include href="admin.html"/>
+  <head>
+    <title>Download Architectures</title>
+  </head>
+
+  <body>
+    <h2>Architectures</h2>
+
+    <form id="{downloads.architecture.id and 'edit' or 'add'}-architecture-form" class="addnew" method="post" action="${panel_href()}">
+      <fieldset>
+        <legend>
+          <py:choose>
+            <py:when test="downloads.architecture.id">
+              Edit Architecture:
+            </py:when>
+            <py:otherwise>
+              Add Architecture:
+            </py:otherwise>
+          </py:choose>
+        </legend>
+
+        <div class="field">
+          <label for="name">Name:</label><br/>
+          <input type="text" id="name" name="name" value="${downloads.architecture.name}"/><br/>
+        </div>
+
+        <div class="field">
+          <label for="description">Description:</label><br/>
+          <input type="text" id="description" name="description" value="${downloads.architecture.description}"/><br/>
+        </div>
+
+        <div class="buttons">
+          <py:choose>
+            <py:when test="downloads.architecture.id">
+              <input type="submit" name="submit" value="Edit"/>
+              <input type="button" name="cancel" value="Cancel" onclick="location.href = '${panel_href()}?order=${downloads.order};desc=${downloads.desc}'"/>
+              <input type="hidden" name="id" value="${downloads.architecture.id}"/>
+              <input type="hidden" name="action" value="post-edit"/>
+            </py:when>
+            <py:otherwise>
+              <input type="submit" name="submit" value="Add"/>
+              <input type="hidden" name="action" value="post-add"/>
+            </py:otherwise>
+          </py:choose>
+          <input type="hidden" name="order" value="${downloads.order}"/>
+          <input type="hidden" name="desc" value="${downloads.desc}"/>
+        </div>
+      </fieldset>
+    </form>
+
+    <py:choose test="len(downloads.architectures) > 0">
+      <py:when test="True">
+        <form method="post" action="${panel_href()}?order=${downloads.order};desc=${downloads.desc}">
+          <table class="listing">
+            <thead>
+              <tr>
+                <th class="sel">&nbsp;</th>
+                ${sortable_th(downloads.order, downloads.desc, 'id', 'ID', panel_href())}
+                ${sortable_th(downloads.order, downloads.desc, 'name', 'Name', panel_href())}
+                ${sortable_th(downloads.order, downloads.desc, 'description', 'Description', panel_href())}
+              </tr>
+            </thead>
+            <tbody>
+              <py:for each="line, architecture in enumerate(downloads.architectures)">
+                <tr class="${line % 2 and 'even' or 'odd'}">
+                  <td class="sel">
+                    <input type="checkbox" name="selection" value="${architecture.id}"/>
+                  </td>
+
+                  <td class="id">
+                    <div class="id">
+                      <a href="${panel_href(architecture.id)}?order=${downloads.order};desc=${downloads.desc}">
+                        ${architecture.id}
+                      </a>
+                    </div>
+                  </td>
+
+                  <td class="name">
+                    <div class="name">
+                      <a href="${panel_href(architecture.id)}?order=${downloads.order};desc=${downloads.desc}">
+                        ${wiki_to_oneliner(context(parent), architecture.name)}
+                      </a>
+                    </div>
+                  </td>
+
+                  <td class="description">
+                    <div class="description">
+                      <a href="${panel_href(architecture.id)}?order=${downloads.order};desc=${downloads.desc}">
+                        ${wiki_to_oneliner(context(parent), architecture.description)}
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </py:for>
+            </tbody>
+          </table>
+
+          <div class="buttons">
+            <input type="submit" name="remove" value="Remove selected items" />
+            <input type="hidden" name="action" value="delete"/>
+          </div>
+        </form>
+      </py:when>
+      <py:otherwise>
+        <p class="help">As long as you don't add any items to the list, this field
+          will remain completely hidden from the user interface.</p>
+        <br style="clear: right"/>
+      </py:otherwise>
+    </py:choose>
+  </body>
+</html>
