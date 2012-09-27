@@ -1,0 +1,24 @@
+/*  General styles */
+
+form.addnew
+{
+  overflow: auto;
+}
+
+table.listing
+{
+  text-align: left;
+}
+
+.listing td.id, .listing td.size, .listing td.time, .listing td.count,
+.listing td.author, .listing td.tags, .listing td.component,
+.listing td.version, .listing td.architecture, .listing td.platform,
+.listing td.type
+{
+  text-align: center;
+}
+
+.listing td.id
+{
+  width: 1%;
+}
