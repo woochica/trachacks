@@ -502,7 +502,7 @@ class DownloadsApi(Component):
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.download_sort_direction
+                    desc = self.download_sort_direction == 'desc'
 
                 self.data['order'] = order
                 self.data['desc'] = desc
@@ -533,7 +533,7 @@ class DownloadsApi(Component):
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.download_sort_direction
+                    desc = self.download_sort_direction == 'desc'
                 download_id = int(context.req.args.get('download') or 0)
 
                 self.data['order'] = order
@@ -630,7 +630,7 @@ class DownloadsApi(Component):
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.architecture_sort_direction
+                    desc = self.architecture_sort_direction == 'desc'
                 architecture_id = int(context.req.args.get('architecture') or 0)
 
                 # Display architectures.
@@ -683,7 +683,7 @@ class DownloadsApi(Component):
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.platform_sort_direction
+                    desc = self.platform_sort_direction == 'desc'
                 platform_id = int(context.req.args.get('platform') or 0)
 
                 # Display platforms.
@@ -736,7 +736,7 @@ class DownloadsApi(Component):
                 if context.req.args.has_key('desc'):
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.type_sort_direction
+                    desc = self.type_sort_direction == 'desc'
                 platform_id = int(context.req.args.get('type') or 0)
 
                 # Display platforms.
