@@ -67,7 +67,7 @@ class GoogleChartProxy(EstimationToolsBase):
         req.perm.require('TICKET_VIEW')
         data = req.args.get('data', '')
         opener = urllib2.build_opener(urllib2.HTTPHandler())
-        chart_req = urllib2.Request('http://chart.apis.google.com/chart', data=data)
+        chart_req = urllib2.Request('http://chart.googleapis.com/chart', data=data)
         self.log.debug("Fetch chart, %r + data: %r" % (chart_req.get_method(), data))
         chart = opener.open(chart_req)
         for header, value in chart.headers.items():

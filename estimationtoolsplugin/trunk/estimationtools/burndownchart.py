@@ -138,7 +138,7 @@ class BurndownChart(EstimationToolsBase, WikiMacroBase):
                                     unicode_quote(chart_args)),
                              alt="Burndown Chart (server)")
         else:
-            return tag.image(src="http://chart.apis.google.com/chart?%s" % chart_args,
+            return tag.image(src="http://chart.googleapis.com/chart?%s" % chart_args,
                              alt="Burndown Chart (client)")
 
     def _calculate_timetable(self, options, query_args, req):
