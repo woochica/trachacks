@@ -14,6 +14,7 @@ from trac.wiki.formatter import wiki_to_html
 
 from simplemultiproject.model import *
 from simplemultiproject.model import smp_filter_settings, smp_settings
+from trac import __version__ as VERSION
 
 class SmpRoadmapProjectFilter(Component):
     """Allows for filtering by 'Project'
@@ -52,6 +53,11 @@ class SmpRoadmapProjectFilter(Component):
                     data['milestones'] = filtered_milestones
                     data['milestone_stats'] = filtered_milestone_stats
             
+        if VERSION <= '0.12':
+            data['infodivclass'] = 'info'
+        else:
+            data['infodivclass'] = 'info trac-progress'
+
         return template, data, content_type
 
     # ITemplateStreamFilter methods
