@@ -20,6 +20,8 @@ setup(
   keywords = 'trac downloads',
   author = 'Radek Bartoň',
   author_email = 'blackhex@post.cz',
+  maintainer = "Ryan J Ollos",
+  maintainer_email = "ryan.j.ollos@gmail.com",
   url = 'http://trac-hacks.org/wiki/DownloadsPlugin',
   description = 'Project release downloads plugin for Trac',
   license = '''GPL'''

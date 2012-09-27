@@ -1,0 +1,10 @@
+[trac.plugins]
+TracDownloads.timeline = tracdownloads.timeline
+TracDownloads.consoleadmin = tracdownloads.consoleadmin
+TracDownloads.core = tracdownloads.core
+TracDownloads.wiki = tracdownloads.wiki
+TracDownloads.webadmin = tracdownloads.webadmin
+TracDownloads.api = tracdownloads.api
+TracDownloads.init = tracdownloads.init
+TracDownloads.tags = tracdownloads.tags [tags]
+
