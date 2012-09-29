@@ -24,14 +24,20 @@ class PermRedirectModule(Component):
                 return template, data, content_type
             
             exctype, exc = sys.exc_info()[0:2]
+
+            ref_url = req.base_url + req.path_info
+            if req.query_string:
+                ref_url = ref_url + "?" + req.query_string
+            login_url = req.href.login(referer=ref_url)
+
             if issubclass(exctype, PermissionError):
-                req.redirect(req.href.login())
+                req.redirect(login_url)
             
             try:
                 if req.path_info.startswith('/admin') and \
                    not AdminModule(self.env)._get_panels(req)[0]:
                     # No admin panels available, assume user should log in.
-                    req.redirect(req.href.login())
+                    req.redirect(login_url)
             except RequestDone:
                 # Reraise on redirect
                 raise
