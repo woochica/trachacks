@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracTags 0.7\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2012-08-19 17:41+0200\n"
+"POT-Creation-Date: 2012-09-30 23:26+0200\n"
 "PO-Revision-Date: 2010-09-11 01:26+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
@@ -34,17 +34,32 @@ msgstr ""
 "Auswahl von aktuellem(n) Tag(s) und entweder ein neues Tag oder die "
 "Löschfreigabe sind erforderlich"
 
-#: tractags/api.py:437
+#: tractags/api.py:377
 #, python-format
 msgid "Tags are not supported on the '%s' realm"
 msgstr "Tags für den Bereich '%s' werden nicht unterstützt"
 
-#: tractags/macros.py:110
-msgid "No tags found"
-msgstr "Keine Tags gefunden"
+#: tractags/db.py:62
+msgid ""
+"A newer plugin version has been installed\n"
+"                              before, but downgrading is unsupported."
+msgstr ""
+"Es war bereits eine neuere Plugin-Version installiert, aber eine "
+"Rückstufung wird nicht unterstützt."
+
+#: tractags/db.py:97
+#, python-format
+msgid ""
+"\n"
+"                        No upgrade module for version %(num)i "
+"(%(version)s.py)\n"
+"                        "
+msgstr ""
+"\n"
+"Kein Aktualisierungsmodul für Version %(num)i (%(version)s.py)"
 
 #. TRANSLATOR: Keep macro doc style formatting here, please.
-#: tractags/macros.py:168
+#: tractags/macros.py:110
 msgid ""
 "Display a tag cloud.\n"
 "\n"
@@ -82,7 +97,7 @@ msgstr ""
 "    Die Abfrage-Syntax finden Sie in der Beschreibung zu Tags.\n"
 "    "
 
-#: tractags/macros.py:184
+#: tractags/macros.py:126
 msgid ""
 "List tagged resources.\n"
 "\n"
@@ -106,30 +121,34 @@ msgstr ""
 "    Die Abfrage-Syntax finden Sie in der Beschreibung zu Tags.\n"
 "    "
 
-#: tractags/macros.py:271
+#: tractags/macros.py:220
 msgid "Id"
 msgstr "ID"
 
-#: tractags/macros.py:275
+#: tractags/macros.py:224
 msgid "Realm"
 msgstr "Bereich"
 
 #. TRANSLATOR: Header label text for tag list at wiki page bottom.
-#: tractags/macros.py:276 tractags/web_ui.py:68 tractags/web_ui.py:93
+#: tractags/macros.py:225 tractags/web_ui.py:68 tractags/web_ui.py:94
 #: tractags/wiki.py:166 tractags/templates/admin_tag_change.html:13
 msgid "Tags"
 msgstr "Tags"
 
-#: tractags/macros.py:372
+#: tractags/macros.py:363
+msgid "No tags found"
+msgstr "Keine Tags gefunden"
+
+#: tractags/macros.py:378
 #, python-format
 msgid "Page %(num)d"
 msgstr "Seite %(num)d"
 
-#: tractags/macros.py:382
+#: tractags/macros.py:388
 msgid "Next Page"
 msgstr "Nächste Seite"
 
-#: tractags/macros.py:386
+#: tractags/macros.py:392
 msgid "Previous Page"
 msgstr "Vorige Seite"
 
@@ -164,7 +183,7 @@ msgid "Do not collect tags from closed tickets."
 msgstr "Sammle keine Tags von geschlossenen Tickets."
 
 #. TRANSLATOR: The meta-nav link label.
-#: tractags/web_ui.py:114
+#: tractags/web_ui.py:116
 msgid "Back to Cloud"
 msgstr "Zurück zum Haufen"
 
