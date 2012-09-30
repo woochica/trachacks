@@ -146,14 +146,17 @@ class TimeDeltaUpdatorModule(Component):
         return (2, 'n != 1')
 
     def _get_units(self, n):
-        def format(msg):
-            return [dgettext('messages', (msg, i)) for i in xrange(n)]
+        def formats(singular, plural):
+            msgid = (singular, 0)
+            if dgettext('messages', msgid) == msgid:
+                return (singular, plural) # without babel
+            return [dgettext('messages', (singular, i)) for i in xrange(n)]
         return (
-            (3600*24*365, format('%(num)d year')),
-            (3600*24*30,  format('%(num)d month')),
-            (3600*24*7,   format('%(num)d week')),
-            (3600*24,     format('%(num)d day')),
-            (3600,        format('%(num)d hour')),
-            (60,          format('%(num)d minute')),
-            (1,           format('%(num)i second')),
+            (3600*24*365, formats('%(num)d year',   '%(num)d years')),
+            (3600*24*30,  formats('%(num)d month',  '%(num)d months')),
+            (3600*24*7,   formats('%(num)d week',   '%(num)d weeks')),
+            (3600*24,     formats('%(num)d day',    '%(num)d days')),
+            (3600,        formats('%(num)d hour',   '%(num)d hours')),
+            (60,          formats('%(num)d minute', '%(num)d minutes')),
+            (1,           formats('%(num)i second', '%(num)i seconds')),
         )
