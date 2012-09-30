@@ -76,7 +76,8 @@ class TracBacksPlugin(Component):
                 # by the TicketChangePlugin to identify the comment being
                 # edited, so we make sure to add it here.
                 cnum_thischange = 1                
-                change_log = t.get_changelog()
+                change_log = [i for i in t.get_changelog()
+                              if i[2] == "comment"]
                 if change_log != []:
                     lastchange = change_log[-1]
                     cnum_lastchange = lastchange[3].rsplit('.', 1)
