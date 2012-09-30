@@ -46,7 +46,8 @@ tractags-0.7 (not yet released)
  * fix an AttributeError specific to the 0.6 release since [2953]
  * fix an Error for `TagCloud` macro when being called without arguments
  * improve formatting of header for `tag_view.html` page template
-
+ * do TagSystem class API cleanup by moving db access to model layer
+ 
  new features
  * #2509: Create wiki page from /tags/<tag> page
  * #2708: Add rel-tag microformat to tags list
@@ -72,6 +73,7 @@ tractags-0.7 (not yet released)
  * let `describe_tagged_resource` method for tickets use Trac core with i18n
  * review and improve code according to PEP 8, SQL statement's formatting too
  * add pager for ListTagged, if matches exceed `listtagged_items_per_page`
+ * add more unit tests
 
 
 ToDo: add more historic entries

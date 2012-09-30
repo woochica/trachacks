@@ -23,16 +23,19 @@ from tractags.db import TagSetup
 class TagSetupTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.env = EnvironmentStub(
-                enable=['trac.*'])
+        self.env = EnvironmentStub(enable=['trac.*'])
         self.env.path = tempfile.mkdtemp()
         # Initialize default (SQLite) db in memory.
-        self.db = DatabaseManager(self.env)
+        self.db_mgr = DatabaseManager(self.env)
         # Workaround required for Trac 0.11 up to 0.12.4 .
         if trac_version < '0.13dev':
-            self.db.init_db()
+            self.db_mgr.init_db()
+        self.db = self.env.get_db_cnx()
 
     def tearDown(self):
+        self.db.close()
+        # Really close db connections.
+        self.env.shutdown()
         shutil.rmtree(self.env.path)
 
     # Helpers
@@ -47,12 +50,11 @@ class TagSetupTestCase(unittest.TestCase):
     # Tests
 
     def test_new_install(self):
-        db = self.env.get_db_cnx()
         setup = TagSetup(self.env)
-        self.assertEquals(0, setup.get_schema_version(db))
+        self.assertEquals(0, setup.get_schema_version(self.db))
 
-        setup.upgrade_environment(self.env.get_db_cnx())
-        cursor = db.cursor()
+        setup.upgrade_environment(self.db)
+        cursor = self.db.cursor()
         tags = cursor.execute("SELECT * FROM tags").fetchall()
         self.assertEquals([], tags)
         self.assertEquals(['tagspace', 'name', 'tag'],
@@ -73,9 +75,8 @@ class TagSetupTestCase(unittest.TestCase):
                 Index(['name', 'namespace']),
             ]
         ]
-        connector = self.db._get_connector()[0]
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        connector = self.db_mgr._get_connector()[0]
+        cursor = self.db.cursor()
 
         for table in schema:
             for stmt in connector.to_sql(table):
@@ -83,19 +84,19 @@ class TagSetupTestCase(unittest.TestCase):
         # Populate table with migration test data.
         cursor.execute("""
             INSERT INTO wiki_namespace
-                        (name, namespace)
-                 VALUES ('WikiStart', 'tag')
-            """)
+                   (name, namespace)
+            VALUES ('WikiStart', 'tag')
+        """)
         # Current tractags schema is setup with enabled component anyway.
         cursor.execute("DROP TABLE IF EXISTS tags")
 
         tags = cursor.execute("SELECT * FROM wiki_namespace").fetchall()
         self.assertEquals([('WikiStart', 'tag')], tags)
         setup = TagSetup(self.env)
-        self.assertEquals(1, setup.get_schema_version(db))
+        self.assertEquals(1, setup.get_schema_version(self.db))
 
-        setup.upgrade_environment(self.env.get_db_cnx())
-        cursor = db.cursor()
+        setup.upgrade_environment(self.db)
+        cursor = self.db.cursor()
         tags = cursor.execute("SELECT * FROM tags").fetchall()
         # Db content should be migrated.
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)
@@ -119,9 +120,8 @@ class TagSetupTestCase(unittest.TestCase):
                 Index(['tagspace', 'tag']),
             ]
         ]
-        connector = self.db._get_connector()[0]
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
+        connector = self.db_mgr._get_connector()[0]
+        cursor = self.db.cursor()
         # Current tractags schema is setup with enabled component anyway.
         cursor.execute("DROP TABLE IF EXISTS tags")
 
@@ -131,17 +131,17 @@ class TagSetupTestCase(unittest.TestCase):
         # Populate table with test data.
         cursor.execute("""
             INSERT INTO tags
-                        (tagspace, name, tag)
-                 VALUES ('wiki', 'WikiStart', 'tag')
-            """)
+                   (tagspace, name, tag)
+            VALUES ('wiki', 'WikiStart', 'tag')
+        """)
 
         tags = cursor.execute("SELECT * FROM tags").fetchall()
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)
         setup = TagSetup(self.env)
-        self.assertEquals(2, setup.get_schema_version(db))
+        self.assertEquals(2, setup.get_schema_version(self.db))
 
-        setup.upgrade_environment(self.env.get_db_cnx())
-        cursor = db.cursor()
+        setup.upgrade_environment(self.db)
+        cursor = self.db.cursor()
         tags = cursor.execute("SELECT * FROM tags").fetchall()
         # Db should be unchanged.
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)

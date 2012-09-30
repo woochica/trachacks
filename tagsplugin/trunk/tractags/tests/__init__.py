@@ -25,6 +25,9 @@ def test_suite():
     import tractags.tests.macros
     suite.addTest(tractags.tests.macros.test_suite())
 
+    import tractags.tests.model
+    suite.addTest(tractags.tests.model.test_suite())
+
     import tractags.tests.query
     suite.addTest(tractags.tests.query.test_suite())
 

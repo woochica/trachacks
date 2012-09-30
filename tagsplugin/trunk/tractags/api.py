@@ -8,19 +8,18 @@
 #
 
 import re
+
+from genshi import Markup
 from pkg_resources import resource_filename
 
 from trac.config import BoolOption
 from trac.core import Component, ExtensionPoint, Interface, TracError, \
                       implements
-from trac.resource import Resource
 from trac.perm import IPermissionRequestor, PermissionError
-from trac.wiki.model import WikiPage
-from trac.util.text import to_unicode
-from trac.util.compat import set, groupby
 from trac.resource import IResourceManager, get_resource_url, \
                           get_resource_description
-from genshi import Markup
+from trac.util.text import to_unicode
+from trac.wiki.model import WikiPage
 
 # Import translation functions.
 # Fallbacks make Babel still optional and provide for Trac 0.11.
@@ -51,7 +50,8 @@ except ImportError:
                 pass
         return string
 
-# now call module importing i18n methods from here
+from tractags.model import resource_tags, tag_resource, tagged_resources
+# Now call module importing i18n methods from here.
 from tractags.query import *
 
 
@@ -83,7 +83,7 @@ class ITagProvider(Interface):
     def set_resource_tags(req, resource, tags, comment=u''):
         """Set tags for a resource."""
 
-    def reparent_resource_tags(req, old_resource, new_resource, comment=u''):
+    def reparent_resource_tags(req, old_resource, resource, comment=u''):
         """Move tags, typically when renaming an existing resource."""
 
     def remove_resource_tags(req, resource, comment=u''):
@@ -110,6 +110,7 @@ class DefaultTagProvider(Component):
     realm = None
 
     # Public methods
+
     def check_permission(self, perm, action):
         """Delegate function for checking permissions.
 
@@ -120,105 +121,43 @@ class DefaultTagProvider(Component):
         return map[action] in perm('tag')
 
     # ITagProvider methods
+
     def get_taggable_realm(self):
         return self.realm
 
     def get_tagged_resources(self, req, tags):
         if not self.check_permission(req.perm, 'view'):
             return
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        args = [self.realm]
-        sql = 'SELECT DISTINCT name FROM tags WHERE tagspace=%s'
-        if tags:
-            sql += ' AND tags.tag IN (%s)' % ', '.join(['%s' for t in tags])
-            args += tags
-        sql += ' ORDER by name'
-        cursor.execute(sql, args)
-
-        resources = {}
-        for name, in cursor:
-            resource = Resource(self.realm, name)
-            if self.check_permission(req.perm(resource), 'view'):
-                resources[resource.id] = resource
-
-        if not resources:
-            return
-
-        args = [self.realm] + list(resources)
-        # XXX Is this going to be excruciatingly slow?
-        sql = 'SELECT DISTINCT name, tag FROM tags WHERE tagspace=%%s AND ' \
-              'name IN (%s) ORDER BY name' % ', '.join(['%s' for _ in resources])
-        cursor.execute(sql, args)
-
-        for name, tags in groupby(cursor, lambda row: row[0]):
-            resource = resources[name]
-            yield resource, set([tag[1] for tag in tags])
+        return tagged_resources(self.env, self.check_permission, req.perm,
+                                self.realm, tags)
 
     def get_resource_tags(self, req, resource):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'view'):
             return
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('SELECT tag FROM tags WHERE tagspace=%s AND name=%s',
-                       (self.realm, resource.id))
-        for row in cursor:
-            yield row[0]
+        return resource_tags(self.env, self.realm, resource.id)
 
     def set_resource_tags(self, req, resource, tags, comment=u''):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
-        db = self.env.get_db_cnx()
-        try:
-            cursor = db.cursor()
-            cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
-                           (self.realm, resource.id))
-            for tag in tags:
-                cursor.execute('INSERT INTO tags (tagspace, name, tag) '
-                               'VALUES (%s, %s, %s)',
-                               (self.realm, resource.id, tag))
-            db.commit()
-        except:
-            db.rollback()
-            raise
+        tag_resource(self.env, self.realm, resource.id, tags=tags)
 
-    def reparent_resource_tags(self, req, old_resource, new_resource,
+    def reparent_resource_tags(self, req, old_resource, resource,
                                comment=u''):
         assert old_resource.realm == self.realm
-        assert new_resource.realm == self.realm
+        assert resource.realm == self.realm
         if not self.check_permission(req.perm(old_resource), 'modify'):
             raise PermissionError(resource=old_resource, env=self.env)
-        if not self.check_permission(req.perm(new_resource), 'modify'):
-            raise PermissionError(resource=new_resource, env=self.env)
-        db = self.env.get_db_cnx()
-        try:
-            cursor = db.cursor()
-            cursor.execute("""
-                UPDATE  tags
-                    SET name=%s
-                WHERE   tagspace=%s
-                    AND name=%s
-                """, (new_resource.id, self.realm, old_resource.id))
-            db.commit()
-        except:
-            db.rollback()
-            raise
+        if not self.check_permission(req.perm(resource), 'modify'):
+            raise PermissionError(resource=resource, env=self.env)
+        tag_resource(self.env, self.realm, old_resource.id, resource.id)
 
     def remove_resource_tags(self, req, resource, comment=u''):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
-        db = self.env.get_db_cnx()
-        try:
-            cursor = db.cursor()
-            cursor.execute('DELETE FROM tags WHERE tagspace=%s AND name=%s',
-                           (self.realm, resource.id))
-            db.commit()
-        except:
-            db.rollback()
-            raise
+        tag_resource(self.env, self.realm, resource.id)
 
     def describe_tagged_resource(self, req, resource):
         return ''
@@ -231,7 +170,7 @@ class TagSystem(Component):
 
     tag_providers = ExtensionPoint(ITagProvider)
 
-    wiki_page_link = BoolOption('tags', 'wiki_page_link', True, 
+    wiki_page_link = BoolOption('tags', 'wiki_page_link', True,
         doc="Link a tag to the wiki page with same name, if it exists.")
 
     # Internal variables
@@ -240,12 +179,12 @@ class TagSystem(Component):
     _realm_provider_map = None
 
     def __init__(self):
-    # bind the 'tractags' catalog to the specified locale directory
+        # Bind the 'tractags' catalog to the specified locale directory.
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
-
     # Public methods
+
     def query(self, req, query='', attribute_handlers=None):
         """Return a sequence of (resource, tags) tuples matching a query.
 
@@ -260,7 +199,7 @@ class TagSystem(Component):
 
         all_attribute_handlers = {
             'realm': realm_handler,
-            }
+        }
         all_attribute_handlers.update(attribute_handlers or {})
         query = Query(query, attribute_handlers=all_attribute_handlers)
         providers = set()
@@ -272,15 +211,15 @@ class TagSystem(Component):
 
         query_tags = set(query.terms())
         for provider in providers:
-            for resource, tags in provider.get_tagged_resources(req, query_tags):
+            for resource, tags in provider.get_tagged_resources(req,
+                                                                query_tags):
                 if query(tags, context=resource):
                     yield resource, tags
 
     def get_all_tags(self, req, query=''):
         """Return all tags, optionally only on resources matching query.
 
-        Returns a dictionary with tag name as the key and tag frequency as the
-        value.
+        Returns a dictionary with tag name as key and tag frequency as value.
         """
         all_tags = {}
         for resource, tags in self.query(req, query):
@@ -319,14 +258,13 @@ class TagSystem(Component):
             # Handle old style tag providers gracefully.
             self.set_tags(req, resource, tags)
 
-    def reparent_tags(self, req, old_resource, new_resource, comment=u''):
+    def reparent_tags(self, req, old_resource, resource, comment=u''):
         """Move tags, typically when renaming an existing resource.
 
         Tags can't be moved between different tag realms with intention.
         """
-        provider = self._get_provider(old_resource.realm) 
-        provider.reparent_resource_tags(req, old_resource, new_resource,
-                                        comment)        
+        provider = self._get_provider(old_resource.realm)
+        provider.reparent_resource_tags(req, old_resource, resource, comment)
 
     def replace_tag(self, req, old_tags, new_tag=None, comment=u'',
                     allow_delete=False):
@@ -376,7 +314,8 @@ class TagSystem(Component):
 
     def split_into_tags(self, text):
         """Split plain text into tags."""
-        return set([t.strip() for t in self._tag_split.split(text) if t.strip()])
+        return set([tag.strip() for tag in self._tag_split.split(text)
+                   if tag.strip()])
 
     def describe_tagged_resource(self, req, resource):
         """Return a short description of a taggable resource."""
@@ -388,7 +327,7 @@ class TagSystem(Component):
                                  'describe_tagged_resource()' % provider)
             return ''
     
-    # IPermissionRequestor methods
+    # IPermissionRequestor method
     def get_permission_actions(self):
         action = ['TAGS_VIEW', 'TAGS_MODIFY']
         actions = [action[0], (action[1], [action[0]]),
@@ -396,6 +335,7 @@ class TagSystem(Component):
         return actions
 
     # IResourceManager methods
+
     def get_resource_realms(self):
         yield 'tag'
 
@@ -421,6 +361,7 @@ class TagSystem(Component):
             return u'tag:%s' % rid
 
     # Internal methods
+
     def _populate_provider_map(self):
         if self._realm_provider_map is None:
             self._realm_provider_map = {}
@@ -433,4 +374,5 @@ class TagSystem(Component):
         try:
             return self._realm_provider_map[realm]
         except KeyError:
-            raise InvalidTagRealm(_("Tags are not supported on the '%s' realm") % realm)
+            raise InvalidTagRealm(_("Tags are not supported on the '%s' realm")
+                                  % realm)
