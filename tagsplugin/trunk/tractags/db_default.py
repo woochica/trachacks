@@ -31,7 +31,7 @@ def get_data(db):
     return (('permission',
               ('username', 'action'),
                 (('anonymous', 'TAGS_VIEW'),
-                 ('authenticated', 'TAGS_EDIT'))),
+                 ('authenticated', 'TAGS_MODIFY'))),
             ('system',
               ('name', 'value'),
                 (('tags_version', str(schema_version)),)))

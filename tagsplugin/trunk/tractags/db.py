@@ -61,8 +61,8 @@ class TagSetup(Component):
         elif schema_ver > db_default.schema_version:
             raise TracError(_("""A newer plugin version has been installed
                               before, but downgrading is unsupported"""))
-        self.log.info("TracTags database schema version is %d, should be %d",
-                      schema_ver, db_default.schema_version)
+        self.log.info("TracTags database schema version is %d, should be %d"
+                      % (schema_ver, db_default.schema_version))
         return True
 
     def upgrade_environment(self, db):
@@ -103,8 +103,8 @@ class TagSetup(Component):
                SET value=%s
              WHERE name='tags_version'
             """, (db_default.schema_version,))
-        self.log.info('Upgraded tractags db schema from version %d to %d',
-                      schema_ver, db_default.schema_version)
+        self.log.info("Upgraded TracTags db schema from version %d to %d"
+                      % (schema_ver, db_default.schema_version))
         db.commit()
 
     # Internal methods
@@ -123,13 +123,13 @@ class TagSetup(Component):
         #return row and int(row[0]) or 0
         # DEVEL: Remove __init__() and all code below after tags-0.7 release.
 
-        if not (row and int(row[0]) > 1):
+        if not (row and int(row[0]) > 2):
             # Care for pre-tags-0.7 installations.
             if self._db_table_exists(self.env, 'tags'):
-                self.env.log.debug("tractags needs to register schema version")
+                self.env.log.debug("TracTags needs to register schema version")
                 return 2
             elif self._db_table_exists(self.env, 'wiki_namespace'):
-                self.env.log.debug("tractags needs to migrate old data")
+                self.env.log.debug("TracTags needs to migrate old data")
                 return 1
             else:
                 # This is a new installation.
