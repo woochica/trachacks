@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """ @package MarkdownMacro
     @file macro.py
     @brief The markdownMacro class
@@ -13,23 +15,21 @@
     @version 0.11.1
 """
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki.formatter import Formatter, system_message
 
 from genshi.builder import tag
 
-from re import sub, compile, search, I
+import re
 from StringIO import StringIO
 
 # links, autolinks, and reference-style links
 
-LINK = compile(
+LINK = re.compile(
     r'(\]\()([^) ]+)([^)]*\))|(<)([^>]+)(>)|(\n\[[^]]+\]: *)([^ \n]+)(.*\n)'
 )
-HREF = compile(r'href=[\'"]?([^\'" ]*)')
-
-__all__ = ['MarkdownMacro']
+HREF = re.compile(r'href=[\'"]?([^\'" ]*)', re.I)
 
 class MarkdownMacro(WikiMacroBase):
     """Implements Markdown syntax [WikiProcessors WikiProcessor] as a Trac macro."""
@@ -45,10 +45,7 @@ class MarkdownMacro(WikiMacroBase):
             pre, target, suf = filter(None, m.groups())
             out = StringIO()
             f.format(target, out)
-            url = search(
-                    HREF,
-                    out.getvalue(),
-                    I).groups()[0]
+            url = re.search(HREF, out.getvalue()).groups()[0]
             # Trac creates relative links, which Markdown won't touch inside
             # <autolinks> because they look like HTML
             if pre == '<' and url != target:
@@ -57,7 +54,7 @@ class MarkdownMacro(WikiMacroBase):
             
         try:
             from markdown import markdown
-            return markdown(sub(LINK, convert, content))
+            return markdown(re.sub(LINK, convert, content))
         except ImportError:
             msg = 'Error importing Python Markdown, install it from '
             url = 'http://www.freewisdom.org/projects/python-markdown/'

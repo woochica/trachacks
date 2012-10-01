@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import os.path
 from setuptools import setup
@@ -6,7 +7,7 @@ from setuptools import setup
 setup(
     name = 'TracMarkdownMacro',
     packages = ['Markdown'],
-    version = '0.11.1',
+    version = '0.11.2',
 
     author = 'Douglas Clifton',
     author_email = 'dwclifton@gmail.com',
