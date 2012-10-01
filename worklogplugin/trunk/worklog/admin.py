@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from trac.admin import IAdminPanelProvider
+from trac.admin.api import IAdminPanelProvider
 from trac.core import Component, implements
 from trac.web.chrome import add_notice
 from trac.util.translation import _
@@ -8,6 +8,8 @@ from trac.util.translation import _
 
 class WorklogAdminPanel(Component):
     implements(IAdminPanelProvider)
+
+    ### IAdminPanelProvider methods
 
     def get_admin_panels(self, req):
         if 'WORK_ADMIN' in req.perm:
@@ -45,5 +47,5 @@ class WorklogAdminPanel(Component):
         if self.config.getint('worklog', 'roundup'):
             data['roundup'] = self.config.getint('worklog', 'roundup')
 
-        return 'worklog_webadminui.html', data
+        return 'worklog_admin.html', data
 
