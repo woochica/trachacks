@@ -1,49 +1,49 @@
 # -*- coding: utf-8 -*-
 
-import time
-
-from trac import ticket
-from trac import util
-from trac.core import *
-from trac.perm import IPermissionRequestor, PermissionSystem
-from trac.util import Markup
-from trac.ticket.admin import TicketAdminPanel
+from trac.admin import IAdminPanelProvider
+from trac.core import Component, implements
+from trac.web.chrome import add_notice
+from trac.util.translation import _
 
 
-class WorklogAdminPanel(TicketAdminPanel):
-    _type = 'worklog'
-    _label = ('Work Log', 'Work Log')
+class WorklogAdminPanel(Component):
+    implements(IAdminPanelProvider)
 
-    def _render_admin_panel(self, req, cat, page, component):
-        req.perm.require('TICKET_ADMIN') and req.perm.require('WORK_ADMIN') 
+    def get_admin_panels(self, req):
+        if 'WORK_ADMIN' in req.perm:
+            yield ('ticket', _("Ticket System"), 'worklog', _("Work Log"))
 
-        bools = [ "timingandestimation", "trachoursplugin", "comment",
-                  "autostop", "autostopstart", "autoreassignaccept" ]
-        
-        if req.method == 'POST' and req.args.has_key('update'):
-            for yesno in bools:
-                if req.args.has_key(yesno):
-                    self.config.set(self._type, yesno, True)
+    def render_admin_panel(self, req, category, page, path_info):
+        req.perm.require('WORK_ADMIN') 
+
+        settings = ('autostop', 'autostopstart', 'autoreassignaccept',
+                    'comment', 'timingandestimation', 'trachoursplugin')
+
+        if req.method == 'POST' and 'update' in req.args:
+            for field in settings:
+                if field in req.args:
+                    self.config.set('worklog', field, True)
                 else:
-                    self.config.set(self._type, yesno, False)
+                    self.config.set('worklog', field, False)
                 roundup = 1
-                if req.args.has_key('roundup'):
+                if 'roundup' in req.args:
                     try:
                         if int(req.args.get('roundup')) > 0:
                             roundup = int(req.args.get('roundup'))
                     except:
                         pass
-                self.config.set(self._type, 'roundup', roundup)
-                
+                self.config.set('worklog', 'roundup', roundup)
+
             self.config.save()
+            add_notice(req, _("Changes have been saved."))
 
-        settings = {}
-        for yesno in bools:
-            if self.config.getbool(self._type, yesno):
-                settings[yesno] = 'checked'
+        data = {'view': 'settings'}
+        for field in settings:
+            if self.config.getbool('worklog', field):
+                data[field] = 'checked'
 
-        if self.config.getint(self._type, 'roundup'):
-            settings['roundup'] = self.config.getint(self._type, 'roundup')
-        
-        settings['view'] = 'settings'
-        return 'worklog_webadminui.html', settings
+        if self.config.getint('worklog', 'roundup'):
+            data['roundup'] = self.config.getint('worklog', 'roundup')
+
+        return 'worklog_webadminui.html', data
+
