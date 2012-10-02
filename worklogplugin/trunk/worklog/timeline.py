@@ -12,8 +12,10 @@ from trac.wiki.formatter import format_to_oneliner
 
 from util import pretty_timedelta
 
+from datetime import datetime
 
-class WorkLogTimelineAddon(Component):
+
+class WorklogTimelineEventProvider(Component):
     implements(ITimelineEventProvider)
     
     # ITimelineEventProvider methods
