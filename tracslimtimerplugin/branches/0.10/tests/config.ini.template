@@ -1,0 +1,13 @@
+[slimtimer]
+username = slimtimer.admin@gmail.com
+password = slimtimer.admin
+api_key  = 30e4b6fde78be8f67e8cc809fffe74
+
+[users]
+config_file = users.xml
+
+[database]
+host     = taupo
+username = tt_recorder
+password = analysethis
+database = timetracking
