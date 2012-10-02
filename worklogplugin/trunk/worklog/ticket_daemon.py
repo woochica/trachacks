@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from trac.ticket import ITicketChangeListener, Ticket
-from trac.core import *
+from trac.ticket import ITicketChangeListener
+from trac.core import Component, implements
+
 from manager import WorkLogManager
+
 
 class WorkLogTicketObserver(Component):
     implements(ITicketChangeListener)
-    def __init__(self):
-        pass
 
     def ticket_created(self, ticket):
         """Called when a ticket is created."""

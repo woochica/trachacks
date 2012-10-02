@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import re
-from util import *
-from trac.core import *
+from genshi import XML
+from genshi.filters.transform import Transformer
+from trac.core import Component, implements
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import add_stylesheet, add_script
-from trac.wiki import wiki_to_oneliner
+from trac.wiki.formatter import wiki_to_oneliner
 
 from manager import WorkLogManager
 from util import pretty_timedelta
 
-from genshi import XML
-from genshi.builder import tag
-from genshi.filters.transform import Transformer 
+from datetime import datetime
+
 
 class WorkLogTicketAddon(Component):
     implements(ITemplateStreamFilter)

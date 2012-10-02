@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-import re
-import time
-from usermanual import *
+
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
-from trac.perm import IPermissionRequestor, PermissionSystem
-from webui import *
-from webadminui import *
-from ticket_filter import *
-from timeline_hook import *
-from ticket_daemon import *
+from trac.util.datefmt import utc
+try:
+    from trac.util.datefmt import to_timestamp
+except ImportError:
+    from trac.util.datefmt import to_utimestamp as to_timestamp
+
+from usermanual import *
 try:
     from xmlrpc import *
 except:
     pass
+
 
 class WorkLogSetupParticipant(Component):
     implements(IEnvironmentSetupParticipant)
@@ -32,18 +32,20 @@ class WorkLogSetupParticipant(Component):
         self.db_installed_version = None
 
         # Initialise database schema version tracking.
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT value FROM system WHERE name=%s", (self.db_version_key,))
         try:
             self.db_installed_version = int(cursor.fetchone()[0])
         except:
-            @self.env.with_transaction()
-            def do_init(db):
-              cursor = db.cursor()
-              self.db_installed_version = 0
-              cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
-                             (self.db_version_key, self.db_installed_version))
+            self.db_installed_version = 0
+            try: 
+                cursor.execute("INSERT INTO system (name,value) VALUES(%s,%s)",
+                               (self.db_version_key, self.db_installed_version))
+                db.commit()
+            except Exception, e:
+                db.rollback()
+                raise e
     
     def environment_created(self):
         """Called when a new Trac environment is created."""
@@ -57,12 +59,14 @@ class WorkLogSetupParticipant(Component):
         # Legacy support hack (supports upgrades from revisions r2495 or before)
         if self.db_installed_version == 0:
             try:
-                cursor = self.env.get_read_db().cursor()
+                
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
                 cursor.execute('SELECT * FROM work_log LIMIT 1')
                 # We've succeeded so we actually have version 1
                 self.db_installed_version = 1
             except:
-                cursor.connection.rollback()
+                db.rollback()
                 self.db_installed_version = 0
         # End Legacy support hack
 
@@ -118,29 +122,28 @@ class WorkLogSetupParticipant(Component):
             # Updates complete, set the version
             cursor.execute("UPDATE system SET value=%s WHERE name=%s", 
                            (self.db_version, self.db_version_key))
+            db.commit()
         except Exception, e:
             self.log.error("WorklogPlugin Exception: %s" % (e,));
             db.rollback()
             raise e
 
-
-    
     def needs_user_man(self):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         try:
             cursor.execute('SELECT MAX(version) FROM wiki WHERE name=%s', (user_manual_wiki_title,))
             maxversion = int(cursor.fetchone()[0])
         except:
-            cursor.connection.rollback()
+            db.rollback()
             maxversion = 0
 
         return maxversion < user_manual_version
 
     def do_user_man_update(self, db):
-        when = int(time.time())
         cursor = db.cursor()
         try:
+            when = to_timestamp(datetime.now(utc))
             cursor.execute('INSERT INTO wiki (name,version,time,author,ipnr,text,comment,readonly) '
                            'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
                            (user_manual_wiki_title, user_manual_version, when,
@@ -171,16 +174,9 @@ class WorkLogSetupParticipant(Component):
         print "Worklog needs an upgrade"
         if self.system_needs_upgrade():
             print " * Upgrading Database"
-            @self.env.with_transaction(db)
-            def real_do_db_upgrade(db):
-              self.do_db_upgrade(db)
+            self.do_db_upgrade(db)
         if self.needs_user_man():
             print " * Upgrading usermanual"
-            @self.env.with_transaction(db)
-            def real_do_user_man_update(db):
-              self.do_user_man_update(db)
+            self.do_user_man_update(db)
         print "Done upgrading Worklog"
-
-
-
 

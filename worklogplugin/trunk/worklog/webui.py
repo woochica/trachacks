@@ -1,25 +1,20 @@
 # -*- coding: utf-8 -*-
 
-import re
-from StringIO import StringIO
-import codecs
-import csv
-from util import *
-from time import time
-from datetime import tzinfo, timedelta, datetime
-from usermanual import *
-from manager import WorkLogManager
 from trac.core import *
 from trac.perm import IPermissionRequestor
-from trac.web import IRequestHandler, IRequestFilter
-from trac.util.datefmt import format_date, format_time
 from trac.util import Markup
-from trac.ticket import Ticket
-from trac.web.chrome import add_stylesheet, add_script, \
-     INavigationContributor, ITemplateProvider
-from trac.web.href import Href
-from trac.wiki.formatter import wiki_to_html
-from trac.util.text import CRLF
+from trac.web import IRequestHandler
+from trac.web.chrome import (
+    INavigationContributor, ITemplateProvider, add_stylesheet
+)
+
+from manager import WorkLogManager
+from usermanual import *
+
+import csv
+import re
+from StringIO import StringIO
+
 
 class WorkLogPage(Component):
     implements(IPermissionRequestor, INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -164,18 +159,13 @@ class WorkLogPage(Component):
         return 'worklog.html', data, None
         
         
-    # ITemplateProvider
+    ### ITemplateProvider methods
+
     def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
         from pkg_resources import resource_filename
         return [('worklog', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
     

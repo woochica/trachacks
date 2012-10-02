@@ -33,7 +33,13 @@ setup(
     entry_points={
         'trac.plugins': [
             'worklog.admin = worklog.admin',
+            'worklog.api = worklog.api',
+            'worklog.ticket_daemon = worklog.ticket_daemon',
+            'worklog.ticket_filter = worklog.ticket_filter',
+            'worklog.timeline_hook = worklog.timeline_hook',
+            'worklog.xmlrpc = worklog.xmlrpc[xmlrpc]',
             'worklog.webui = worklog.webui'
         ]
-    }
+    },
+    extras_require = {'xmlrpc': 'TracXMLRPC >= 1.1'}
 )

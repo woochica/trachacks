@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from time import time
-from datetime import tzinfo, timedelta, datetime
-from util import pretty_timedelta
 from trac.ticket.notification import TicketNotifyEmail
 from trac.ticket import Ticket
 from trac.ticket.web_ui import TicketModule
 from trac.util.datefmt import format_date, format_time, to_datetime
+
+from util import pretty_timedelta
+
+from datetime import datetime
+from time import time
+
 
 class WorkLogManager:
     env = None
@@ -75,14 +78,14 @@ class WorkLogManager:
                 cnum += 1
         nowdt = self.now
         nowdt = to_datetime(nowdt)
-        tckt.save_changes(self.authname, msg, nowdt, None, cnum+1)
+        tckt.save_changes(self.authname, msg, nowdt, cnum=cnum+1)
         ## Often the time overlaps and causes a db error,
         ## especially when the trac integration post-commit hook is used.
         ## NOTE TO SELF. I DON'T THINK THIS IS NECESSARY RIGHT NOW...
         #count = 0
         #while count < 10:
         #    try:
-        #        tckt.save_changes(self.authname, msg, self.now, None, cnum+1)
+        #        tckt.save_changes(self.authname, msg, self.now, cnum=cnum+1)
         #        count = 42
         #    except Exception, e:
         #        self.now += 1
@@ -136,15 +139,17 @@ class WorkLogManager:
         if self.config.getbool('worklog', 'autostopstart'):
             # Don't care if this fails, as with these arguments the only failure
             # point is if there is no active task... which is the desired scenario :)
-            self.stop_work(comment='Stopping work on this ticket to start work on #%s.' % (ticket))
+            self.stop_work(comment='Stopping work on this ticket to start work on #%s.' % ticket)
             self.explanation = ''
  
-        @self.env.with_transaction()
-        def do_log(db):
-          cursor = db.cursor()
-          cursor.execute('INSERT INTO work_log (worker, ticket, lastchange, starttime, endtime) '
-                         'VALUES (%s, %s, %s, %s, %s)',
-                         (self.authname, ticket, self.now, self.now, 0))
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            INSERT INTO work_log (worker, ticket, lastchange, starttime, endtime)
+            VALUES (%s, %s, %s, %s, %s)
+            """, (self.authname, ticket, self.now, self.now, 0))
+        db.commit()
+        
         return True
 
     
@@ -165,15 +170,15 @@ class WorkLogManager:
             stoptime = self.now - 1
 
         stoptime = float(stoptime)
+          
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute('UPDATE work_log '
+                       'SET endtime=%s, lastchange=%s, comment=%s '
+                       'WHERE worker=%s AND lastchange=%s AND endtime=0',
+                       (stoptime, stoptime, comment, self.authname, active['lastchange']))
+        db.commit()
         
-        @self.env.with_transaction()
-        def do_log(db):
-          cursor = db.cursor()
-          cursor.execute('UPDATE work_log '
-                         'SET endtime=%s, lastchange=%s, comment=%s '
-                         'WHERE worker=%s AND lastchange=%s AND endtime=0',
-                         (stoptime, stoptime, comment, self.authname, active['lastchange']))
-
         plugtne = self.config.getbool('worklog', 'timingandestimation') and self.config.get('ticket-custom', 'hours')
         plughrs = self.config.getbool('worklog', 'trachoursplugin') and self.config.get('ticket-custom', 'totalhours')
 
@@ -227,15 +232,15 @@ class WorkLogManager:
 
 
     def who_is_working_on(self, ticket):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT worker,starttime FROM work_log WHERE ticket=%s AND endtime=0', (ticket,))
         try:
-            who,since = cursor.fetchone()
-            return who,float(since)
+            who, since = cursor.fetchone()
+            return who, float(since)
         except:
             pass
-        return None,None
+        return None, None
 
     def who_last_worked_on(self, ticket):
         return "Not implemented"
@@ -244,7 +249,7 @@ class WorkLogManager:
         if self.authname == 'anonymous':
             return None
 
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute('SELECT MAX(lastchange) FROM work_log WHERE worker=%s', (self.authname,))
         row = cursor.fetchone()
@@ -285,7 +290,7 @@ class WorkLogManager:
         return task
 
     def get_work_log(self, mode='all'):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         if mode == 'user':
             cursor.execute('SELECT wl.worker, s.value, wl.starttime, wl.endtime, wl.ticket, t.summary, t.status, wl.comment '

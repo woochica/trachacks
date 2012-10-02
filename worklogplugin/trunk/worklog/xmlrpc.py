@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import xmlrpclib
-import posixpath
+from trac.core import Component, implements
 
 from manager import WorkLogManager
+from tracrpc.api import IXMLRPCHandler
 
-from trac.core import *
-from trac.perm import IPermissionRequestor
-from tracrpc.api import IXMLRPCHandler, expose_rpc
 
 class WorlLogRPC(Component):
     """ Interface to the [http://trac-hacks.org/wiki/WorkLogPlugin Work Log Plugin] """

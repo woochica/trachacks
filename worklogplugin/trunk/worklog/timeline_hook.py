@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 
-import re
 from genshi.builder import tag
-from util import *
-from trac.core import *
-from trac.util.datefmt import to_timestamp, utc
-from trac.util.text import shorten_line
+from trac.core import Component, implements
+from trac.resource import Resource
 from trac.ticket.api import TicketSystem
 from trac.timeline.api import ITimelineEventProvider
-from trac.wiki.formatter import format_to_oneliner
-from trac.resource import Resource, get_resource_url, \
-                         render_resource_link, get_resource_shortname, \
-                         get_resource_name
+from trac.util.datefmt import to_timestamp, utc
+from trac.util.text import shorten_line
 from trac.web.chrome import add_stylesheet
+from trac.wiki.formatter import format_to_oneliner
+
+from util import pretty_timedelta
+
 
 class WorkLogTimelineAddon(Component):
     implements(ITimelineEventProvider)
@@ -35,7 +34,7 @@ class WorkLogTimelineAddon(Component):
             ts_stop = to_timestamp(stop)
 
             ticket_realm = Resource('ticket')
-            db = self.env.get_read_db()
+            db = self.env.get_db_cnx()
             cursor = db.cursor()
 
             cursor.execute("""SELECT wl.worker,wl.ticket,wl.time,wl.starttime,wl.comment,wl.kind,t.summary,t.status,t.resolution,t.type
