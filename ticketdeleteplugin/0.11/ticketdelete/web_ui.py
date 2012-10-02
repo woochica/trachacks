@@ -50,14 +50,14 @@ class TicketDeletePlugin(Component):
             if data['ticket'].values['description']:
                 # Reply button and associated elements are present
                 filter = Transformer("//div[@class='description']//div[@class='inlinebuttons']")
-                stream |= filter.append(tag.input(type='hidden', name='delete', value='1')) \
-                                .append(tag.input(type='submit', title="Delete this ticket", value='Delete'))
+                stream |= filter.append(tag.input(type='submit', name='delete',
+                                                  title="Delete this ticket", value='Delete'))
             else:
                 # Reply button and associated elements not present
                 filter = Transformer("//div[@class='description']/h3")
                 stream |= filter.after( \
-                    tag.form(tag.div(tag.input(type='hidden', name='delete', value='1'),
-                                     tag.input(type='submit', title="Delete this ticket", value='Delete'),
+                    tag.form(tag.div(tag.input(type='submit', name='delete',
+                                               title="Delete this ticket", value='Delete'),
                                      class_='inlinebuttons'
                                      ),
                              name='addreply', method='get', action='#comment')
@@ -65,8 +65,8 @@ class TicketDeletePlugin(Component):
 
             # Add Delete buttons to ticket comments
             stream |= Transformer("//div[@id='changelog']//div[@class='inlinebuttons']") \
-                          .append(tag.input(type='hidden', name='delete', value='1')) \
-                          .append(tag.input(type='submit', title="Delete this comment", value='Delete'))
+                          .append(tag.input(type='submit', name='delete',
+                                            title="Delete this comment", value='Delete'))
 
         return stream
 
@@ -199,7 +199,7 @@ class TicketDeletePlugin(Component):
         """Delete the given ticket ID."""
         ticket = Ticket(self.env, id)
         ticket.delete()
-        self.log.debug("Deleted ticket #%s", id)
+        self.log.debug("Deleted ticket #%s" % id)
             
     def _delete_change(self, id, ts, field=None):
         """Delete the change on the given ticket at the given timestamp."""
@@ -225,7 +225,7 @@ class TicketDeletePlugin(Component):
                     DELETE FROM ticket_change
                     WHERE ticket = %s AND time = %s AND field = %s
                     """, (id, ts, field))
-            self.log.debug('TicketDelete: Deleted change to ticket %s at %s (%s)'% (id, ts, field))
+            self.log.debug('TicketDelete: Deleted change to ticket %s at %s (%s)' % (id, ts, field))
         else:
             for _, _, field, _, _, _ in ticket.get_changelog(to_datetime(int(ts))):
                 self._delete_change(id, ts, field)
