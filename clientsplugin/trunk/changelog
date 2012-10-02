@@ -4,5 +4,7 @@ ClientsPlugin-0.5 (not yet released) - trunk
    md5 module, with preference to the former when available. 
 
  new features
+ * #10260: hide clients field on ticket form if there are no clients
+   in the database.
 
 ClientsPlugin-0.4

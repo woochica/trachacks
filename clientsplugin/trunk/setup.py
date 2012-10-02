@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 PACKAGE = 'clients'
 
@@ -16,7 +16,7 @@ setup(name=PACKAGE,
     long_description="""
     I'll write this later!
     """,
-    packages=[PACKAGE],
+    packages=find_packages(exclude=['*.tests']),
     package_data={PACKAGE : ['templates/*.html', 'htdocs/*.css']},
     entry_points = {
         'trac.plugins': [
@@ -35,7 +35,10 @@ setup(name=PACKAGE,
             'clients.action_email = clients.action_email',
             'clients.action_zendesk_forum = clients.action_zendesk_forum',
         ]
-    })
+    },
+    test_suite='clients.tests.test_suite',
+    tests_require=[]
+    )
 
 #### AUTHORS ####
 ## Primary Author:
