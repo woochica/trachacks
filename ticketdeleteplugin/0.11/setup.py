@@ -8,13 +8,16 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from setuptools import setup
+from setuptools import find_packages, setup
+from ticketdelete import assert_trac_version
+
+name = 'TracTicketDelete'
+
+assert_trac_version('< 0.12', name)
 
 setup(
-    name='TracTicketDelete',
+    name=name,
     version='3.0.0',
-    packages=['ticketdelete'],
-    package_data={ 'ticketdelete': ['templates/*.html'] },
     author="Noah Kantrowitz",
     author_email="noah@coderanger.net",
     maintainer="Ryan J Ollos",
@@ -27,6 +30,8 @@ setup(
     classifiers=[
         'Framework :: Trac',
     ],
+    packages=find_packages(exclude=['*.tests*']),
+    package_data={ 'ticketdelete': ['templates/*.html'] },
     entry_points={
         'trac.plugins': [
             'ticketdelete = ticketdelete.web_ui'
