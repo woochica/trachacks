@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2008 Dmitry Dianov
+# Copyright (C) 2011-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -17,7 +18,7 @@ setup(
     maintainer = 'Ryan J Ollos',
     maintainer_email = 'ryan.j.ollos@gmail.com',
     description = "Add suggestions to ticket 'keywords' field",
-    license = "BSD 3-Clause",
+    license = "3-Clause BSD",
     url = 'http://trac-hacks.org/wiki/KeywordSuggestPlugin',
     packages=find_packages(exclude=['*.tests*']),
     package_data = { 'keywordsuggest': ['htdocs/js/*.js','htdocs/css/*.css','htdocs/images/*.png'] },
