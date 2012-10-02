@@ -9,7 +9,7 @@ import time
 try:
     from trac.util.compat import md5
 except:
-    import md5
+    from md5 import new as md5
 
 __all__ = ['ClientEvent']
 
@@ -56,7 +56,7 @@ class ClientEvent(object):
             row = cursor.fetchone()
             if not row:
                 raise TracError('Client Event %s does not exist.' % name)
-            self.md5 = md5.new(name).hexdigest()
+            self.md5 = md5(name).hexdigest()
             self.name = self._old_name = name
             self.summary = row[0] or ''
             self.action = row[1] or ''
@@ -124,7 +124,7 @@ class ClientEvent(object):
           options[name] = value
         rv = {}
         for option in thing.options(client):
-          option['md5'] = md5.new(option['name']).hexdigest()
+          option['md5'] = md5(option['name']).hexdigest()
           if options.has_key(option['name']):
             option['value'] = options[option['name']]
           else:
@@ -223,7 +223,7 @@ class ClientEvent(object):
                        "ORDER BY name")
         for name, summary, action, lastrun in cursor:
             clev = cls(env)
-            clev.md5 = md5.new(name).hexdigest()
+            clev.md5 = md5(name).hexdigest()
             clev.name = clev._old_name = name
             clev.summary = summary or ''
             clev.action = action or ''

@@ -1,0 +1,8 @@
+ClientsPlugin-0.5 (not yet released) - trunk
+ resolved issues
+ * #10402: support use of md5 class from the hashlib module or deprecated
+   md5 module, with preference to the former when available. 
+
+ new features
+
+ClientsPlugin-0.4
