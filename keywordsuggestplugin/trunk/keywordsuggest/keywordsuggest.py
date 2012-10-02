@@ -65,7 +65,7 @@ class KeywordSuggestModule(Component):
     matchcontains = BoolOption('keywordsuggest','matchcontains', True,
                                """Include partial matches in suggestion list. Default is true.""")
 
-    multipleseparator = Option('keywordsuggest','multipleseparator', ',',
+    multipleseparator = Option('keywordsuggest','multipleseparator', ' ',
                                """Character(s) to use as separators between keywords.Default is `,`.""")
 
     helppage = Option('keywordsuggest','helppage', None,
@@ -108,9 +108,9 @@ class KeywordSuggestModule(Component):
             
         js = """jQuery(document).ready(function($) {
                     var keywords = [ %(keywords)s ]
-                    var sep = '%(multipleseparator)s' + ' '
+                    var sep = '%(multipleseparator)s'.trim() + ' '
                     function split( val ) {
-                        return val.split( /%(multipleseparator)s\s*/ );
+                        return val.split( /%(multipleseparator)s\s*|\s+/ );
                     }
                     function extractLast( term ) {
                         return split( term ).pop();
@@ -146,12 +146,6 @@ class KeywordSuggestModule(Component):
                                 return false;
                             }                            
                         });
-                    $("form").submit(function() {
-                        keywords = $("input%(field)s").attr('value')                        
-                        keywords = keywords.replace(/ /g, '').replace(/(^\s*,)|(,\s*$)/g, '')
-                        keywords = keywords.replace(/(\w+%(multipleseparator)s)/g, '$1 ')
-                        $("input%(field)s").attr('value', keywords)
-                    });
                 });"""
 
         # inject transient part of javascript directly into ticket.html template
