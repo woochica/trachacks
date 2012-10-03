@@ -23,6 +23,7 @@ from genshi.filters.transform import Transformer
 
 class InputfieldTrapPlugin(Component):
     implements(ITicketManipulator, ITemplateStreamFilter, IWikiPageManipulator)
+    #implements(ITicketManipulator, ITemplateStreamFilter)
 
     def get_content(self, req):
         """Returns the Genshi tags for the HTML INPUT trap element"""
@@ -79,3 +80,10 @@ class InputfieldTrapPlugin(Component):
         ticket. Therefore, a return value of `[]` means everything is OK."""
         
         return self.validate_inputfieldtrap(req) # if req.authname == "anonymous"
+
+  
+    def prepare_wiki_page(self, req, page, fields):
+        pass
+	#for message in self.validate(page):
+        #    add_warning(req, message)
+
