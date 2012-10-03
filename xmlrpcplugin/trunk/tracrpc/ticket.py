@@ -120,7 +120,7 @@ class TicketRPC(Component):
                     label, widget, hint = \
                         controller.render_ticket_action_control(req, t, action)
                     fragment += widget
-                    hints.append(hint)
+                    hints.append(hint.rstrip('.') + '.')
                     first_label = first_label == None and label or first_label
             controls = []
             for elem in fragment.children:
@@ -141,7 +141,7 @@ class TicketRPC(Component):
                             value = option
                     controls.append((elem.attrib.get('name'),
                                     value, options))
-            actions.append((action, first_label, ". ".join(hints) + '.', controls))
+            actions.append((action, first_label, " ".join(hints), controls))
         return actions
 
     def get(self, req, id):
