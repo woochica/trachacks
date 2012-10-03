@@ -18,6 +18,7 @@ class KeywordSuggestModuleTestCase(unittest.TestCase):
     def setUp(self):
         self.env = EnvironmentStub(enable=['trac.*', 'keywordsuggest.*'])
         self.ksm = KeywordSuggestModule(self.env)
+        self.req = Mock()
 
     def tearDown(self):
         pass
@@ -41,13 +42,36 @@ class KeywordSuggestModuleTestCase(unittest.TestCase):
         self.env.config.set('keywordsuggest', 'multipleseparator', "' '")
         self.assertEqual(' ', self.ksm.multiple_separator)
 
-    def test_implements_itemplateprovider(self):
-        from trac.web.chrome import Chrome
-        self.assertTrue(self.ksm in Chrome(self.env).template_providers)
+    def test_get_keywords_no_keywords(self): 
+        self.assertEqual('', self.ksm._get_keywords_string(self.req))
+
+    def test_get_keywords_define_in_config(self):
+        self.env.config.set('keywordsuggest', 'keywords', 'tag1, tag2, tag3')
+        self.assertEqual("'tag1','tag2','tag3'", self.ksm._get_keywords_string(self.req))
+
+    def test_keywords_are_sorted(self):
+        self.env.config.set('keywordsuggest', 'keywords', 'tagb, tagc, taga')
+        self.assertEqual("'taga','tagb','tagc'", self.ksm._get_keywords_string(self.req))
+    
+    def test_keywords_duplicates_removed(self):
+        self.env.config.set('keywordsuggest', 'keywords', 'tag1, tag1, tag2')
+        self.assertEqual("'tag1','tag2'", self.ksm._get_keywords_string(self.req))
+
+    def test_keywords_quoted_for_javascript(self):
+        self.env.config.set('keywordsuggest', 'keywords', 'it\'s, "this"')
+        self.assertEqual('\'\\"this\\"\',\'it\\\'s\'', self.ksm._get_keywords_string(self.req))
 
     def test_implements_irequestfilter(self):
         from trac.web.main import RequestDispatcher
         self.assertTrue(self.ksm in RequestDispatcher(self.env).filters)
+
+    def test_implements_itemplateprovider(self):
+        from trac.web.chrome import Chrome
+        self.assertTrue(self.ksm in Chrome(self.env).template_providers)
+
+    def test_implements_itemplatestreamfilter(self):
+        from trac.web.chrome import Chrome
+        self.assertTrue(self.ksm in Chrome(self.env).stream_filters)
 
 def test_suite():
     suite = unittest.TestSuite()
