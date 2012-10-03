@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2008 Dmitry Dianov
@@ -14,7 +13,6 @@ import re
 from genshi.builder import tag
 from genshi.core import Markup
 from genshi.filters.transform import Transformer
-from pkg_resources import resource_filename
 from trac.config import Option, BoolOption, ListOption
 from trac.core import Component, implements
 from trac.resource import Resource, ResourceSystem
@@ -53,29 +51,36 @@ class KeywordSuggestModule(Component):
     implements (ITemplateStreamFilter, ITemplateProvider, IRequestFilter)
 
     field = Option('keywordsuggest', 'field', 'keywords',
-                   """Field to which the drop-down list should be attached.""")
+        """Field to which the drop-down list should be attached.""")
 
     keywords = ListOption('keywordsuggest', 'keywords', '', ',',
-                          doc="""A list of comma separated values available for input.""")
+        doc="A list of comma separated values available for input.")
 
 # This needs to be reimplemented as part of the work on version 0.5, refs th:#8141
 #    mustmatch = BoolOption('keywordsuggest', 'mustmatch', False,
 #                           """If true, 'keywords' field accepts values from the keywords list only.""")
 
     matchcontains = BoolOption('keywordsuggest','matchcontains', True,
-                               """Include partial matches in suggestion list. Default is true.""")
+        "Include partial matches in suggestion list. Default is true.")
 
-    multipleseparator = Option('keywordsuggest','multipleseparator', ' ',
-                               """Character(s) to use as separators between keywords.Default is `,`.""")
+    multiple_separator_opt = Option('keywordsuggest','multipleseparator', ' ',
+        """Character(s) to use as separators between keywords. Default is a
+           single whitespace.""")
 
     helppage = Option('keywordsuggest','helppage', None,
-                      """If specified, 'keywords' label will be turned into a link to this URL.""")
+        "If specified, 'keywords' label will be turned into a link to this URL.")
 
     helppagenewwindow = BoolOption('keywordsuggest','helppage.newwindow', False,
-                                   """If true and helppage specified, wiki page will open in a new window. Default is false.""")
+        """If true and helppage specified, wiki page will open in a new window.
+           Default is false.""")
+
+    @property
+    def multiple_separator(self):
+        return self.multiple_separator_opt.strip('\'') or ' '
 
     # ITemplateStreamFilter
     def filter_stream(self, req, method, filename, stream, data):
+
         if not (filename == 'ticket.html' or
                 (tagsplugin_is_installed and filename == 'wiki_edit.html')): 
             return stream
@@ -105,7 +110,7 @@ class KeywordSuggestModule(Component):
         matchfromstart = '"^" +'
         if self.matchcontains:
             matchfromstart = ''
-            
+
         js = """jQuery(document).ready(function($) {
                     var keywords = [ %(keywords)s ]
                     var sep = '%(multipleseparator)s'.trim() + ' '
@@ -152,7 +157,7 @@ class KeywordSuggestModule(Component):
         if req.path_info.startswith('/ticket/') or \
            req.path_info.startswith('/newticket'):
             js_ticket =  js % {'field': '#field-' + self.field, 
-                               'multipleseparator': self.multipleseparator,
+                               'multipleseparator': self.multiple_separator,
                                'keywords': keywords,
                                'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append\
@@ -172,7 +177,7 @@ class KeywordSuggestModule(Component):
         # inject transient part of javascript directly into wiki.html template                             
         elif tagsplugin_is_installed and req.path_info.startswith('/wiki/'):
             js_wiki =  js % {'field': '#tags', 
-                             'multipleseparator': self.multipleseparator,
+                             'multipleseparator': self.multiple_separator,
                              'keywords': keywords,
                              'matchfromstart': matchfromstart}
             stream = stream | Transformer('.//head').append \
@@ -220,13 +225,11 @@ class KeywordSuggestModule(Component):
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
+        from pkg_resources import resource_filename
         return [('keywordsuggest', resource_filename(__name__, 'htdocs'))]
     
     def get_templates_dirs(self):
-
+        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'htdocs')]
 
     # IRequestFilter methods
@@ -240,3 +243,4 @@ class KeywordSuggestModule(Component):
             add_script(req, 'keywordsuggest/js/jquery-ui-1.8.16.custom.min.js')
             add_stylesheet(req, 'keywordsuggest/css/jquery-ui-1.8.16.custom.css')
         return template, data, content_type
+

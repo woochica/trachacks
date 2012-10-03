@@ -20,11 +20,13 @@ setup(
     description = "Add suggestions to ticket 'keywords' field",
     license = "3-Clause BSD",
     url = 'http://trac-hacks.org/wiki/KeywordSuggestPlugin',
-    packages=find_packages(exclude=['*.tests*']),
+    packages=find_packages(exclude=['*.tests']),
     package_data = { 'keywordsuggest': ['htdocs/js/*.js','htdocs/css/*.css','htdocs/images/*.png'] },
     entry_points = {
         'trac.plugins': [
-            'keywordsuggest = keywordsuggest.keywordsuggest'
+            'keywordsuggest.web_ui = keywordsuggest.web_ui'
         ]
-    }
+    },
+    test_suite='keywordsuggest.tests.test_suite',
+    tests_require=[]
 )
