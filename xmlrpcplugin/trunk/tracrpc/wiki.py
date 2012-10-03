@@ -105,14 +105,14 @@ class WikiRPC(Component):
         return page.text
 
     def getPageHTML(self, req, pagename, version=None):
-        """ Return page in rendered HTML, latest version. """
+        """ Return latest version of page as rendered HTML, utf8 encoded. """
         page = self._fetch_page(req, pagename, version)
         fields = {'text': page.text}
         for manipulator in self.manipulators:
             manipulator.prepare_wiki_page(req, page, fields)
         context = Context.from_request(req, page.resource, absurls=True)
         html = format_to_html(self.env, context, fields['text'])
-        return '<html><body>%s</body></html>' % html
+        return '<html><body>%s</body></html>' % html.encode('utf-8')
 
     def getAllPages(self, req):
         """ Returns a list of all pages. The result is an array of utf8 pagenames. """
