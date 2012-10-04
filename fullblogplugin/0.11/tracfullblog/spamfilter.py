@@ -12,9 +12,13 @@ from trac.resource import Resource
 from trac.util import arity
 from trac.util.compat import set
 from trac.util.text import to_unicode
-from tracspamfilter.api import FilterSystem
 from tracfullblog.api import IBlogManipulator
 from tracfullblog.model import BlogPost
+
+try: #SpamFilter < 0.7
+    from tracspamfilter.api import FilterSystem
+except ImportError: #SpamFilter 0.7+
+    from tracspamfilter.filtersystem import FilterSystem
 
 
 class BlogSpamFilterAdapter(Component):
