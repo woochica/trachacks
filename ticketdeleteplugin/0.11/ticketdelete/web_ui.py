@@ -124,9 +124,16 @@ class TicketDeletePlugin(Component):
                             for field, ts in deletions:
                                 if field == 'change':
                                     self._delete_change(t.id, ts)
+                                    add_notice(req, """
+                                        Change(s) to ticket #%s at %s has
+                                        been deleted."""
+                                        % (t.id, format_datetime(int(ts))))
                                 else:
                                     self._delete_change(t.id, ts, field)
-                                add_notice(req, "Change(s) to ticket #%s at %s has been deleted." % (t.id, format_datetime(int(ts))))
+                                    add_notice(req, """
+                                        Change to field \"%s\" of ticket #%s at
+                                        %s has been deleted."""
+                                        % (field, t.id, format_datetime(int(ts))))
                     else:
                         exists = False
 
@@ -210,9 +217,11 @@ class TicketDeletePlugin(Component):
             if field == 'attachment':
                 cursor.execute("DELETE FROM attachment WHERE type = 'ticket' AND id = %s AND time = %s", (id, ts))
             else:
-                custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
-                if field != "comment" and not [1 for time, author, field2, oldval, newval, _ in ticket.get_changelog() if to_timestamp(time) > int(ts) and field == field2]:
-                    oldval = [old for _, _, field2, old, _, _ in ticket.get_changelog(to_datetime(int(ts))) if field2 == field][0]
+                if field != 'comment' and not [1 for time, _, field2, _, _, _ in ticket.get_changelog()
+                                               if to_timestamp(time) > int(ts) and field == field2]:
+                    oldval = [old for _, _, field2, old, _, _ in ticket.get_changelog(to_datetime(int(ts))) if field2 == field][0]    
+                    custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
+                    # Revert the field to it's old value
                     if field in custom_fields:
                         cursor.execute("""
                             UPDATE ticket_custom SET value=%s
@@ -223,7 +232,7 @@ class TicketDeletePlugin(Component):
                             WHERE id=%%s""" % field, (oldval, id))
                 cursor.execute("""
                     DELETE FROM ticket_change
-                    WHERE ticket = %s AND time = %s AND field = %s
+                    WHERE ticket=%s AND time=%s AND field=%s
                     """, (id, ts, field))
             self.log.debug('TicketDelete: Deleted change to ticket %s at %s (%s)' % (id, ts, field))
         else:
