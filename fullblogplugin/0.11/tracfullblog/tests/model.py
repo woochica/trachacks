@@ -42,3 +42,29 @@ class GroupPostsByMonthTestCase(unittest.TestCase):
     def test_no_posts(self):
         grouped = group_posts_by_month(get_blog_posts(self.env))
         self.assertEquals([], grouped)
+
+class GetBlogPostsTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.env = EnvironmentStub()
+        FullBlogSetup(self.env).upgrade_environment(self.env.get_db_cnx())
+
+    def tearDown(self):
+        self.env.destroy_db()
+        del self.env
+
+    def test_get_by_category(self):
+        bp = BlogPost(self.env, 'one')
+        bp.update_fields({'title': 'one', 'body': 'body', 'author': 'user',
+                          'categories': 'about stuff'})
+        self.assertEquals([], bp.save('user'))
+        posts = get_blog_posts(self.env)
+        self.assertEquals(1, len(posts))
+        self.assertEquals('one', posts[0][0])
+        posts = get_blog_posts(self.env, category='non-existing')
+        self.assertEquals(0, len(posts))
+        posts = get_blog_posts(self.env, category='stuff')
+        self.assertEquals(1, len(posts))
+        self.assertEquals('one', posts[0][0])
+        self.assertEquals(get_blog_posts(self.env, category='about'),
+                          get_blog_posts(self.env, category='stuff'))
