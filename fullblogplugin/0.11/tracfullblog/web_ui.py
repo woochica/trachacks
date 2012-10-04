@@ -279,7 +279,7 @@ class FullBlogModule(Component):
 
         elif command == 'delete':
             bp = BlogPost(self.env, pagename)
-            req.perm(bp.resource).require('BLOG_ADMIN')
+            req.perm(bp.resource).require('BLOG_DELETE')
             if 'blog-cancel' in req.args:
                 req.redirect(req.href.blog(pagename))
             comment = int(req.args.get('comment', '0'))

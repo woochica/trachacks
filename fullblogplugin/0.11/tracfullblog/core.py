@@ -71,7 +71,8 @@ class FullBlogCore(Component):
                 ('BLOG_CREATE', ['BLOG_VIEW']),
                 ('BLOG_MODIFY_OWN', ['BLOG_CREATE']),
                 ('BLOG_MODIFY_ALL', ['BLOG_MODIFY_OWN']),
-                ('BLOG_ADMIN', ['BLOG_MODIFY_ALL', 'BLOG_COMMENT']),
+                'BLOG_DELETE',
+                ('BLOG_ADMIN', ['BLOG_MODIFY_ALL', 'BLOG_COMMENT', 'BLOG_DELETE']),
                 ]
 
     # ILegacyAttachmentPolicyDelegate methods
