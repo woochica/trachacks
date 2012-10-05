@@ -147,11 +147,11 @@ class TagSetup(Component):
             cursor.execute("""
                 SELECT relname
                   FROM pg_class
-                 WHERE relname=%s 
+                 WHERE relname='%s'
             """ % table)
             if not cursor.fetchone():
-                return True
-            return False
+                return False
+            return True
         sql = "SELECT COUNT(*) FROM %s" % table
         try:
             cursor.execute(sql)
