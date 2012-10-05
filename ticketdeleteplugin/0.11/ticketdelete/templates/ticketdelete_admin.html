@@ -62,7 +62,8 @@
 	                </tr>
 	                <py:for each="field in change.fields">
 	                  <tr>
-	                    <td><input type="checkbox" id="${field}_${change.ts}" name="mdelete" value="${field}_${change.ts}" checked="${change.checked or None}" /></td>
+	                    <td><input type="checkbox" id="${field}_${change.ts}" name="mdelete"
+                                   value="${field}_${change.ts}" checked="${change.checked or None}" /></td>
 	                    <td>${field}</td>
 	                    <py:choose>
 	                      <py:when test="field == 'comment'">

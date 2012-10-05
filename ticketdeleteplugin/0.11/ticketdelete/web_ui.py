@@ -19,6 +19,7 @@ from trac.web.chrome import (
     ITemplateProvider, add_ctxtnav, add_notice, add_warning
 )
 
+
 class TicketDeletePlugin(Component):
     implements(IAdminPanelProvider, IRequestFilter, ITemplateProvider,
                ITemplateStreamFilter)
@@ -26,6 +27,7 @@ class TicketDeletePlugin(Component):
     ### IRequestFilter methods
 
     def pre_process_request(self, req, handler):
+        # Redirect to the ticket delete admin panel if delete was pressed
         if req.path_info.startswith('/ticket/') and req.args.get('delete'):
             id = req.args.get('id')
             cnum = req.args.get('replyto')
@@ -43,6 +45,7 @@ class TicketDeletePlugin(Component):
     ### ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
+        # Add delete buttons to the ticket form
         ticket = data.get('ticket')
         if filename == 'ticket.html' and 'TICKET_ADMIN' in req.perm(ticket.resource):
 
@@ -90,6 +93,7 @@ class TicketDeletePlugin(Component):
         exists = True
         deleted = False
 
+        # Handle a delete request
         if req.method == 'POST':
             if page == 'deleteticket':
                 if 'ticketid' in req.args:
@@ -122,21 +126,11 @@ class TicketDeletePlugin(Component):
                             deletions = [buttons[0].split('_')]
                         if deletions:
                             for field, ts in deletions:
-                                if field == 'change':
-                                    self._delete_change(t.id, ts)
-                                    add_notice(req, """
-                                        Change(s) to ticket #%s at %s has
-                                        been deleted."""
-                                        % (t.id, format_datetime(int(ts))))
-                                else:
-                                    self._delete_change(t.id, ts, field)
-                                    add_notice(req, """
-                                        Change to field \"%s\" of ticket #%s at
-                                        %s has been deleted."""
-                                        % (field, t.id, format_datetime(int(ts))))
+                                self._delete_change(req, t.id, ts, field)
                     else:
                         exists = False
 
+        # Render the admin page for deleting tickets or ticket changes.
         tid = path_info or req.args.get('ticketid')
         if tid and not deleted and exists:
             t = self._validate(req, tid)
@@ -208,36 +202,54 @@ class TicketDeletePlugin(Component):
         ticket.delete()
         self.log.debug("Deleted ticket #%s" % id)
             
-    def _delete_change(self, id, ts, field=None):
-        """Delete the change on the given ticket at the given timestamp."""
+    def _delete_change(self, req, id, ts, field):
+        """Delete the change to a field on the specified ticket at the
+          specified timestamp."""
+        ticket = Ticket(self.env, id)
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        ticket = Ticket(self.env,id)
-        if field:
-            if field == 'attachment':
-                cursor.execute("DELETE FROM attachment WHERE type = 'ticket' AND id = %s AND time = %s", (id, ts))
+        dt = to_datetime(int(ts))
+        changelog = ticket.get_changelog(dt)
+        if changelog:
+            if field == 'change':
+                # Iterate over all the fields that have changed 
+                for change in changelog:
+                    self._delete_change(req, id, ts, change[2])
+            elif field == 'attachment':
+                # Delete the attachment
+                cursor.execute("""
+                    DELETE FROM attachment WHERE type = 'ticket'
+                    AND id = %s AND time = %s""", (id, ts))
             else:
-                if field != 'comment' and not [1 for time, _, field2, _, _, _ in ticket.get_changelog()
-                                               if to_timestamp(time) > int(ts) and field == field2]:
-                    oldval = [old for _, _, field2, old, _, _ in ticket.get_changelog(to_datetime(int(ts))) if field2 == field][0]    
-                    custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
-                    # Revert the field to it's old value
-                    if field in custom_fields:
-                        cursor.execute("""
-                            UPDATE ticket_custom SET value=%s
-                            WHERE ticket=%s AND name=%s""", (oldval, id, field))
-                    else:
-                        cursor.execute("""
-                            UPDATE ticket SET %s=%%s
-                            WHERE id=%%s""" % field, (oldval, id))
+                # Revert the field to its old value if it's the newest change to that field
+                exists_newer = [True for change in ticket.get_changelog()
+                                if to_timestamp(change[0]) > int(ts) and field == change[2]]
+                if field != 'comment' and not exists_newer:
+                    oldval = [change[3] for change in changelog if change[2] == field]
+                    if oldval:
+                        custom_fields = [f['name'] for f in ticket.fields if f.get('custom')]
+                        if field in custom_fields:
+                            cursor.execute("""
+                                UPDATE ticket_custom SET value=%s
+                                WHERE ticket=%s AND name=%s""", (oldval[0], id, field))
+                        else:
+                            cursor.execute("""
+                                UPDATE ticket SET %s=%%s
+                                WHERE id=%%s""" % field, (oldval[0], id))
+                # Delete the ticket change
                 cursor.execute("""
                     DELETE FROM ticket_change
                     WHERE ticket=%s AND time=%s AND field=%s
                     """, (id, ts, field))
-            self.log.debug('TicketDelete: Deleted change to ticket %s at %s (%s)' % (id, ts, field))
         else:
-            for _, _, field, _, _, _ in ticket.get_changelog(to_datetime(int(ts))):
-                self._delete_change(id, ts, field)
+            raise TracError("""
+                      Ticket change with timestamp %s (datetime: %s) not found
+                      in ticket #%s changelog.
+                      """ % (ts, dt, id))
 
         db.commit()
+        msg = "Change to field \"%s\" of ticket #%s at %s has been deleted." \
+              % (field, id, dt)
+        add_notice(req, msg)
+        self.log.debug("TicketDelete: " + msg)
 
