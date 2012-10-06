@@ -7,6 +7,8 @@ setup(
     version='0.2',
     packages=['tracdeveloper', 'tracdeveloper.dozer'],
     author='Alec Thomas',
+    maintainer='Olemis Lang',
+    maintainer_email='olemis+trac@gmail.com',
     description='Adds some features to Trac that are useful for developers',
     url='http://trac-hacks.org/wiki/TracDeveloperPlugin',
     license='BSD',
