@@ -25,11 +25,7 @@ class TagSetupTestCase(unittest.TestCase):
     def setUp(self):
         self.env = EnvironmentStub(enable=['trac.*'])
         self.env.path = tempfile.mkdtemp()
-        # Initialize default (SQLite) db in memory.
         self.db_mgr = DatabaseManager(self.env)
-        # Workaround required for Trac 0.11 up to 0.12.4 .
-        if trac_version < '0.13dev':
-            self.db_mgr.init_db()
         self.db = self.env.get_db_cnx()
 
     def tearDown(self):

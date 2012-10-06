@@ -10,7 +10,6 @@ import shutil
 import tempfile
 import unittest
 
-from trac import __version__ as trac_version
 from trac.db.api import DatabaseManager
 from trac.perm import PermissionCache, PermissionSystem
 from trac.resource import Resource
@@ -27,10 +26,6 @@ class TagModelTestCase(unittest.TestCase):
         self.env = EnvironmentStub(default_data=True,
                                    enable=['trac.*', 'tractags.*'])
         self.env.path = tempfile.mkdtemp()
-        # Workaround required for Trac 0.11 up to 0.12.4 .
-        #   Initialize default (SQLite) db in memory.
-        if trac_version < '0.13dev':
-            DatabaseManager(self.env).init_db()
         self.perms = PermissionSystem(self.env)
 
         self.check_perm = WikiTagProvider(self.env).check_permission

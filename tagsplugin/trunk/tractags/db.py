@@ -19,36 +19,6 @@ class TagSetup(Component):
 
     implements(IEnvironmentSetupParticipant)
 
-    def __init__(self):
-        db = DatabaseManager(self.env).get_connection()
-        self.rollback_is_safe = False
-        if self.get_schema_version(db):
-            # We have a valid version, all transactions should succeed anyway.
-            self.rollback_is_safe = False
-            return
-            
-        # Preemptive check for rollback tolerance of read-only db connections.
-        # This is required to avoid breaking `environment_needs_upgrade`,
-        #   if the plugin uses intentional db transaction errors for the test.
-        self.rollback_is_safe = True
-        try:
-            if hasattr(db, 'readonly'):
-                db = DatabaseManager(self.env).get_connection(readonly=True)
-                cursor = db.cursor()
-                # Test needed for rollback on read-only connections.
-                cursor.execute("SELECT COUNT(*) FROM system")
-                cursor.fetchone()
-                try:
-                    db.rollback()
-                except AttributeError:
-                    # Avoid rollback on read-only connections.
-                    self.rollback_is_safe = False
-                    return
-                # Test passed.
-        except TracError, e:
-            # Even older Trac - expect no constraints.
-            return
-
     # IEnvironmentSetupParticipant methods
 
     def environment_created(self):
@@ -120,44 +90,40 @@ class TagSetup(Component):
              WHERE name='tags_version'
         """)
         row = cursor.fetchone()
-        #return row and int(row[0]) or 0
-        # DEVEL: Remove __init__() and all code below after tags-0.7 release.
-
         if not (row and int(row[0]) > 2):
             # Care for pre-tags-0.7 installations.
-            if self._db_table_exists(self.env, 'tags'):
+            dburi = self.config.get('trac', 'database')
+            tables = self._get_tables(dburi, cursor)
+            if 'tags' in tables:
                 self.env.log.debug("TracTags needs to register schema version")
                 return 2
-            elif self._db_table_exists(self.env, 'wiki_namespace'):
+            if 'wiki_namespace' in tables:
                 self.env.log.debug("TracTags needs to migrate old data")
                 return 1
-            else:
-                # This is a new installation.
-                return 0
+            # This is a new installation.
+            return 0
         # The expected outcome for any up-to-date installation.
         return row and int(row[0]) or 0
 
-    def _db_table_exists(self, env, table):
-        # Using a separate connection per test minimises error side-effects.
-        db = env.get_db_cnx()
-        cursor = db.cursor()
-
-        # Special handling for PostgreSQL Trac db backend.
-        if env.config.get('trac', 'database').startswith('postgres'):
-            cursor.execute("""
-                SELECT relname
-                  FROM pg_class
-                 WHERE relname='%s'
-            """ % table)
-            if not cursor.fetchone():
-                return False
-            return True
-        sql = "SELECT COUNT(*) FROM %s" % table
-        try:
-            cursor.execute(sql)
-            cursor.fetchone()
-            return True
-        except Exception, e:
-            if self.rollback_is_safe:
-                db.rollback()
-            return False
+    def _get_tables(self, dburi, cursor):
+        """Code from TracMigratePlugin by Jun Omae (see tracmigrate.admin)."""
+        if dburi.startswith('sqlite:'):
+            sql = """
+                SELECT name
+                  FROM sqlite_master
+                 WHERE type='table'
+                   AND NOT name='sqlite_sequence'
+            """
+        elif dburi.startswith('postgres:'):
+            sql = """
+                SELECT tablename
+                  FROM pg_tables
+                 WHERE schemaname = ANY (current_schemas(false))
+            """
+        elif dburi.startswith('mysql:'):
+            sql = "SHOW TABLES"
+        else:
+            raise TracError('Unsupported database type "%s"'
+                            % dburi.split(':')[0])
+        cursor.execute(sql)
+        return sorted([row[0] for row in cursor])
