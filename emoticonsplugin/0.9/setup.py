@@ -22,7 +22,8 @@ from setuptools import setup, find_packages
 setup(
     name = 'TracEmoticons', version = '0.1',
     author = 'Christopher Lenz', author_email = 'cmlenz@gmx.de',
-    url = 'http://trac-hacks.swapoff.org/wiki/EmoticonsPlugin',
+    maintainer = 'Olemis Lang', maintainer_email = 'olemis+trac@gmail.com',
+    url = 'http://trac-hacks.org/wiki/EmoticonsPlugin',
     description = 'Emoticon support for Trac',
     license = 'GPL',
     packages = find_packages(exclude=['*.tests*']),
