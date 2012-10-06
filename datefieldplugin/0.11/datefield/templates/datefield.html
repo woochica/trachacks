@@ -5,6 +5,7 @@ jQuery(document).ready(function($) {
     jQuery('.datepick').datepicker({
         firstDay: "${data.first_day}",
         dateFormat: "${data.format}",
+        defaultDate: 0,
         showOn: "both",
         weekHeader: 'W',
         showWeek: ${data.show_week and 'true' or 'false'},

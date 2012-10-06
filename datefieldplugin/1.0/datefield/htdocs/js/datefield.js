@@ -2,6 +2,7 @@ jQuery(document).ready(function($) {
     jQuery('.datepick').datepicker({
         firstDay: datefield['first_day'],
         dateFormat: datefield['format'],
+        defaultDate: 0,
         showOn: "both",
         weekHeader: 'W',
         showWeek: datefield['show_week'],
