@@ -16,6 +16,7 @@ setup(
     description='Gives a whiteboard view of query results',
     long_description=read('README'),
     author="Brian Meeker", author_email="meeker.brian@gmail.com",
+    maintainer='Olemis Lang', maintainer_email='olemis+trac@gmail.com',
     license='BSD', url='http://trac-hacks.org/wiki/WhiteboardPlugin',
     packages = ['whiteboard'],
     package_data={
