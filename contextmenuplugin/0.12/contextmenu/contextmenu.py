@@ -34,104 +34,22 @@ Created on 17 Jun 2010
 @author: penmark
 '''
 from genshi.builder import tag
-from trac.core import Component, ExtensionPoint, implements
-from trac.web.api import ITemplateStreamFilter
-from api import ISourceBrowserContextMenuProvider
-from genshi.filters.transform import Transformer
 from genshi.core import Markup
+from genshi.filters.transform import Transformer
 from trac.config import Option
-from trac.versioncontrol.api import RepositoryManager
-from trac.web.chrome import add_stylesheet, ITemplateProvider, add_javascript
+from trac.core import Component, ExtensionPoint, implements
 from trac.util.translation import _
+from trac.versioncontrol.api import RepositoryManager
+from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import add_stylesheet, ITemplateProvider, add_javascript
+
+from api import ISourceBrowserContextMenuProvider
+
 import os
 
 
-class InternalNameHolder(Component):
-    """ This component holds a reference to the file on this row
-    for the javascript to use"""
-    implements(ISourceBrowserContextMenuProvider)
-    # IContextMenuProvider methods
-    def get_order(self, req):
-        return 0
-
-    def get_draw_separator(self, req):
-        return False
-    
-    def get_content(self, req, entry, stream, data):
-        reponame = data['reponame'] or ''
-        filename = os.path.normpath(os.path.join(reponame, entry.path))
-        return tag.span(filename, class_="filenameholder %s" % entry.kind,
-                        style="display:none")
-    
-class SubversionLink(Component):
-    """Generate direct link to file in svn repo"""
-    implements(ISourceBrowserContextMenuProvider)
-
-    # IContextMenuProvider methods
-    def get_order(self, req):
-        return 1
-
-    def get_draw_separator(self, req):
-        return True
-    
-    def get_content(self, req, entry, stream, data):
-        if self.env.is_component_enabled("svnurls.svnurls.svnurls"):
-            # They are already providing links to subversion, so we won't duplicate them.
-            return None
-        if isinstance(entry, basestring):
-            path = entry
-        else:
-            try:
-                path = entry.path
-            except AttributeError:
-                path = entry['path']
-        repos = RepositoryManager(self.env).get_repository(data['reponame'])
-        return tag.a(_('Subversion'), href=repos.get_path_url(path, None))
-
-class WikiToBrowserLink(Component):
-    """Generate wiki link"""
-    implements(ISourceBrowserContextMenuProvider)
-
-    # IContextMenuProvider methods
-    def get_order(self, req):
-        return 2
-
-    def get_draw_separator(self, req):
-        return True
-    
-    def get_content(self, req, entry, stream, data):
-        if isinstance(entry, basestring):
-            path = entry
-        else:
-            try:
-                path = entry.path
-            except AttributeError:
-                path = entry['path']
-        href = ''
-        if data['reponame']:
-            href += '/' + data['reponame']
-        href += '/' + path
-        if data.has_key('rev'):
-            href += "@%s" % data['rev']
-        return tag.a(_('Wiki Link (to copy)'), href="source:%s" % href)
-
-class SendResourceLink(Component):
-    """Generate "Share file" menu item"""
-    implements(ISourceBrowserContextMenuProvider)
-    def get_order(self, req):
-        return 10
-
-    def get_draw_separator(self, req):
-        return False
-    
-    # IContextMenuProvider methods
-    def get_content(self, req, entry, stream, data):
-        if not entry.isdir:
-            return tag.a(_('Share file'), href=req.href.share(entry.path) + 'FIXME')
-
-  
 class SourceBrowserContextMenu(Component):
-    """Component for adding a context menu to each item in the trac browser
+    """Component for adding a context menu to each item in the Trac browser
     file-list
     """
     implements(ITemplateStreamFilter, ITemplateProvider)
@@ -167,6 +85,7 @@ class SourceBrowserContextMenu(Component):
             else:
                 # First row = //tr[1]
                 row_index = 1
+
             for entry in data['dir']['entries']:
                 menu = tag.div(tag.span(Markup('&#9662;'),style="color: #bbb"),
                                tag.div(class_="ctx-foldable", style="display:none"),
@@ -190,7 +109,7 @@ class SourceBrowserContextMenu(Component):
                 idx += 1
             stream |= Transformer('//th[1]').before(tag.th())
         return stream
-    
+
     # ITemplateProvider methods
     
     def get_htdocs_dirs(self):
@@ -199,3 +118,100 @@ class SourceBrowserContextMenu(Component):
 
     def get_templates_dirs(self):
         return []
+
+
+class InternalNameHolder(Component):
+    """ This component holds a reference to the file on this row
+    for the javascript to use"""
+    implements(ISourceBrowserContextMenuProvider)
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 0
+
+    def get_draw_separator(self, req):
+        return False
+    
+    def get_content(self, req, entry, stream, data):
+        reponame = data['reponame'] or ''
+        filename = os.path.normpath(os.path.join(reponame, entry.path))
+        return tag.span(filename, class_="filenameholder %s" % entry.kind,
+                        style="display:none")
+
+
+class SubversionLink(Component):
+    """Generate direct link to file in svn repo"""
+    implements(ISourceBrowserContextMenuProvider)
+
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 1
+
+    def get_draw_separator(self, req):
+        return True
+    
+    def get_content(self, req, entry, stream, data):
+        if self.env.is_component_enabled("svnurls.svnurls.svnurls"):
+            # Another plugin provides links to subversion, so we won't duplicate them.
+            return None
+        repos, path, rev = get_repository_path_and_rev(entry, data)
+        href = repos.get_path_url(path, rev)
+        if href:
+            return tag.a(_('Subversion'), href=href)
+        else:
+            # Probably no URL has been specified for the repository
+            return None
+
+
+class WikiToBrowserLink(Component):
+    """Generate wiki link"""
+    implements(ISourceBrowserContextMenuProvider)
+
+    # IContextMenuProvider methods
+    def get_order(self, req):
+        return 2
+
+    def get_draw_separator(self, req):
+        return True
+
+    def get_content(self, req, entry, stream, data):
+        repos, path, rev = get_repository_path_and_rev(entry, data)
+        href = ''
+        if repos.name:
+            href += '/' + repos.name
+        href = 'source:/%s' % path
+        if rev:
+            href += '@%s' % data['rev']
+        return tag.a(_("Wiki Link (to copy)"), href=href)
+
+
+class SendResourceLink(Component):
+    """Generate "Share file" menu item"""
+    implements(ISourceBrowserContextMenuProvider)
+    def get_order(self, req):
+        return 10
+
+    def get_draw_separator(self, req):
+        return False
+
+    # IContextMenuProvider methods
+    def get_content(self, req, entry, stream, data):
+        if not entry.isdir:
+            return tag.a(_('Share file'), href=req.href.share(entry.path) + '/FIXME')
+
+
+def get_repository_path_and_rev(entry, data):
+    rev = None
+    if isinstance(entry, basestring):
+        path = entry
+        if 'rev' in data and data['rev']:
+            rev = data['rev']
+    else:
+        try:
+            path = entry.path
+            rev = entry.rev
+        except AttributeError:
+            path = entry['path']
+            rev = entry['rev']
+
+    return data['repos'], path, rev
+

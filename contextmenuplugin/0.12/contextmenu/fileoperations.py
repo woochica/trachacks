@@ -34,8 +34,9 @@
 
 from genshi.builder import tag
 from trac.core import Component, implements
-from api import ISourceBrowserContextMenuProvider
 from trac.util.translation import _
+
+from api import ISourceBrowserContextMenuProvider
 
 class DeleteResourceLink(Component):
     """Generate "Delete" menu item"""      
