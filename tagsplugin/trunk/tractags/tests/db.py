@@ -55,6 +55,7 @@ class TagSetupTestCase(unittest.TestCase):
     def test_new_install(self):
         setup = TagSetup(self.env)
         # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for clean install testing.
         self._revert_tractags_schema_init()
         self.assertEquals(0, setup.get_schema_version(self.db))
         self.assertTrue(setup.environment_needs_upgrade(self.db))
@@ -86,6 +87,7 @@ class TagSetupTestCase(unittest.TestCase):
         ]
         setup = TagSetup(self.env)
         # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for clean install testing.
         self._revert_tractags_schema_init()
 
         connector = self.db_mgr._get_connector()[0]
@@ -137,6 +139,7 @@ class TagSetupTestCase(unittest.TestCase):
         ]
         setup = TagSetup(self.env)
         # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for clean install testing.
         self._revert_tractags_schema_init()
 
         connector = self.db_mgr._get_connector()[0]

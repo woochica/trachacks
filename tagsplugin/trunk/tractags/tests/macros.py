@@ -42,7 +42,6 @@ class ListTaggedMacroTestCase(unittest.TestCase):
         self.env = EnvironmentStub(
                 enable=['trac.*', 'tractags.*'])
         self.env.path = tempfile.mkdtemp()
-        PermissionSystem(self.env).grant_permission('user', 'TAGS_VIEW')
 
         self.tag_twm = TagWikiMacros(self.env)
 

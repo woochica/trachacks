@@ -31,6 +31,9 @@ class TagModelTestCase(unittest.TestCase):
         self.check_perm = WikiTagProvider(self.env).check_permission
         self.db = self.env.get_db_cnx()
         setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for getting default permissions inserted.
+        self._revert_tractags_schema_init()
         setup.upgrade_environment(self.db)
 
         cursor = self.db.cursor()
@@ -49,6 +52,13 @@ class TagModelTestCase(unittest.TestCase):
         shutil.rmtree(self.env.path)
 
     # Helpers
+
+    def _revert_tractags_schema_init(self):
+        cursor = self.db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS tags")
+        cursor.execute("DELETE FROM system WHERE name='tags_version'")
+        cursor.execute("DELETE FROM permission WHERE action %s"
+                       % self.db.like(), ('TAGS_%',))
 
     def _tags(self):
         tags = {}

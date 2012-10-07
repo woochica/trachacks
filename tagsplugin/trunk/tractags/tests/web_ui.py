@@ -17,6 +17,7 @@ from trac.web.href import Href
 from trac.web.session import DetachedSession
 
 from tractags.api import TagSystem
+from tractags.db import TagSetup
 from tractags.web_ui import TagRequestHandler
 
 
@@ -30,20 +31,44 @@ class TagRequestHandlerTestCase(unittest.TestCase):
         self.tag_s = TagSystem(self.env)
         self.tag_rh = TagRequestHandler(self.env)
 
-        perm_system = PermissionSystem(self.env)
-        self.anonymous = PermissionCache(self.env, 'anonymous')
+        self.db = self.env.get_db_cnx()
+        setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for getting a clean setup.
+        self._revert_tractags_schema_init()
+        setup.upgrade_environment(self.db)
+
+        perms = PermissionSystem(self.env)
+        # Revoke default permissions, because more diversity is required here.
+        perms.revoke_permission('anonymous', 'TAGS_VIEW')
+        perms.revoke_permission('authenticated', 'TAGS_MODIFY')
+        perms.grant_permission('reader', 'TAGS_VIEW')
+        perms.grant_permission('writer', 'TAGS_MODIFY')
+        perms.grant_permission('admin', 'TAGS_ADMIN')
+        self.anonymous = PermissionCache(self.env)
         self.reader = PermissionCache(self.env, 'reader')
-        perm_system.grant_permission('reader', 'TAGS_VIEW')
         self.writer = PermissionCache(self.env, 'writer')
-        perm_system.grant_permission('writer', 'TAGS_MODIFY')
         self.admin = PermissionCache(self.env, 'admin')
-        perm_system.grant_permission('admin', 'TAGS_ADMIN')
 
         self.href = Href('/trac')
         self.abs_href = Href('http://example.org/trac')
 
     def tearDown(self):
+        self.db.close()
+        # Really close db connections.
+        self.env.shutdown()
         shutil.rmtree(self.env.path)
+
+    # Helpers
+
+    def _revert_tractags_schema_init(self):
+        cursor = self.db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS tags")
+        cursor.execute("DELETE FROM system WHERE name='tags_version'")
+        cursor.execute("DELETE FROM permission WHERE action %s"
+                       % self.db.like(), ('TAGS_%',))
+
+    # Tests
 
     def test_matches(self):
         req = Mock(path_info='/tags',
@@ -80,8 +105,13 @@ class TagRequestHandlerTestCase(unittest.TestCase):
 
     def test_get_main_page_no_permission(self):
         req = Mock(path_info='/tags',
+                   args={},
                    authname='anonymous',
-                   perm=self.anonymous
+                   perm=self.anonymous,
+                   href=self.href,
+                   chrome=dict(static_hash='hashme!'),
+                   locale='',
+                   tz=''
                 )
         self.assertRaises(PermissionError, self.tag_rh.process_request, req)
 

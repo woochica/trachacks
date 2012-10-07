@@ -33,6 +33,9 @@ class TagSystemTestCase(unittest.TestCase):
         self.tag_s = TagSystem(self.env)
         self.db = self.env.get_db_cnx()
         setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for getting default permissions inserted.
+        self._revert_tractags_schema_init()
         setup.upgrade_environment(self.db)
 
     def tearDown(self):
@@ -40,6 +43,17 @@ class TagSystemTestCase(unittest.TestCase):
         # Really close db connections.
         self.env.shutdown()
         shutil.rmtree(self.env.path)
+
+    # Helpers
+
+    def _revert_tractags_schema_init(self):
+        cursor = self.db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS tags")
+        cursor.execute("DELETE FROM system WHERE name='tags_version'")
+        cursor.execute("DELETE FROM permission WHERE action %s"
+                       % self.db.like(), ('TAGS_%',))
+
+    # Tests
 
     def test_available_actions(self):
         for action in self.actions:
