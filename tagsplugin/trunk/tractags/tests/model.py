@@ -53,11 +53,12 @@ class TagModelTestCase(unittest.TestCase):
     def _tags(self):
         tags = {}
         cursor = self.db.cursor()
-        for i, tag in cursor.execute("SELECT name,tag FROM tags").fetchall():
-            if i in tags:
-                tags[i].add(tag)
+        cursor.execute("SELECT name,tag FROM tags")
+        for name, tag in cursor.fetchall():
+            if name in tags:
+                tags[name].add(tag)
             else:
-                tags[i] = set([tag])
+                tags[name] = set([tag])
         return tags
 
     # Tests

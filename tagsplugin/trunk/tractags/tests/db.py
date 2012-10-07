@@ -43,24 +43,37 @@ class TagSetupTestCase(unittest.TestCase):
         else:
             return cursor.cursor.description
 
+    def _revert_tractags_schema_init(self):
+        cursor = self.db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS tags")
+        cursor.execute("DELETE FROM system WHERE name='tags_version'")
+        cursor.execute("DELETE FROM permission WHERE action %s"
+                       % self.db.like(), ('TAGS_%',))
+
     # Tests
 
     def test_new_install(self):
         setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        self._revert_tractags_schema_init()
         self.assertEquals(0, setup.get_schema_version(self.db))
+        self.assertTrue(setup.environment_needs_upgrade(self.db))
 
         setup.upgrade_environment(self.db)
+        self.assertFalse(setup.environment_needs_upgrade(self.db))
         cursor = self.db.cursor()
-        tags = cursor.execute("SELECT * FROM tags").fetchall()
+        cursor.execute("SELECT * FROM tags")
+        tags = cursor.fetchall()
         self.assertEquals([], tags)
         self.assertEquals(['tagspace', 'name', 'tag'],
                 [col[0] for col in self._get_cursor_description(cursor)])
-        version = cursor.execute("""
-                      SELECT value
-                        FROM system
-                       WHERE name='tags_version'
-                  """).fetchone()
-        self.assertEquals(db_default.schema_version, int(version[0]))
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='tags_version'
+        """)
+        version = int(cursor.fetchone()[0])
+        self.assertEquals(db_default.schema_version, version)
 
     def test_upgrade_schema_v1(self):
         # Ancient, unversioned schema - wiki only.
@@ -71,9 +84,12 @@ class TagSetupTestCase(unittest.TestCase):
                 Index(['name', 'namespace']),
             ]
         ]
+        setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        self._revert_tractags_schema_init()
+
         connector = self.db_mgr._get_connector()[0]
         cursor = self.db.cursor()
-
         for table in schema:
             for stmt in connector.to_sql(table):
                 cursor.execute(stmt)
@@ -83,27 +99,30 @@ class TagSetupTestCase(unittest.TestCase):
                    (name, namespace)
             VALUES ('WikiStart', 'tag')
         """)
-        # Current tractags schema is setup with enabled component anyway.
-        cursor.execute("DROP TABLE IF EXISTS tags")
 
-        tags = cursor.execute("SELECT * FROM wiki_namespace").fetchall()
+        cursor = self.db.cursor()
+        cursor.execute("SELECT * FROM wiki_namespace")
+        tags = cursor.fetchall()
         self.assertEquals([('WikiStart', 'tag')], tags)
-        setup = TagSetup(self.env)
         self.assertEquals(1, setup.get_schema_version(self.db))
+        self.assertTrue(setup.environment_needs_upgrade(self.db))
 
         setup.upgrade_environment(self.db)
+        self.assertFalse(setup.environment_needs_upgrade(self.db))
         cursor = self.db.cursor()
-        tags = cursor.execute("SELECT * FROM tags").fetchall()
+        cursor.execute("SELECT * FROM tags")
+        tags = cursor.fetchall()
         # Db content should be migrated.
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)
         self.assertEquals(['tagspace', 'name', 'tag'],
                 [col[0] for col in self._get_cursor_description(cursor)])
-        version = cursor.execute("""
-                      SELECT value
-                        FROM system
-                       WHERE name='tags_version'
-                  """).fetchone()
-        self.assertEquals(db_default.schema_version, int(version[0]))
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='tags_version'
+        """)
+        version = int(cursor.fetchone()[0])
+        self.assertEquals(db_default.schema_version, version)
 
     def test_upgrade_schema_v2(self):
         # Just register a current, but unversioned schema.
@@ -116,11 +135,12 @@ class TagSetupTestCase(unittest.TestCase):
                 Index(['tagspace', 'tag']),
             ]
         ]
+        setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        self._revert_tractags_schema_init()
+
         connector = self.db_mgr._get_connector()[0]
         cursor = self.db.cursor()
-        # Current tractags schema is setup with enabled component anyway.
-        cursor.execute("DROP TABLE IF EXISTS tags")
-
         for table in schema:
             for stmt in connector.to_sql(table):
                 cursor.execute(stmt)
@@ -131,24 +151,28 @@ class TagSetupTestCase(unittest.TestCase):
             VALUES ('wiki', 'WikiStart', 'tag')
         """)
 
-        tags = cursor.execute("SELECT * FROM tags").fetchall()
+        cursor.execute("SELECT * FROM tags")
+        tags = cursor.fetchall()
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)
-        setup = TagSetup(self.env)
         self.assertEquals(2, setup.get_schema_version(self.db))
+        self.assertTrue(setup.environment_needs_upgrade(self.db))
 
         setup.upgrade_environment(self.db)
+        self.assertFalse(setup.environment_needs_upgrade(self.db))
         cursor = self.db.cursor()
-        tags = cursor.execute("SELECT * FROM tags").fetchall()
+        cursor.execute("SELECT * FROM tags")
+        tags = cursor.fetchall()
         # Db should be unchanged.
         self.assertEquals([('wiki', 'WikiStart', 'tag')], tags)
         self.assertEquals(['tagspace', 'name', 'tag'],
                 [col[0] for col in self._get_cursor_description(cursor)])
-        version = cursor.execute("""
-                      SELECT value
-                        FROM system
-                       WHERE name='tags_version'
-                  """).fetchone()
-        self.assertEquals(db_default.schema_version, int(version[0]))
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='tags_version'
+        """)
+        version = int(cursor.fetchone()[0])
+        self.assertEquals(db_default.schema_version, version)
 
 
 def test_suite():
