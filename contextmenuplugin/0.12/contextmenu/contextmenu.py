@@ -60,8 +60,8 @@ class SourceBrowserContextMenu(Component):
 
             for idx, entry in enumerate(data['dir']['entries']):
                 menu = tag.div(tag.span(Markup('&#9662;'), style='color: #bbb'),
-                                tag.div(class_='ctx-foldable', style='display:none'),
-                                        id='ctx%s' % idx, class_='context-menu')
+                               tag.div(class_='ctx-foldable', style='display:none'),
+                               id='ctx%s' % idx, class_='context-menu')
                 for provider in sorted(self.context_menu_providers, key=lambda x: x.get_order(req)):
                     content = provider.get_content(req, entry, stream, data)
                     if content:
