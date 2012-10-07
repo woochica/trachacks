@@ -1,4 +1,4 @@
-jQuery(function($){
+jQuery(function($) {
   $('div.context-menu').live('click', function(e) {
     var holder = $(this)
     var menu = $('div:first', holder)

@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2010, Logica
@@ -14,9 +13,8 @@ from genshi.filters.transform import Transformer
 from trac.config import Option
 from trac.core import Component, ExtensionPoint, implements
 from trac.util.translation import _
-from trac.versioncontrol.api import RepositoryManager
 from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import add_stylesheet, ITemplateProvider, add_javascript
+from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 
 from api import ISourceBrowserContextMenuProvider
 
@@ -39,19 +37,18 @@ class SourceBrowserContextMenu(Component):
                 # Probably an upstream error
                 return stream
             # provide a link to the svn repository at the top of the Browse Source listing
-            if self.env.is_component_enabled("contextmenu.contextmenu.SubversionLink"):
+            if self.env.is_component_enabled('contextmenu.contextmenu.SubversionLink'):
                 content = SubversionLink(self.env).get_content(req, data['path'], stream, data)
                 if content:
-                    stream |= Transformer("//div[@id='content']/h1").after(content)
+                    stream |= Transformer('//div[@id="content"]/h1').after(content)
             # No dir entries; we're showing a file
             if not data['dir']:
                 return stream
             # FIXME: The idx is only good for finding rows, not generating element ids.
             # Xhr rows are only using dir_entries.html, not browser.html.
             # The xhr-added rows' ids are added using js (see expand_dir.js)
-            idx = 0
             add_stylesheet(req, 'contextmenu/contextmenu.css')
-            add_javascript(req, 'contextmenu/contextmenu.js')
+            add_script(req, 'contextmenu/contextmenu.js')
             if 'up' in data['chrome']['links']:
                 # Start appending stuff on 2nd tbody row when we have a parent dir link
                 row_index = 2
@@ -61,10 +58,10 @@ class SourceBrowserContextMenu(Component):
                 # First row = //tr[1]
                 row_index = 1
 
-            for entry in data['dir']['entries']:
-                menu = tag.div(tag.span(Markup('&#9662;'),style="color: #bbb"),
-                               tag.div(class_="ctx-foldable", style="display:none"),
-                               id="ctx%s" % idx, class_="context-menu")
+            for idx, entry in enumerate(data['dir']['entries']):
+                menu = tag.div(tag.span(Markup('&#9662;'), style='color: #bbb'),
+                                tag.div(class_='ctx-foldable', style='display:none'),
+                                        id='ctx%s' % idx, class_='context-menu')
                 for provider in sorted(self.context_menu_providers, key=lambda x: x.get_order(req)):
                     content = provider.get_content(req, entry, stream, data)
                     if content:
@@ -77,12 +74,13 @@ class SourceBrowserContextMenu(Component):
                 # Add the menu
                 stream |= Transformer('%s//tr[%d]//td[@class="name"]' % (path_prefix, idx + row_index)).prepend(menu)
                 if provider.get_draw_separator(req):
-                    menu.children[1].append(tag.div(class_="separator"))
+                    menu.children[1].append(tag.div(class_='separator'))
                 # Add td+checkbox
                 cb = tag.td(tag.input(type='checkbox', id="cb%s" % idx, class_='fileselect'))
                 stream |= Transformer('%s//tr[%d]//td[@class="name"]' % (path_prefix, idx + row_index)).before(cb)
-                idx += 1
+
             stream |= Transformer('//th[1]').before(tag.th())
+
         return stream
 
     # ITemplateProvider methods
@@ -96,7 +94,7 @@ class SourceBrowserContextMenu(Component):
 
 
 class InternalNameHolder(Component):
-    """ This component holds a reference to the file on this row
+    """This component holds a reference to the file on this row
     for the javascript to use"""
     implements(ISourceBrowserContextMenuProvider)
     # IContextMenuProvider methods
@@ -109,8 +107,8 @@ class InternalNameHolder(Component):
     def get_content(self, req, entry, stream, data):
         reponame = data['reponame'] or ''
         filename = os.path.normpath(os.path.join(reponame, entry.path))
-        return tag.span(filename, class_="filenameholder %s" % entry.kind,
-                        style="display:none")
+        return tag.span(filename, class_='filenameholder %s' % entry.kind,
+                        style='display:none')
 
 
 class SubversionLink(Component):
@@ -125,16 +123,18 @@ class SubversionLink(Component):
         return True
     
     def get_content(self, req, entry, stream, data):
-        if self.env.is_component_enabled("svnurls.svnurls.svnurls"):
+        if self.env.is_component_enabled('svnurls.svnurls.svnurls'):
             # Another plugin provides links to subversion, so we won't duplicate them.
             return None
         repos, path, rev = get_repository_path_and_rev(entry, data)
-        href = repos.get_path_url(path, rev)
-        if href:
-            return tag.a(_('Subversion'), href=href)
-        else:
-            # Probably no URL has been specified for the repository
-            return None
+        if repos:
+            href = repos.get_path_url(path, rev)
+            if href:
+                return tag.a(_("Subversion"), href=href)
+
+        # Probably repositories not configured or
+        # no URL has been specified for the repository
+        return None
 
 
 class WikiToBrowserLink(Component):
@@ -162,6 +162,7 @@ class WikiToBrowserLink(Component):
 class SendResourceLink(Component):
     """Generate "Share file" menu item"""
     implements(ISourceBrowserContextMenuProvider)
+
     def get_order(self, req):
         return 10
 
@@ -171,7 +172,7 @@ class SendResourceLink(Component):
     # IContextMenuProvider methods
     def get_content(self, req, entry, stream, data):
         if not entry.isdir:
-            return tag.a(_('Share file'), href=req.href.share(entry.path) + '/FIXME')
+            return tag.a(_("Share file"), href=req.href.share(entry.path) + '/FIXME')
 
 
 def get_repository_path_and_rev(entry, data):
