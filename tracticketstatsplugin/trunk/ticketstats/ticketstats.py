@@ -1,13 +1,12 @@
-## $Id: ticketstats.py 4014 2008-07-14 20:49:59Z echo0101 $ ###
+# -*- coding: utf-8 -*-
 #
-# FILE:         $URL: http://dev.phluidcorp.com/svn/software/dev/u
-# REVISION      $Rev: 4014 $
-#    
-# PROJECT:      TracTicketStatistics 
-# ORIGINAL AUTHOR:  Prentice Wongvibulisn
-# $LastChangedBy: echo0101 $
+# Copyright (c) 2008-2009 Prentice Wongvibulsin <me@prenticew.com>
+# Copyright (c) 2010-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
 #
-#############################################################
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 import re
 
