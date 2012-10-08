@@ -12,20 +12,19 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='Tracticketstats', 
+    name='Tracticketstats',
     version='2.2.0',
-    author = 'Prentice Wongvibulsin',
-    author_email = 'me@prenticew.com',
-    maintainer = 'Ryan J Ollos',
-    maintainer_email = 'ryan.j.ollos@gmail.com',
-    license = '3-Clause BSD',
-    packages=find_packages(exclude=['*.test*']),
-    entry_points = """
+    author='Prentice Wongvibulsin',
+    author_email='me@prenticew.com',
+    maintainer='Ryan J Ollos',
+    maintainer_email='ryan.j.ollos@gmail.com',
+    license='3-Clause BSD',
+    packages=find_packages(exclude=['*.tests']),
+    entry_points="""
         [trac.plugins]
-	    ticketstats = ticketstats
+        ticketstats = ticketstats
     """,
-    install_requires = ['Trac >= 0.12'],
-    package_data = {'ticketstats': ['templates/*.html']},
+    install_requires=['Trac >= 0.12'],
+    package_data={'ticketstats': ['templates/*.html']},
 )
-
 
