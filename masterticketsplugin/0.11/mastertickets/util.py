@@ -1,6 +1,6 @@
 from trac.ticket.model import Ticket
 from trac.resource import ResourceNotFound
-from trac.util.compat import set
+from trac.util.compat import set, sorted
 from genshi.builder import tag
 
 def linkify_ids(env, req, ids):
