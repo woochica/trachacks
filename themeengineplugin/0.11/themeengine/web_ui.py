@@ -1,5 +1,12 @@
-# Created by Noah Kantrowitz on 2007-07-15.
-# Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2006-2010 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os.path
 
 from pkg_resources import resource_filename

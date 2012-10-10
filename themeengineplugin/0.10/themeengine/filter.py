@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2006-2010 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from trac.core import *
 from trac.config import Option, BoolOption
 from trac.web.chrome import ITemplateProvider, add_link

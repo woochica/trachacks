@@ -1,5 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2006-2010 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 
 from setuptools import setup
@@ -15,7 +23,7 @@ setup(
     author_email = 'noah@coderanger.net',
     description = 'Provide a modular interface to styling Trac.',
     long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
-    license = 'BSD',
+    license = '3-Clause BSD',
     keywords = 'trac plugin theme style',
     url = 'http://trac-hacks.org/wiki/ThemeEnginePlugin',
     download_url = 'http://trac-hacks.org/svn/themeengineplugin/0.11#egg=TracThemeEngine-dev',
