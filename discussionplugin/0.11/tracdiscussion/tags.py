@@ -12,11 +12,8 @@ from trac.config import ListOption
 # TracTags imports.
 from tractags.api import DefaultTagProvider, TagSystem
 
-# Local imports
-from tracdiscussion.api import DiscussionApi
-
 # Local interfaces.
-from tracdiscussion.api import IForumChangeListener, ITopicChangeListener
+from tracdiscussion.api import DiscussionApi, IForumChangeListener, ITopicChangeListener
 
 class DiscussionTagProvider(DefaultTagProvider):
     """

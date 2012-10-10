@@ -38,6 +38,12 @@ try:
 except:
     pass
 
+def is_tags_enabled(env):
+    return env.is_component_enabled(
+               'tracdiscussion.tags.DiscussionTags') and \
+           env.is_component_enabled(
+               'tractags.api.TagSystem')
+
 class IDiscussionFilter(Interface):
     """Extension point interface for components that want to filter discussion
     topics and messages before their addition."""
@@ -321,8 +327,7 @@ class DiscussionApi(Component):
         context.users = self.get_users(context)
 
         # Check if TracTags plugin is enabled.
-        context.has_tags = self.env.is_component_enabled(
-          'tracdiscussion.tags.DiscussionTags')
+        context.has_tags = is_tags_enabled(self.env)
 
         # Populate active message.
         context.group = None
