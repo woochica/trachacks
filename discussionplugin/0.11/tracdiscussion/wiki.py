@@ -168,6 +168,9 @@ class DiscussionWiki(Component):
         context = Context.from_request(formatter.req)
         context.realm = 'discussion-wiki'
 
+        # Check if TracTags plugin is enabled.
+        context.has_tags = is_tags_enabled(self.env)
+
         # Get database access.
         db = self.env.get_db_cnx()
         context.cursor = db.cursor()

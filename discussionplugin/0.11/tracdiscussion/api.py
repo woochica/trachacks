@@ -334,14 +334,13 @@ class DiscussionApi(Component):
         context.forum = None
         context.topic = None
         context.message = None
-        if context.req.args.has_key('message'):
+        if 'message' in context.req.args:
             message_id = int(context.req.args.get('message') or 0)
             context.message = self.get_message(context, message_id)
             if context.message:
                 context.topic = self.get_topic(context, context.message['topic'])
                 context.forum = self.get_forum(context, context.topic['forum'])
-                context.group = self.get_group(context, context.forum[
-                  'forum_group'])
+                context.group = self.get_group(context, context.forum['forum_group'])
 
                 # Create request resource.
                 context.resource = Resource('discussion', 'message/%s' % (
