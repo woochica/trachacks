@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from trac.core import *
 from trac.Search import ISearchSource, shorten_result
 from trac import util
@@ -8,7 +10,7 @@ class DiscussionSearch(Component):
     """
     implements(ISearchSource)
 
-    # ISearchSource
+    #ï¿½ISearchSource
     def get_search_filters(self, req):
         if req.perm.has_permission('DISCUSSION_VIEW'):
             yield ("discussion", "Discussion")

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tracdiscussion.api import *
 from tracdiscussion.core import *
 from trac.core import *

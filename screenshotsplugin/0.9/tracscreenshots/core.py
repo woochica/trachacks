@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from tracscreenshots.api import *
 from trac.core import *
 from trac.web.chrome import INavigationContributor, ITemplateProvider, add_stylesheet

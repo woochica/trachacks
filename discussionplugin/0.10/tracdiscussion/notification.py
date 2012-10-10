@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from trac.notification import NotifyEmail
 from trac.util import format_datetime

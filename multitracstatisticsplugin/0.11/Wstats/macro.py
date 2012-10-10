@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import os
 from trac.wiki.macros import WikiMacroBase
 from trac.core import *

@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 import sets, re, os, os.path, shutil, time, mimetypes, unicodedata, Image
 

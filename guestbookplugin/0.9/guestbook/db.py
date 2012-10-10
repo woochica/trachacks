@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from trac.core import *
 from trac.db_default import Table, Column, Index
 

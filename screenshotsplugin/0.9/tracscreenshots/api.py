@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from trac.core import *
 from trac.wiki import wiki_to_html, wiki_to_oneliner
 from trac.util import format_datetime, escape

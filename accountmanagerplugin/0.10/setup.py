@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+# -*- coding: utf-8 -*-
+#
 # License:
 #   "THE BEER-WARE LICENSE" (Revision 42):
 # <trac@matt-good.net> wrote this file.  As long as you retain this notice you

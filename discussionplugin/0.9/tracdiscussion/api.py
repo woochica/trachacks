@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from trac.core import *
 from trac.web.chrome import add_stylesheet
 from trac.wiki import wiki_to_html, wiki_to_oneliner
@@ -516,7 +518,7 @@ class DiscussionApi(object):
                 new_author = Markup(req.args.get('author'))
                 new_body = Markup(req.args.get('body'))
 
-                # Add topic.
+                #ï¿½Add topic.
                 self.add_topic(cursor, forum['id'], new_subject, new_author,
                   new_body)
 
@@ -634,7 +636,7 @@ class DiscussionApi(object):
                 new_author = Markup(req.args.get('author'))
                 new_body = Markup(req.args.get('body'))
 
-                # Add message.
+                #ï¿½Add message.
                 if message:
                     self.add_message(cursor, forum['id'], topic['id'],
                       message['id'], new_author, new_body)

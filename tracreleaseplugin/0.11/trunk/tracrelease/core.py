@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 #
 # To start developing a new Trac Plugin I used those references (and copied some of their code, too):

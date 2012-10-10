@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+#
 # TicketBackLinks plugin for Trac Tickets
 #
 # David Francos Cuartero

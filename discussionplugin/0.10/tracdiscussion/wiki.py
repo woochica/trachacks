@@ -1,4 +1,4 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 
 from tracdiscussion.api import *
 from tracdiscussion.core import *
