@@ -697,10 +697,10 @@ class DiscussionApi(Component):
 
                 # Get form values.
                 order = context.req.args.get('order') or self.forum_sort
-                if context.req.args.has_key('desc'):
+                if 'desc' in context.req.args:
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.forum_sort_direction
+                    desc = self.forum_sort_direction == 'desc'
 
                 # Display forums.
                 context.data['order'] = order
@@ -713,10 +713,10 @@ class DiscussionApi(Component):
 
                 # Get ordering arguments values.
                 order = context.req.args.get('order') or self.forum_sort
-                if context.req.args.has_key('desc'):
+                if 'desc' in context.req.args:
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.forum_sort_direction
+                    desc = self.forum_sort_direction == 'desc'
 
                 # Display forums.
                 context.data['order'] = order
@@ -966,10 +966,10 @@ class DiscussionApi(Component):
 
                 # Get form values.
                 order = context.req.args.get('order') or self.topic_sort
-                if context.req.args.has_key('desc'):
+                if 'desc' in context.req.args:
                     desc = context.req.args.get('desc') == '1'
                 else:
-                    desc = self.topic_sort_direction
+                    desc = self.topic_sort_direction == 'desc'
                 page = int(context.req.args.get('discussion_page') or '1') - 1
 
                 # Get topic list display type from session.
