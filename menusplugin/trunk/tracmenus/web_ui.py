@@ -21,9 +21,10 @@ class MenuManagerModule(Component):
                         doc="""List of menus to be controlled by the Menu Manager""")
     serve_ui_files = BoolOption('menu-custom', 'serve_ui_files', True)
 
-    # ITemplateProvider
+    # ITemplateProvider methods
     def get_templates_dirs(self):
         return []
+
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('tracmenus',resource_filename(__name__, 'htdocs'))]
@@ -125,7 +126,7 @@ class MenuManagerModule(Component):
         for option, value in self.config[menu_name].options():
             item_parts = option.split('.',1)
             name, prop_name = item_parts[0], len(item_parts)>1 and item_parts[1] or 'enabled'
-            if name in ['inherit']:
+            if name == 'inherit':
                 options[name] = value
                 continue
             menu.setdefault(name, new_menu_option(name)) 
@@ -134,10 +135,14 @@ class MenuManagerModule(Component):
                 continue
             elif prop_name=='enabled':
                 value=self.config[menu_name].getbool(option, True)
+                menu[name][prop_name]=value
+                continue
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
                 href = value.startswith('/') and (req.href().rstrip('/') + value) or value
-                menu[name]['label']=menu[name].setdefault('label', html.a())(href=href)
+                menu[name]['label'] = menu[name].setdefault('label', html.a())(href=href)
+                menu[name][prop_name]=value
+                continue
             elif prop_name=='label':
                 menu[name].setdefault('label', html.a(href='#'))(value)
                 continue
@@ -152,5 +157,11 @@ class MenuManagerModule(Component):
             elif prop_name=='perm':
                 menu[name][prop_name] = self.config[menu_name].getlist(option, default=[], sep=',')
                 continue
-            menu[name][prop_name]=value
+
+        # Perform checks for invalid configuration
+        for name in menu:
+            # There won't be an href if there isn't a label
+            if 'label' not in menu[name]:
+                menu[name]['enabled'] = False
+
         return menu, options
