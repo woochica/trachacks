@@ -3,7 +3,7 @@ from setuptools import setup
 PACKAGE = 'nevernotifyupdaterplugin'
 
 setup(name=PACKAGE,
-      version='0.1.2',
+      version='0.1.3',
       packages=[PACKAGE],
       url='http://www.trac-hacks.org/wiki/NeverNotifyUpdaterPlugin',
       license='http://www.opensource.org/licenses/mit-license.php',

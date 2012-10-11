@@ -3,6 +3,8 @@ import re
 from trac.env import IEnvironmentSetupParticipant
 import trac.ticket.notification as note
 
+from __future__ import with_statement
+
 
 class NeverNotifyUpdaterSetupParticipant(Component):
     """ This component monkey patches note.TicketNotifyEmail.get_recipients so that trac will never 
