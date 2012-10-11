@@ -133,8 +133,7 @@ class MenuManagerModule(Component):
             if prop_name=='parent':
                 menu[name]['parent_name']=value
             elif prop_name=='enabled':
-                value=self.config[menu_name].getbool(option, True)
-                menu[name][prop_name]=value
+                menu[name][prop_name] = self.config[menu_name].getbool(option, True)
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
                 href = value.startswith('/') and (req.href().rstrip('/') + value) or value
@@ -150,6 +149,8 @@ class MenuManagerModule(Component):
                 menu[name][prop_name] = self.config[menu_name].getbool(option, False)
             elif prop_name=='perm':
                 menu[name][prop_name] = self.config[menu_name].getlist(option, default=[], sep=',')
+            else:
+                menu[name][prop_name]=value
 
         # Perform checks for invalid configuration
         for name in menu:
