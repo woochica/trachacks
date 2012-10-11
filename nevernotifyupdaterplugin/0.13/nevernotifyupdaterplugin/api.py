@@ -1,9 +1,10 @@
+from __future__ import with_statement
 from trac.core import *
 import re
 from trac.env import IEnvironmentSetupParticipant
 import trac.ticket.notification as note
 
-from __future__ import with_statement
+
 
 
 class NeverNotifyUpdaterSetupParticipant(Component):
