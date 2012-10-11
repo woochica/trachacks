@@ -132,31 +132,24 @@ class MenuManagerModule(Component):
             menu.setdefault(name, new_menu_option(name)) 
             if prop_name=='parent':
                 menu[name]['parent_name']=value
-                continue
             elif prop_name=='enabled':
                 value=self.config[menu_name].getbool(option, True)
                 menu[name][prop_name]=value
-                continue
             elif prop_name=='href':
                 value = value.replace('$PATH_INFO', req.path_info)
                 href = value.startswith('/') and (req.href().rstrip('/') + value) or value
                 menu[name]['label'] = menu[name].setdefault('label', html.a())(href=href)
                 menu[name][prop_name]=value
-                continue
             elif prop_name=='label':
                 menu[name].setdefault('label', html.a(href='#'))(value)
-                continue
             elif prop_name=='path_info':
                 menu[name]['if_path_info'] = re.match(value, req.path_info) and True or False
             elif prop_name=='enabled':
                 menu[name][prop_name] = self.config[menu_name].getbool(option, False)
-                continue
             elif prop_name=='hide_if_no_children':
                 menu[name][prop_name] = self.config[menu_name].getbool(option, False)
-                continue
             elif prop_name=='perm':
                 menu[name][prop_name] = self.config[menu_name].getlist(option, default=[], sep=',')
-                continue
 
         # Perform checks for invalid configuration
         for name in menu:
