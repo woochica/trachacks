@@ -254,28 +254,29 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
     # TODO - use ticket-classN styles instead of colors?
     def _add_sample_tasks(self):
-        tasks = ''
-        tasks = self.GanttID+'.setDateInputFormat("mm/dd/yyyy");'
+        task= ''
+        tasks = self.GanttID+'.setDateInputFormat("mm/dd/yyyy");\n'
 
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100, 0, 1, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(12,  "Task Objects",         "",          "",          "#00ff00", "", 0, "Shlomy",   40, 1, 1, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60, 0, 12, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com", 0, "",         60, 0, 12, 1,121, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com", 0, "Anyone",   60, 0, 12, 1, 0, "This is another caption", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com", 0, "Brian",    20, 0, 0, 1,122, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com", 0, "Brian",     0, 1, 0, 1 , '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com", 0, "Brian",    30, 0, 3, 1, 0,"Caption 1", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com", 0, "Shlomy",   40, 0, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com", 0, "Someone",  40, 1, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com", 0, "Brian",    60, 0, 33, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com", 0, "Anybody",  60, 1, 3, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, "332,333", '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com", 0, "Brian",    60, 0, 34, 1, '+self.GanttID+'));\n'
-        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem(35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com", 0, "Brian",    30, 0, 3,  1, '+self.GanttID+'));\n'
+        #                                                                         ID    Name                   Start        End          Display    Link                    MS Res         Pct  Gr Par Open Dep Cap
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',1,   "Define Chart API",     "",          "",          "#ff0000", "http://help.com",      0, "Brian",     0,  1, 0,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',11,  "Chart Object",         "2/20/2011", "2/20/2011", "#ff00ff", "http://www.yahoo.com", 1, "Shlomy",  100,  0, 1,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',12,  "Task Objects",         "",          "",          "#00ff00", "",                     0, "Shlomy",   40,  1, 1,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',121, "Constructor Proc",     "2/21/2011", "3/9/2011",  "#00ffff", "http://www.yahoo.com", 0, "Brian T.", 60,  0, 12, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',122, "Task Variables",       "3/6/2011",  "3/11/2011", "#ff0000", "http://help.com",      0, "",         60,  0, 12, 1,121));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',123, "Task Functions",       "3/9/2011",  "3/29/2011", "#ff0000", "http://help.com",      0, "Anyone",   60,  0, 12, 1, 0, "This is another caption"));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',2,   "Create HTML Shell",    "3/24/2011", "3/25/2011", "#ffff00", "http://help.com",      0, "Brian",    20,  0, 0,  1,122));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',3,   "Code Javascript",      "",          "",          "#ff0000", "http://help.com",      0, "Brian",     0,  1, 0,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',31,  "Define Variables",     "2/25/2011", "3/17/2011", "#ff00ff", "http://help.com",      0, "Brian",    30,  0, 3,  1, 0,"Caption 1"));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',32,  "Calculate Chart Size", "3/15/2011", "3/24/2011", "#00ff00", "http://help.com",      0, "Shlomy",   40,  0, 3,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',33,  "Draw Taks Items",      "",          "",          "#00ff00", "http://help.com",      0, "Someone",  40,  1, 3,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',332, "Task Label Table",     "3/6/2011",  "3/11/2011", "#0000ff", "http://help.com",      0, "Brian",    60,  0, 33, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',333, "Task Scrolling Grid",  "3/9/2011",  "3/20/2011", "#0000ff", "http://help.com",      0, "Brian",    60,  0, 33, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',34,  "Draw Task Bars",       "",          "",          "#990000", "http://help.com",      0, "Anybody",  60,  1, 3,  1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',341, "Loop each Task",       "3/26/2011", "4/11/2011", "#ff0000", "http://help.com",      0, "Brian",    60,  0, 34, 1, "332,333"));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',342, "Calculate Start/Stop", "4/12/2011", "5/18/2011", "#ff6666", "http://help.com",      0, "Brian",    60,  0, 34, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',343, "Draw Task Div",        "5/13/2011", "5/17/2011", "#ff0000", "http://help.com",      0, "Brian",    60,  0, 34, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',344, "Draw Completion Div",  "5/17/2011", "6/04/2011", "#ff0000", "http://help.com",      0, "Brian",    60,  0, 34, 1));\n'
+        tasks += self.GanttID+'.AddTaskItem(new JSGantt.TaskItem('+self.GanttID+',35,  "Make Updates",         "10/17/2011","12/04/2011","#f600f6", "http://help.com",      0, "Brian",    30,  0, 3,  1));\n'
         return tasks
 
     # Get the required columns for the tickets which match the
@@ -490,8 +491,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             name = "#%d:%s (%s %s)" % \
                    (ticket['id'], ticket['summary'],
                     ticket['status'], ticket['type'])
-        task += 't = new JSGantt.TaskItem(%d,"%s",' % \
-            (ticket['id'], javascript_quote(name))
+        task += 't = new JSGantt.TaskItem(%s,%d,"%s",' % \
+            (self.GanttID, ticket['id'], javascript_quote(name))
 
         # pStart, pEnd
         task += '"%s",' % self.pm.start(ticket).strftime(self.pyDateFormat)
@@ -563,7 +564,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += '"%s (%s %s)"' % (javascript_quote(ticket['description']),
                                   javascript_quote(ticket['status']),
                                   javascript_quote(ticket['type']))
-        task += ', ' + self.GanttID
         task += ');\n'
         task += self.GanttID+'.AddTaskItem(t);\n'
         return task

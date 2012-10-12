@@ -56,6 +56,7 @@ function htmlspecialchars(str) {
 * @constructor
 * @for JSGantt
 
+* @param g - Gantt that this task is being added to
 * @param pID {Number} Task unique numeric ID
 * @param pName {String} Task Name
 * @param pStart {Date} Task start date/time (not required for pGroup=1 )
@@ -64,7 +65,7 @@ function htmlspecialchars(str) {
 * @param pLink {String} Task URL, clicking on the task will redirect to this url. Leave empty if you do not with the Task also serve as a link
 * @param pMile {Boolean} Determines whether task is a milestone (1=Yes,0=No)
 * @param pRes {String} Resource to perform the task
-* @param pComp {Number} Percent complete (Number between 0 and 100)
+* @param pComp {String} Percent complete (Number between 0 and 100) or "act/est"
 * @param pGroup {Boolean}
 * @param pParent {Number} ID of the parent task
 * @param pOpen {Boolean}
@@ -73,7 +74,7 @@ function htmlspecialchars(str) {
 * note : you should use setCaption("Caption") in order to display the caption
 * @return void
 */
-JSGantt.TaskItem = function(pID, pName, pStart, pEnd, pDisplay, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption, g)
+JSGantt.TaskItem = function(g, pID, pName, pStart, pEnd, pDisplay, pLink, pMile, pRes, pComp, pGroup, pParent, pOpen, pDepend, pCaption)
 {
 
 /**
@@ -172,7 +173,11 @@ var vRes   = pRes;
 var vComp;
 var vEst;
 var vAct;
-if (pComp.indexOf('/') == -1) {
+if (typeof pComp === 'number') {
+    vComp = pComp;
+    vEst = null;
+    vAct = null;
+} else if (pComp.indexOf('/') == -1) {
     vComp = parseFloat(pComp);
     vEst = null;
     vAct = null;
