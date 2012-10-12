@@ -569,7 +569,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         return task
 
     def _add_tasks(self, options):
-        if options.get('sample'):
+        if options.get('sample') and int(options['sample']) != 0:
             tasks = self._add_sample_tasks()
         else:
             tasks = ''
