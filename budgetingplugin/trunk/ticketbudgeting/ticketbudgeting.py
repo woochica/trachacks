@@ -358,7 +358,7 @@ class TicketBudgetingView(Component):
                     '<legend>' + _('Budget Estimation') + '</legend>'
                     '<div class="inlinebuttons">'
                     '<label>' + _('Add a new row') + '</label>'
-                    '<input type="button" name="addRow" style="border-radius: 1em 1em 1em 1em;" onclick="addBudgetRow()" value = "+"/>'
+                    '<input type="button" name="addRow" style="border-radius: 1em 1em 1em 1em; font-size: 100%%" onclick="addBudgetRow()" value = "&#x271A;"/>'
                     '</div>'
                        '<span id="hiddenbudgettable"%s>' \
                        '<table>' \
@@ -610,7 +610,7 @@ class TicketBudgetingView(Component):
                     if col == 5:
                         preview_html += '&nbsp;%'
                     preview_html += '</td>'
-                input_html += '<td><div class="inlinebuttons"><input type="button" style="border-radius: 1em 1em 1em 1em;" name="deleteRow%s" onclick="deleteRow(%s)" value = "-"/></div></td>' % (pos, pos)
+                input_html += '<td><div class="inlinebuttons"><input type="button" style="border-radius: 1em 1em 1em 1em; font-size: 100%%" name="deleteRow%s" onclick="deleteRow(%s)" value = "&#x274C;"/></div></td>' % (pos, pos)
                 input_html += '</tr>'
                 preview_html += '</tr>'
 #        print "input_html: %s \n\n preview_html: %s" % (input_html, preview_html)

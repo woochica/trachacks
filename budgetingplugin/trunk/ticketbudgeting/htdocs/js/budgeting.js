@@ -115,8 +115,8 @@ function addBudgetRow() {
 	// Adding a Delete Button to the end of the row
 	deleteButtonElement = document.createElement('td');
 	deleteButtonElement.innerHTML = '<div class="inlinebuttons">'
-			+ '<input type="button" style="border-radius: 1em 1em 1em 1em;" name="deleteRow'
-			+ rowCounter + '" onclick="deleteRow(%s)" value = "-"/></div>';
+			+ '<input type="button" style="border-radius: 1em 1em 1em 1em; font-size: 100%" name="deleteRow'
+			+ rowCounter + '" onclick="deleteRow(' + rowCounter + ')" value = "&#x274C"/></div>';
 	tableRow.appendChild(deleteButtonElement);
 }
 
