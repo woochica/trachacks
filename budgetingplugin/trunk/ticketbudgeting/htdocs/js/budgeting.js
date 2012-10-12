@@ -115,7 +115,7 @@ function addBudgetRow() {
 			+ '<input type="button" style="border-radius: 1em 1em 1em 1em;'
 			+ ' font-size: 100%" name="deleteRow'
 			+ rowCounter + '" onclick="deleteRow(' + rowCounter
-			+ ')" value = "&#x274C"/></div>';
+			+ ')" value = "&#x2718"/></div>';
 	tableRow.appendChild(deleteButtonElement);
 	// Change hidden tbody elment to be visible
 	$('#hiddenbudgettable').show();
