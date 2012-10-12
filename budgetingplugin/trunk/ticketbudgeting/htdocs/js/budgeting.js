@@ -1,9 +1,9 @@
 /*
- *Hides the Tabelle of  all Entryrow by changing the visibility of an
+ * Hides the Table of all Entry row by changing the visibility of an
  * parent elment by the id hiddenbudgettable
  */
 function hideTable() {
-	document.getElementById('hiddenbudgettable').style.visibility = "hidden";
+	$('#hiddenbudgettable').hide();
 }
 
 /*
@@ -13,49 +13,47 @@ function hideTable() {
 function addBudgetRow() {
 	// Getting the values of the types - select by reading an hidden
 	// Element with the id selectTypes in the html page
-	if (document.getElementById('selectTypes') != null)
-		var types = document.getElementById('selectTypes').innerHTML;
-	types = types.split(';');
-	var def_type_index = 0;
-	if (document.getElementById('def_type') != null) {
+	if ($('#selectTypes').length != 0) {
+		var types = $('#selectTypes').html();
+		types = types.split(';');
 	}
-	var def_type = document.getElementById('def_type').innerHTML;
-	if (def_type != -1) {
-		for ( var i = 0; i < types.length; i++) {
-			if (types[i] == def_type) {
-				def_type_index = i;
-				break;
+	var def_type_index = 0;
+	if ($('#def_type').length != 0) {
+		var def_type = $('#def_type').html();
+		if (def_type != -1) {
+			for ( var i = 0; i < types.length; i++) {
+				if (types[i] == def_type) {
+					def_type_index = i;
+					break;
+				}
 			}
 		}
 	}
 
 	// Getting the name-select values from html
-	if (document.getElementById('selectNames') != null)
-		var names = document.getElementById('selectNames').innerHTML;
+	if ($('#selectNames').length != 0)
+		var names = $('#selectNames').html();
 	names = names.split(';');
-
 	// Getting the default values for Name, Estimation, Cost and State
 	var def_name_index = 0;
-	if (document.getElementById('def_name') != null)
-		var def_name = document.getElementById('def_name').innerHTML;
+	if ($('#def_name').length != 0)
+		var def_name = $('#def_name').html();
 	for ( var i = 0; i < names.length; i++) {
 		if (names[i] == def_name) {
 			def_name_index = i;
 			break;
 		}
 	}
-	if (document.getElementById('def_est') != null)
-		var def_est = document.getElementById('def_est').innerHTML;
-	if (document.getElementById('def_cost') != null)
-		var def_cost = document.getElementById('def_cost').innerHTML;
-	if (document.getElementById('def_state') != null)
-		var def_state = document.getElementById('def_state').innerHTML;
+	if ($('#def_est').length != 0)
+		var def_est = $('#def_est').html();
+	if ($('#def_cost').length != 0)
+		var def_cost = $('#def_cost').html();
+	if ($('#def_state').length != 0)
+		var def_state = $('#def_state').html();
 
-	// Chane hidden tbody elment to be visible
-	document.getElementById('hiddenbudgettable').style.visibility = "visible";
-	var tBodyContainer = document.getElementById('budget_container');
+	var tBodyContainer = $('#budget_container');
 	// initialise the rowcounter by the current amount of rows
-	var trElements = tBodyContainer.getElementsByTagName('tr');
+	var trElements = tBodyContainer.children('tr');
 	var rowCounter = 1;
 	if (trElements && trElements.length > 0) {
 		rowCounter = trElements[trElements.length - 1].id.split(':')[1];
@@ -65,7 +63,7 @@ function addBudgetRow() {
 	// Amount of Columns, may should be given by function call
 	var columnCount = 6;
 	tableRow.id = 'row:' + rowCounter;
-	tBodyContainer.appendChild(tableRow);
+	tBodyContainer.append(tableRow);
 	// Adding column by column to the row element
 	for (column = 1; column <= columnCount; column++) {
 		var td = document.createElement('td');
@@ -104,7 +102,6 @@ function addBudgetRow() {
 			// Comment
 			columnElement = document.createElement('input');
 			columnElement.size = 60;
-
 			break;
 		default:
 			break;
@@ -115,9 +112,13 @@ function addBudgetRow() {
 	// Adding a Delete Button to the end of the row
 	deleteButtonElement = document.createElement('td');
 	deleteButtonElement.innerHTML = '<div class="inlinebuttons">'
-			+ '<input type="button" style="border-radius: 1em 1em 1em 1em; font-size: 100%" name="deleteRow'
-			+ rowCounter + '" onclick="deleteRow(' + rowCounter + ')" value = "&#x274C"/></div>';
+			+ '<input type="button" style="border-radius: 1em 1em 1em 1em;'
+			+ ' font-size: 100%" name="deleteRow'
+			+ rowCounter + '" onclick="deleteRow(' + rowCounter
+			+ ')" value = "&#x274C"/></div>';
 	tableRow.appendChild(deleteButtonElement);
+	// Change hidden tbody elment to be visible
+	$('#hiddenbudgettable').show();
 }
 
 /*
@@ -165,19 +166,9 @@ function deleteRow(row) {
 		inputElements[i].name = ('DEL' + inputElements[i].getAttribute('name'));
 	}
 
-	var rowElements = document.getElementById('container')
-			.getElementsByTagName('tr');
 	// This logic ist responsible for hidding the complete tbody element, if no
-	// further
-	// row ist visible or rather not deleted
-	var hiddenCounter = 1;
-	for ( var i = 0; i < rowElements.length; i++) {
-		if (rowElements[i].style["display"].length > 0) {
-			hiddenCounter++;
-		}
-	}
-	if (hiddenCounter > rowElements.length) {
+	// further row ist visible or rather not deleted
+	if ($('#budget_container tr[style!="display: none;"]').length == 0) {
 		hideTable();
 	}
-
 }

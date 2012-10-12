@@ -295,7 +295,7 @@ class TicketBudgetingView(Component):
                 modifyAllowed = modifyAllowed or authorizedPerm in req.perm(tkt.resource)
 
             if modifyAllowed:
-                visibility = ' style="visibility:hidden"'
+                visibility = ' style="display: none"'
                 if self._budgets:
                     visibility = ''
 
@@ -385,11 +385,11 @@ class TicketBudgetingView(Component):
                 '<table class="listing">' \
                 '<thead>' \
                      '<tr>' \
-                        '<th>' + _('Person') + '</th>' \
-                        '<th>' + _('Type') + '</th>' \
-                        '<th>' + _('Estimation') + '</th>' \
-                        '<th>' + _('Cost') + '</th>' \
-                        '<th>' + _('State') + '</th>' \
+                        '<th style="width:90px">' + _('Person') + '</th>' \
+                        '<th style="width:90px">' + _('Type') + '</th>' \
+                        '<th style="width:90px">' + _('Estimation') + '</th>' \
+                        '<th style="width:90px">' + _('Cost') + '</th>' \
+                        '<th style="width:90px">' + _('State') + '</th>' \
                         '<th style="width:300px">' + _('Comment') + '</th>' \
                     '</tr>' \
                     '</thead>' \
