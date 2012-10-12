@@ -3,6 +3,7 @@ import time
 from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
+from trac.util.datefmt import to_utimestamp, localtz
 from trac.util.text import to_unicode
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
@@ -698,7 +699,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         options = self._parse_options(content)
 
-        self.GanttID = 'g_'+ str(time.time()).replace('.','')
+        # Surely we can't create two charts in one microsecond.
+        self.GanttID = 'g_'+str(to_utimestamp(datetime.now(localtz)))
         chart = ''
         tasks = self._add_tasks(options)
         if len(tasks) == 0:
