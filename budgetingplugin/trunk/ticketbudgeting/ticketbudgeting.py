@@ -358,7 +358,7 @@ class TicketBudgetingView(Component):
                     '<legend>' + _('Budget Estimation') + '</legend>'
                     '<div class="inlinebuttons">'
                     '<label>' + _('Add a new row') + '</label>'
-                    '<input type="button" name="addRow" style="border-radius: 1em 1em 1em 1em; font-size: 100%%" onclick="addBudgetRow()" value = "&#x271A;"/>'
+                    '<input type="button" name="addRow" style="margin-left: 5px; border-radius: 1em 1em 1em 1em; font-size: 100%%" onclick="addBudgetRow()" value = "&#x271A;"/>'
                     '</div>'
                        '<span id="hiddenbudgettable"%s>' \
                        '<table>' \
