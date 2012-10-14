@@ -28,8 +28,6 @@ class TicketTagProvider(DefaultTagProvider):
     Currently does NOT support custom fields.
     """
 
-    implements(ITagProvider)
-
     fields = ListOption('tags', 'ticket_fields', 'keywords',
         doc=_("List of ticket fields to expose as tags."))
 
