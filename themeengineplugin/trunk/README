@@ -1,0 +1,150 @@
+Notes
+=====
+
+Adds a simple API and GUI for packaging and configuring Trac themes.
+
+Configuration
+=============
+
+trac.ini
+--------
+
+All configuration options go in the ``[theme]`` section.
+
+``theme`` : *optional, default: "default"*
+    Theme name to use. Name is case-insensitive.
+
+``enable_css`` : *optional, default: false*
+    Enable or disable the CSS customizations.
+
+``color.*`` : *optional*
+    Stored values for simple CSS overrides. Note that changing this will
+    not take effect until you save them in the admin panel.
+
+Web interface
+-------------
+
+Theme
+~~~~~
+
+Use the arrows to select your theme from the installed options and then click
+the button to activate it.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_theme.png?format=raw
+
+Customize
+~~~~~~~~~
+
+Here you can further customize your theme by changing colors for certain
+pieces of the UI. The scheme drop down allows you to load pre-configured 
+color schemes. Note that not all themes will support this, or support the
+same options.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_customize.png?format=raw
+
+Customize: Advanced
+~~~~~~~~~~~~~~~~~~~
+
+Here you can customize the CSS even further. As mentioned in the file, if you
+edit this file by hand, you should not use the simple customizer system or
+you will lose your changes.
+
+.. image:: http://trac-hacks.org/attachment/wiki/ThemeEnginePlugin/admin_advanced.png?format=raw
+
+Example
+=======
+
+To enable the PyDotOrg theme::
+
+    [theme]
+    theme = pydotorg
+    
+    [components]
+    themeengine.* = enabled
+    pydotorgtheme.* = enabled
+
+Creating a theme
+================
+
+Simple way
+----------
+
+The easiest way to make a new theme is to inherit from ``ThemeBase``. A
+basic example theme is as follows::
+
+    from trac.core import *
+    
+    from themeengine.api import ThemeBase
+    
+    class ExampleTheme(ThemeBase):
+        """A example theme."""
+        
+        template = htdocs = css = screenshot = True
+
+The name will be inferred from the class name ("Example" in this case) and the
+docstring will be used as the description. There are several class variables
+you can set to configure the theme. By default all of these are set to
+``False`` and so are disabled. If set to ``True``, each option will use a
+generally sane default. If set to any value other than those, that value will
+be used directly.
+
+The available options as follows (all are optional):
+
+``template`` : *default: $name_theme.html*
+    The filename of the replacement template.
+
+``css`` : *default: $name.css*
+    Filename for a stylesheet to include.
+
+``htdocs`` : *default: htdocs*
+    Subfolder containing static content.
+
+``screenshot`` : *default: htdocs/screenshot.png*
+    Package-relative path to the screenshot file. File should be 640x400 or
+    use the same aspect ratio.
+
+``colors`` : 
+    Specifiers for simple color customization system. This should be an
+    iterable of tuples of the form ``(name, property, selector)``. ``name``
+    will be shown in the customization UI for that entry. ``property`` will
+    generally be ``color`` or ``background-color``. ``selector`` should be
+    a CSS selector string to apply the color rule to.
+
+``schemes`` :
+    Pre-built color schemes. This should be an iterable of tuples of the form
+    ``(name, color_dict)``. The ``color_dict`` should be a dictionary mapping
+    color name to hex color string (of the form ``#00AAFF``).
+
+Advanced API
+------------
+
+For more advanced control you can implement ``IThemeProvider`` from 
+``themeengine.api``. The interface definition is::
+
+    class IThemeProvider(Interface):
+        """An interface to provide style information."""
+    
+        def get_theme_names():
+            """Return an iterable of names."""
+        
+        def get_theme_info(name):
+            """Return a dict containing 0 or more of the following pairs:
+        
+             description::
+               A breif description of the theme.
+             template::
+               The name of the theme template file. 
+             css::
+               The filename of the CSS file.
+             htdocs::
+               The folder containg the static content.
+             screenshot::
+               The name of the screenshot file.
+             colors::
+               A list of (name, css-property, selector) tuples.
+             schemes::
+               A list of (name, {color-name: value, ...}) tuples.
+            """
+
+Most of these are the same as the simple API above, except ``description``
+is explicit.

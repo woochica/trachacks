@@ -1,0 +1,141 @@
+<!--!
+	admin_theme
+	Created by Noah Kantrowitz on 2009-03-29.
+	Copyright (c) 2009 Noah Kantrowitz. All rights reserved.
+-->
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="admin.html" />
+  <head>
+    <title>Custom theme</title>
+    <style type="text/css" media="screen"></style>
+    <script type="text/javascript">
+      $(function() {
+        var theme_colors = {};
+        <py:for each="color in current_theme.get('colors',())">
+        theme_colors['${color[0]}'] = {
+          name: '${color[0]}',
+          prop: '${color[1]}',
+          selector: '${color[2]}',
+          color: '${colors.get(color[0], '')}'
+        };
+        </py:for>
+        var theme_schemes = {};
+        <py:for each="name, scheme in current_theme.get('schemes',())">
+        theme_schemes['$name'] = {};
+        <py:for each="colorname, color in scheme.iteritems()">
+        theme_schemes['$name']['$colorname'] = '$color';
+        </py:for>
+        </py:for>
+        
+        // <![CDATA[
+        var colors = $('#colors');
+        var farb = null;
+        if(colors.length == 0)
+          colors = null;
+        else {
+          colors.addClass('js').after('<div id="farb"></div>');
+          farb = jQuery.farbtastic('#farb');
+        }
+        
+        var set_color = function(name, color) {
+          $('#scheme').val('__none__');
+          var elm = $('#color_'+name).val(color).css('background-color', color);
+          var v = Math.max.apply(null, farb.unpack(color));
+          if(v < 0.5)
+            elm.css('color', '#FFF');
+          else
+            elm.css('color', '#000');
+          //console.log(v);
+          
+          var theme = theme_colors[name];
+          theme.color = color;
+          if (!document.styleSheets) {
+            if(theme.selector.search(/:/) == -1) {
+              $(theme.selector).css(theme.prop, color);
+            }
+          } else {
+            $.rule(theme.selector, 'style').remove();
+            var newcss = theme.selector + '{';
+            for(t in theme_colors) {
+              t = theme_colors[t];
+              if(t.selector == theme.selector)
+                newcss += t.prop + ':' + t.color + ';';
+            }
+            newcss += '}';
+            //console.log(newcss);
+            $.rule(newcss).appendTo('style');
+          }
+        };
+        
+        $('#schemes').find('select').change(function() {
+          if($(this).val() == '__none__')
+            return;
+          var scheme = theme_schemes[$(this).val()];
+          for(colorname in scheme) {
+            set_color(colorname, scheme[colorname]);
+          }
+        }).end().show();
+        
+        $('#colors input').focus(function() {
+          var elm = $(this);
+          farb.linkTo(function(color) {
+              set_color(elm.attr('name').substring(6), color);
+          }).setColor(elm.val());
+        }).keyup(function() {
+          var val = $(this).val();
+          if(val.length == 7 && val[0] == '#')
+            farb.setColor(val);
+        }).each(function() {
+          set_color($(this).attr('name').substring(6), $(this).val());
+          //$(this).css('background-color', $(this).val());
+        }).focus();
+        
+        if(colors != null) {
+          var off = colors.position();
+          off.left += colors.outerWidth() + 4;
+          off.top += (colors.outerHeight(true) - colors.outerHeight(false));
+          $('#farb').css('position', 'absolute').css('top', off.top+'px').css('left', off.left+'px');
+        }
+      });
+      // ]]>
+    </script>
+  </head>
+  <body>
+    <h2>Custom theme</h2>
+    
+    <form method="post" id="simple">
+      <fieldset>
+        <legend>General</legend>
+        <div>
+          <label for="enable_css">Enable:</label>
+          <input type="checkbox" id="enable_css" name="enable_css" value="1" checked="${enable or None}" />
+        </div>
+      </fieldset>
+      <fieldset id="schemes" py:if="current_theme and current_theme.get('schemes') and len(current_theme['schemes']) > 1">
+        <legend>Schemes</legend>
+        <div>
+          <label for="scheme">Scheme:</label>
+          <select id="scheme" name="scheme" value="__none__">
+            <option name="__none__">&nbsp;</option>
+            <option py:for="name, scheme in current_theme['schemes']" value="$name">${name.islower() and name.title() or name}</option>
+          </select>
+        </div>
+      </fieldset>
+      <fieldset id="colors" py:if="current_theme and current_theme.get('colors')">
+        <legend>Colors</legend>
+        <div py:for="name, color in sorted(colors.iteritems())">
+          <label for="color_$name">${name.replace('_', ' ').title()}:</label>
+          <input type="text" id="color_$name" name="color_$name" value="${color.upper()}" size="8" />
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <input type="submit" value="Submit" />
+      </div>
+    </form>
+  </body>
+</html>
