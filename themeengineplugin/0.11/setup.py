@@ -21,6 +21,8 @@ setup(
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
+    maintainer='Olemis Lang',
+    maintainer_email='olemis+trac@gmail.com',
     description = 'Provide a modular interface to styling Trac.',
     long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
     license = '3-Clause BSD',
