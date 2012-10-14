@@ -18,6 +18,8 @@ from trac.test import EnvironmentStub, Mock
 
 from tractags.api import TagSystem
 from tractags.db import TagSetup
+from tractags.ticket import TicketTagProvider
+from tractags.wiki import WikiTagProvider
 
 
 class TagSystemTestCase(unittest.TestCase):
@@ -58,6 +60,16 @@ class TagSystemTestCase(unittest.TestCase):
     def test_available_actions(self):
         for action in self.actions:
             self.failIf(action not in self.perms.get_actions())
+
+    def test_available_providers(self):
+        # Standard implementations of DefaultTagProvider should be registered.
+        seen = []
+        for provider in [TicketTagProvider(self.env),
+                         WikiTagProvider(self.env)]:
+            self.failIf(provider not in self.tag_s.tag_providers)
+            # Ensure unique provider references, a possible bug in Trac-0.11.
+            self.failIf(provider in seen)
+            seen.append(provider)
 
     def test_set_tags_no_perms(self):
         resource = Resource('wiki', 'WikiStart')
