@@ -1,0 +1,212 @@
+# German translations for TracCustomFieldAdmin.
+# Copyright (C) 2012 CodeResort.com (BV Network AS)
+# This file is distributed under the same license as the
+# TracCustomFieldAdmin project.
+# Steffen Hoffmann <hoff.st@web.de>, 2012.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: TracCustomFieldAdmin 0.2.8\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2012-01-24 13:47+0100\n"
+"PO-Revision-Date: 2012-09-22 22:44+0200\n"
+"Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
+"Language-Team: de <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: customfieldadmin/admin.py:33
+msgid "Ticket System"
+msgstr "Ticket-System"
+
+#: customfieldadmin/admin.py:34
+msgid "Custom Fields"
+msgstr "Individuelle Felder"
+
+#: customfieldadmin/admin.py:65
+#, python-format
+msgid "Custom field %(name)s does not exist."
+msgstr "Es gibt kein individuelles Feld %(name)s."
+
+#: customfieldadmin/admin.py:94
+msgid "No custom field selected"
+msgstr "Kein individuelles Feld gewählt"
+
+#: customfieldadmin/admin.py:123
+msgid ""
+"Custom Fields are not correctly sorted. This may affect appearance when "
+"viewing tickets."
+msgstr ""
+"Die individuellen Felder sind nicht ordnungsgemäß sortiert. Das kann ihre"
+" Darstellung bei der Ticket-Anzeige beeinflussen."
+
+#: customfieldadmin/api.py:87
+msgid "Custom field requires attributes 'name' and 'type'."
+msgstr "Das individuelle Feld benötigt die Attribute 'name' und 'type'."
+
+#: customfieldadmin/api.py:92
+msgid ""
+"Only alphanumeric characters allowed for custom field name ('a-z' or "
+"'0-9' or '_'), with 'a-z' as first character."
+msgstr ""
+"Nur alphanumerischen Zeichen sind als Name eines individuellem Feldes "
+"zugelassen ('a-z' oder '0-9' oder '_'), und 'a-z' als erstes Zeichen."
+
+#: customfieldadmin/api.py:98
+msgid "Custom field name must begin with a character (a-z)."
+msgstr ""
+"Der Name des individuellen Feldes muss mit einem Kleinbuchstaben (a-z) "
+"beginnen."
+
+#: customfieldadmin/api.py:102
+#, python-format
+msgid "%(field_type)s is not a valid field type"
+msgstr "%(field_type)s ist kein gültiger Feldtyp"
+
+#: customfieldadmin/api.py:107
+msgid "Can not create as field already exists."
+msgstr "Das Feld kann nicht neu erstellt werden, weil es bereits existiert."
+
+#: customfieldadmin/api.py:157
+#, python-format
+msgid "Custom Field '%(name)s' does not exist. Cannot update."
+msgstr "Es gibt kein individuelles Feld '%(name)s'. Aktualisierung unmöglich."
+
+#: customfieldadmin/templates/customfieldadmin.html:11
+msgid "Custom Fields Admin"
+msgstr "Individuelle Felder"
+
+#: customfieldadmin/templates/customfieldadmin.html:16
+msgid "Manage Custom Fields"
+msgstr "Verwaltung individueller Felder"
+
+#: customfieldadmin/templates/customfieldadmin.html:21
+msgid "Modify Custom Field:"
+msgstr "Änderung des individuellen Feldes:"
+
+#: customfieldadmin/templates/customfieldadmin.html:23
+msgid "Name (cannot modify):"
+msgstr "Name (unveränderlich):"
+
+#: customfieldadmin/templates/customfieldadmin.html:28
+#: customfieldadmin/templates/customfieldadmin.html:91
+msgid "Type:"
+msgstr "Typ:"
+
+#: customfieldadmin/templates/customfieldadmin.html:39
+#: customfieldadmin/templates/customfieldadmin.html:100
+msgid "Label:"
+msgstr "Bezeichnung:"
+
+#: customfieldadmin/templates/customfieldadmin.html:44
+msgid ""
+"Default value\n"
+"                  (regular text for Text, Textarea, Radio or Select):"
+msgstr ""
+"Standardwert (Vorgabetext für Textzeile, Textfeld, Optionsschaltfläche "
+"oder Auswahllistenfeld):"
+
+#: customfieldadmin/templates/customfieldadmin.html:50
+msgid "Format (Text or Textarea):"
+msgstr "Format (Textzeile oder -feld):"
+
+#: customfieldadmin/templates/customfieldadmin.html:60
+msgid ""
+"Options for Radio or Select\n"
+"                  (for Select, empty first line makes field optional):"
+msgstr ""
+"Wahlmöglichkeiten für Optionsschaltfläche oder Auswahllistenfeld (leere "
+"erste Zeile macht Auswahllistenfeld optional)"
+
+#: customfieldadmin/templates/customfieldadmin.html:71
+msgid "Size of Textarea for entry (Textarea only):"
+msgstr "Grösse des Textfeldes (nur Textfeld):"
+
+#: customfieldadmin/templates/customfieldadmin.html:71
+msgid "Columns:"
+msgstr "Spalten:"
+
+#: customfieldadmin/templates/customfieldadmin.html:72
+#: customfieldadmin/templates/customfieldadmin.html:128
+msgid "Rows:"
+msgstr "Zeilen:"
+
+#: customfieldadmin/templates/customfieldadmin.html:76
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: customfieldadmin/templates/customfieldadmin.html:77
+msgid "Save"
+msgstr "Speichern"
+
+#: customfieldadmin/templates/customfieldadmin.html:84
+msgid "Add Custom Field:"
+msgstr "Individuelles Feld hinzufügen:"
+
+#: customfieldadmin/templates/customfieldadmin.html:86
+msgid "Name:"
+msgstr "Name:"
+
+#: customfieldadmin/templates/customfieldadmin.html:105
+msgid "Default value:"
+msgstr "Standardwert:"
+
+#: customfieldadmin/templates/customfieldadmin.html:110
+msgid "Format:"
+msgstr "Format:"
+
+#: customfieldadmin/templates/customfieldadmin.html:119
+msgid "Options:"
+msgstr "Zusatzangaben:"
+
+#: customfieldadmin/templates/customfieldadmin.html:127
+msgid "Size of Textarea:"
+msgstr "Grösse des Textfeldes:"
+
+#: customfieldadmin/templates/customfieldadmin.html:127
+msgid "Cols:"
+msgstr "Spalten:"
+
+#: customfieldadmin/templates/customfieldadmin.html:133
+msgid "Add"
+msgstr "Hinzufügen"
+
+#: customfieldadmin/templates/customfieldadmin.html:139
+msgid "No Custom Fields defined for this project."
+msgstr "Für dieses Projekt wurden keine individuellen Felder definiert."
+
+#: customfieldadmin/templates/customfieldadmin.html:147
+msgid "Name"
+msgstr "Name"
+
+#: customfieldadmin/templates/customfieldadmin.html:148
+msgid "Type"
+msgstr "Typ"
+
+#: customfieldadmin/templates/customfieldadmin.html:149
+msgid "Label"
+msgstr "Bezeichnung"
+
+#: customfieldadmin/templates/customfieldadmin.html:150
+msgid "Order"
+msgstr "Reihenfolge"
+
+#: customfieldadmin/templates/customfieldadmin.html:157
+msgid "Field cannot be deleted (declared in source code)"
+msgstr "Feld kann nicht entfernt werden (Quellcode-Vorgabe)"
+
+#: customfieldadmin/templates/customfieldadmin.html:171
+msgid "Currently outside regular range"
+msgstr "Momentan ausserhalb des üblichen Bereichs"
+
+#: customfieldadmin/templates/customfieldadmin.html:180
+msgid "Remove selected items"
+msgstr "Ausgewählte Einträge entfernen"
+
+#: customfieldadmin/templates/customfieldadmin.html:182
+msgid "Apply changes"
+msgstr "Änderungen übernehmen"
+
