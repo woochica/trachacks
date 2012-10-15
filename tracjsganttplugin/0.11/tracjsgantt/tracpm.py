@@ -598,7 +598,10 @@ class TracPM(Component):
             msAsGroup = False
 
         # FIXME - Really?  This is a display option
-        if not options['omitMilestones']:
+        if options.get('omitMilestones') \
+                and int(options['omitMilestones']) == 1:
+            pass
+        else:
             for t in tickets:
                 if 'milestone' in t and \
                         t['milestone'] != '' and \
