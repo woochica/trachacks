@@ -562,6 +562,9 @@ class TracPM(Component):
         if self.isCfg('estimate'):
             ticket[self.fields['estimate']] = 0
 
+        if self.isCfg('worked'):
+            ticket[self.fields['worked']] = 0
+
         # There is no percent complete for a pseudoticket
         if self.isCfg('percent'):
             ticket[self.fields['percent']] = 0
