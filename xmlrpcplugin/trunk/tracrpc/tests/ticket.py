@@ -268,30 +268,27 @@ class RpcTicketTestCase(TracRpcTestCase):
     def test_update_time_changed(self):
         # Update with collision check
         import datetime
-        from tracrpc.xml_rpc import from_xmlrpc_datetime, to_xmlrpc_datetime
+        from tracrpc.util import to_utimestamp
+        from tracrpc.xml_rpc import from_xmlrpc_datetime
         tid = self.admin.ticket.create('test_update_time_changed', '...', {})
         tid, created, modified, attrs = self.admin.ticket.get(tid)
         then = from_xmlrpc_datetime(modified) - datetime.timedelta(minutes=1)
         # Unrestricted old-style update (to be removed soon)
         try:
             self.admin.ticket.update(tid, "comment1",
-                    {'_ts': to_xmlrpc_datetime(then)})
+                    {'_ts': str(to_utimestamp(then))})
         except Exception, e:
             self.assertTrue("Ticket has been updated since last get" in str(e))
         # Update with 'action' to test new-style update.
         try:
             self.admin.ticket.update(tid, "comment1",
-                    {'_ts': to_xmlrpc_datetime(then),
+                    {'_ts': str(to_utimestamp(then)),
                      'action': 'leave'})
         except Exception, e:
             self.assertTrue("modified by someone else" in str(e))
         self.admin.ticket.delete(tid)
 
     def test_update_time_same(self):
-        # Update with collision check
-        import datetime
-        from tracrpc.xml_rpc import from_xmlrpc_datetime, to_xmlrpc_datetime
-
         # Unrestricted old-style update (to be removed soon)
         tid = self.admin.ticket.create('test_update_time_same', '...', {})
         tid, created, modified, attrs = self.admin.ticket.get(tid)

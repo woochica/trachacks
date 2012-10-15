@@ -24,7 +24,7 @@ from trac.web.chrome import add_warning
 from trac.util.datefmt import to_datetime, utc
 
 from tracrpc.api import IXMLRPCHandler, expose_rpc, Binary
-from tracrpc.util import StringIO, to_utimestamp
+from tracrpc.util import StringIO, to_utimestamp, from_utimestamp
 
 __all__ = ['TicketRPC']
 
@@ -148,7 +148,7 @@ class TicketRPC(Component):
         """ Fetch a ticket. Returns [id, time_created, time_changed, attributes]. """
         t = model.Ticket(self.env, id)
         req.perm(t.resource).require('TICKET_VIEW')
-        t['_ts'] = str(t.time_changed)
+        t['_ts'] = str(to_utimestamp(t.time_changed))
         return (t.id, t.time_created, t.time_changed, t.values)
 
     def create(self, req, summary, description, attributes={}, notify=False, when=None):
@@ -208,7 +208,8 @@ class TicketRPC(Component):
                     "has no workflow 'action'." % (id, req.authname))
             req.perm(t.resource).require('TICKET_MODIFY')
             time_changed = attributes.pop('_ts', None)
-            if time_changed and str(time_changed) != str(t.time_changed):
+            if time_changed and \
+                    str(time_changed) != str(to_utimestamp(t.time_changed)):
                 raise TracError("Ticket has been updated since last get().")
             for k, v in attributes.iteritems():
                 t[k] = v
@@ -217,7 +218,12 @@ class TicketRPC(Component):
             ts = TicketSystem(self.env)
             tm = TicketModule(self.env)
             # TODO: Deprecate update without time_changed timestamp
-            time_changed = str(attributes.pop('_ts', t.time_changed))
+            time_changed = attributes.pop('_ts', to_utimestamp(t.time_changed))
+            try:
+                time_changed = int(time_changed)
+            except ValueError:
+                raise TracError("RPC ticket.update: Wrong '_ts' token " \
+                                "in attributes (%r)." % time_changed)
             action = attributes.get('action')
             avail_actions = ts.get_available_actions(req, t)
             if not action in avail_actions:
@@ -231,7 +237,10 @@ class TicketRPC(Component):
             # TicketModule reads req.args - need to move things there...
             req.args.update(attributes)
             req.args['comment'] = comment
-            req.args['ts'] = time_changed
+            # Collision detection: 0.11+0.12 timestamp
+            req.args['ts'] = str(from_utimestamp(time_changed))
+            # Collision detection: 0.13/1.0+ timestamp
+            req.args['view_time'] = str(time_changed)
             changes, problems = tm.get_ticket_changes(req, t, action)
             for warning in problems:
                 add_warning(req, "Rpc ticket.update: %s" % warning)
