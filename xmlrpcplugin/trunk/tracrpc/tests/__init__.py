@@ -79,7 +79,8 @@ try:
         return suite
 
 except Exception, e:
-    print e
+    import sys, traceback
+    traceback.print_exc(file=sys.stdout)
     print "Trac test infrastructure not available."
     print "Install Trac as 'python setup.py develop' (run Trac from source).\n"
     test_suite = unittest.TestSuite() # return empty suite
