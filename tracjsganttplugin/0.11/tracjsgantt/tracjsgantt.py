@@ -656,9 +656,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     if fieldDisplay:
                         displayTickets.append(ticket)
 
-                # Sort the tickets by date and successor dependencies
-                displayTickets.sort(self._compare_tickets)
-
             for ticket in displayTickets:
                 tasks += self._format_ticket(ticket, options)
 
