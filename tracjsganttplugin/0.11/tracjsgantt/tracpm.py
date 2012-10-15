@@ -220,8 +220,17 @@ class TracPM(Component):
     # Return None if the field is not configured or empty.
     def parseStart(self, ticket):
         if self.isSet(ticket, 'start'):
-            start = datetime(*time.strptime(ticket[self.fields['start']], 
-                                       self.dbDateFormat)[0:7])
+            try:
+                start = datetime(*time.strptime(ticket[self.fields['start']], 
+                                                self.dbDateFormat)[0:7])
+            except:
+                raise TracError('Ticket %s has an invalid %s value, "%s".' \
+                                    ' It should match the format "%s".' %
+                                (ticket['id'], 
+                                 self.fields['start'],
+                                 ticket[self.fields['start']],
+                                 self.dbDateFormat))
+                
             start.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             start = None
@@ -231,8 +240,17 @@ class TracPM(Component):
     # Return None if the field is not configured or empty.
     def parseFinish(self, ticket):
         if self.isSet(ticket, 'finish'):
-            finish = datetime(*time.strptime(ticket[self.fields['finish']], 
-                                           self.dbDateFormat)[0:7])
+            try:
+                finish = datetime(*time.strptime(ticket[self.fields['finish']], 
+                                                 self.dbDateFormat)[0:7])
+            except:
+                raise TracError('Ticket %s has an invalid %s value, "%s".' \
+                                    ' It should match the format "%s".' %
+                                (ticket['id'], 
+                                 self.fields['finish'],
+                                 ticket[self.fields['finish']],
+                                 self.dbDateFormat))
+                
             finish.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             finish = None
