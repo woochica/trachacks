@@ -2,16 +2,15 @@ import re
 from trac.core import *
 from trac.web.chrome import INavigationContributor, add_script, add_stylesheet, ITemplateProvider
 from trac.util import escape, Markup
+from trac.util.datefmt import format_datetime
 from pkg_resources import resource_filename
 from trac.web.api import IRequestHandler, IRequestFilter
 
 from trac.wiki.macros import WikiMacroBase, parse_args
 from genshi.builder import tag
 from trac.util.text import pretty_size
-from trac.util.datefmt import to_timestamp
 from trac.env import IEnvironmentSetupParticipant
 import time
-import datetime
 
 class FileListInit(Component):
     implements(IEnvironmentSetupParticipant)
@@ -21,7 +20,7 @@ class FileListInit(Component):
 
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
-        self.upgrade_environment( self.env.get_db_cnx())
+        self.upgrade_environment(None)
 
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
@@ -33,7 +32,7 @@ class FileListInit(Component):
             return True
 
     def upgrade_environment(self, db):
-        db = self.env.get_db_cnx()
+        db = db or self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("INSERT INTO wiki VALUES ('Files', 1, '%s', "
                        "'trac', '127.0.0.1', '= Files stored here = \n\n "
@@ -58,6 +57,7 @@ class FileListPlugin(Component):
 
 class PageCleanup(Component):
     implements(IRequestHandler, IRequestFilter, ITemplateProvider)
+
     # IRequestHandler methods
     def match_request(self, req):
         return re.match(r'/filelist(?:/(\d+)(/.*))?$', req.path_info)
@@ -67,9 +67,11 @@ class PageCleanup(Component):
         data = {'action': action}   
         return ('filelist.js', data, 'text/plain')
         req.send('')
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
+
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/wiki/Files'):
             add_script(req, 'js_extras/bgiframe/jquery.bgiframe.pack.js')
@@ -85,9 +87,11 @@ class PageCleanup(Component):
                             'ui.draggable.packed.js')
             add_script(req, 'filelist/js/filelist.js') 
         return template, data, content_type
+
     # ITemplateProvider methods
     def get_templates_dirs(self):
-        return [resource_filename(__name__, 'templates')]
+        return []
+
     def get_htdocs_dirs(self):
         return [('filelist', resource_filename(__name__, 'htdocs'))]
 
@@ -165,7 +169,7 @@ class AllAttachmentsMacro(WikiMacroBase):
         return tag.ul(
                       [tag.li(
                           tag.a(filename, href=formatter.href.attachment(type + "/" + id + "/" + filename)),
-                          " (", tag.span(pretty_size(size), title=size), ") - ", tag.em((datetime.datetime.fromtimestamp(time)).ctime()), " - added by ",
+                          " (", tag.span(pretty_size(size), title=size), ") - ", tag.em(format_datetime(time)), " - added by ",
                           tag.em(author), " to ",
                           tag.a(types[type] + " " + id, href=formatters[type](id)), " ")
                     for type,id,filename,size,time,description,author,ipnr in cursor])
