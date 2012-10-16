@@ -1028,7 +1028,14 @@ class ResourceScheduler(Component):
                                   self.sorters,
                                   SimpleSorter)
 
+        self.logEnabled = self.config.get('TracPM', 'logScheduling', '0')
 
+
+
+    # Log scheduling progress.
+    def _logSch(self, msg):
+        if self.logEnabled == '1':
+            self.env.log.info(msg)
 
     # ITaskScheduler method
     # Uses options hoursPerDay and schedule (alap or asap).
@@ -1175,6 +1182,8 @@ class ResourceScheduler(Component):
                                                'but %s is not in the chart. ' +
                                                'Ancestor deadlines ignored.') %
                                               (t['id'], pid, pid))
+                self._logSch('ancestor finish for %s is %s' %
+                             (t['id'], finish))
                 return copy.copy(finish)
 
             # Find the earliest start of any successor
@@ -1193,6 +1202,8 @@ class ResourceScheduler(Component):
                                            'but %s is not in the chart. ' +
                                            'Dependency deadlines ignored.') %
                                           (t['id'], tid, tid))
+                self._logSch('earliest successor for %s is %s' %
+                             (t['id'], start))
                 return copy.copy(start)
 
             # If we found a loop, tell the user and give up.
@@ -1233,6 +1244,8 @@ class ResourceScheduler(Component):
                         finish += timedelta(days=1)
 
                         finish = [finish, False]
+                        self._logSch('Defaulted finish for %s to %s' %
+                                     (t['id'], finish))
 
                 # Check resource availability.  Can't start later than
                 # earliest available time.
@@ -1257,6 +1270,8 @@ class ResourceScheduler(Component):
                     # Move forward one hour to the end of the day
                     f += timedelta(hours=1)
                     finish[0] = f
+                    self._logSch('Adjusted finish of %s to end of day, %s' %
+                                 (t['id'], finish))
 
                 # Set the field
                 t['calc_finish'] = finish
