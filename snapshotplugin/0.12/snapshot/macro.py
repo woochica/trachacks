@@ -44,7 +44,7 @@ Example:
                     cols = line[14:].split(' =||= ')
                 elif line.startswith('|| group: '):
                     group = line[10:]
-                    if group == u'None': group = None
+                    if group in [u'', u'None']: group = None
                     groups[group] = [] # initialize for the group
                 elif line.startswith('|| '):
                     values = iter(line[3:].split(' || '))
