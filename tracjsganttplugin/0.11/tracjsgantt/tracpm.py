@@ -543,20 +543,21 @@ class TracPM(Component):
 
         return ids
 
-    # Create a pseudoticket with all the fields needed for PM work.
-    def _pseudoTicket(self, tid, summary, description, ticketType, milestone):
+    # Create a pseudoticket for a Trac milestone with all the fields
+    # needed for PM work.
+    def _pseudoTicket(self, tid, summary, description, milestone):
         ticket = {}
         ticket['id'] = tid
         ticket['summary'] = summary
         ticket['description'] = description
         ticket['milestone'] = milestone
 
-        # Pseudotickets are always shown
+        # Milestones are always shown
         ticket['level'] = 0
 
-        # A pseudoticket has no owner
+        # A milestone has no owner
         ticket['owner'] = ''
-        ticket['type'] = ticketType
+        ticket['type'] = self.milestoneType
         ticket['status'] = ''
 
         if self.isCfg('estimate'):
@@ -574,12 +575,10 @@ class TracPM(Component):
             ticket[self.fields['parent']] = 0
         ticket['children'] = []
 
-        # FIXME - handle pred, succ here?
-
         # Place holder.
         ticket['link'] = ''
 
-        # A pseudoticket has no priority
+        # A milestone has no priority
         ticket['priority'] = 'n/a'
 
         return ticket
@@ -590,15 +589,6 @@ class TracPM(Component):
             milestones = options['milestone'].split('|')
         else:
             milestones = []
-
-        # FIXME - allow finer-grained configuration to control when
-        # this group is displayed: never, always, only if multiple
-        # milestones are on the chart.
-        if options.get('milestoneAsGroup') \
-                and int(options['milestoneAsGroup']) == 1:
-            msAsGroup = True
-        else:
-            msAsGroup = False
 
         # FIXME - Really?  This is a display option
         if options.get('omitMilestones') \
@@ -625,14 +615,9 @@ class TracPM(Component):
                            milestones)
             for row in cursor:
                 tid = tid - 1
-                msType = self.milestoneType
-                if (msAsGroup):
-                    msType += '-group'
-
                 milestoneTicket = self._pseudoTicket(tid, 
                                                      row[0],
-                                                     'Milestone %s due' % row[0],
-                                                     msType,
+                                                     'Milestone %s' % row[0],
                                                      row[0])
 
                 # If there's no due date, let the scheduler set it.
@@ -653,53 +638,31 @@ class TracPM(Component):
                     milestoneTicket[self.fields['start']] = ''
 
 
-                if (msAsGroup):
-                    # Any tickets in this milestone without a parent
-                    # are children of the milestone's group
-                    if self.isCfg('parent'):
-                        for t in tickets:
-                            if t['milestone'] == milestoneTicket['milestone'] \
-                                    and self.parent(t) == 0:
-                                if self.isField('parent'):
-                                    t[self.fields['parent']] = tid 
-                                else:
-                                    t['parent'] = tid 
-
-                                milestoneTicket['children'].append(t['id'])
-                else:
-                    # Any ticket with this as a milestone and no
-                    # successors has the milestone as a successor
-                    if self.isCfg(['pred', 'succ']):
-                        pred = []
-                        for t in tickets:
-                            if not t['children'] and \
-                                    t['milestone'] == row[0] and \
-                                    self.successors(t) == []:
-                                if self.isField('succ'):
-                                    t[self.fields[self.sources['succ']]] = \
-                                        [ tid ]
-                                else:
-                                    t['succ'] = [ tid ]
-                                pred.append(t['id'])
-                        if self.isField('pred'):
-                            milestoneTicket[self.fields[self.sources['pred']]] = \
-                                pred
-                        else:
-                            milestoneTicket['pred'] = pred
+                # Any ticket with this as a milestone and no
+                # successors has the milestone as a successor
+                if self.isCfg(['pred', 'succ']):
+                    pred = []
+                    for t in tickets:
+                        if not t['children'] and \
+                                t['milestone'] == row[0] and \
+                                self.successors(t) == []:
+                            if self.isField('succ'):
+                                t[self.fields[self.sources['succ']]] = \
+                                    [ tid ]
+                            else:
+                                t['succ'] = [ tid ]
+                            pred.append(t['id'])
+                    if self.isField('pred'):
+                        milestoneTicket[self.fields[self.sources['pred']]] = \
+                            pred
+                    else:
+                        milestoneTicket['pred'] = pred
 
                 # A Trac milestone has no successors
                 if self.isField('succ'):
                     milestoneTicket[self.fields[self.sources['succ']]] = []
                 elif self.isRelation('succ'):
                     milestoneTicket['succ'] = []
-
-                # A milestone shown as a group has no predecessors.
-                if (msAsGroup):
-                    if self.isField('pred'):
-                        milestoneTicket[self.fields[self.sources['pred']]] = []
-                    elif self.isRelation('pred'):
-                        milestoneTicket['pred'] = []
-
                 
                 tickets.append(milestoneTicket)
 

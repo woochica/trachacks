@@ -181,7 +181,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
                    'schedule', 'hoursPerDay', 'doResourceLeveling',
-                   'milestoneAsGroup',
                    'display')
 
         for opt in options:
