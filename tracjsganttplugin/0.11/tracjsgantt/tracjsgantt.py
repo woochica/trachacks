@@ -90,6 +90,8 @@ class TracJSGanttSupport(Component):
                 """Hours worked per day""")
     Option('trac-jsgantt', 'option.display', None,
                 """Display filter for tickets in the form 'field1:value1|field2:value2' or 'field:value1|value2'; displays tickets where field1==value1, etc.""")
+    Option('trac-jsgantt', 'option.order', 'wbs',
+           """Fields to sort tasks by before display.  May include tickets fields (including custom fields) or 'wbs'.""")
      
 
     # ITemplateProvider methods
@@ -140,6 +142,7 @@ The chart display can be controlled with a number of macro arguments:
 || `schedule`||Schedule tasks based on dependenies and estimates.  Either as soon as possible (asap) or as late as possible (alap)||alap||
 ||`doResourceLeveling`||Resolve resource conflicts (1) or not (0) when scheduling tickets.||0||
 ||`display`||Filter for limiting display of tickets.  `owner:fred` shows only tickets owned by fred. `status:closed` shows only closed tickets.||None||
+||`order`||Order of fields used to sort tickets before display. `order=milestone` sorts by milestone.  May include ticket fields, including custom fields, or "wbs" (work breakdown structure).||wbs||
 
 Site-wide defaults for macro arguments may be set in the `trac-jsgantt` section of `trac.ini`.  `option.<opt>` overrides the built-in default for `<opt>` from the table above.
 
@@ -181,7 +184,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
                    'schedule', 'hoursPerDay', 'doResourceLeveling',
-                   'display')
+                   'display', 'order')
 
         for opt in options:
             self.options[opt] = self.config.get('trac-jsgantt',
@@ -569,6 +572,29 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += self.GanttID+'.AddTaskItem(t);\n'
         return task
 
+
+    # Sort tickets by options['order'].  For example,
+    # order=milestone|wbs sorts by wbs within milestone.
+    #
+    # http://wiki.python.org/moin/HowTo/Sorting (at
+    # #Sort_Stability_and_Complex_Sorts) notes that Python list
+    # sorting is stable so you can sort by increasing priority of keys
+    # (tertiary, then secondary, then primary) to get a multi-key
+    # sort.  
+    #
+    # FIXME - this sorts enums by text, not value.
+    def _sortTickets(self, tickets, options):
+        # Get all the sort fields
+        sortFields = options['order'].split('|')
+        # Reverse so lowest priority is first
+        sortFields.reverse()
+        # Do the sort by each field
+        for field in sortFields:
+            tickets.sort(key=itemgetter(field))
+
+        return tickets
+
+
     def _add_tasks(self, options):
         if options.get('sample') and int(options['sample']) != 0:
             tasks = self._add_sample_tasks()
@@ -591,9 +617,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             # Sort tickets by date for computing WBS
             self.tickets.sort(self._compare_tickets)
 
-            # Compute the WBS and sort them by WBS for display
+            # Compute the WBS
             self._compute_wbs()                
-            self.tickets.sort(key=itemgetter('wbs'))
 
             # Set the link for clicking through the Gantt chart
             for t in self.tickets:
@@ -654,6 +679,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                         fieldDisplay = fieldDisplay & display
                     if fieldDisplay:
                         displayTickets.append(ticket)
+
+            # Sort the remaining tickets for display (based on order option).
+            displayTickets = self._sortTickets(displayTickets, options)
 
             for ticket in displayTickets:
                 tasks += self._format_ticket(ticket, options)
