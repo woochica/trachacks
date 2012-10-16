@@ -584,10 +584,30 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     #
     # FIXME - this sorts enums by text, not value.
     def _sortTickets(self, tickets, options):
+        # Force milestones to the end
+        def msSorter(t1, t2):
+            # If t1 is a not milestone and t2 is, t1 comes first
+            if not self.pm.isMilestone(t1) and self.pm.isMilestone(t2):
+                result = -1
+            elif self.pm.isMilestone(t1) and not self.pm.isMilestone(t2):
+                result = 1
+            else:
+                result = 0
+            return result
+
         # Get all the sort fields
         sortFields = options['order'].split('|')
-        # Reverse so lowest priority is first
+
+        # If sorting by milestone, force milestone type tickets to the
+        # end before any other sort.  The stability of the other sorts
+        # will keep them at the end of the milestone group (unless
+        # overridden by other fields listed in `order`).
+        if 'milestone' in sortFields:
+            tickets.sort(msSorter)
+
+        # Reverse sort fields so lowest priority is first
         sortFields.reverse()
+
         # Do the sort by each field
         for field in sortFields:
             tickets.sort(key=itemgetter(field))
