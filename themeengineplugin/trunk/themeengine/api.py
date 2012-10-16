@@ -13,6 +13,11 @@ import inspect
 from trac.core import *
 from trac.config import Option
 
+try:
+    from trac.util import lazy
+except ImportError:
+    lazy = None
+
 class ThemeNotFound(TracError):
     """The requested theme isn't found."""
     
@@ -67,16 +72,28 @@ class ThemeEngineSystem(Component):
     providers = ExtensionPoint(IThemeProvider)
     
     def __init__(self):
-        # This can safely go in here because the data can only change on a restart anyway
-        self.info = {}
+        if lazy is None:
+            # Trac < 1.0 : this can safely go in here because the data can 
+            # only change on a restart anyway
+            self.info = self.info()
+
+    def info(self):
+        # Trac >= 1.0 : Hack needed to deal with infinite recursion error
+        #    Details : http://trac-hacks.org/ticket/9580#comment:1
+        #    Details : http://trac-hacks.org/ticket/9580#comment:2
+        info = {}
         for provider in self.providers:
             for name in provider.get_theme_names():
                 theme = provider.get_theme_info(name)
                 theme['provider'] = provider
                 theme['module'] = provider.__class__.__module__
                 theme['name'] = name
-                self.info[name.lower()] = theme
-                
+                info[name.lower()] = theme
+        return info
+
+    if lazy is not None:
+        info = lazy(info)
+
     # IThemeProvider methods
     def get_theme_names(self):
         yield 'default'
