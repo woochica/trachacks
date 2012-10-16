@@ -1,38 +1,4 @@
-$.fn.insertAtCaret = function (myValue) {
-	return this.each(function(){
-			//IE support
-			if (document.selection) {
-					this.focus();
-					sel = document.selection.createRange();
-					sel.text = myValue;
-					this.focus();
-			}
-			//MOZILLA / NETSCAPE support
-			else if (this.selectionStart || this.selectionStart == '0') {
-					var startPos = this.selectionStart;
-					var endPos = this.selectionEnd;
-					var scrollTop = this.scrollTop;
-					this.value = this.value.substring(0, startPos)+ myValue+ this.value.substring(endPos,this.value.length);
-					this.focus();
-					this.selectionStart = startPos + myValue.length;
-					this.selectionEnd = startPos + myValue.length;
-					this.scrollTop = scrollTop;
-			} else {
-					this.value += myValue;
-					this.focus();
-			}
-	});
-};
-
-function addToDescription(upload) {
-  if(upload.length)
-  {
-    //$('#field-description').val(text + '[[Image('+upload+')]]');
-    $('#field-description').insertAtCaret('[[Image('+upload+')]]');
-  }
-}
-
-$(document).ready(function() {
+jQuery(document).ready(function() {
   
   $('#propertyform').attr('enctype', 'multipart/form-data');
   
@@ -40,29 +6,28 @@ $(document).ready(function() {
   var edithref = $('.edit-image').attr('href');
   var deletehref = $('.delete-image').attr('href');
   
-  
   var upload = '\
-<div class="upload">\
-  <span>\
-    <a class="uploadDescription" href="#"><img src="'+edithref+'"></a>\
-    <input class="fileInput" type="file" name="attachment[]" />\
-  </span>\
-  <div class="field">\
-    <label>Description of the file (optional):<br />\
-    <input type="text" name="description[]" size="60" /></label>\
-  </div>\
-</div>';
+	<div class="upload">\
+	  <span>\
+	    <a class="uploadDescription" href="#"><img src="'+edithref+'"></a>\
+	    <input class="fileInput" type="file" name="attachment[]" />\
+	  </span>\
+	  <div class="field">\
+	    <label>Description of the file (optional):<br />\
+	    <input type="text" name="description[]" size="60" /></label>\
+	  </div>\
+	</div>';
 
-var uploadContainer = '\
-<fieldset>\
-  <legend>Add Files</legend>\
-  <div id="uploads" class="uploads">\
-  </div>\
-  <a class="addUpload" href="#" style="float:right"><img src="'+addhref+'"></a>\
-</fieldset>';
+  var uploadContainer = '\
+	<fieldset>\
+	  <legend>Add Files</legend>\
+	  <div id="uploads" class="uploads">\
+	  </div>\
+	  <a class="addUpload" href="#" style="float:right"><img src="'+addhref+'"></a>\
+	</fieldset>';
 
-$('#properties').next().html(uploadContainer);
-  
+  $('#properties').after(uploadContainer);
+
   $('#uploads').append(upload);
      
   $('.uploadDescription').click(function(event) {
@@ -97,4 +62,39 @@ $('#properties').next().html(uploadContainer);
     });
     
   });
+
+  function addToDescription(upload) {
+    if(upload.length)
+	{
+	  //$('#field-description').val(text + '[[Image('+upload+')]]');
+	  $('#field-description').insertAtCaret('[[Image('+upload+')]]');
+	}
+  }
+  
+  $.fn.insertAtCaret = function (myValue) {
+    return this.each(function(){
+		//IE support
+		if (document.selection) {
+				this.focus();
+				sel = document.selection.createRange();
+				sel.text = myValue;
+				this.focus();
+		}
+		//MOZILLA / NETSCAPE support
+		else if (this.selectionStart || this.selectionStart == '0') {
+				var startPos = this.selectionStart;
+				var endPos = this.selectionEnd;
+				var scrollTop = this.scrollTop;
+				this.value = this.value.substring(0, startPos)+ myValue+ this.value.substring(endPos,this.value.length);
+				this.focus();
+				this.selectionStart = startPos + myValue.length;
+				this.selectionEnd = startPos + myValue.length;
+				this.scrollTop = scrollTop;
+		} else {
+				this.value += myValue;
+				this.focus();
+		}
+	});
+  };
+
 });

@@ -6,6 +6,6 @@ setup(
     package_data={ 'awesome': [ 'htdocs/images/*', 'htdocs/js/*', 'htdocs/css/*' ]},
     entry_points = """
         [trac.plugins]
-        awesome = awesome.ticketuploadmodule
+        awesome = awesome.awesomeattachments
     """,
 )
