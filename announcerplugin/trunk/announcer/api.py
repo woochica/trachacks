@@ -8,17 +8,17 @@
 # you should have received as part of this distribution.
 #
 
-import pkg_resources
 import time
 
 from operator import itemgetter
+from pkg_resources import resource_filename
 
 from trac.config import ExtensionOption
-from trac.core import *
+from trac.core import Component, ExtensionPoint, Interface, TracError, \
+                      implements
 from trac.db import Table, Column, Index
 from trac.db import DatabaseManager
 from trac.env import IEnvironmentSetupParticipant
-from trac.util.compat import set
 
 
 class IAnnouncementProducer(Interface):
@@ -299,11 +299,11 @@ class SubscriptionResolver(Component):
 
         """
         This logic is meant to generate a list of subscriptions for each
-        distirbution method.  The important thing is that we pick the rule with
-        the highest priority for each (sid, distribution) pair.  If it is
-        "never", then the user is dropped from the list.  If it is always, then
-        the user is kept.  Only the users highest priority rule is used and all
-        others are skipped.
+        distribution method.  The important thing is, that we pick the rule
+        with the highest priority for each (sid, distribution) pair.
+        If it is "never", then the user is dropped from the list,
+        if it is "always", then the user is kept.
+        Only users highest priority rule is used and all others are skipped.
         """
         # sort by dist, sid, authenticated, priority
         ordered_subs = sorted(subscriptions, key=itemgetter(1,2,3,6))
@@ -430,8 +430,8 @@ class AnnouncementSystem(Component):
     ]
 
     def __init__(self):
-        # bind the 'announcer' catalog to the locale directory
-        locale_dir = pkg_resources.resource_filename(__name__, 'locale')
+        # Bind the 'announcer' catalog to the specified locale directory.
+        locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
     def environment_created(self):
@@ -515,4 +515,3 @@ class AnnouncementSystem(Component):
                                 evt)
         except:
             self.log.error("AnnouncementSystem failed.", exc_info=True)
-
