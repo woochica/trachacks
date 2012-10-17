@@ -450,7 +450,8 @@ class EmailDistributor(Component):
                     req.session['announcer_email_format_%s'%realm] = opt
         prefs = {}
         for realm in supported_realms:
-            prefs[realm] = req.session.get('announcer_email_format_%s'%realm, None)
+            prefs[realm] = req.session.get('announcer_email_format_%s'%realm,
+                                           None) or self._get_default_format()
         data = dict(
             realms = supported_realms,
             preferences = prefs,
