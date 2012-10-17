@@ -4,7 +4,7 @@ import os
 from trac.attachment import Attachment
 from trac.core import Component, implements
 from trac.ticket.notification import TicketNotifyEmail
-from trac.ticket.api import TicketModule
+from trac.ticket.web_ui import TicketModule
 from trac.util import get_reporter_id
 from trac.util.translation import _
 from trac.web.api import IRequestFilter, IRequestHandler
@@ -55,7 +55,7 @@ class TicketUploadModule(TicketModule):
         if size == 0:
             raise TracError(_("Can't upload empty file"))
         
-        max_size = self.config('attachment', 'max_size')
+        max_size = self.env.config.get('attachment', 'max_size')
         if max_size >= 0 and size > max_size:
             raise TracError(_('Maximum attachment size: %(num)s bytes', num=max_size), _('Upload failed'))
         
