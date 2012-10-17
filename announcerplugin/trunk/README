@@ -1,0 +1,22 @@
+TracAnnouncer is a flexible trac notifications drop in replacement that is
+very flexible and customizable.  There is a focus on users being able to
+configure what notifications they would like and relieving the sysadmin
+from having to manage notifications.
+
+HACKING NOTES:
+
+The most confusing part of announce is that subscriptions have three
+related fields, that are not intuitive.  (sid, authenticated, address).
+There is a very good reason for this.  First, Trac users are identified
+throughout the system with the sid, authenticated pair.  Anonymous user
+are allowed to set their sid to anything that they would like via the
+advanced preferences in the preferences section of the site.  The can
+set their sid to the same sid as some authenticated user.  The way we
+tell the difference between the two identical sids is the authenticated
+flag.  There is a third type of user when we are talking about announcements.
+Users can enter any email address in some ticket fields, like CC.  These
+subscriptions are not associated with any sid.  So the sid and authenticated
+in the subscription would be None, None.  These users should be treated
+with all default configuration and permissions checked against anonymous.
+I hope this helps, because it took me a while to wrap my head around :P
+

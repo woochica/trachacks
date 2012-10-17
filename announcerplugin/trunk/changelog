@@ -1,0 +1,6 @@
+Authors: Steven Hanson, Robert Corsaro
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
+
+tracannouncer-0.12.1 (not yet released) - branch 0.11
+ resolved issues
+ * #10483: Move license to COPYING file

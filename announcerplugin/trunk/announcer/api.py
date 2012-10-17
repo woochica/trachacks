@@ -2,57 +2,11 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009, Robert Corsaro
-# Copyright (c) 2010,2011 Steffen Hoffmann
+# Copyright (c) 2010-2012 Steffen Hoffmann
 #
-# All rights reserved.
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the <ORGANIZATION> nor the names of its
-#       contributors may be used to endorse or promote products derived from
-#       this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-# LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-# ----------------------------------------------------------------------------
-"""
-TracAnnouncer is a flexible trac notifications drop in replacement that is
-very flexible and customizable.  There is a focus on users being able to
-configure what notifications they would like and relieving the sysadmin
-from having to manage notifications.
-
-HACKING NOTES:
-
-The most confusing part of announce is that subscriptions have three
-related fields, that are not intuitive.  (sid, authenticated, address).
-There is a very good reason for this.  First, Trac users are identified
-throughout the system with the sid, authenticated pair.  Anonymous user
-are allowed to set their sid to anything that they would like via the
-advanced preferences in the preferences section of the site.  The can
-set their sid to the same sid as some authenticated user.  The way we
-tell the difference between the two identical sids is the authenticated
-flag.  There is a third type of user when we are talking about announcements.
-Users can enter any email address in some ticket fields, like CC.  These
-subscriptions are not associated with any sid.  So the sid and authenticated
-in the subscription would be None, None.  These users should be treated
-with all default configuration and permissions checked against anonymous.
-I hope this helps, because it took me a while to wrap my head around :P
-"""
 
 import pkg_resources
 import time
