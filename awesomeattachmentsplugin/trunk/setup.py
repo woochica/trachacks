@@ -7,13 +7,15 @@
 # you should have received as part of this distribution.
 #
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
     name='AwesomeAttachmentsPlugin',
-    version='0.2',
+    version='0.3',
+    author='Dan Ordille',
+    author_email='dordille@gmail.com',
     license='3-Clause BSD',
-    packages=['awesome'],
+    packages=find_packages(exclude=['*.tests']),
     package_data={ 'awesome': [ 'htdocs/images/*', 'htdocs/js/*', 'htdocs/css/*' ]},
     entry_points = """
         [trac.plugins]
