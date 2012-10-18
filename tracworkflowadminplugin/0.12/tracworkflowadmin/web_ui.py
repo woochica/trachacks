@@ -20,7 +20,7 @@ from trac.config import Configuration, Option, BoolOption, ListOption, \
                         FloatOption, ChoiceOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import PermissionSystem
-from trac.util.compat import md5
+from trac.util.compat import md5, any
 from trac.util.text import to_unicode, exception_to_unicode
 from trac.util.translation import dgettext, domain_functions
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
@@ -509,12 +509,9 @@ class TracWorkflowAdminModule(Component):
         newOptions = {}
 
         if len(errors) == 0:
-            leave_status_exists = False
-            for act in params['actions']:
-                if 'leave_status' in act['operations'] and act['next'] == '*':
-                    leave_status_exists = True
-                    break
-            if not leave_status_exists:
+            if not any(act['next'] == '*' and \
+                           'leave_status' in act.get('operations', ())
+                       for act in params['actions']):
                 errors.append(_("The action with operation 'leave_status' and "
                                 "next status '*' is certainly required."))
 
