@@ -22,13 +22,10 @@
 #   5 weeks
 #
 
-from StringIO import StringIO
-from datetime import datetime
-
+from trac.core import TracError
 from trac.resource import get_resource_name
-from trac.util.datefmt import format_datetime, utc
+from trac.util.datefmt import format_datetime, to_datetime
 from trac.util.html import Markup
-from trac.wiki.formatter import Formatter
 from trac.wiki.macros import WikiMacroBase, parse_args
 
 revision = "$Rev$"
@@ -40,7 +37,7 @@ class LastModifiedMacro(WikiMacroBase):
 
     def expand_macro(self, formatter, name, content):
 
-        args, _ = parse_args(content)
+        args, kwargs = parse_args(content)
         
         if not args:
             page_name = get_resource_name(self.env, formatter.resource)
@@ -58,8 +55,7 @@ class LastModifiedMacro(WikiMacroBase):
                        "ORDER BY version DESC LIMIT 1" % page_name)
         row = cursor.fetchone()
         if not row:
-            out = StringIO('cannot find "' + page_name + '"')
-            return Markup(out.getvalue())
+            raise TracError('Wiki page "%s" not found.' % page_name)
 
         username = row[0]
         time_int = row[1]
@@ -71,12 +67,12 @@ class LastModifiedMacro(WikiMacroBase):
         if not row:
             author = username
         else:
-            author = row[0]        
+            author = row[0]
 
-        last_mod = datetime.fromtimestamp(time_int, utc)
-        now = datetime.now(utc)
-        elapsed = now - last_mod
         if mode == 'delta':
+            last_mod = to_datetime(time_int)
+            now = to_datetime(None)
+            elapsed = now - last_mod
             if elapsed.days == 0:
                 if elapsed.seconds / 3600 > 1.5:
                     count = elapsed.seconds / 3600
@@ -105,8 +101,7 @@ class LastModifiedMacro(WikiMacroBase):
             text = "" + repr(count) + " " + unit
             if (count != 1 and count != -1): text += "s"
         else:
-            text = format_datetime(last_mod, '%c')
-            text = format_datetime(last_mod, '%m/%d %k:%M')
+            text = format_datetime(time_int, '%c')
 
-        out = StringIO(text)
-        return Markup(out.getvalue())
+        return Markup(text)
+
