@@ -322,7 +322,7 @@ class VisibleVersion(Component):
 
         stats = get_ticket_stats(self.version_stats_provider, tickets)
         interval_hrefs = version_interval_hrefs(self.env, req, stats,
-        [ milestone.name for milestone in milestones ])
+            [milestone.name for milestone in milestones])
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)

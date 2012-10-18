@@ -66,11 +66,10 @@ class ReleasesModule(Component):
 
         showall = req.args.get('show') == 'all'
 
-        db = self.env.get_read_db()
         versions = []
         resources = []
         is_released = []
-        for v in Version.select(self.env, db):
+        for v in Version.select(self.env):
             r = Resource('version', v.name)
             ir = v.time and v.time.date() < date.today()
 
