@@ -9,18 +9,6 @@
 #
 # Created for the BFGFF project, http://chimp.acm.uiuc.edu/
 #
-# Shows the last modification date of the specified page, or the page the
-# macro appears in if not specified. An optional argument,  delta, can be
-# given to show the time elapsed since the last modification. The output is
-# placed in span with a title that gives the exact modification date and
-# the author of the change.
-#
-# For example, [[LastModified(CustomMacros)]] produces:
-#   09/06 20:34
-#
-# Alternatively, [[LastModified(CustomMacros,delta)]] produces:
-#   5 weeks
-#
 
 from trac.core import TracError
 from trac.resource import get_resource_name
@@ -34,6 +22,17 @@ author = "Steven N. Severinghaus"
 author_email = "<sns@severinghaus.org>"
 
 class LastModifiedMacro(WikiMacroBase):
+    """Displays the last modified date a wiki page.
+    
+    If no arguments are provided, the last modified date of the page
+    containing the macro is displayed. A wiki page name can be specified
+    as the first argument. An optional argument, delta, can be given to
+    show the time elapsed since the last modification.
+
+    Examples:
+     * `[[LastModified(WikiMacros)]]` produces: [[LastModified(WikiMacros)]]
+     * `[[LastModified(WikiMacros,delta)]]` produces: [[LastModified(WikiMacros,delta)]]
+    """
 
     def expand_macro(self, formatter, name, content):
 
