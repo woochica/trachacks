@@ -18,8 +18,11 @@ from trac.wiki.macros import WikiMacroBase, parse_args
 
 revision = "$Rev$"
 url = "http://trac-hacks.org/wiki/LastModifiedMacro"
+license = "GPLv2"
 author = "Steven N. Severinghaus"
-author_email = "<sns@severinghaus.org>"
+author_email = "sns@severinghaus.org"
+maintainer = "Ryan J Ollos"
+maintainer_email = "ryan.j.ollos@gmail.com"
 
 class LastModifiedMacro(WikiMacroBase):
     """Displays the last modified date a wiki page.
