@@ -105,12 +105,17 @@ class TracHoursPlugin(Component):
             execute_non_query(self.env, update, formatted, result['ticket'])
 
     def get_ticket_hours(self, ticket_id, from_date=None, to_date=None, worker_filter=None):
+        
+        if not ticket_id:
+            return []
+        
         args = []
         if isinstance(ticket_id, int):
             where = "ticket = %s"
             args.append(ticket_id)
         else:
-            where = "ticket in (%s)" % ",".join(map(str, ticket_id)) #note the lack of args.  This is because there's no way to do a placeholder for a list that I can see.
+            # Note the lack of args.  This is because there's no way to do a placeholder for a list that I can see.
+            where = "ticket in (%s)" % ",".join(map(str, ticket_id))
 
         if from_date:
             where += " and time_started >= %s"
