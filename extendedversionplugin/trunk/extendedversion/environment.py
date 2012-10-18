@@ -1,4 +1,11 @@
-import pkg_resources
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
@@ -53,13 +60,15 @@ class EnvironmentSetup(Component):
     # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
-       return [('extendedversion', pkg_resources.resource_filename('extendedversion', 'htdocs'))]
+        from pkg_resources import resource_filename
+        return [('extendedversion', resource_filename('extendedversion', 'htdocs'))]
 
     def get_templates_dirs(self):
-       return [pkg_resources.resource_filename('extendedversion', 'templates')]
+        from pkg_resources import resource_filename
+        return [resource_filename('extendedversion', 'templates')]
 
 
-    # internal methods
+    # Internal methods
 
     def _get_version(self, db):
         cursor = db.cursor()
@@ -69,3 +78,4 @@ class EnvironmentSetup(Component):
             return int(row[0])
         else:
             return 0
+

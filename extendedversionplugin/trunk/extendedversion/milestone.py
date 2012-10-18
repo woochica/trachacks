@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from datetime import datetime
 
 from genshi.builder import tag
@@ -30,7 +39,7 @@ class MilestoneVersion(Component):
 
             old_name = req.args.get('id')
             new_name = req.args.get('name')
-            db = self.env.get_read_db()
+            db = self.env.get_db_cnx()
 
             if old_name and old_name != new_name:
                 self._delete_milestone_version(db, old_name)
@@ -86,7 +95,7 @@ class MilestoneVersion(Component):
         return stream | filter
 
     def _version_display(self, req, milestone):
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
@@ -101,7 +110,7 @@ class MilestoneVersion(Component):
 
     def _version_edit(self, data):
         milestone = data.get('milestone').name
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("SELECT version FROM milestone_version WHERE milestone=%s", (milestone,))
         row = cursor.fetchone()
@@ -109,7 +118,7 @@ class MilestoneVersion(Component):
 
         cursor.execute("SELECT name FROM version WHERE time IS NULL OR time = 0 OR time>%s "
                        "OR name = %s ORDER BY name",
-                                (to_timestamp(datetime.now(utc)),value))
+                                (to_timestamp(datetime.now(utc)), value))
 
         return tag.div(
                 tag.label(

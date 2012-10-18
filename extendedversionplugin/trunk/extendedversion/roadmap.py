@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from datetime import date
 from genshi.builder import tag
 
@@ -17,14 +26,9 @@ from trac.web.chrome import INavigationContributor
 class ReleasesModule(Component):
     implements(INavigationContributor, IRequestHandler, IRequestFilter)
 
-    navigation = BoolOption('extended_version', 'roadmap_navigation', 'false',
-        doc="""Whether to add a link to the main navigation bar.""")
-    navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
-        doc="""The name for the navigation item to highlight.
-        
-        May be set to 'roadmap' to highlight the navigation provided by the core
-        ticket module. If roadmap_navigation is also set to true, this completely
-        replaces the main navigation for the core roadmap.""")
+    roadmap_navigation = BoolOption('extended_version', 'roadmap_navigation',
+        'false', doc="""Whether to have the roadmap navigation item link to
+        the versions page.""")
 
     # INavigationContributor methods
 
@@ -32,13 +36,13 @@ class ReleasesModule(Component):
         return 'versions'
 
     def get_navigation_items(self, req):
-        if self.navigation and 'VERSION_VIEW' in req.perm:
-            if self.navigation_item == 'roadmap':
+        if 'VERSION_VIEW' in req.perm:
+            if self.roadmap_navigation:
                 yield ('mainnav', 'versions',
-                               tag.a(_('Roadmap'), href=req.href.versions()))
-            elif self.navigation_item == 'versions':
-                yield ('mainnav', self.navigation_item,
-                               tag.a(_('Versions'), href=req.href.versions()))
+                       tag.a(_('Roadmap'), href=req.href.versions()))
+            else:
+                yield ('mainnav', 'versions',
+                       tag.a(_('Versions'), href=req.href.versions()))
 
     # IRequestHandler methods
 
@@ -53,8 +57,8 @@ class ReleasesModule(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if self.navigation and 'VERSION_VIEW' in req.perm and self.navigation_item == 'roadmap':
-            self._remove_item(req, self.navigation_item)
+        if self.roadmap_navigation and 'VERSION_VIEW' in req.perm:
+            self._remove_item(req, 'roadmap')
         return template, data, content_type
 
     def process_request(self, req):
@@ -102,3 +106,4 @@ class ReleasesModule(Component):
             for navitem in navitems:
                 if navitem['name'] == 'versions':
                     navitem['active'] = True
+

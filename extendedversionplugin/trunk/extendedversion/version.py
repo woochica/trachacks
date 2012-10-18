@@ -1,9 +1,11 @@
-"""
-ExtendedVersionTracPlugin:
-Extend versions in trac
-Plugin for trac:  http://trac.edgewall.org
-See also:  http://trac-hacks.org
-"""
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 import re
 
@@ -95,9 +97,10 @@ class VisibleVersion(Component):
         decision = action in perm(resource.parent)
         if not decision:
             self.env.log.debug('ExtendedVersionTracPlugin denied %s '
-                               'access to %s. User needs %s' %
-                              (username, resource, action))
+                               'access to %s. User needs %s' % 
+                               (username, resource, action))
         return decision
+
 
     # INavigationContributor methods
 
@@ -105,7 +108,8 @@ class VisibleVersion(Component):
         return 'versions'
 
     def get_navigation_items(self, req):
-        return []
+        yield ()
+
 
     # IPermissionRequestor methods
 
@@ -113,6 +117,7 @@ class VisibleVersion(Component):
         actions = ['VERSION_CREATE', 'VERSION_DELETE', 'VERSION_MODIFY',
                    'VERSION_VIEW']
         return actions + [('VERSION_ADMIN', actions)]
+
 
     # IRequestHandler methods
 
@@ -127,7 +132,7 @@ class VisibleVersion(Component):
         version_id = req.args.get('id')
         req.perm('version', version_id).require('VERSION_VIEW')
         
-        db = self.env.get_read_db() # TODO: db can be removed
+        db = self.env.get_db_cnx()
         version = Version(self.env, version_id, db)
         action = req.args.get('action', 'view')
 
@@ -291,7 +296,7 @@ class VisibleVersion(Component):
         
     def _render_view(self, req, db, version):
 
-        db = self.env.get_read_db()
+        db = self.env.get_db_cnx()
         sql = "SELECT name,due,completed,description FROM milestone " \
               "INNER JOIN milestone_version ON (name = milestone) " \
               "WHERE version = %s " \
@@ -317,7 +322,7 @@ class VisibleVersion(Component):
 
         stats = get_ticket_stats(self.version_stats_provider, tickets)
         interval_hrefs = version_interval_hrefs(self.env, req, stats,
-		[ milestone.name for milestone in milestones ])
+        [ milestone.name for milestone in milestones ])
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
