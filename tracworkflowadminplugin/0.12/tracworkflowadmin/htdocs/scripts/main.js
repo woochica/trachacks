@@ -603,6 +603,7 @@ jQuery(document).ready(function(){
     // ステータスの削除
     $('#elements .del-status').click(function() {
         var colspan = $('#status-header-bar').attr('colspan');
+        colspan = parseInt(colspan || '1', 10);
         var c = 0;
         var rowNo = -1;
         var thisEl = $(this).parent().get()[0];
@@ -655,6 +656,7 @@ jQuery(document).ready(function(){
             'Ok': function(){
                 $('#new-status-input-dialog').dialog('close');
                 var colspan = $('#status-header-bar').attr('colspan');
+                colspan = parseInt(colspan || '1', 10);
                 var statusName = $('#new-status-input-dialog input').val();
                 if (!statusName) return false;
                 $('#status-header-bar').attr('colspan', colspan + 1);
@@ -686,6 +688,7 @@ jQuery(document).ready(function(){
 
     $('#elements #add-status').click(function() {
         var colspan = $('#status-header-bar').attr('colspan');
+        colspan = parseInt(colspan || '1', 10);
         if (colspan >= 30) {
             alert(_("Too many statuses. Please remove unnecessary statuses."));
             return false;
