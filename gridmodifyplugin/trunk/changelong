@@ -2,6 +2,8 @@ gridmodifyplugin - 0.1.6 (not yet released)
  resolved issues
  * #10418: Superfluous "updated by gridmod plugin" comment no longer added
    when editing the grid.
+ * #10506: Cast ticket ID to an int before passing to the `Ticket` constructor
+   to avoid an exception with AgiloTrac.
  
  new features
  * none

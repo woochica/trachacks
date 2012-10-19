@@ -52,7 +52,7 @@ class GridModifyModule(Component):
                 self.log.debug("GridModifyModule: process_request: req.args: %s", req.args)
 
                 now = datetime.now(utc)
-                id = req.args.get('ticket')
+                id = int(req.args.get('ticket'))
                 ticket = Ticket(self.env, id)
                 action = 'leave'
 
