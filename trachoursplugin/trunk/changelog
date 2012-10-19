@@ -2,7 +2,10 @@ TracHours (0.6.0) (not yet released) - trunk (3-Clause BSD license)
  resolved issues:
  * #10327: Issue a warning when validating the ticket if 'estimatedhours' is
    not defined in the ticket-custom section of trac.ini, to avoid a traceback
-   on ticket submit.   
+   on ticket submit.
+ * #8391, #8343: SQL incompatibility issues on PostgreSQL and MySQL.
+ * #8570: UnicodeDecode Error rendering template for /hours/<id> when months
+   contained unicode characters.
 
  new features:
 

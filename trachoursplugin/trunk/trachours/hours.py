@@ -668,9 +668,9 @@ class TracHoursPlugin(Component):
                                end_of_day=True)
         else:
             to_date = now
-        
+
         data['prev_week'] = from_date - timedelta(days=7)
-        data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]        
+        data['months'] = list(enumerate(calendar.month_name))
         data['years'] = range(now.year, now.year - 10, -1)
         data['days'] = range(1, 32)
         data['users'] = get_all_users(self.env)
@@ -867,22 +867,18 @@ class TracHoursPlugin(Component):
         ticket_id = int(path.split('/')[-1]) # matches a ticket number
         ticket = Ticket(self.env, ticket_id)
 
-        if req.method == "POST":
-            if req.args.has_key('addhours'):
-                return self.do_ticket_change(req, ticket)            
-            if req.args.has_key('edithours'):
-                return self.edit_ticket_hours(req, ticket)            
+        if req.method == 'POST':
+            if 'addhours' in req.args:
+                return self.do_ticket_change(req, ticket)
+            if 'edithours' in req.args:
+                return self.edit_ticket_hours(req, ticket)
 
         # XXX abstract date stuff as this is used multiple places
         now = datetime.now()
         months = [ (i, calendar.month_name[i], i == now.month) for i in range(1,13) ]
         years = range(now.year, now.year - 10, -1)
-        days= [ (i, i == now.day) for i in range(1, 32) ]
+        days = [ (i, i == now.day) for i in range(1, 32) ]
 
-        # user information and permissions
-        can_add_hours = req.perm.has_permission('TICKET_ADD_HOURS')
-        can_add_others_hours = req.perm.has_permission('TRAC_ADMIN')
-        users = get_all_users(self.env)
         time_records = self.get_ticket_hours(ticket.id)
         time_records.sort(key=lambda x: x['time_started'], reverse=True)
 
@@ -893,12 +889,18 @@ class TracHoursPlugin(Component):
             record['hours_worked'], record['minutes_worked'] = self.format_hours_and_minutes(record['seconds_worked'])
             total += record['seconds_worked']
         total = self.format_hours(total)
-        ticket_link = req.href('ticket', ticket.id)
-        hours_link = req.href('hours')
 
-        # copy the locals dictionary for use in the template
-        data = locals().copy()
-        data.pop('self')
+        data = {
+            'can_add_hours': req.perm.has_permission('TICKET_ADD_HOURS'),
+            'can_add_others_hours': req.perm.has_permission('TRAC_ADMIN'),
+            'days': days,
+            'months': months,
+            'years': years,
+            'users': get_all_users(self.env),
+            'total': total,
+            'ticket': ticket,
+            'time_records': time_records
+        }
         
         # return the rss, if requested
         if req.args.get('format') == 'rss':

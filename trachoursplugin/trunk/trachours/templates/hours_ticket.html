@@ -11,7 +11,7 @@
   </head>
 
   <body>
-    <h1>Edit Hours for <a href="${ticket_link}">Ticket #${ticket.id}</a></h1>
+    <h1>Edit Hours for <a href="${href('ticket', ticket.id)}">Ticket #${ticket.id}</a></h1>
       <div>
         <form id="ticket_hours" method="post">
           <table class="listing reports">
@@ -36,7 +36,7 @@
 	              </td>
 	              <td py:when="False">${record['hours_worked']}:${'%02d' % record['minutes_worked']}</td>
 	            </py:choose>
-	            <td>${record['date_started']}</td>
+	            <td>${to_unicode(record['date_started'])}</td>
 	            <td>${record['comments']}</td>
                 <td py:if="can_add_hours">
                   <input py:if="can_add_others_hours or req.authname ==record['worker']"

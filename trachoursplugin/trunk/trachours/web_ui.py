@@ -259,7 +259,7 @@ class TracUserHours(Component):
         """data for the date"""
         now = datetime.datetime.now()
         data['days'] = range(1, 32)
-        data['months'] = [ (i, calendar.month_name[i]) for i in range(1,13) ]        
+        data['months'] = list(enumerate(calendar.month_name))
         data['years'] = range(now.year, now.year - 10, -1)
         if 'from_year' in req.args:
             from_date = get_date(req.args['from_year'], 
