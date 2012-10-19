@@ -1,0 +1,10 @@
+gridmodifyplugin - 0.1.6 (not yet released)
+ resolved issues
+ * #10418: Superfluous "updated by gridmod plugin" comment no longer added
+   when editing the grid.
+ 
+ new features
+ * none
+ 
+ gridmodifyplugin - TBC
+ 
