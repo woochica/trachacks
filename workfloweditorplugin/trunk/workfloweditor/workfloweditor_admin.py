@@ -79,7 +79,7 @@ class WorkflowEditorAdmin(Component):
 
     def _update_config(self, req):
         # get ticket-workflow section
-        section = self.config._sections['ticket-workflow']
+        section = self.config['ticket-workflow']
         
         # delete old data
         for (name, value) in section.options():
@@ -102,7 +102,7 @@ class WorkflowEditorAdmin(Component):
         # page_param['workflow_config']
         
         # sort config for display
-        section = self.config._sections['ticket-workflow']
+        section = self.config['ticket-workflow']
         name_list = []
         for (name, value) in section.options():
             name_list.append(name)
