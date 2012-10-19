@@ -27,7 +27,7 @@ class DecayedWiki(Component):
             
             means that the page modified in a day shows on white,
             in a week shows on light grey, and so on.
-            (Provided by !%s)""" % "DecayedPlugin.Wiki")
+            (Provided by !ContextChrome.!DecayedWiki) """)
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
@@ -38,11 +38,10 @@ class DecayedWiki(Component):
             delta = (datetime.datetime.now(page.time and page.time.tzinfo or None) - page.time).total_seconds()
             try:
                 colors = [color.split(':') for color in self.config.getlist('wiki', 'decay_colors')]
-                self.log.debug("colors getlist: %s" % colors)
                 colors = map(lambda kv: (int(kv[0]), kv[1]), colors)
             except:
                 errorinfo = sys.exc_info()
-                self.log.warning('Parse Error - use defaults, at trac.ini [wiki]/decay_colors;  %s', errorinfo)
+                self.log.warning('Parse Error - using defaults, at trac.ini [wiki]/decay_colors;  %s', errorinfo)
                 colors = self.default_colors.items() #fallback
             color = 'white' # centinel; avoid undefined error with empty list
             for value, color in sorted(colors):
