@@ -5,6 +5,7 @@
 
 import re
 from datetime import datetime 
+from trac.config import ListOption
 from trac.core import *
 from trac.perm import IPermissionRequestor        
 from trac.ticket import TicketSystem
@@ -21,6 +22,9 @@ __all__ = ['GridModifyModule']
 
 class GridModifyModule(Component):
     implements(IPermissionRequestor, IRequestHandler, ITemplateProvider, ITemplateStreamFilter)
+
+    fields = ListOption('gridmodify', 'fields', '',
+        doc="List of fields to which gridmodify will be applied.")
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -144,30 +148,13 @@ class GridModifyModule(Component):
             div = tag.div(id="table_inits_holder", style="display:none;")
             div.append("\n")
 
-
-            # Fet the 'fields' options list - if none are specified only SELECTs will be processed.
-            # This should be the only place we have to look at the [gridmodify] section of trac.ini
-            # for this purpose, as everything else is driven by the storage div generated here.
-            affected_fields = []
-            gridmodify_tracini_options_gen = self.env.config.options('gridmodify')
-            gridmodify_tracini_options = dict(x for x in gridmodify_tracini_options_gen)
-            if 'fields' in gridmodify_tracini_options:
-                affected_fields_str = gridmodify_tracini_options['fields']
-                affected_fields_raw = affected_fields_str.split(',');
-                for field in affected_fields_raw:
-                    affected_fields.append(field)
-                self.log.debug("filter_stream: trac.ini listed fields: %s", affected_fields)
-            if len(affected_fields) == 0:
-                self.log.debug("filter_stream: trac.ini does not specify any fields, only SELECTs will be processed")
-
-
             for field in TicketSystem(self.env).get_ticket_fields():
 
                 #debug
                 self.log.debug("filter_stream: field: " + str(field))
 
                 # SELECT tags
-                if (field['type'] == 'select') and ((field['name'] in affected_fields) or (len(affected_fields) == 0)):
+                if field['type'] == 'select' and (field['name'] in self.fields or len(self.fields) == 0):
                     select = tag.select(name=field['name'], class_="gridmod_form")
                     self.log.debug("SELECT INPUT '%s' (%s)", field['name'], field['label'])
                     if (field.has_key('value')):
@@ -188,7 +175,7 @@ class GridModifyModule(Component):
                     div.append(select)
 
                 # INPUT TEXT tags
-                elif ((field['type'] == 'text') and (field['name'] in affected_fields)):
+                elif field['type'] == 'text' and field['name'] in self.fields:
                     text = tag.input(type='text', name=field['name'], class_='gridmod_form')
                     if(field.has_key('value')):
                         self.log.debug("TEXT INPUT '%s' (%s) HAS DEFAULT VALUE '%s'", field['name'], field['label'], field['value'])
@@ -199,7 +186,7 @@ class GridModifyModule(Component):
                     div.append(text)
 
                 # INPUT CHECKBOX tags
-                elif ((field['type'] == 'checkbox') and (field['name'] in affected_fields)):
+                elif field['type'] == 'checkbox' and field['name'] in self.fields:
                     checkbox = tag.input(type='checkbox', name=field['name'], class_='gridmod_form')
                     if(field.has_key('value')):
                         self.log.debug("CHECKBOX INPUT '%s' (%s) HAS DEFAULT VALUE '%s'", field['name'], field['label'], field['value'])
@@ -212,7 +199,7 @@ class GridModifyModule(Component):
                     div.append(checkbox)
 
                 # INPUT RADIO tags
-                elif ((field['type'] == 'radio') and (field['name'] in affected_fields)):
+                elif field['type'] == 'radio' and field['name'] in self.fields:
                     # This is slightly complicated.
                     # We convert the radio values into a SELECT tag for screen real estate reasons.
                     # It gets handled as a SELECT at the server end of the AJAX call, which appears to work fine.
@@ -253,5 +240,4 @@ class GridModifyModule(Component):
                        controller.get_ticket_actions(req, ticket)]
             if action in actions:
                 yield controller
-
 
