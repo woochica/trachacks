@@ -643,8 +643,7 @@ class TracPM(Component):
                 if self.isCfg(['pred', 'succ']):
                     pred = []
                     for t in tickets:
-                        if not t['children'] and \
-                                t['milestone'] == row[0] and \
+                        if t['milestone'] == row[0] and \
                                 self.successors(t) == []:
                             if self.isField('succ'):
                                 t[self.fields[self.sources['succ']]] = \
