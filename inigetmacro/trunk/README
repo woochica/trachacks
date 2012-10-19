@@ -5,8 +5,7 @@
 
 Allows a Trac wiki author to insert the value of a {{{trac.ini}}} configuration option into a page.
 
-The IniGetMacro package consists of two macros. The first, [http://github.com/dwclifton/tracinigetmacro/tree/master/0.11/iniget/macro.py IniGet], returns as plain
-text the value of a [http://trac-hacks.org/wiki/TracIni trac.ini] configuration option. The `trac.ini` file is a simple flat-file database of sections and option/value pairs:
+The IniGetMacro package consists of two macros. The first, `IniGet`, returns as plain text the value of a [http://trac-hacks.org/wiki/TracIni trac.ini] configuration option. The `trac.ini` file is a simple flat-file database of sections and option/value pairs:
 
 {{{
 #!ini
@@ -17,7 +16,7 @@ name = value
 By calling the macro like so: `[[IniGet(section.name)]]`, it returns the value. If no option matches, it returns an error message. Some option names themselves
 contain periods, this is supported.
 
-The second macro in the package is [http://github.com/dwclifton/tracinigetmacro/tree/master/0.11/welcome/macro.py Welcome], and it returns a level 1 heading
+The second macro in the package is `Welcome`, and it returns a level 1 heading
 element in the following format:
 
 {{{
