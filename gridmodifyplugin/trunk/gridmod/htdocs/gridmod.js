@@ -1,5 +1,4 @@
-/* 
- * -*- coding: utf-8 -*-
+/* -*- coding: utf-8 -*-
  * Copyright (C) 2008 Abbywinters.com
  * trac-dev@abbywinters.com
  * Contributor: Zach Miller
@@ -7,8 +6,7 @@
 
 if(!window.console)
     window.console = {};
-if(!window.console.firebug || !window.console.log)
-    window.console.log = function() {};
+console.log = console.log || function(){};
 
 $(document).ready(function() {
 
@@ -72,7 +70,7 @@ $(document).ready(function() {
    $(".gridmod_form").each(function(i) {
         $(this).change(function() {
             var ticket_field = $(this).attr('name');
-            var ticket_number = $(this).parents('tr').find('[class="id"],[class="ticket"]').text();
+            var ticket_number = $(this).parent('td').siblings('.ticket, .id').text();
             ticket_number = ticket_number.replace(/[^\d]/g, '');
 
             // React differently depending on the field type

@@ -4,6 +4,8 @@ gridmodifyplugin - 0.1.6 (not yet released)
    when editing the grid.
  * #10506: Cast ticket ID to an int before passing to the `Ticket` constructor
    to avoid an exception with AgiloTrac.
+ * #9659: Navigate the DOM more precisely when retrieving the ticket ID to
+   avoid problems on modified templates or alternate versions of Trac.
  
  new features
  * none
