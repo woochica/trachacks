@@ -1,13 +1,11 @@
-# Author: Steven N. Severinghaus <sns@severinghaus.org>
-# Last Modified: 2008-09-23 by Bill Coffman <bill.coffman@gmail.com>
-# Home: http://trac-hacks.org/wiki/LastModifiedMacro
+# -*- coding: utf-8 -*-
 #
-# The LastModified macro is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License as published
-# by the Free Software Foundation; either version 2 of the License, or (at
-# your option) any later version.
+# Copyright (C) 2006-2008 Steven N. Severinghaus <sns@severinghaus.org> 
+# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
 #
-# Created for the BFGFF project, http://chimp.acm.uiuc.edu/
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 
 from trac.core import TracError
@@ -18,7 +16,7 @@ from trac.wiki.macros import WikiMacroBase, parse_args
 
 revision = "$Rev$"
 url = "http://trac-hacks.org/wiki/LastModifiedMacro"
-license = "GPLv2"
+license = "3-Clause BSD"
 author = "Steven N. Severinghaus"
 author_email = "sns@severinghaus.org"
 maintainer = "Ryan J Ollos"
