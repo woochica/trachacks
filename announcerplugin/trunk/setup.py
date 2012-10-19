@@ -32,7 +32,7 @@ except ImportError:
 
 setup(
     name = 'TracAnnouncer',
-    version = '0.12.1',
+    version = '1.0',
     author = 'Robert Corsaro',
     author_email = 'rcorsaro@gmail.com',
     description = 'Customizable notification system for Trac',

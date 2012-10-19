@@ -1,7 +1,41 @@
-Authors: Steven Hanson, Robert Corsaro
+Authors: Steven Hanson, Robert Corsaro (since 17-Jul-2008) |r4028|
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
-tracannouncer-0.12.1 (not yet released) - branch 0.11
+announcer-1.0 (not yet released) - branch 0.11 again
  resolved issues
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'
  * #10483: Move license to COPYING file
+
+
+announcer-0.12.1 (14-Sep-2010) |r8853| by Robert Corsaro
+
+
+announcer-0.12-p2 (05-Jun-2010) |r8087| by Robert Corsaro
+ on behalf of Steffen Hoffmann
+
+
+announcer-0.12 from '0.11' (13-Feb-10) |r7569| by Robert Corsaro
+
+
+announcer-0.11.1.9 from '1.0-a1' (26-Sep-2010) |r9147| - branch 0.11.2dev
+
+
+announcer-0.11.1 from '1.0-a1' (26-Sep-2010) |r9146| - branch 0.11.1
+
+
+announcer-0.11 from '0.2' (26-Sep-2010) |r9145| by Robert Corsaro
+
+
+announcer-0.11 (13-Jan-2010) from |r7548| to |r7569| by Robert Corsaro
+
+
+announcer-1.0-a1 (26-Nov-2009) |r7188| by Robert Corsaro
+ updated from '0.2' (23-Aug-2010) |r8410| by Steffen Hoffmann
+ with declaration to shift from 0.11 development to 0.12
+
+
+announcer-0.2 (20-Jan-2008) by Robert Corsaro - branch 0.11
+ due to completed "basic functionality for tickets and wiki notifications"
+
+
+announcer-0.1 (10-Jan-2008) - initial release by Stephen Hansen
