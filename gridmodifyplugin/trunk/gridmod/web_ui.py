@@ -97,7 +97,7 @@ class GridModifyModule(Component):
                     #   * Rendering is handled differently in the report form
                     #   * TextAreas support Wiki formatting so would need to use the Wiki engine
 
-                ticket.save_changes(author=req.authname)
+                ticket.save_changes(req.authname, None)
 
                 try:
                     tn = TicketNotifyEmail(self.env)
