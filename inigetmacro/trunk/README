@@ -1,59 +1,58 @@
-= !IniGetMacro =
+[[PageOutline(2-5,Contents,pullout)]]
+= Display option values for trac.ini =
 
-The !IniGetMacro package consists of two macros. The first, !IniGet, returns as
-plain text the value of a [http://trac-hacks.org/wiki/TracIni trac.ini] configuration
-option. The '''`trac.ini`''' file is a simple database of sections and option/value
-pairs:
+== Description ==
+
+Allows a Trac wiki author to insert the value of a {{{trac.ini}}} configuration option into a page.
+
+The IniGetMacro package consists of two macros. The first, [http://github.com/dwclifton/tracinigetmacro/tree/master/0.11/iniget/macro.py IniGet], returns as plain
+text the value of a [http://trac-hacks.org/wiki/TracIni trac.ini] configuration option. The `trac.ini` file is a simple flat-file database of sections and option/value pairs:
 
 {{{
+#!ini
 [section]
 name = value
 }}}
 
-By calling the macro like so: `[[IniGet(section.name)]]`, it returns the value.
-If no option matches, it returns an error message. Some option names themselves
+By calling the macro like so: `[[IniGet(section.name)]]`, it returns the value. If no option matches, it returns an error message. Some option names themselves
 contain periods, this is supported.
 
-The second macro in the package is Welcome, and it returns a level 1 heading
+The second macro in the package is [http://github.com/dwclifton/tracinigetmacro/tree/master/0.11/welcome/macro.py Welcome], and it returns a level 1 heading
 element in the following format:
 
 {{{
 <h1 id="welcome">Welcome to the project.name Project</h1>
 }}}
 
-Where project.name is dynamically inserted in the same manner as !IniGet.
-
-The example above is the default behavior. However, Welcome also supports from
-zero to two arguments that allow the user to specify the prefix and/or suffix
-strings. Both standard and dictionary keyword methods are supported. If using
-the standard method, order is important. Using the keyword method it is not.
-You cannot mix both methods.
+Where `project.name` is dynamically inserted in the same manner as !IniGet. The example above is the default behavior. However, Welcome also supports from zero to two arguments that allow the user to specify the prefix and/or suffix strings. Both standard and dictionary keyword methods are supported. If using the standard method, order is important, if using the keyword method it is not. You cannot mix both methods. 
 
 These macros are useful for WikiStart project templates.
 
 == Installation ==
-
+ 
 {{{
+#!sh
 python setup.py bdist_egg
 cp dist/*.egg /trac/env/Project/plugins
 }}}
 
 == Configuration ==
-
+ 
 Enable the macros in:
-
+ 
 /trac/env/Project/conf/trac.ini:
-
+ 
 {{{
+#!ini
 [components]
 iniget.* = enabled
 welcome.* = enabled
 }}}
-
-Then restart you Web server.
+ 
+You may need to restart your Web server.
 
 == Examples ==
-
+ 
 {{{
 [[Welcome]]
 [[Welcome()]]
@@ -61,14 +60,20 @@ Then restart you Web server.
 [[Welcome(prefix=This is the,suffix=Project)]]
 [[Welcome(suffix=Super Cool Project)]]
 [[Welcome(,Super Cool Project)]]
-
+ 
 The [[IniGet(project.name)]] project is designed to track and document software defects...
 }}}
 
+== Download ==
+
+Download the zipped source from [download:inigetmacro here].
+
 == Source ==
 
-Browse the source at: [http://github.com/dwclifton/tracinigetmacro/tree/master GitHub][[BR]]
-Public clone URL:
-{{{
-git clone git://github.com/dwclifton/tracinigetmacro.git
-}}}
+You can check out IniGetMacro from [http://trac-hacks.org/svn/inigetmacro here] using Subversion, or [source:inigetmacro browse the source] with Trac.
+
+== Bugs/Feature Requests == 
+
+Existing bugs and feature requests for IniGetMacro are [report:9?COMPONENT=IniGetMacro here].
+
+If you have any issues, create a [http://trac-hacks.org/newticket?component=IniGetMacro&owner=dwclifton new ticket].

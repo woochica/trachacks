@@ -19,14 +19,18 @@ import re
 __all__ = ['WelcomeMacro']
 
 class WelcomeMacro(WikiMacroBase):
+    """Return a welcome heading with the project name extracted from trac.ini.
 
+       * User-defined welcome string suffix and prefix.
+       * Supports both standard and dictionary methods.
+       * With defaults.
+       
+       Example: `[[Welcome(prefix=This is the,suffix=Project)]]` yields
+       [[Welcome(prefix=This is the,suffix=Project)]]
+    """
+    
     def expand_macro(self, formatter, name, args):
-        """Return a welcome heading with the project name extracted from trac.ini.
-
-           + User-defined welcome string suffix and prefix.
-           + Supports both standard and dictionary methods.
-           + With defaults.
-        """
+        
         prefix = suffix = ''
         args, kw = parse_args(args)
 
