@@ -117,20 +117,12 @@ class GridModifyModule(Component):
                     controller.apply_action_side_effects(req, ticket, action)
             else:
                 raise Exception('Permission denied')
-        except Exception, e:
-            req.send_response(500)
-            req.send_header('Content-Type', 'text/plain')
-            req.send_header('Content-Length', 8)
-            req.end_headers()
-            req.write("Oops...\n");
-            import traceback;
-            req.write(traceback.format_exc()+"\n");
+        except Exception:
+            import traceback
+            self.log.error("GridModifyModule: Failure editing grid.\n" + traceback.format_exc())
+            req.send_error(traceback.format_exc(), content_type='text/plain')
         else:
-            req.send_response(200)
-            req.send_header('Content-Type', 'text/plain')
-            req.send_header('Content-Length', 2)
-            req.end_headers()
-            req.write('OK')
+            req.send('OK', 'text/plain')
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, formdata):
@@ -142,7 +134,8 @@ class GridModifyModule(Component):
         # JQuery then uses this information to update the relevant fields on the page.
 
 
-        if (filename == 'query.html' or filename == 'report_view.html') and (req.perm.has_permission('TICKET_ADMIN') or req.perm.has_permission('TICKET_GRID_MODIFY')):
+        if (filename == 'query.html' or filename == 'report_view.html') and \
+           (req.perm.has_permission('TICKET_ADMIN') or req.perm.has_permission('TICKET_GRID_MODIFY')):
             add_script(req, 'gridmod/gridmod.js')
             xpath = '//div[@id="content"]'
             div = tag.div(id="table_inits_holder", style="display:none;")

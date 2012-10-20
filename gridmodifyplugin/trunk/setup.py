@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2008 Abbywinters.com
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 PACKAGE = 'GridModify'
 VERSION = '0.1.6'
@@ -13,7 +13,7 @@ setup(
     author="Abbywinters.com", author_email="trac-dev@abbywinters.com",
     maintainer = "Björn Harrtell", maintainer_email = "bjorn@wololo.org",
     license='BSD', url='http://trac-hacks.org/wiki/GridModifyPlugin',
-    packages = ['gridmod'],
+    packages = find_packages(exclude=['*.tests']),
     package_data={
         'gridmod': [
             'htdocs/*.js',

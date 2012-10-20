@@ -6,6 +6,8 @@ gridmodifyplugin - 0.1.6 (not yet released)
    to avoid an exception with AgiloTrac.
  * #9659: Navigate the DOM more precisely when retrieving the ticket ID to
    avoid problems on modified templates or alternate versions of Trac.
+ * Replaced custom option parsing code with a call to `ListOption` in the Trac
+   API, which eliminates sensitivity to whitespace in the option value.
  
  new features
  * none

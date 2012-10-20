@@ -8,7 +8,7 @@ if(!window.console)
     window.console = {};
 console.log = console.log || function(){};
 
-$(document).ready(function() {
+jQuery(document).ready(function() {
 
     // Do post-load processing on each field type on the page
 
