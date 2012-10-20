@@ -30,8 +30,7 @@ from trac.attachment import ILegacyAttachmentPolicyDelegate
 from trac.perm import IPermissionPolicy, IPermissionRequestor
 #from trac.search import ISearchSource
 from trac.ticket.roadmap import ITicketGroupStatsProvider
-from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor
+from trac.web.chrome import IRequestHandler, ITemplateProvider
 from trac.wiki import IWikiSyntaxProvider
 
 
@@ -62,8 +61,8 @@ def version_interval_hrefs(env, req, stat, milestones):
 
 
 class VisibleVersion(Component):
-    implements(ILegacyAttachmentPolicyDelegate, INavigationContributor, IPermissionRequestor,
-            IRequestHandler, IWikiSyntaxProvider)
+    implements(ILegacyAttachmentPolicyDelegate, IPermissionRequestor,
+               IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
 
     navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
         """The main navigation item to highlight when displaying versions.""")
@@ -102,15 +101,6 @@ class VisibleVersion(Component):
         return decision
 
 
-    # INavigationContributor methods
-
-    def get_active_navigation_item(self, req):
-        return 'versions'
-
-    def get_navigation_items(self, req):
-        yield ()
-
-
     # IPermissionRequestor methods
 
     def get_permission_actions(self):
@@ -122,7 +112,7 @@ class VisibleVersion(Component):
     # IRequestHandler methods
 
     def match_request(self, req):
-        match = re.match(r'/version(?:/(.+))?$', req.path_info)
+        match = re.match(r'/version/(?:(.+))?', req.path_info)
         if match:
             if match.group(1):
                 req.args['id'] = match.group(1)
@@ -155,6 +145,18 @@ class VisibleVersion(Component):
             req.redirect(req.href.versions())
 
         return self._render_view(req, db, version)
+
+
+    # ITemplateProvider methods
+
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('extendedversion', resource_filename('extendedversion', 'htdocs'))]
+
+    def get_templates_dirs(self):
+        from pkg_resources import resource_filename
+        return [resource_filename('extendedversion', 'templates')]
+
 
     # IWikiSyntaxProvider methods
 

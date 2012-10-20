@@ -16,18 +16,26 @@ from genshi.template.markup import MarkupTemplate
 from trac.core import *
 from trac.resource import ResourceNotFound
 from trac.ticket import Version
-from trac.util.datefmt import utc, to_timestamp
-from trac.wiki.formatter import wiki_to_oneliner
-
-### interfaces
+from trac.util.datefmt import to_timestamp
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
+from trac.web.chrome import INavigationContributor
+from trac.wiki.formatter import wiki_to_oneliner
 
 
 class MilestoneVersion(Component):
     """Add a 'Version' attribute to milestones.
     """
        
-    implements(IRequestFilter, ITemplateStreamFilter)
+    implements(INavigationContributor, IRequestFilter, ITemplateStreamFilter)
+
+    # INavigationContributor methods
+
+    def get_active_navigation_item(self, req):
+        return 'versions'
+
+    def get_navigation_items(self, req):
+        return []
+
 
     # IRequestFilter methods
 
@@ -118,7 +126,7 @@ class MilestoneVersion(Component):
 
         cursor.execute("SELECT name FROM version WHERE time IS NULL OR time = 0 OR time>%s "
                        "OR name = %s ORDER BY name",
-                                (to_timestamp(datetime.now(utc)), value))
+                                (to_timestamp(None), value))
 
         return tag.div(
                 tag.label(

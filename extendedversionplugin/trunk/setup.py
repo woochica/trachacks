@@ -24,7 +24,7 @@ setup(name='ExtendedVersionTracPlugin',
       zip_safe=False,
       entry_points = """
           [trac.plugins]
-          extendedversion.environment = extendedversion.environment
+          extendedversion.db = extendedversion.db
           extendedversion.milestone = extendedversion.milestone
           extendedversion.roadmap = extendedversion.roadmap
           extendedversion.version = extendedversion.version

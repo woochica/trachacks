@@ -7,9 +7,8 @@
 # you should have received as part of this distribution.
 #
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
-from trac.web.chrome import ITemplateProvider
 
 db_version = 1
 upgrades = [
@@ -25,8 +24,8 @@ upgrades = [
 ]
 
 
-class EnvironmentSetup(Component):
-    implements(IEnvironmentSetupParticipant, ITemplateProvider)
+class ExtendedVersionsSetup(Component):
+    implements(IEnvironmentSetupParticipant)
 
     # IEnvironmentSetupParticipant methods
 
@@ -57,25 +56,18 @@ class EnvironmentSetup(Component):
         self.log.info('Upgraded ExtendedVersionTracPlugin schema from %d to %d',
                       dbver, db_version)
 
-    # ITemplateProvider methods
-
-    def get_htdocs_dirs(self):
-        from pkg_resources import resource_filename
-        return [('extendedversion', resource_filename('extendedversion', 'htdocs'))]
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename('extendedversion', 'templates')]
-
 
     # Internal methods
 
     def _get_version(self, db):
         cursor = db.cursor()
-        cursor.execute("SELECT value FROM system WHERE name='extended_version_plugin'")
-        row = cursor.fetchone()
-        if row:
-            return int(row[0])
-        else:
+        try:
+            cursor.execute("SELECT value FROM system WHERE name='extended_version_plugin'")
+            row = cursor.fetchone()
+            if row:
+                return int(row[0])
+            else:
+                return 0
+        except:
             return 0
 
