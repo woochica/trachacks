@@ -302,7 +302,7 @@ class VisibleVersion(Component):
         sql = "SELECT name,due,completed,description FROM milestone " \
               "INNER JOIN milestone_version ON (name = milestone) " \
               "WHERE version = %s " \
-              "ORDER BY name "
+              "ORDER BY due"
         cursor = db.cursor()
         cursor.execute(sql, (version.name,))
 
