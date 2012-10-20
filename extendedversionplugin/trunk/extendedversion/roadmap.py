@@ -31,7 +31,6 @@ class ReleasesModule(Component):
         the versions page.""")
 
     # INavigationContributor methods
-
     def get_active_navigation_item(self, req):
         return 'versions'
 
@@ -44,14 +43,6 @@ class ReleasesModule(Component):
                 yield ('mainnav', 'versions',
                        tag.a(_('Versions'), href=req.href.versions()))
 
-    # IRequestHandler methods
-
-    def match_request(self, req):
-        return '/versions' == req.path_info
-        #match = re.match(r'/versions$', req.path_info)
-        #if match:
-        #    return True
-
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
@@ -60,6 +51,10 @@ class ReleasesModule(Component):
         if self.roadmap_navigation and 'VERSION_VIEW' in req.perm:
             self._remove_item(req, 'roadmap')
         return template, data, content_type
+
+    # IRequestHandler methods
+    def match_request(self, req):
+        return req.path_info == '/versions'
 
     def process_request(self, req):
         req.perm.require('VERSION_VIEW')
