@@ -1,4 +1,4 @@
-$(function() {
+jQuery(document).ready(function($) {
   var last_note = null;
   
   // Look for inital status in the URL

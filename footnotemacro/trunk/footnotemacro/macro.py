@@ -1,3 +1,14 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2005-2006 Alex Thomas
+# Copyright (C) 2007-2008 Noah Kantrowitz <noah@coderanger.net>
+# Copyright (C) 2010-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from trac.core import *
 from trac.web.chrome import add_stylesheet, add_script, ITemplateProvider
 from trac.wiki.formatter import format_to_oneliner
@@ -114,6 +125,5 @@ class FootNoteMacro(WikiMacroBase):
         return [('footnote', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        #return [resource_filename(__name__, 'templates')]
         return []
 
