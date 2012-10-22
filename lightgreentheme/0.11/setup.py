@@ -12,6 +12,7 @@ setup(
     author = "Radu Gasler",
     author_email = 'miezuit@gmail.com',
     description = "A theme for Trac based on http://projects.autonomy.net.au/hotwire/",
+    url = "http://trac-hacks.org/wiki/LightGreenTheme",
     keywords = "trac plugin theme",
 
     classifiers = [
