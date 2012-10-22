@@ -627,8 +627,10 @@ class TracWorkflowAdminModule(Component):
                 for (name, value) in self.config.options('ticket-workflow'):
                     self.config.remove('ticket-workflow', name)
                 out['result'] = 0
-                for key in newOptions.keys():
-                    self.config.set('ticket-workflow', key, newOptions[key])
+                for key, val in newOptions.iteritems():
+                    if key.endswith('.name') and not val:
+                        continue
+                    self.config.set('ticket-workflow', key, val)
                 self.config.save()
             except Exception, e:
                 self.config.parse_if_needed(force=True)
