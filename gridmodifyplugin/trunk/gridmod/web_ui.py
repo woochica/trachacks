@@ -55,7 +55,6 @@ class GridModifyModule(Component):
                 self.log.debug("GridModifyModule: process_request: permissions OK")
                 self.log.debug("GridModifyModule: process_request: req.args: %s", req.args)
 
-                now = datetime.now(utc)
                 id = int(req.args.get('ticket'))
                 ticket = Ticket(self.env, id)
                 action = 'leave'
@@ -101,7 +100,8 @@ class GridModifyModule(Component):
                     #   * Rendering is handled differently in the report form
                     #   * TextAreas support Wiki formatting so would need to use the Wiki engine
 
-                ticket.save_changes(req.authname, None)
+                now = datetime.now(utc)
+                ticket.save_changes(req.authname, None, now)
 
                 try:
                     tn = TicketNotifyEmail(self.env)
