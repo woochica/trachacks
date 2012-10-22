@@ -4,27 +4,28 @@
 # Contributor: Zach Miller
 
 import re
-from datetime import datetime 
+from datetime import datetime
+
+from genshi.builder import tag
+from genshi.filters.transform import Transformer
 from trac.config import ListOption
-from trac.core import *
-from trac.perm import IPermissionRequestor        
+from trac.core import Component, implements
+from trac.perm import IPermissionRequestor
 from trac.ticket import TicketSystem
+from trac.ticket.model import Ticket
+from trac.ticket.notification import TicketNotifyEmail
+from trac.util.datefmt import utc
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.web.main import IRequestHandler
-from trac.util.datefmt import utc
-from trac.ticket.notification import TicketNotifyEmail
-from trac.ticket.model import Ticket
-from genshi.filters.transform import Transformer
-from genshi.builder import tag
 
-__all__ = ['GridModifyModule']
 
 class GridModifyModule(Component):
-    implements(IPermissionRequestor, IRequestHandler, ITemplateProvider, ITemplateStreamFilter)
+    implements(IPermissionRequestor, IRequestHandler,
+               ITemplateProvider, ITemplateStreamFilter)
 
     fields = ListOption('gridmodify', 'fields', '',
-        doc="List of fields to which gridmodify will be applied.")
+        doc="List of fields that will be modifiable.")
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -36,16 +37,16 @@ class GridModifyModule(Component):
         return [('gridmod', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        from pkg_resources import resource_filename
         return []
     
     # IRequestHandler methods
     def match_request(self, req):
-        """Handle requests to /trac/gridmod URLs"""
+        "Handle requests to /trac/gridmod URLs"
         return re.match(r'/gridmod(?:/.*)?$', req.path_info)
 
     def process_request(self, req):
-        """Process AJAX request from select controls on modified query and report pages."""
+        """Process AJAX request from select controls on modified query
+           and report pages."""
 
         self.log.debug("GridModifyModule: process_request: entered")
         
@@ -71,28 +72,28 @@ class GridModifyModule(Component):
                     self.log.debug("        label: %s", field['label'])
                     self.log.debug("        ticket value['%s']: ", ticket[field_name])
 
-                    if (not field_name in req.args):
+                    if not field_name in req.args:
                         continue;
                     self.log.debug("  field '%s' in REQUEST", field_name)
 
                     val = req.args.get(field_name)
                     self.log.debug("        request value['%s']: %s", field_name, val)
 
-                    if (field['type'] == 'select'):
+                    if field['type'] == 'select':
                         if ((val in field['options']) or (val == '')):
                             self.log.debug("GridModifyModule: process_request: SELECT TAG: setting '%s' to '%s'.", field_name, val)
                             ticket[field_name] = val
-                    elif (field['type'] == 'text'):
+                    elif field['type'] == 'text':
                         self.log.debug("GridModifyModule: process_request: INPUT TEXT TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
-                    elif (field['type'] == 'checkbox'):
-                        if (val == 'True' or val == '1'):
+                    elif field['type'] == 'checkbox':
+                        if val == 'True' or val == '1':
                             val = '1';
                         else:
                             val = '0';
                         self.log.debug("GridModifyModule: process_request: INPUT CHECKBOX TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
-                    elif (field['type'] == 'radio'):
+                    elif field['type'] == 'radio':
                         self.log.debug("GridModifyModule: process_request: INPUT RADIO TAG: setting '%s' to '%s'.", field_name, val)
                         ticket[field_name] = val
 
@@ -112,7 +113,7 @@ class GridModifyModule(Component):
 
                 # After saving the changes, apply the side-effects.
                 for controller in controllers:
-                    self.env.log.info('Side effect for %s' %
+                    self.env.log.info('Side effect for %s' % 
                                        controller.__class__.__name__)
                     controller.apply_action_side_effects(req, ticket, action)
             else:
@@ -229,7 +230,7 @@ class GridModifyModule(Component):
     def _get_action_controllers(self, req, ticket, action):
         """Generator yielding the controllers handling the given `action`"""
         for controller in TicketSystem(self.env).action_controllers:
-            actions = [a for w,a in
+            actions = [a for w, a in
                        controller.get_ticket_actions(req, ticket)]
             if action in actions:
                 yield controller
