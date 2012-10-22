@@ -15,7 +15,7 @@ setup(
     version = '2.2.3',
     packages = ['pytpptheme'],
     package_dir = {
-            'pytpptheme' : 'pydotorgtheme'
+            'pytpptheme' : 'pytpptheme'
         },
     package_data = { 'pytpptheme': ['htdocs/*.*', 'templates/*.html', 
                                     'CHANGES'] },
