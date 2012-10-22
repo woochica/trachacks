@@ -82,4 +82,4 @@ class RequiredFieldValidator(Component):
                        controller.get_ticket_actions(req, ticket)]
             if action in actions:
                 yield controller
-                
+

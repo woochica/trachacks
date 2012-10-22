@@ -24,7 +24,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = 'TicketValidator',
-    version = '0.1',
+    version = '0.2',
     description = 'Ticket Validation',
     author = 'Max Stewart',
     author_email = 'max.e.stewart@gmail.com',
@@ -33,10 +33,9 @@ setup(
 
     zip_safe = False,
 
-    packages = find_packages('src', exclude=['*.tests*']),
-    package_dir = {'': 'src'},
+    packages = find_packages(exclude=['*.tests*']),
     package_data = {
-        'ticketvalidator': ['htdocs/*.*', 'templates/*.html']
+        'ticketvalidator': ['templates/*.html']
     },
     
     entry_points = {
