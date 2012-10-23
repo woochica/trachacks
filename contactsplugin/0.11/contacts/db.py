@@ -34,20 +34,20 @@ class ContactsEnvironment(Component):
         try:
             if self.db_installed_version < 1:
                 contacts_table = Table('contact', key=('id',))[
-                    Column('id', type='int', unique=True, auto_increment=True),
+                    Column('id', type='int', auto_increment=True),
                     Column('first'),
                     Column('last'),
                     Column('position'),
                     Column('email'),
                     Column('phone')
                 ]
-                print 'Adding Contacts Table'
                 for stmt in to_sql(self.env, contacts_table):
                     cursor.execute(stmt)
             cursor.execute("UPDATE system SET value = %s WHERE name = %s", (self.db_version, self.db_version_key))
 
         except Exception, e:
-            self.log.error("Contacts Exception: $s" % (e,))
+            import traceback
+            print traceback.format_exc(e)
             db.rollback()
 
 
@@ -74,15 +74,12 @@ class ContactsEnvironment(Component):
         performed the upgrades they need without an error being raised.
         """
         print 'Contacts needs an upgrade'
-        print ' * Upgrading db'
         self.do_db_upgrade()
-        print 'Done Upgrading'
 
     
 #   Taken from the fullblogplugin source
 def to_sql(env, table):
     """ Convenience function to get the to_sql for the active connector."""
     from trac.db.api import DatabaseManager
-    dm = env.components[DatabaseManager]
-    dc = dm._get_connector()[0]
+    dc = DatabaseManager(env)._get_connector()[0]
     return dc.to_sql(table)
