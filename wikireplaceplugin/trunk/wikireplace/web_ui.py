@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
-# Created by Radu Gasler
-# Based on WikiRenamePlugin created by Noah Kantrowitz
-# Copyright (c) 2008 Noah Kantrowitz. All rights reserved.
+#
+# Copyright (c) 2008 Noah Kantrowitz <noah@coderanger.net>
+# Copyright (C) 2009-2011 Radu Gasler <miezuit@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import urllib
 
 from trac.core import *
