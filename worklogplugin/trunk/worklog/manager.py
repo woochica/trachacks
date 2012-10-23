@@ -78,7 +78,7 @@ class WorkLogManager:
                 cnum += 1
         nowdt = self.now
         nowdt = to_datetime(nowdt)
-        tckt.save_changes(self.authname, msg, nowdt, cnum=cnum+1)
+        tckt.save_changes(self.authname, msg, nowdt, cnum=str(cnum+1))
         ## Often the time overlaps and causes a db error,
         ## especially when the trac integration post-commit hook is used.
         ## NOTE TO SELF. I DON'T THINK THIS IS NECESSARY RIGHT NOW...
