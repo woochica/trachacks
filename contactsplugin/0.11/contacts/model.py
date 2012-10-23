@@ -10,7 +10,8 @@ class Contact(object):
 
     def load_by_id(self, id):
         id = int(id)
-        cursor = self.env.get_db_cnx().cursor()
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
         cursor.execute("SELECT first, last, position, email, phone FROM contact WHERE id = %s", (id,))
         row = cursor.fetchone()
         if not row:
@@ -75,10 +76,13 @@ class Contact(object):
 
 def ContactIterator(env, order_by = None):
     if not order_by:
-        order_by = 'last, first'
-    cursor = env.get_db_cnx().cursor()
+        order_by = ('last', 'first')
+    db = env.get_db_cnx()
+    cursor = db.cursor()
     #   Using the prepared db statement won't work if we have more than one entry in order_by
-    cursor.execute("SELECT id, first, last, position, email, phone FROM contact ORDER BY %s" % order_by)
+    cursor.execute("""
+        SELECT id, first, last, position, email, phone
+        FROM contact ORDER BY %s""" % ','.join(['%s']*len(order_by)), order_by)
     for id, first, last, position, email, phone in cursor:
         contact = Contact(env)
         contact.id = id
