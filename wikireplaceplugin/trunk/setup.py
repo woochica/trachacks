@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2010 Radu Gasler <miezuit@gmail.com>
+# Copyright (C) 2009-2011 Radu Gasler <miezuit@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
