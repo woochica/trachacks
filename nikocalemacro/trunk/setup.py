@@ -11,7 +11,7 @@
 from setuptools import find_packages, setup
 
 setup(
-    name = 'NikoCalendar',
+    name = 'NikoCale',
     version = 1.0,
     author = 'yattom',
     author_email = 'yach@alles.or.jp',
@@ -19,7 +19,7 @@ setup(
     url = 'http://trac-hacks.org/wiki/NikoCaleMacro',
     description = 'Macro that provides an easy-to-create Niko Niko Calendar.',
     packages = find_packages(exclude=['*.tests']),
-    package_data = { 'nikocalendar': ['htdocs/*.png'] },
-    entry_points={'trac.plugins': ['NikoCalendar = nikocalendar.macro']},
+    package_data = { 'nikocale': ['htdocs/*.png'] },
+    entry_points={'trac.plugins': ['NikoCale = nikocale.macro']},
     keywords = 'trac macro',
 )

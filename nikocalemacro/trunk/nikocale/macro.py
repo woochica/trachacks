@@ -14,7 +14,7 @@ from trac.core import Component, implements
 from trac.web.chrome import ITemplateProvider
 from trac.wiki.macros import WikiMacroBase
 
-class NikoCalendarMacro(WikiMacroBase):
+class NikoCaleMacro(WikiMacroBase):
     """Niko-niko Calendar macro.
 
     {{{
@@ -54,7 +54,7 @@ class NikoCalendarMacro(WikiMacroBase):
     
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-        return [('nikocalendar', resource_filename(__name__, 'htdocs'))]
+        return [('nikocale', resource_filename(__name__, 'htdocs'))]
 
 
 class NikoCale(object):
@@ -67,9 +67,9 @@ class NikoCale(object):
     def __init__(self, req):
         self.entries = {}
         self.req = req
-        self.good = '<IMG src="%s/nikocalendar/good.png" alt="good!" title="%%(comment)s" />' % req.href.chrome()
-        self.ordinary = '<IMG src="%s/nikocalendar/ordinary.png" alt="ordinary" title="%%(comment)s" />' % req.href.chrome()
-        self.bad = '<IMG src="%s/nikocalendar/bad.png" alt="bad" title="%%(comment)s" />' % req.href.chrome()
+        self.good = '<IMG src="%s/nikocale/good.png" alt="good!" title="%%(comment)s" />' % req.href.chrome()
+        self.ordinary = '<IMG src="%s/nikocale/ordinary.png" alt="ordinary" title="%%(comment)s" />' % req.href.chrome()
+        self.bad = '<IMG src="%s/nikocale/bad.png" alt="bad" title="%%(comment)s" />' % req.href.chrome()
         pass
 
     def add(self, name, date_str, niko_str, comment=''):
