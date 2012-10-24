@@ -9,10 +9,52 @@
 import re
 import datetime
 from StringIO import StringIO
-from trac.core import *
+
+from trac.core import Component, implements
+from trac.web.chrome import ITemplateProvider
 from trac.wiki.macros import WikiMacroBase
 
-__all__ = ['NikoCaleMacro']
+class NikoCalendarMacro(WikiMacroBase):
+    """Niko-niko Calendar macro.
+
+    {{{
+    #!NikoCale
+    # you can add comment
+    yattom,7/2,(^o^),Had fun at Python Workshop
+    morita,7/2,(-_-)
+    yattom,7/3,(>_<)
+    # empty face can be used for empty cell (like weekends)
+    ,2007/7/5,
+    }}}
+
+    """
+    implements(ITemplateProvider)
+
+    def expand_macro(self, formatter, name, content):
+        nikocale = NikoCale(formatter.req)
+        for line in content.split('\n'):
+            line = line.strip()
+            if re.match('^\s*#', line) or re.match('^\s*$', line):
+                continue
+            parts = line.split(',', 3)
+            if not (len(parts) == 3 or len(parts) == 4):
+                continue
+            if len(parts) == 3:
+                parts.append('')
+            name, date, niko, comment = parts
+            nikocale.add(name.strip(), date.strip(), niko.strip(), comment.strip())
+
+        buf = StringIO()
+        txt = nikocale.render(buf)
+        return buf.getvalue()
+
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        return []
+    
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('nikocalendar', resource_filename(__name__, 'htdocs'))]
 
 
 class NikoCale(object):
@@ -20,14 +62,14 @@ class NikoCale(object):
     ORDINARY_KEYS = ['(-_-)', 'ordinary', 'normal', '2']
     BAD_KEYS = ['(>_<)', 'bad', '3']
     EMPTY_KEYS = ['', '0']
-    GOOD = '<IMG src="%(base_url)s/chrome/site/img/good.png" alt="good!" title="%(comment)s" />'
-    ORDINARY = '<IMG src="%(base_url)s/chrome/site/img/ordinary.png" alt="ordinary" title="%(comment)s" />'
-    BAD = '<IMG src="%(base_url)s/chrome/site/img/bad.png" alt="bad" title="%(comment)s" />'
     EMPTY = '&nbsp;'
 
     def __init__(self, req):
         self.entries = {}
         self.req = req
+        self.good = '<IMG src="%s/nikocalendar/good.png" alt="good!" title="%%(comment)s" />' % req.href.chrome()
+        self.ordinary = '<IMG src="%s/nikocalendar/ordinary.png" alt="ordinary" title="%%(comment)s" />' % req.href.chrome()
+        self.bad = '<IMG src="%s/nikocalendar/bad.png" alt="bad" title="%%(comment)s" />' % req.href.chrome()
         pass
 
     def add(self, name, date_str, niko_str, comment=''):
@@ -45,16 +87,16 @@ class NikoCale(object):
 
         niko_str = niko_str.strip()
         if niko_str in NikoCale.GOOD_KEYS:
-            niko = NikoCale.GOOD
+            niko = self.good
         elif niko_str in NikoCale.ORDINARY_KEYS:
-            niko = NikoCale.ORDINARY
+            niko = self.ordinary
         elif niko_str in NikoCale.BAD_KEYS:
-            niko = NikoCale.BAD
+            niko = self.bad
         elif niko_str in NikoCale.EMPTY_KEYS:
             niko = NikoCale.EMPTY
         else:
             raise ValueError('wrong face: %s'%(niko_str))
-        niko = niko%{'base_url':self.req.base_url, 'comment':comment}
+        niko = niko%{'comment':comment}
 
         if not name in self.entries:
             self.entries[name] = {}
@@ -89,35 +131,3 @@ class NikoCale(object):
 
         return buf
 
-class NikoCaleMacro(WikiMacroBase):
-    """Niko-niko Calendar macro.
-
-    {{{
-    #!NikoCale
-    # you can add comment
-    yattom,7/2,(^o^),Had fun at Python Workshop
-    morita,7/2,(-_-)
-    yattom,7/3,(>_<)
-    # empty face can be used for empty cell (like weekends)
-    ,2007/7/5,
-    }}}
-
-    """
-
-    def render_macro(self, req, name, content):
-        nikocale = NikoCale(req)
-        for line in content.split('\n'):
-            line = line.strip()
-            if re.match('^\s*#', line) or re.match('^\s*$', line):
-                continue
-            parts = line.split(',', 3)
-            if not (len(parts) == 3 or len(parts) == 4):
-                continue
-            if len(parts) == 3:
-                parts.append('')
-            name, date, niko, comment = parts
-            nikocale.add(name.strip(), date.strip(), niko.strip(), comment.strip())
-
-        buf = StringIO()
-        txt = nikocale.render(buf)
-        return buf.getvalue()
