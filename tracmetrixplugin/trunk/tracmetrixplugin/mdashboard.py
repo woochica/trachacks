@@ -19,14 +19,14 @@ import os
 from bisect import bisect
 from datetime import timedelta
 from itertools import groupby
+
 from pylab import date2num, drange, num2date #FIXME: use Trac's date utils and get rid of the pylab dependency.
 
 from genshi.builder import tag
-from trac import mimeview
 from trac.config import BoolOption, ExtensionOption, IntOption, Option
 from trac.core import Component, implements, TracError
 from trac.perm import IPermissionRequestor
-from trac.ticket import Milestone, TicketSystem
+from trac.ticket.model import Milestone, TicketSystem
 from trac.ticket.roadmap import ITicketGroupStatsProvider, get_ticket_stats, get_tickets_for_milestone, milestone_stats_data
 from trac.util.compat import sorted
 from trac.util.datefmt import to_datetime, format_date, utc    
@@ -52,7 +52,7 @@ def get_every_tickets_in_milestone(db, milestone):
                    "(SELECT DISTINCT ticket FROM ticket_change "
                    "WHERE (ticket_change.field='milestone' AND "
                    "ticket_change.oldvalue=%s)) "
-                   "UNION SELECT id FROM ticket WHERE milestone=%s", 
+                   "UNION SELECT id FROM ticket WHERE milestone=%s",
                    (milestone, milestone))  
     tickets = []
     for tkt_id, in cursor:
@@ -67,7 +67,7 @@ def add_milestone_event(env, history, time, event, ticket_id):
         history[time][event].add(ticket_id)
     else:
         
-        history[time]={'Enter':set([]), 'Leave':set([]), 'Finish':set([])}
+        history[time] = {'Enter':set([]), 'Leave':set([]), 'Finish':set([])}
         #make the list of ticket as set so that there is no duplicate
         #this is to handle the case where many ticket fields are changed 
         #at the same time.
@@ -89,7 +89,7 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
                "ticket.time, ticket.milestone, null, null, null FROM ticket " \
                "WHERE ticket.time = ticket.changetime " \
                "AND ticket.id IN (%s) ORDER BY tid" \
-               % ((",".join(['%s']*len(ticket_ids))), (",".join(['%s']*len(ticket_ids))))
+               % ((",".join(['%s'] * len(ticket_ids))), (",".join(['%s'] * len(ticket_ids))))
         
 #    sqlquery = "SELECT ticket.id, ticket.type, ticket.time, ticket.status, " \
 #                   "ticket.time as changetime, null, null, null FROM ticket " \
@@ -142,7 +142,7 @@ def collect_tickets_status_history(env, db, ticket_ids, milestone):
                         # in case that closed ticket was assigned to the milestone
                         if current_status == 'closed':
                             add_milestone_event(env, history, tkt_changedtime, 'Enter', tkt_id)
-                            add_ticket_status_event(env,history, tkt_changedtime, tkt_status, tkt_id)
+                            add_ticket_status_event(env, history, tkt_changedtime, tkt_status, tkt_id)
                         else:
                             add_milestone_event(env, history, tkt_changedtime, 'Enter', tkt_id)
                     
@@ -258,7 +258,7 @@ def make_cumulative_data(env, tkt_counts):
             if index == 0:
                 next_value = tkt_counts[key][index]                
             else:
-                next_value = tkt_cumulative[key][index-1] + tkt_counts[key][index]
+                next_value = tkt_cumulative[key][index - 1] + tkt_counts[key][index]
             
             tkt_cumulative[key].append(next_value)
  
@@ -271,7 +271,7 @@ class MDashboard(Component):
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler,
                IWikiSyntaxProvider, ITemplateProvider, ITicketGroupStatsProvider)
  
-    yui_base_url = Option('pdashboard', 'yui_base_url', 
+    yui_base_url = Option('pdashboard', 'yui_base_url',
                           default='http://yui.yahooapis.com/2.7.0',
                           doc='Location of YUI API')
  
@@ -337,7 +337,7 @@ class MDashboard(Component):
         
         milestone_id = req.args.get('id')
 
-        self.env.log.info("mdashboard process request %s, %s" % (req.path_info,req.args.get('id')))  
+        self.env.log.info("mdashboard process request %s, %s" % (req.path_info, req.args.get('id')))  
 
         add_link(req, 'up', req.href.pdashboard(), 'Dashboard')
 
@@ -427,7 +427,7 @@ class MDashboard(Component):
                             
                 # Sort the key in the history list
                 # returns sorted list of tuple of (key, value)
-                sorted_events = sorted(tkt_history.items(), key=lambda(k,v):(k))
+                sorted_events = sorted(tkt_history.items(), key=lambda(k, v):(k))
         
                 #debug  
                 self.env.log.info("sorted_event content")
@@ -465,8 +465,8 @@ class MDashboard(Component):
                     #prepare Yahoo datasource for comulative flow chart
                 dscumulative = ''
                 for idx, date in enumerate(dates):
-                    dscumulative = dscumulative +  '{ date: "%s", enter: %d, leave: %d, finish: %d}, ' \
-                          % (format_date(date,tzinfo=utc), tkt_cumulative_table['Enter'][idx], \
+                    dscumulative = dscumulative + '{ date: "%s", enter: %d, leave: %d, finish: %d}, ' \
+                          % (format_date(date, tzinfo=utc), tkt_cumulative_table['Enter'][idx], \
                              tkt_cumulative_table['Leave'][idx], tkt_cumulative_table['Finish'][idx])
   
                 

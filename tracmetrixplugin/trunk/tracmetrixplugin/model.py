@@ -13,11 +13,11 @@
 #
 # Author: Bhuricha Sethanandha <khundeen@gmail.com>
 
-import sys
 import os
 
 from datetime import timedelta
 from bisect import bisect
+
 from pylab import date2num, drange, num2date
 
 from trac.core import *
@@ -35,43 +35,43 @@ class ProgressTicketGroupStatsProvider(Component):
     def get_ticket_group_stats(self, ticket_ids):
         
         # ticket_ids is a list of ticket id as number.
-        total_cnt = len(ticket_ids)
-        if total_cnt:
-            
+        total_count = len(ticket_ids)
+        status_count = {
+            'closed': 0,
+            'new': 0,
+            'reopened': 0
+        }
+        
+        if total_count:
             db = self.env.get_db_cnx()
-            cursor = db.cursor()            
+            cursor = db.cursor()
+            str_ids = [str(x) for x in sorted(ticket_ids)]
+            cursor.execute("""
+                SELECT status, count(status) FROM ticket
+                WHERE id IN (%s) GROUP BY status"""
+                % ",".join(str_ids))
             
-            closed_cnt = cursor.execute("SELECT COUNT(*) FROM ticket "
-                                        "WHERE status = 'closed' AND id IN (%s)"
-                                        %  (",".join(['%s']*len(ticket_ids))), tuple(ticket_ids))
-            closed_cnt = cursor.fetchone()[0]
-                
-            active_cnt = cursor.execute("SELECT COUNT(*) FROM ticket "
-                                        "WHERE status IN ('new', 'reopened') AND id IN (%s)"
-                                        %  (",".join(['%s']*len(ticket_ids))), tuple(ticket_ids))
-            active_cnt = cursor.fetchone()[0]
-                
-        else:
-            closed_cnt = 0
-            active_cnt = 0
+            for status, count in cursor.fetchall():
+                status_count[status] = count
 
-        inprogress_cnt = total_cnt - ( active_cnt + closed_cnt)
+        inprogress_cnt = total_count - (status_count['new'] + \
+            status_count['reopened'] + status_count['closed'])
 
         stat = TicketGroupStats('ticket status', 'ticket')
-        stat.add_interval('closed', closed_cnt,
+        stat.add_interval('closed', status_count['closed'],
                           {'status': 'closed', 'group': 'resolution'},
                           'closed', True)
         stat.add_interval('inprogress', inprogress_cnt,
                           {'status': ['accepted', 'assigned']},
                           'inprogress', False)
-        stat.add_interval('new', active_cnt,
+        stat.add_interval('new', status_count['new'] + status_count['reopened'],
                           {'status': ['new', 'reopened']},
                           'new', False)
                           
         stat.refresh_calcs()
         return stat
 
-    def get_ticket_resolution_group_stats(self, ticket_ids):        
+    def get_ticket_resolution_group_stats(self, ticket_ids):
         # ticket_ids is a list of ticket ids with type int
         
         stat = TicketGroupStats('ticket resolution', 'ticket')
@@ -79,25 +79,25 @@ class ProgressTicketGroupStatsProvider(Component):
         if len(ticket_ids):
             db = self.env.get_db_cnx()
             cursor = db.cursor()
+            str_ids = [str(x) for x in sorted(ticket_ids)]
             
-            count_by_resolution = [] # list of dictionaries with keys name and count
-            for resolution in model.Resolution.select(self.env, db=db):                
-                cursor.execute("SELECT COUNT(*) FROM ticket "
-                               "WHERE status = 'closed' AND resolution=%%s AND id IN (%s)"
-                               % (",".join(['%s']*len(ticket_ids))), (resolution.name,) + tuple(ticket_ids))
+            cursor.execute("""
+                SELECT resolution, count(resolution) FROM ticket
+                WHERE status='closed' AND id IN (%s)"""
+                % ",".join(str_ids))
 
-                count = cursor.fetchone()[0]
-                if count > 0:
-                    count_by_resolution.append({'name': resolution.name, 'count': count})            
-        
-            for t in count_by_resolution:                
-                if t['name'] in ('fixed', 'completed'): # default ticket type 'defect'        
-                    stat.add_interval(t['name'], t['count'],
-                                      {'resolution': t['name']}, 'value', True)            
+            resolution_count = {}
+            for resolution, count in cursor.fetchall():
+                resolution_count[resolution] = count                            
+
+            for key, value in resolution_count.iteritems():
+                if key in ('fixed', 'completed'): # default ticket type 'defect'        
+                    stat.add_interval(
+                        {'resolution': key}, 'value', True)
                 else:
-                    stat.add_interval(t['name'], t['count'],
-                                      {'resolution': t['name']}, 'waste', False)
-            
+                    stat.add_interval(key, value,
+                        {'resolution': key}, 'waste', False)
+
         stat.refresh_calcs()
         return stat
 
@@ -116,7 +116,7 @@ class ProgressTicketGroupStatsProvider(Component):
             
                 count = cursor.execute("SELECT COUNT(*) FROM ticket "
                                         "WHERE type = %%s AND id IN (%s)"
-                                        %  (",".join(['%s']*len(ticket_ids))), (type.name, ) + tuple(ticket_ids))
+                                        % (",".join(['%s'] * len(ticket_ids))), (type.name,) + tuple(ticket_ids))
                 count = cursor.fetchone()[0]
                 if count > 0:
                     type_count.append({'name':type.name, 'count':count})
@@ -159,7 +159,7 @@ class TicketTypeGroupStatsProvider(Component):
             
                 cursor.execute("SELECT COUNT(*) FROM ticket "
                                "WHERE type = %%s AND id IN (%s)"
-                               %  (",".join(['%s']*len(ticket_ids))), (type.name, ) + tuple(ticket_ids))
+                               % (",".join(['%s'] * len(ticket_ids))), (type.name,) + tuple(ticket_ids))
                 count = cursor.fetchone()[0]
                 if count > 0:
                     type_count.append({'name':type.name, 'count':count})
@@ -186,14 +186,11 @@ class TicketTypeGroupStatsProvider(Component):
 
 class TicketGroupMetrics(object):
     
-    def __init__(self, env, tkt_ids):
+    def __init__(self, env, ticket_ids):
 
         self.env = env
-        self.ticket_ids = tkt_ids
-        self.num_tickets = len(tkt_ids)
-        
-        self.tickets = [Ticket(env,id) for id in tkt_ids]
-        self.ticket_metrics = [TicketMetrics(env,ticket) for ticket in self.tickets ]
+        self.tickets = [Ticket(env, id) for id in ticket_ids]
+        self.ticket_metrics = [TicketMetrics(env, t) for t in self.tickets]
     
     def get_num_comment_stats(self):
         
@@ -362,7 +359,7 @@ class TicketGroupMetrics(object):
                     # determine index
                     date = ticket.time_created.date()            
                     #get index of day in the dates list
-                    index = bisect(numdates, date2num(date)) - 1                
+                    index = bisect(numdates, date2num(date)) - 1
                 
                     # add ticket created ticket list
                     backlog_stats['created'][index].append(ticket.id)
@@ -370,9 +367,9 @@ class TicketGroupMetrics(object):
                 for t, author, field, oldvalue, newvalue, permanent in ticket.get_changelog():
 
                     # determine index
-                    date = t.date()            
+                    date = t.date()
                     #get index of day in the dates list
-                    index = bisect(numdates, date2num(date)) - 1   
+                    index = bisect(numdates, date2num(date)) - 1
                     
                     if field == 'status' and start_date <= t <= end_date:
                         
@@ -389,7 +386,7 @@ class TicketGroupMetrics(object):
             if idx > 0:
                 
                 # merge list of opened ticket from previous day
-                list.extend(backlog_stats['opened'][idx-1])
+                list.extend(backlog_stats['opened'][idx - 1])
                 
                 # add created ticket to opened ticket list
                 list.extend(backlog_stats['created'][idx])
@@ -433,7 +430,7 @@ class TicketGroupMetrics(object):
             if opened_tickets_dataset[i] == 0:
                  bmi_dataset.append(0.0)
             else:
-                bmi_dataset.append(float(closed_tickets_dataset[i])*100/float(opened_tickets_dataset[i]))
+                bmi_dataset.append(float(closed_tickets_dataset[i]) * 100 / float(opened_tickets_dataset[i]))
     
 #        for idx, numdate in enumerate(numdates):
 #            self.env.log.info("%s: %s, %s, %s" % (num2date(numdate), 
@@ -443,8 +440,8 @@ class TicketGroupMetrics(object):
         ds_daily_backlog = ''
         
         for idx, numdate in enumerate(numdates):
-                    ds_daily_backlog = ds_daily_backlog +  '{ date: "%s", opened: %d, closed: %d, created: %d}, ' \
-                          % (format_date(num2date(numdate),tzinfo=utc), opened_tickets_dataset[idx], \
+                    ds_daily_backlog = ds_daily_backlog + '{ date: "%s", opened: %d, closed: %d, created: %d}, ' \
+                          % (format_date(num2date(numdate), tzinfo=utc), opened_tickets_dataset[idx], \
                              closed_tickets_dataset[idx], created_tickets_dataset[idx])
   
         return '[ ' + ds_daily_backlog + ' ];'
@@ -467,7 +464,7 @@ class TicketMetrics(object):
     
     def __inseconds(self, duration):
         # convert timedelta object to interger value in seconds
-        return duration.days*24*3600 + duration.seconds
+        return duration.days * 24 * 3600 + duration.seconds
         
     def __collect_history_data(self, ticket):
         
@@ -492,13 +489,13 @@ class TicketMetrics(object):
                 
                 if newvalue == 'closed':
                     self.num_closed += 1
-                    self.lead_time = self.lead_time + self.__inseconds(t-previous_status_change)
+                    self.lead_time = self.lead_time + self.__inseconds(t - previous_status_change)
                     
                 elif newvalue == 'reopen':
-                    self.closed_time = self.closed_time + self.__inseconds(t-previous_status_change)
+                    self.closed_time = self.closed_time + self.__inseconds(t - previous_status_change)
                     
                 else:
-                    self.lead_time = self.lead_time + self.__inseconds(t-previous_status_change)
+                    self.lead_time = self.lead_time + self.__inseconds(t - previous_status_change)
                 
                 previous_status = newvalue
                 previous_status_change = t
@@ -509,16 +506,16 @@ class TicketMetrics(object):
     
         # Calculate the ticket time up to current.
         if previous_status == 'closed':
-            self.closed_time = self.closed_time + self.__inseconds(to_datetime(None, utc)- previous_status_change)
+            self.closed_time = self.closed_time + self.__inseconds(to_datetime(None, utc) - previous_status_change)
 
         else:
             self.lead_time = self.lead_time + self.__inseconds(to_datetime(None, utc) - previous_status_change)
 
     def get_all_metrics(self):
-        return {'lead_time':self.lead_time, 
+        return {'lead_time':self.lead_time,
                 'closed_time':self.closed_time,
-                'num_comment':self.num_comment, 
-                'num_closed':self.num_closed, 
+                'num_comment':self.num_comment,
+                'num_closed':self.num_closed,
                 'num_milestone':self.num_milestone}
 
 class DescriptiveStats(object):
@@ -582,7 +579,7 @@ class ChangesetsStats:
         self.stop_date = stop_date
         self.first_rev = self.last_rev = None
         
-        if start_date != None and stop_date !=None:
+        if start_date != None and stop_date != None:
             self.set_date_range(start_date, stop_date)
     
     def set_date_range(self, start_date, stop_date): 
@@ -596,7 +593,7 @@ class ChangesetsStats:
         
         self.changesets = []
         for rev, time, author in cursor:
-            self.changesets.append((rev,time,author))
+            self.changesets.append((rev, time, author))
         
         self.start_date = start_date
         self.stop_date = stop_date
@@ -631,8 +628,8 @@ class ChangesetsStats:
         ds_commits = ''
         
         for idx, numdate in enumerate(numdates):
-                    ds_commits = ds_commits +  '{ date: "%s", commits: %d}, ' \
-                          % (format_date(num2date(numdate),tzinfo=utc), numcommits[idx])
+                    ds_commits = ds_commits + '{ date: "%s", commits: %d}, ' \
+                          % (format_date(num2date(numdate), tzinfo=utc), numcommits[idx])
         
         return '[ ' + ds_commits + ' ];'
 

@@ -17,40 +17,26 @@ from datetime import timedelta, datetime
 
 from genshi.builder import tag
 from genshi.filters.transform import StreamBuffer, Transformer
-from trac import mimeview
 from trac.config import ExtensionOption, Option
-from trac.mimeview import Context
 from trac.core import Component, implements
+from trac.mimeview import Context
 from trac.perm import IPermissionRequestor
-from trac.ticket import Milestone
+from trac.ticket.model import Milestone
 from trac.ticket.query import Query
-from trac.ticket.roadmap import ITicketGroupStatsProvider, get_ticket_stats, get_tickets_for_milestone, milestone_stats_data
+from trac.ticket.roadmap import (
+    ITicketGroupStatsProvider, get_ticket_stats,
+    get_tickets_for_milestone, milestone_stats_data
+)
 from trac.util.datefmt import to_datetime, utc
-from trac.web import IRequestFilter, IRequestHandler, ITemplateStreamFilter
-from trac.web.chrome import add_stylesheet, INavigationContributor, ITemplateProvider
+from trac.web.api import IRequestFilter, IRequestHandler, ITemplateStreamFilter
+from trac.web.chrome import (
+    INavigationContributor, ITemplateProvider, add_stylesheet
+)
 
 from tracmetrixplugin.model import ChangesetsStats, TicketGroupMetrics
 
 # Constants
 DAYS_BACK = 28
-
-def get_project_tickets(env):
-    """
-        This method collect interesting data of each ticket in the project.
-        
-        lead_time is the time from when ticket is created until it is closed.
-        closed_time is the time from wheh ticket is closed untill it is reopened.
-        
-    """
-    
-    db = env.get_db_cnx()
-    cursor = db.cursor()
-    
-    cursor.execute("SELECT id FROM ticket ORDER BY id")
-
-    tkt_ids = [id for id , in cursor]
-    
-    return tkt_ids
 
 def last_day_of_month(year, month):
 
@@ -58,7 +44,7 @@ def last_day_of_month(year, month):
     if month == 12: 
  	year = year + 1 
  	
-    return datetime(year+(month/12), (month%12)+1 , 1, tzinfo=utc) - timedelta(days=1)
+    return datetime(year + (month / 12), (month % 12) + 1 , 1, tzinfo=utc) - timedelta(days=1)
 
 class GenerateMetrixLink(object):
 
@@ -102,7 +88,7 @@ class RoadmapMetrixIntegrator(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
 
-        if filename in ('roadmap.html', ):
+        if filename in ('roadmap.html',):
 
             buffer = StreamBuffer()
             t = Transformer('//li[@class="milestone"]/div[@class="info"]/h2/a/em/text()')
@@ -123,7 +109,7 @@ class MilestoneMetrixIntegrator(Component):
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
 
-        if filename in ('milestone_view.html', ):
+        if filename in ('milestone_view.html',):
 
             buffer = StreamBuffer()
             t = Transformer('//div[@class="milestone"]/h1/text()[2]')
@@ -138,7 +124,7 @@ class PDashboard(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler, ITemplateProvider)
     
-    yui_base_url = Option('pdashboard', 'yui_base_url', 
+    yui_base_url = Option('pdashboard', 'yui_base_url',
                           default='http://yui.yahooapis.com/2.7.0',
                           doc='Location of YUI API')
     
@@ -215,22 +201,26 @@ class PDashboard(Component):
         }
         
         self.env.log.info("getting project statistics")
-        project_tickets = get_project_tickets(self.env)
         
         # Get project progress stats
-        proj_stat = self.stats_provider.get_ticket_group_stats(project_tickets)
+        query = Query.from_string(self.env, 'max=0&order=id')
+        tickets = query.execute(req)
+        proj_stat = get_ticket_stats(self.stats_provider, tickets)
         
         data['proj_progress_stat'] = {'stats': proj_stat,
                                       'stats_href': req.href.query(proj_stat.qry_args),
                                       'interval_hrefs': [req.href.query(interval['qry_args'])
                                                          for interval in proj_stat.intervals]}
 
-        closed_stat = self.stats_provider.get_ticket_resolution_group_stats(project_tickets)
+        ticket_ids = [t['id'] for t in tickets]
+        closed_stat = self.stats_provider.get_ticket_resolution_group_stats(ticket_ids)
 
-        data['proj_closed_stat'] = {'stats': closed_stat,
-                                    'stats_href': req.href.query(closed_stat.qry_args),
-                                    'interval_hrefs': [req.href.query(interval['qry_args'])
-                                                       for interval in closed_stat.intervals]}
+        data['proj_closed_stat'] = {
+            'stats': closed_stat,
+            'stats_href': req.href.query(closed_stat.qry_args),
+            'interval_hrefs': [req.href.query(interval['qry_args'])
+            for interval in closed_stat.intervals]
+        }
 
         tkt_frequency_stats = {}
         tkt_duration_stats = {}
@@ -240,7 +230,7 @@ class PDashboard(Component):
             
         if showmetrics:                                                     
             self.env.log.info("getting ticket metrics")
-            tkt_group_metrics = TicketGroupMetrics(self.env, project_tickets)      
+            tkt_group_metrics = TicketGroupMetrics(self.env, ticket_ids)      
         
             tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
             tkt_duration_stats = tkt_group_metrics.get_duration_metrics_stats()
