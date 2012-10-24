@@ -8,5 +8,5 @@ from themeengine.api import ThemeBase
 class PyDotOrgTheme(ThemeBase):
     """A theme for Trac based on http://www.python.org."""
 
-    htdocs = css = True
+    htdocs = css = screenshot = True
     
