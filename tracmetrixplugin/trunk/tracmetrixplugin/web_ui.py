@@ -41,9 +41,9 @@ DAYS_BACK = 28
 def last_day_of_month(year, month):
 
     # For december the next month will be january of next year.
-    if month == 12: 
- 	year = year + 1 
- 	
+    if month == 12:
+ 	year = year + 1
+
     return datetime(year + (month / 12), (month % 12) + 1 , 1, tzinfo=utc) - timedelta(days=1)
 
 class GenerateMetrixLink(object):
@@ -123,11 +123,11 @@ class MilestoneMetrixIntegrator(Component):
 class PDashboard(Component):
 
     implements(INavigationContributor, IPermissionRequestor, IRequestHandler, ITemplateProvider)
-    
+
     yui_base_url = Option('pdashboard', 'yui_base_url',
                           default='http://yui.yahooapis.com/2.7.0',
                           doc='Location of YUI API')
-    
+
     stats_provider = ExtensionOption('pdashboard', 'stats_provider',
                                      ITicketGroupStatsProvider,
                                      'ProgressTicketGroupStatsProvider',
@@ -155,23 +155,23 @@ class PDashboard(Component):
 
     def match_request(self, req):
 
-        self.env.log.info("pdashboard match request %s" % (req.path_info,))  
-        
+        self.env.log.info("pdashboard match request %s" % (req.path_info,))
+
         return req.path_info == '/pdashboard'
 
     def process_request(self, req):
         req.perm.require('ROADMAP_VIEW')
 
         db = self.env.get_db_cnx()
-        
-        return self._render_view(req, db) 
-        
+
+        return self._render_view(req, db)
+
 
     def _render_view(self, req, db):
-        
+
         showall = req.args.get('show') == 'all'
         showmetrics = req.args.get('showmetrics') == 'true'
-                
+
         # Get list of milestone object for the project
         milestones = list(Milestone.select(self.env, showall, db))
         stats = []
@@ -188,7 +188,7 @@ class PDashboard(Component):
             'name': self.env.project_name,
             'description': self.env.project_description
         }
-        
+
         data = {
             'context': Context.from_request(req),
             'milestones': milestones,
@@ -197,16 +197,16 @@ class PDashboard(Component):
             'showall': showall,
             'showmetrics': showmetrics,
             'project' : project,
-            'yui_base_url': self.yui_base_url 
+            'yui_base_url': self.yui_base_url
         }
-        
+
         self.env.log.info("getting project statistics")
-        
+
         # Get project progress stats
         query = Query.from_string(self.env, 'max=0&order=id')
         tickets = query.execute(req)
         proj_stat = get_ticket_stats(self.stats_provider, tickets)
-        
+
         data['proj_progress_stat'] = {'stats': proj_stat,
                                       'stats_href': req.href.query(proj_stat.qry_args),
                                       'interval_hrefs': [req.href.query(interval['qry_args'])
@@ -227,27 +227,27 @@ class PDashboard(Component):
         bmi_stats = []
         daily_backlog_chart = {}
         today = to_datetime(None)
-            
-        if showmetrics:                                                     
+
+        if showmetrics:
             self.env.log.info("getting ticket metrics")
-            tkt_group_metrics = TicketGroupMetrics(self.env, ticket_ids)      
-        
+            tkt_group_metrics = TicketGroupMetrics(self.env, ticket_ids)
+
             tkt_frequency_stats = tkt_group_metrics.get_frequency_metrics_stats()
             tkt_duration_stats = tkt_group_metrics.get_duration_metrics_stats()
-            
+
             #stat for this month
             first_day = datetime(today.year, today.month, 1, tzinfo=utc)
             last_day = last_day_of_month(today.year, today.month)
             bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
-         
+
             # stat for last month        
             last_day = first_day - timedelta(days=1)
             first_day = datetime(last_day.year, last_day.month, 1, tzinfo=utc)
             bmi_stats.append(tkt_group_metrics.get_bmi_monthly_stats(first_day, last_day))
-            
+
             # get daily backlog history
             last_day = datetime(today.year, today.month, today.day, tzinfo=utc)
-            first_day = last_day - timedelta(days=DAYS_BACK)            
+            first_day = last_day - timedelta(days=DAYS_BACK)
             self.env.log.info("getting backlog history")
             backlog_history = tkt_group_metrics.get_daily_backlog_history(first_day, last_day)
             daily_backlog_chart = tkt_group_metrics.get_daily_backlog_chart(backlog_history)
@@ -258,25 +258,25 @@ class PDashboard(Component):
         changeset_group_stats = ChangesetsStats(self.env, first_day, last_day)
         commits_by_date = changeset_group_stats.get_commit_by_date()
         commits_by_date_chart = changeset_group_stats.get_commit_by_date_chart(commits_by_date)
-        
+
         data['project_bmi_stats'] = bmi_stats
         #self.env.log.info(bmi_stats)
         data['ticket_frequency_stats'] = tkt_frequency_stats
         data['ticket_duration_stats'] = tkt_duration_stats
         data['ds_daily_backlog'] = daily_backlog_chart
         data['ds_commit_by_date'] = commits_by_date_chart
-        
-        add_stylesheet(req, 'pd/css/dashboard.css')        
+
+        add_stylesheet(req, 'pd/css/dashboard.css')
         add_stylesheet(req, 'common/css/report.css')
-        
+
         return ('pdashboard.html', data, None)
-   
+
     # ITemplateProvider methods
     # Used to add the plugin's templates and htdocs 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
-    
+
     def get_htdocs_dirs(self):
         """Return a list of directories with static resources (such as style
         sheets, images, etc.)
@@ -289,4 +289,4 @@ class PDashboard(Component):
         resources on the local file system.
         """
         from pkg_resources import resource_filename
-        return [('pd', resource_filename(__name__, 'htdocs'))]    
+        return [('pd', resource_filename(__name__, 'htdocs'))]

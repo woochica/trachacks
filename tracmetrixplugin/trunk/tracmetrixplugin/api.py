@@ -28,14 +28,14 @@ class TracMetrixSetupParticipant(Component):
     
     """
     implements(IEnvironmentSetupParticipant)
-    
-    
+
+
     def environment_created(self):
         """Called when a new Trac environment is created."""
         if self.environment_needs_upgrade(None):
             self.upgrade_environment(None)
-            
-            
+
+
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
         
@@ -51,7 +51,7 @@ class TracMetrixSetupParticipant(Component):
         transactions. This is done implicitly after all participants have
         performed the upgrades they need without an error being raised.
         """
-        
+
         if self._cachefolder_needs_upgrade():
             path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin')
             try:
@@ -59,9 +59,9 @@ class TracMetrixSetupParticipant(Component):
             except OSError, e:
                 print "Upgrade failed: Could not create path %s" % path
                 print e
-        
+
     def _cachefolder_needs_upgrade(self):
         # Check if the cache exist
         path = os.path.join(self.env.path, 'cache', 'tracmetrixplugin')
         return not os.path.exists(path)
-        
+
