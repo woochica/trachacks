@@ -232,6 +232,29 @@ class ReportRenderer(RenderImpl):
         inner( tag.th( e ), class_ = self.getcssheaderclass(e) )
     tablehead(inner)
     outer(tablehead)
+   
+   
+    customdatefields = [ self.macroenv.conf.get( 'custom_due_assign_field' ), self.macroenv.conf.get( 'custom_due_close_field' ) ]
+    def getSortableTableCell( f ):
+      field = t.getfielddef( f, '' )
+      cssclass,style = self.getcsscolstyle(f, field )
+      if f == 'id':
+        if t.getfielddef( 'status', '' )=='closed':
+          cssclass ="ticket closed"
+        else:
+          cssclass ="ticket "
+        text = tag.p(tag.a( '#'+str(t.getfielddef( f, '' )), href=t.getfielddef( 'href', '' ), class_ = cssclass ) )
+      elif f == 'priority' : # special case 
+        # two-digit integer representation of priority sorting (as definend in trac admin panel)
+        text = tag.span(str(99-int(t.getfielddef( 'priority_value', '0' ))), class_ = 'invisible')+self.wiki2html(field)
+      elif f in customdatefields : # special case: date string 
+        text =  tag.span(self.getNormalizedDateStringOfSegment(field), class_='invisible')+self.wiki2html(field)
+      else :
+        text =  self.wiki2html(field)
+      return (text,cssclass,style)
+    
+    
+    
     
     # generate HTML: Table body
     _odd = True
@@ -243,20 +266,8 @@ class ReportRenderer(RenderImpl):
       else:
         inner = tag.tr( class_='even' )
       for f in self.fields:
-        if f == 'id':
-          if t.getfielddef( 'status', '' )=='closed':
-            cssclass ="ticket closed"
-          else:
-            cssclass ="ticket "
-          inner( tag.td( tag.a( '#'+str(t.getfielddef( f, '' )), href=t.getfielddef( 'href', '' ), class_ = cssclass ) ) )
-        else:
-          cssclass,style = self.getcsscolstyle(f, t.getfielddef( f, '' ) )
-          if f == 'priority' : # special case 
-            # two-digit integer representation of priority sorting (as definend in trac admin panel)
-            text = tag.span(str(99-int(t.getfielddef( 'priority_value', '' ))), class_ = 'invisible')+' '+t.getfielddef( f, '' ) 
-          else :
-            text =  self.wiki2html(t.getfielddef( f, '' ))
-          inner( tag.td( text, style = style, class_ = cssclass ) )
+        text,cssclass,style = getSortableTableCell(f)
+        inner( tag.td( text, style = style, class_ = cssclass ) )
       for e in self.extensions:
         if t.hasextension( e ):
           cssclass,style = self.getcsscolstyle(e, t.getfielddef( e, '' ) )

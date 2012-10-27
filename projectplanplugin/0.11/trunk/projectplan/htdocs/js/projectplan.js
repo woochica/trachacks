@@ -775,7 +775,7 @@
 		},
 		type: "numeric"
 	});
-		
+	
 	ts.addParser({
 		id: "percent",
 		is: function(s) { 
@@ -797,7 +797,8 @@
 		},
 		type: "numeric"
 	});
-
+/*
+	// working wrongly on ticket due to close dates
 	ts.addParser({
 		id: "shortDate",
 		is: function(s) {
@@ -819,7 +820,7 @@
 		},
 		type: "numeric"
 	});
-
+*/
 	ts.addParser({
 	    id: "time",
 	    is: function(s) {
@@ -831,7 +832,7 @@
 	  type: "numeric"
 	});
 	
-	
+
 	ts.addParser({
 	    id: "metadata",
 	    is: function(s) {

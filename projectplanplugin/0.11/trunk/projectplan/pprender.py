@@ -95,6 +95,7 @@ class SortedReportRenderer(RenderImpl):
   '''
     Base Class for Renderer which enumerate a TicketSet,
     Sort them by a given Key and Output them into a HTML Table
+    @deprecated
   '''
   
   # Map resolving the row to a real name
@@ -321,7 +322,7 @@ class SortedReportRenderer(RenderImpl):
           cssclass,style = self.getcsscolstyle(f, t.getfielddef( f, '' ) )
           if f == 'priority' : # special case 
             # two-digit integer representation of priority sorting (as definend in trac admin panel)
-            text = tag.span(str(99-int(t.getfielddef( 'priority_value', '' ))), class_ = 'invisible')+' '+t.getfielddef( f, '' ) 
+            text = tag.span(str(99-int(t.getfielddef( 'priority_value', '0' ))), class_ = 'invisible')+' '+t.getfielddef( f, '' ) 
           else :
             text = t.getfielddef( f, '' )
           inner( tag.td( text, style = style, class_ = cssclass ) )
@@ -340,7 +341,8 @@ class SortedReportRenderer(RenderImpl):
     
     return outer
 
-RenderRegister.add( SortedReportRenderer, 'report' )
+#RenderRegister.add( SortedReportRenderer, 'report' )
+RenderRegister.add( ReportRenderer, 'report' )
 
 
 

@@ -119,7 +119,22 @@ class RenderImpl():
     except Exception,e:
       self.macroenv.tracenv.log.warn('getDateOfSegment: '+str(e)+' '+dateformat+' '+timestr)
       return None
+
+  def getNormalizedDateStringOfSegment( self, timestr ):
+    return self.getNormalizedDateStringOfDate(self.getDateOfSegment(timestr))
   
+  def getNormalizedDateStringOfDate( self, mydate):
+    if mydate == None:
+      return '0000-00-00'
+    else:
+      return mydate.strftime('%Y-%m-%d')
+
+  def getNormalizedDateTimeStringOfDate( self, mydatetime):
+    if mydatetime == None:
+      return '0000-00-00 00:00:00'
+    else:
+      return mydatetime.strftime('%Y-%m-%d %H:%M:%S')
+
   def createTicketLink(self, ticket):
     '''
       create a link to a ticket
@@ -169,10 +184,17 @@ class RenderImpl():
     
     return('https://%s?chf=bg,s,FFFFFF00&cht=p3&chd=t:%s&chs=170x50&chdl=%s&chco=%s' % (googlecharturl, ','.join(values), '|'.join(keys), ','.join(colors)) )
   
-  def wiki2html( self, mystring ):
+  def wiki2html( self, myinput ):
     '''
       transform wiki markup to HTML code
     '''
+    if type(myinput) == datetime.date:
+      mystring = self.getNormalizedDateStringOfDate(myinput)
+    elif type(myinput) == datetime:
+      mystring = self.getNormalizedDateTimeStringOfDate(myinput)
+    else:
+      mystring = myinput
+    
     return wiki_to_html(mystring, self.macroenv.tracenv, self.macroenv.tracreq)
 
   def divWarning(self, mystr):
