@@ -1,12 +1,28 @@
 $(document).ready(function() {
 	jQuery(window).hashchange(function(event) {
 		traclinks = $("#proj-search").attr('value');
-		if(location.hash.indexOf('#comment:') == 0 && ( i = traclinks.indexOf('ticket:')) >= 0) {
-			traclinks = location.hash.slice(1) + ':' + traclinks.slice(i);
+		if($('#main #ticket').length == 1) { // ticket
+			path_elements = document.location.pathname.split('/');
+			ticketid = path_elements[path_elements.length - 1];
+			if(location.hash.indexOf('#comment:') == 0) { // comment of ticket
+				traclinks = location.hash.slice(1) + ':ticket:' + ticketid;
+			} else {
+				traclinks = 'ticket:' + ticketid + location.hash;
+			}
 			$("#proj-search").attr('value', traclinks);
-		} else if(location.hash.indexOf('#L') == 0 && (traclinks.indexOf('source:')) == 0) {
+		}
+		if($('#main #wikipage').length == 1) { // wiki
+			start = $('link[rel="start"]')[0].href
+			hash = document.location.hash
+			pagename = document.location.href.slice(start.length, -hash.length)
+			// take care for WikiStart as start page ... pagename == "" in some case
+			traclinks = 'wiki:' + pagename + '#' + location.hash.slice(1)
+			$("#proj-search").attr('value', traclinks);
+		}
+		if($('#main #preview').length == 1) { //browser
+			// TODO: rewrite this ad-hoc code
 			if(( i = traclinks.indexOf('#')) >= 0)
-				traclinks = traclinks.slice(0, i)
+			traclinks = traclinks.slice(0, i)
 			traclinks = traclinks + '#' + location.hash.slice(1)
 			$("#proj-search").attr('value', traclinks);
 		}

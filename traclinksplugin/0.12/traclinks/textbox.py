@@ -87,8 +87,8 @@ class TextBox(Component):
                 resource = Resource('query', data['query'].to_string().replace("\n", "")[7:])
         else:
             pass
-        # link hash
-        if filename in ['browser.html', 'ticket.html', 'agilo_ticket_view.html']:
+        # link hash TODO: check wiki_view for agilo
+        if filename in ['browser.html', 'ticket.html', 'agilo_ticket_view.html', 'wiki_view.html']:
             add_script(req, 'traclinks/js/jquery.ba-hashchange.js')
             add_script(req, 'traclinks/js/onhashchange.js')
         #
