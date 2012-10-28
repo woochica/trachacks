@@ -92,6 +92,7 @@ td.pptableticketperday { /* needed for good looking statistics */
   background-position: left middle;
 }
 
+
 /*
 #ppconnect_from {
         background-color:#00FFFF;
@@ -243,8 +244,9 @@ table.pplisting tbody td.ppimagecol {
 .ticketsperuserday table tfoot td
 {
 /* 	font-size: 13px; */
-	color: #039;
-	background: #b9c9fe;
+/* 	color: #039; */
+/* 	background: #b9c9fe; */
+	border-top: 4px solid #aabcfe;
 }
 
 .ticketsperuserday table td
@@ -279,7 +281,7 @@ table.pplisting tbody td.ppimagecol {
 	color: #111;
 /* 	border-bottom: 1px solid #9baff1; */
 }
-.blacktable table th, .blacktable table tfoot td
+.blacktable table th /*, .blacktable table tfoot td */
 {
 	color: #DDD;
 	text-align:center;
@@ -367,6 +369,15 @@ table.pplisting tbody td.ppimagecol {
   white-space:nowrap;
 }
 
+.blacktable table tfoot td 
+{
+  border-top: 2px solid #DDD;
+}
+
+.blacktable table td.ppstatistics
+{
+  border-left: 2px solid #DDD;
+}
 
 
 /* ***************** date picker ***************** */

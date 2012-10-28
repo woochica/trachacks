@@ -10,6 +10,7 @@
 import string
 import datetime
 import time
+import os
 from genshi.builder import tag
 from genshi.input import HTMLParser
 from genshi.core import Stream as EventStream, Markup

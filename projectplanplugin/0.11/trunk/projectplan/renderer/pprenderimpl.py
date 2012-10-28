@@ -162,7 +162,7 @@ class RenderImpl():
       style += 'background-color: '+self.macroenv.conf.get_map_defaults('ColorForPriority', priority, white)
     return tag.span( tag.span( tag.a('#'+str(tid), href=self.macroenv.tracenv.href.ticket(tid), class_ = cssclass, style = style ), class_ = cssclassouter ), class_ = 'ppticket' )
   
-  def createGoogleChartFromDict( self, colorschema, mydict ):
+  def createGoogleChartFromDict( self, colorschema, mydict, title='', width=170, height=50 ):
     
     #Example: http://chart.googleapis.com/chart?chf=bg,s,FFFFFF00&cht=p&chd=t:1,4,1,1&chs=200x100&chdl=January|February|March|April
     googlecharturl = 'chart.googleapis.com/chart'
@@ -172,7 +172,7 @@ class RenderImpl():
     colors = []
     
     for key in mydict :
-      keys.append(key)
+      keys.append('%s (%s)' % (key,str(mydict[key]) ))
       values.append(str(mydict[key]))
       colors.append(self.macroenv.conf.get_map_val(colorschema, key)[1:] ) # remove #
     
@@ -182,7 +182,10 @@ class RenderImpl():
     
     # nr = random.randrange(0, 9) # randomize server
     
-    return('https://%s?chf=bg,s,FFFFFF00&cht=p3&chd=t:%s&chs=170x50&chdl=%s&chco=%s' % (googlecharturl, ','.join(values), '|'.join(keys), ','.join(colors)) )
+    if title != '' :
+      title = '&chtt=%s&chts=333333,10.5' % (title,)
+    
+    return('https://%s?chf=bg,s,FFFFFF00&cht=p3&chd=t:%s&chs=%sx%s&chma=|0,%s&chdl=%s&chco=%s%s' % (googlecharturl,  ','.join(values),  width,  height, height, '|'.join(keys), ','.join(colors), title) )
   
   def wiki2html( self, myinput ):
     '''

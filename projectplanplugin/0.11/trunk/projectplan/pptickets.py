@@ -104,6 +104,19 @@ class ppTicket():
   def get_changelog( self ):
     t = Ticket(self.env, id)
     return( t.get_changelog() )
+  
+  def getstatus( self ):
+    '''
+      return status of ticket
+    '''
+    return self.getfield('status')
+  
+  def getpriority( self ) :
+    '''
+      return priority of ticket
+    '''
+    return self.getfield('priority')
+ 
 
 class ppTicketSet():
 
@@ -143,6 +156,14 @@ class ppTicketSet():
       return a list of ticket ids of tickets in this set
     '''
     return self.__tickets.keys();
+
+  def getIDSortedList(self):
+    '''
+      return a  sorted list of ticket ids of tickets in this set
+    '''
+    idlist = self.__tickets.keys();
+    idlist.sort()
+    return idlist
 
   def getTicket(self,id):
     '''

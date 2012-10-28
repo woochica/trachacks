@@ -31,11 +31,16 @@ class TicketsPerUserDay(RenderImpl):
     '''
     self.macroenv = macroenv
     
-    segments = self.macroenv.macrokw.get('segments')
-    if segments == None:
-      self.segments = []
-    else:
-      self.segments = [ self.parseTimeSegment(s.strip()) for s in segments.split(';') ] 
+    cols = self.macroenv.macrokw.get('cols') # standard parameter
+    coltype = self.macroenv.macrokw.get('coltype') # standard parameter
+    
+    if cols == None:
+      # for backward compatibility
+      segments = self.macroenv.macrokw.get('segments') 
+      if segments == None:
+        self.segments = []
+      else:
+        self.segments = [ self.parseTimeSegment(s.strip()) for s in segments.split(';') ] 
     
     
     rows = self.macroenv.macrokw.get('rows') # standard parameter
@@ -310,6 +315,212 @@ class TicketsPerUserDay(RenderImpl):
     
     div(table)
     return div
+
+
+
+class TicketTableAvsB(RenderImpl):
+  '''
+    rewritten class of TicketsPerUserDay
+    generic approach to show the tickets over two dimensions
+    examples: 
+      [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B)]]
+      [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B, summary=chart)]]
+    TODO: allow multiple col/row values, like coltype=priority, cols=minor|trivial;major
+  '''
+  def __init__(self,macroenv):
+    '''
+      Initialize
+    '''
+    self.macroenv = macroenv
+    
+    self.coltype = self.macroenv.macrokw.get('coltype') # standard parameter
+    if self.macroenv.macrokw.get('cols') != None :
+      self.cols = [ s.strip() for s in self.macroenv.macrokw.get('cols').split(';') ]     # standard parameter
+    else :
+      self.cols = None
+    
+    self.rowtype = self.macroenv.macrokw.get('rowtype') # standard parameter
+    if self.macroenv.macrokw.get('rows') != None :
+      self.rows = [ s.strip() for s in self.macroenv.macrokw.get('rows').split(';') ]     # standard parameter
+    else :
+      self.rows = None
+    
+    cssclass = self.macroenv.macrokw.get('cssclass')
+    if cssclass == None:
+      self.cssclass = 'blacktable' # fallback
+    else:
+      self.cssclass = cssclass.strip()
+    
+    # init flag for charts summary
+    showsummary = self.macroenv.macrokw.get('summary')
+    self.showsummarypiechart = False
+    if showsummary == None:
+      pass # fallback
+    else:
+      showsummary = showsummary.lower()
+      if showsummary == 'chart' : 
+        self.showsummarypiechart = True # default
+      elif showsummary == 'chart:pie':
+        self.showsummarypiechart = True
+      else:
+        pass
+    
+
+
+  def render(self, ticketset):
+    return_div = tag.div(class_=self.cssclass+' projectplanrender' )
+    
+    # check for missing parameters 
+    missingparameter = False
+    if self.rows == [] or self.rows == None:
+      return_div(tag.div('Missing parameter "rows": use a semicolon-separated list to input the "'+self.rowtype+'".', class_='ppwarning')) 
+      missingparameter = True
+    if self.rowtype == None or  str(self.rowtype).strip() == '':
+      return_div(tag.div('Missing parameter "rowtype": specifies the ticket attribute that should be showed at the rows.', class_='ppwarning')) 
+      missingparameter = True
+    if self.cols == [] or self.cols == None:
+      return_div(tag.div('Missing parameter: use a semicolon-separated list to input the "cols".', class_='ppwarning'))
+      missingparameter = True
+    if self.coltype == None or  str(self.coltype).strip() == '':
+      return_div(tag.div('Missing parameter "coltype": specifies the ticket attribute that should be showed in the columns.', class_='ppwarning')) 
+      missingparameter = True
+    if missingparameter:
+      return return_div
+    
+    
+    #ul = tag.ul()
+    #for tid in ticketset.getIDSortedList():
+      #ticket = ticketset.getTicket(tid)
+      #ul( tag.li(tid, " ",ticket.getfield('component') , " ", ticket.getfield('owner') ))
+    #return_div(ul)
+    def getstatistictitle( statusdict ):
+      mytitle = ''
+      mysum = 0
+      for status in statusdict:
+        mytitle += "%s: %s\n" % (status, str(statusdict[status]) )
+        mysum += int(statusdict[status])
+      mytitle += "%s: %s" % ('number', mysum)
+      return mytitle
+    
+    chartheight=80
+    chartwidth=170
+    
+    data = {}
+    statistics = {}
+    
+    # init table data 
+    for row in self.rows :
+      colstatistics = {}
+      colkeys = {}
+      for col in self.cols :
+        colkeys[col] = []
+        colstatistics[col] = {}
+      data[row] = colkeys
+      statistics[row] = colstatistics
+    
+    for tid in ticketset.getIDSortedList():
+      ticket = ticketset.getTicket(tid)
+      if ticket.getfield(self.rowtype) in self.rows and ticket.getfield(self.coltype) in self.cols :
+        ticket_rowtype = ticket.getfield(self.rowtype)
+        ticket_coltype =  ticket.getfield(self.coltype)
+        data[ticket_rowtype][ticket_coltype].append(ticket)
+        self.log_warn('row:%s col:%s append:%s' % (ticket_rowtype,ticket_coltype,tid))
+    
+    # create HTML table
+    table = tag.table( class_="data pptableticketperday" , border = "1", style = 'width:auto;')
+    
+    # create HTML table head
+    thead = tag.thead()
+    tr = tag.tr()
+    tr( tag.th("%s vs %s" % (self.rowtype,self.coltype) ) )
+    for colkey in self.cols :
+      tr( tag.th(tag.h4(tag.a( colkey, href=self.macroenv.tracenv.href()+('/query?%s=%s&order=%s' % (self.coltype,colkey,self.rowtype)) )),title="%s is %s" % (self.coltype,colkey) ) ) # first line with all colkeys
+    if self.showsummarypiechart:
+      tr( tag.th(tag.h4( "Ticket Overview" ) ) )  
+    thead(tr)
+    table(thead)
+    
+    # create HTML table body
+    tbody = tag.tbody()
+    counter=0
+    
+    for rowkey in self.rows :
+      self.log_warn(rowkey)
+      # switch line color
+      if counter % 2 == 1:
+        class_ = 'odd'
+      else:
+        class_ = 'even'
+      counter += 1
+      tr = tag.tr( class_=class_ ) # new line
+      
+      td = tag.td() # new cell
+      td(tag.h5(tag.a( rowkey, href=self.macroenv.tracenv.href()+('/query?%s=%s&order=%s' % (self.rowtype,rowkey,self.coltype)) )),title="%s is %s" % (self.rowtype,rowkey) ) # first cell contains row key
+      tr(td)
+      for colkey in self.cols :
+        self.log_warn(colkey)
+        td = tag.td()
+        self.log_warn( len(data[rowkey][colkey]) )
+        for ticket in data[rowkey][colkey] :
+          td( tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner' ), " " , mytitle="%s is %s and %s is %s" % (self.rowtype,rowkey,self.coltype,colkey) ) # mytitle might be used later by javascript
+          if not statistics[rowkey][colkey].has_key( ticket.getstatus() ) :
+            statistics[rowkey][colkey][ticket.getstatus()] = 0
+          statistics[rowkey][colkey][ticket.getstatus()] += 1
+        tr(td)
+      
+      # compute statistics
+      rowstatistics = {}
+      count = 0
+      for colkey in statistics[rowkey] :
+        for status in statistics[rowkey][colkey] :
+          if not rowstatistics.has_key(status) : 
+            rowstatistics[status] = 0
+          try:
+            rowstatistics[status] += statistics[rowkey][colkey][status]
+            count += statistics[rowkey][colkey][status]
+          except:
+            pass
+        
+      if self.showsummarypiechart:
+        tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', rowstatistics, '%s tickets' % (count,), height=chartheight )), class_='ppstatistics' , title=getstatistictitle(rowstatistics)) ) # Summary
+      
+      tbody(tr)
+    table(tbody)
+    
+    # create HTML table foot
+    if self.showsummarypiechart :
+      fullstatistics = {}
+      tfoot = tag.tfoot()
+      tr = tag.tr()
+      
+      tr( tag.td(tag.h5('Ticket Overview') ) )
+      
+      # create statistics for col
+      fullcount = 0
+      for colkey in self.cols :
+        colstatistics = {}
+        colcount = 0
+        for rowkey in self.rows :
+          for status in statistics[rowkey][colkey] :
+            if not fullstatistics.has_key(status) : 
+              fullstatistics[status] = 0
+            if not colstatistics.has_key(status) : 
+              colstatistics[status] = 0
+            try:
+              colstatistics[status] += statistics[rowkey][colkey][status]
+              colcount += statistics[rowkey][colkey][status]
+              fullstatistics[status] += statistics[rowkey][colkey][status]
+              fullcount += statistics[rowkey][colkey][status]
+            except:
+              pass
+        tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', colstatistics, '%s tickets' % (colcount,), height=chartheight)), title=getstatistictitle(colstatistics) )) # Col Summary
+      tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', fullstatistics, '%s tickets' % (fullcount,), height=chartheight)), class_='ppstatistics', title=getstatistictitle(fullstatistics))) # Full Summary
+      tfoot(tr)
+      table(tfoot)
+    
+    return_div(table)
+    
+    return return_div 
 
 
 
