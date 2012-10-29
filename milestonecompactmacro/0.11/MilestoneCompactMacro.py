@@ -31,8 +31,8 @@ class MilestoneCompactProcessor(Component):
 
         cursor = self.env.get_db_cnx().cursor()
 
-	query = "SELECT name, due, completed, description from milestone order by due;"
-	cursor.execute(query)
+    query = "SELECT name, due, completed, description from milestone order by due;"
+    cursor.execute(query)
 
         miles = [mile for mile in cursor]
 
@@ -54,8 +54,8 @@ class MilestoneCompactProcessor(Component):
             if completed:
                 d = date.fromtimestamp(completed)
                 dc = d.strftime('%b %d, %Y')
-            dl = int((due-init)/86400)
-            dp = int((due-last)/86400)
+            dl = int((due - init) / 86400)
+            dp = int((due - last) / 86400)
 
             if not tblMode:
                 dt = " '''%s'''" % name
@@ -71,7 +71,7 @@ class MilestoneCompactProcessor(Component):
                 dt = '||%s||%s||%d||%d||%s||%s||' % (name, dd, dl, dp, dc, descrip)
                 content.append(dt)
 
-            last = due                
+            last = due
 
         content = '\n'.join(content)
 
