@@ -31,8 +31,8 @@ class MilestoneCompactProcessor(Component):
 
         cursor = self.env.get_db_cnx().cursor()
 
-    query = "SELECT name, due, completed, description from milestone order by due;"
-    cursor.execute(query)
+        query = "SELECT name, due, completed, description from milestone order by due;"
+        cursor.execute(query)
 
         miles = [mile for mile in cursor]
 
