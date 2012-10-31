@@ -4,6 +4,7 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 announcer-1.0 (not yet released) - branch 0.11 again
  resolved issues
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'
+ * #10083: HTML notifications for attachments do not include the author name
  * #10483: Move license to COPYING file
 
 

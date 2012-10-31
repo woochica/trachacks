@@ -125,7 +125,7 @@
       <div class="descbody" style="font-size: small; padding: 1em;">${description}</div>
       </py:if>
     </div>
-    <py:if test="has_changes">
+    <py:if test="has_changes or attachment">
       <div class="changetitle" style="font-size: small; margin: 1em;">Changes: (by <strong>${author}</strong>)</div>
       <ul>
         <li py:for="change in short_changes" class="changeitem" style="font-size: small;">
@@ -148,7 +148,7 @@
       </ul>
     </py:if>
     <py:if test="comment">
-      <div class="commentstitle" style="font-size: small; margin: 1em;">Comments: <span py:if="not has_changes">(by <strong>${author}</strong>)</span></div>
+      <div class="commentstitle" style="font-size: small; margin: 1em;">Comments: <span py:if="not (has_changes or attachment)">(by <strong>${author}</strong>)</span></div>
       <div class="comments" style="margin: 0 0 0 2em;">${comment}</div>
     </py:if>
     <br />
