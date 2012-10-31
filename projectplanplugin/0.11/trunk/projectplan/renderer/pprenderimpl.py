@@ -47,6 +47,12 @@ class RenderImpl():
     '''
     self.macroenv.tracenv.log.warn(message)
   
+  def log_debug( self, message ):
+    '''
+      shortcut: warn logging
+    '''
+    self.macroenv.tracenv.log.debug(message)
+  
   def getDateFormat( self ):
     return(self.macroenv.conf.get( 'ticketclosedf' ))
   

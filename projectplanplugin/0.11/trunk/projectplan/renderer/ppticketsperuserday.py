@@ -325,6 +325,7 @@ class TicketTableAvsB(RenderImpl):
     examples: 
       [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B)]]
       [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B, summary=chart)]]
+      [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y|Z|Q,coltype=owner,cols=A|B;C)]]
     TODO: allow multiple col/row values, like coltype=priority, cols=minor|trivial;major
   '''
   def __init__(self,macroenv):
@@ -336,12 +337,14 @@ class TicketTableAvsB(RenderImpl):
     self.coltype = self.macroenv.macrokw.get('coltype') # standard parameter
     if self.macroenv.macrokw.get('cols') != None :
       self.cols = [ s.strip() for s in self.macroenv.macrokw.get('cols').split(';') ]     # standard parameter
+      self.cols = [ s.split('|') for s in self.cols ]
     else :
       self.cols = None
     
     self.rowtype = self.macroenv.macrokw.get('rowtype') # standard parameter
     if self.macroenv.macrokw.get('rows') != None :
       self.rows = [ s.strip() for s in self.macroenv.macrokw.get('rows').split(';') ]     # standard parameter
+      self.rows = [ s.split('|') for s in self.rows ]
     else :
       self.rows = None
     
@@ -402,6 +405,28 @@ class TicketTableAvsB(RenderImpl):
       mytitle += "%s: %s" % ('number', mysum)
       return mytitle
     
+    def setKV( myStruct, myKey, newValue ):
+      '''
+        shortcut to set the values correctly
+        used to reduce the code needed while using a list as key of a dict
+      '''
+      myStruct[str(myKey)] = newValue
+    
+    def tableKeyPrettyPrint( mylist ) :
+      '''
+        transform a list of keys to a user readable string
+        in: ['a','b'] --> out: 'a|b'
+      '''
+      return '|'.join(mylist)
+    
+    def tableKeyQueryParameter( parameter, mylist ) :
+      '''
+        transform a list of keys to a Trac query string parameter  (OR)
+        in: x, ['a','b'] --> out: 'x=a&x=b'
+      '''
+      return '&'.join([ "%s=%s" % (parameter, s) for s in mylist ])
+    
+    
     chartheight=80
     chartwidth=170
     
@@ -413,18 +438,28 @@ class TicketTableAvsB(RenderImpl):
       colstatistics = {}
       colkeys = {}
       for col in self.cols :
-        colkeys[col] = []
-        colstatistics[col] = {}
-      data[row] = colkeys
-      statistics[row] = colstatistics
+        # colkeys[col] = []
+        setKV( colkeys, col, [] )
+        # colstatistics[col] = {}
+        setKV( colstatistics, col, {} )
+      # data[row] = colkeys
+      setKV( data, row, colkeys )
+      # statistics[row] = colstatistics
+      setKV( statistics, row, colstatistics )
     
     for tid in ticketset.getIDSortedList():
       ticket = ticketset.getTicket(tid)
-      if ticket.getfield(self.rowtype) in self.rows and ticket.getfield(self.coltype) in self.cols :
-        ticket_rowtype = ticket.getfield(self.rowtype)
-        ticket_coltype =  ticket.getfield(self.coltype)
-        data[ticket_rowtype][ticket_coltype].append(ticket)
-        self.log_warn('row:%s col:%s append:%s' % (ticket_rowtype,ticket_coltype,tid))
+      ticket_rowtype = ticket.getfield(self.rowtype)
+      ticket_coltype =  ticket.getfield(self.coltype)
+      
+      # determine the data cell where the ticket has to be added, keep in mind that rows and cols are list of lists
+      for row in self.rows :
+        for col in self.cols :
+          if ticket_rowtype in row and ticket_coltype in col :
+            data[str(row)][str(col)].append(ticket) # save tickets at precise values of row and col
+            self.log_debug('row:%s col:%s append:%s' % (row,col,tid))
+      
+      # if ticket_rowtype in self.rows and ticket_coltype in self.cols :
     
     # create HTML table
     table = tag.table( class_="data pptableticketperday" , border = "1", style = 'width:auto;')
@@ -434,7 +469,7 @@ class TicketTableAvsB(RenderImpl):
     tr = tag.tr()
     tr( tag.th("%s vs %s" % (self.rowtype,self.coltype) ) )
     for colkey in self.cols :
-      tr( tag.th(tag.h4(tag.a( colkey, href=self.macroenv.tracenv.href()+('/query?%s=%s&order=%s' % (self.coltype,colkey,self.rowtype)) )),title="%s is %s" % (self.coltype,colkey) ) ) # first line with all colkeys
+      tr( tag.th(tag.h4(tag.a( tableKeyPrettyPrint(colkey), href=self.macroenv.tracenv.href()+('/query?%s&order=%s' % ( tableKeyQueryParameter(self.coltype, colkey),self.rowtype)) )),title="%s is %s" % (self.coltype, tableKeyPrettyPrint(colkey) ) ) ) # first line with all colkeys
     if self.showsummarypiechart:
       tr( tag.th(tag.h4( "Ticket Overview" ) ) )  
     thead(tr)
@@ -445,7 +480,6 @@ class TicketTableAvsB(RenderImpl):
     counter=0
     
     for rowkey in self.rows :
-      self.log_warn(rowkey)
       # switch line color
       if counter % 2 == 1:
         class_ = 'odd'
@@ -455,29 +489,27 @@ class TicketTableAvsB(RenderImpl):
       tr = tag.tr( class_=class_ ) # new line
       
       td = tag.td() # new cell
-      td(tag.h5(tag.a( rowkey, href=self.macroenv.tracenv.href()+('/query?%s=%s&order=%s' % (self.rowtype,rowkey,self.coltype)) )),title="%s is %s" % (self.rowtype,rowkey) ) # first cell contains row key
+      td(tag.h5(tag.a( tableKeyPrettyPrint(rowkey), href=self.macroenv.tracenv.href()+('/query?%s&order=%s' % ( tableKeyQueryParameter( self.rowtype,rowkey),self.coltype)) )),title="%s is %s" % (self.rowtype, tableKeyPrettyPrint(rowkey) ) ) # first cell contains row key
       tr(td)
       for colkey in self.cols :
-        self.log_warn(colkey)
         td = tag.td()
-        self.log_warn( len(data[rowkey][colkey]) )
-        for ticket in data[rowkey][colkey] :
+        for ticket in data[str(rowkey)][str(colkey)] :
           td( tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner' ), " " , mytitle="%s is %s and %s is %s" % (self.rowtype,rowkey,self.coltype,colkey) ) # mytitle might be used later by javascript
-          if not statistics[rowkey][colkey].has_key( ticket.getstatus() ) :
-            statistics[rowkey][colkey][ticket.getstatus()] = 0
-          statistics[rowkey][colkey][ticket.getstatus()] += 1
+          if not statistics[str(rowkey)][str(colkey)].has_key( ticket.getstatus() ) :
+            statistics[str(rowkey)][str(colkey)][ticket.getstatus()] = 0
+          statistics[str(rowkey)][str(colkey)][ticket.getstatus()] += 1
         tr(td)
       
       # compute statistics
       rowstatistics = {}
       count = 0
-      for colkey in statistics[rowkey] :
-        for status in statistics[rowkey][colkey] :
+      for colkey in statistics[str(rowkey)] :
+        for status in statistics[str(rowkey)][str(colkey)] :
           if not rowstatistics.has_key(status) : 
             rowstatistics[status] = 0
           try:
-            rowstatistics[status] += statistics[rowkey][colkey][status]
-            count += statistics[rowkey][colkey][status]
+            rowstatistics[status] += statistics[str(rowkey)][str(colkey)][status]
+            count += statistics[str(rowkey)][str(colkey)][status]
           except:
             pass
         
@@ -501,16 +533,16 @@ class TicketTableAvsB(RenderImpl):
         colstatistics = {}
         colcount = 0
         for rowkey in self.rows :
-          for status in statistics[rowkey][colkey] :
+          for status in statistics[str(rowkey)][str(colkey)] :
             if not fullstatistics.has_key(status) : 
               fullstatistics[status] = 0
             if not colstatistics.has_key(status) : 
               colstatistics[status] = 0
             try:
-              colstatistics[status] += statistics[rowkey][colkey][status]
-              colcount += statistics[rowkey][colkey][status]
-              fullstatistics[status] += statistics[rowkey][colkey][status]
-              fullcount += statistics[rowkey][colkey][status]
+              colstatistics[status] += statistics[str(rowkey)][str(colkey)][status]
+              colcount += statistics[str(rowkey)][str(colkey)][status]
+              fullstatistics[status] += statistics[str(rowkey)][str(colkey)][status]
+              fullcount += statistics[str(rowkey)][str(colkey)][status]
             except:
               pass
         tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', colstatistics, '%s tickets' % (colcount,), height=chartheight)), title=getstatistictitle(colstatistics) )) # Col Summary
