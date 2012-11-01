@@ -164,8 +164,7 @@ class TeamCalendar(Component):
             flat = [item for sublist in inserts for item in sublist]
             insert_cursor.execute("INSERT INTO %s " % self.table_name + \
                                       "(ondate, username, availability) " + \
-                                      "VALUES %s" % valuesClause,
-                                  flat)
+                                      "VALUES %s" % valuesClause, flat)
 
         if len(updates):
             update_cursor = db.cursor()
