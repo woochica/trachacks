@@ -31,11 +31,11 @@ class ScheduledWorkflow(Component):
     # IAdminCommandProvider methods
 
     def get_admin_commands(self):
-        yield ('transition', '<oldstate> <newstate> <days> [<user> <explanation>]',
+        yield ('transition do', '<oldstate> <newstate> <days> [<user> [<explanation>]]',
                'Transition tickets from <oldstate> to <newstate> if they have been in <oldstate> for <days> or longer',
                self._complete_transition, self._do_transition)
-        yield ('transition_list', '<oldstate> <days>',
-               'List tickets that have been in <oldstate> for <days> or longer',
+        yield ('transition check', '<oldstate> <days>',
+               'Show tickets that have been in <oldstate> for <days> or longer',
                self._complete_transition_list, self._list_transition)
 
     def _do_transition(self, oldstate, newstate, days, user=None, explanation=None):
