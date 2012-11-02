@@ -312,7 +312,7 @@ class Graphviz(Component):
         map_path = os.path.join(self.cache_dir, map_name)
 
         # Check for URL="" presence in graph code
-        URL_in_graph = 'URL=' in content
+        URL_in_graph = 'URL=' in content or 'href=' in content
 
         # Create image if not in cache
         if not os.path.exists(img_path):
@@ -414,7 +414,7 @@ class Graphviz(Component):
     def _expand_wiki_links(self, context, out_format, content):
         """Expand TracLinks that follow all URL= patterns."""
         def expand(match):
-            wiki_text = match.groups()[0] # TracLink ([1], source:file/, ...)
+            attrib, wiki_text = match.groups() # "URL" or "href", "TracLink"
             link = extract_link(self.env, context, wiki_text)
             link = find_element(link, 'href')
             if link:
@@ -425,15 +425,15 @@ class Graphviz(Component):
                 href = wiki_text
                 description = None
             if out_format == 'svg':
-                format = 'URL="javascript:window.parent.location.href=\'%s\'"'
+                format = '="javascript:window.parent.location.href=\'%s\'"'
             else:
-                format = 'URL="%s"'
-            url = format % href
+                format = '="%s"'
+            attribs = attrib + format % href
             if description:
-                url += '\ntooltip="%s"' % description \
-                        .replace('"', '').replace('\n', '')
-            return url
-        return re.sub(r'URL="(.*?)"', expand, content)
+                attribs += '\ntooltip="%s"' % (description.replace('"', '')
+                                               .replace('\n', ''))
+            return attribs
+        return re.sub(r'(URL|href)="(.*?)"', expand, content)
 
     def _load_config(self):
         """Preprocess the graphviz trac.ini configuration."""
