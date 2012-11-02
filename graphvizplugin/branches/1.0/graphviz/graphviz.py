@@ -176,8 +176,8 @@ class Graphviz(Component):
 
     def render(self, context, mimetype, content, filename=None, url=None):
         ext = filename.split('.')[1]
-        name = ext == 'graphviz' and 'graphviz' or 'graphviz.%s' % ext
-        text = hasattr(content, 'read') and content.read() or content
+        name = 'graphviz' if ext == 'graphviz' else 'graphviz.%s' % ext
+        text = content.read() if hasattr(content, 'read') else content
         return self.expand_macro(context, name, text)
 
 
@@ -185,7 +185,6 @@ class Graphviz(Component):
 
     def match_request(self, req):
         return req.path_info.startswith('/graphviz')
-
 
     def process_request(self, req):
         # check and load the configuration
