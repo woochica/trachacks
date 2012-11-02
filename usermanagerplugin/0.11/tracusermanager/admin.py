@@ -129,6 +129,9 @@ class UserManagementAdminPage(Component):
         # adding usernamager's data to the data dict
         data.update(user_manager = um_data)
         
+        data['sort'] = req.args.get('sort') or 'name'
+        data['asc'] = req.args.get('asc') or '1'
+        
         # checking for external users
         trac_managed_users_out = self._do_import_current_users(req, dry_run=True)
         if len(trac_managed_users_out)>0:

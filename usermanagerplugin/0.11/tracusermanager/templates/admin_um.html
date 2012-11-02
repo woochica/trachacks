@@ -5,6 +5,7 @@
       xmlns:xi="http://www.w3.org/2001/XInclude"
       xmlns:py="http://genshi.edgewall.org/" >
     <xi:include href="admin.html" />
+    <?python from operator import itemgetter ?>
     <head>
         <title>Manage Team</title>
     </head>
@@ -27,17 +28,38 @@
                     </tr>           
                     <tr>
                         <th width="1%" align="left"></th>
-                        <th align="left">User</th>
-                        <th align="left" py:for="cell_dict in sorted(user_manager.cells, lambda x,y:x['order']-y['order'])">${cell_dict.label}</th>
+                        <?python desc = asc == '1' and '0' or '1' ?>
+                        <th align="left" class="${sort == 'username' and (asc == '1' and 'asc' or 'desc') or None}">
+                          <a title="${_('Sort by User %(direction)s',
+                                         direction=(sort =='username' and asc == '1' and
+                                                    _('(descending)') or _('(ascending)')))}"
+                             href="${href.admin('accounts/users', sort='username',
+                                                asc=sort =='username' and asc == '1' and '0' or '1')}">
+                            User
+                          </a>
+                        </th>
+                        <th align="left" py:for="cells in sorted(user_manager.cells, key=itemgetter('order'))"
+                            class="${sort == cells.name and (asc == '1' and 'asc' or 'desc') or None}">
+                          <a title="${_('Sort by %(label)s %(direction)s',
+                                         label=cells.label,
+                                         direction=(sort == cells.name and asc == '1' and
+                                                    _('(descending)') or _('(ascending)')))}"
+                             href="${href.admin('accounts/users', sort=cells.name,
+                                                asc=sort == cells.name and asc == '1' and '0' or '1')}">
+                            ${cells.label}
+                          </a>
+                        </th>
                         <th width="1%" align="center">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                <py:for each="user in sorted(users, lambda x,y:x.username>y.username and 1 or -1)">
+                <py:for each="user in sorted(users, key=itemgetter(sort), reverse=asc == '0')">
                     <tr id="um_user_${user.username}">
                         <th rowspan="${(user_manager.user and user_manager.user.username==user.username) and '2' or None}"><img src="${href.chrome('tracusermanager')+'/img/user.png'}" /></th>
                         <th rowspan="1" valign="top" align="left" ><a href="${panel_href(user.username, (not is_trac_managed and user_manager.default_panel!='account') and user_manager.default_panel or 'profile')}#um_user_${user.username}" class="expander${(user_manager.user and user_manager.user.username==user.username) and '_open' or ''}">${user.username}</a></th>
-                        <th align="left" py:for="cell_dict in sorted(user_manager.cells, lambda x,y:x['order']-y['order'])" title="${cell_dict.label}">${cell_dict.render_method(cell_dict.name, user)}</th>
+                        <th align="left" py:for="cell_dict in sorted(user_manager.cells, lambda x,y:x['order']-y['order'])" title="${cell_dict.label}">
+                          ${cell_dict.render_method(cell_dict.name, user)}
+                        </th>
                         <th align="left" >
                             <form method="POST" action="${panel_href()}">
                                 <input type="hidden" name="um_deleteuser_username" value="$user.username"/>                 

@@ -52,6 +52,8 @@ class User(object):
             value = self.user_manager.get_user_attribute(self.username, attribute)
             if value:
                 return value
+            elif attribute == 'username':
+                return self.username
         if self.default_attributes.has_key(attribute):
             return self.default_attributes[attribute]      
             
