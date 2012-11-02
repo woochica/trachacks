@@ -162,7 +162,7 @@ class Graphviz(Component):
 
 
     def __init__(self):
-        self.log.info('version: %s - id: %s' % (__version__, str(__id__)))
+        self.log.info('version: %s - id: %s', __version__, str(__id__))
 
 
     # IHTMLPreviewRenderer methods
@@ -293,7 +293,7 @@ class Graphviz(Component):
                                    processor)
 
         if out_format not in Graphviz.Formats:
-            self.log.error('render_macro: requested format (%s) not found.' %
+            self.log.error('render_macro: requested format (%s) not found.',
                            out_format)
             return self._error_div(
                     tag.p(_("Graphviz macro processor error: "
@@ -484,8 +484,8 @@ class Graphviz(Component):
 
             if not pname:
                 self.log.warn('The %s program was not found. '
-                              'The graphviz/%s macro will be disabled.' %
-                              (pname, name))
+                              'The graphviz/%s macro will be disabled.',
+                              pname, name)
                 Graphviz.Processors.remove(name)
 
             self.cmds[name] = pname
@@ -585,7 +585,7 @@ class Graphviz(Component):
             size = 0
 
             for name in os.listdir(self.cache_dir):
-                #self.log.debug('clean_cache.entry: %s' % name)
+                #self.log.debug('clean_cache.entry: %s', name)
                 entry_list[name] = os.stat(os.path.join(self.cache_dir, name))
 
                 atime_list.setdefault(entry_list[name][7], []).append(name)
@@ -597,9 +597,9 @@ class Graphviz(Component):
             atime_keys = atime_list.keys()
             atime_keys.sort()
 
-            #self.log.debug('clean_cache.atime_keys: %s' % atime_keys)
-            #self.log.debug('clean_cache.count: %d' % count)
-            #self.log.debug('clean_cache.size: %d' % size)
+            #self.log.debug('clean_cache.atime_keys: %s', atime_keys)
+            #self.log.debug('clean_cache.count: %d', count)
+            #self.log.debug('clean_cache.size: %d', size)
 
             # In the spirit of keeping the code fairly simple, the
             # clearing out of files from the cache directory may
