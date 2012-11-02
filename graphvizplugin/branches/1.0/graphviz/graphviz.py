@@ -80,8 +80,8 @@ class Graphviz(Component):
             """The directory that will be used to cache the generated
             images.  Note that if different than the default (`%s`),
             this directory must exist.  If not given as an absolute
-            path, the path will be relative to the Trac environment's
-            directory.
+            path, the path will be relative to the `files` directory 
+            within the Trac environment's directory.
             """ % DEFAULT_CACHE_DIR)
 
     encoding = Option("graphviz", "encoding", 'utf-8',
@@ -448,8 +448,8 @@ class Graphviz(Component):
             return _("The [graphviz] section is missing the cache_dir field.")
 
         if not os.path.isabs(self.cache_dir):
-            self.cache_dir = os.path.join(self.env.path, self.cache_dir)
-
+            self.cache_dir = os.path.join(self.env.path, 'files', 
+                                          self.cache_dir)
         if not os.path.exists(self.cache_dir):
             if self.cache_dir_option == self.DEFAULT_CACHE_DIR:
                 os.mkdir(self.cache_dir)
