@@ -310,7 +310,8 @@ class Graphviz(Component):
         encoded_cmd = (processor + unicode(self.processor_options)) \
             .encode(self.encoding)
         encoded_content = content.encode(self.encoding)
-        sha_key  = sha.new(encoded_cmd + encoded_content).hexdigest()
+        sha_key  = sha.new(encoded_cmd + encoded_content +
+                           ('S' if self.sanitizer else '')).hexdigest()
         img_name = '%s.%s.%s' % (sha_key, processor, out_format)
         # cache: hash.<dot>.<png>
         img_path = os.path.join(self.cache_dir, img_name)
@@ -412,7 +413,7 @@ class Graphviz(Component):
             f.close()
             map = "".join(map).replace('\n', '')
             return tag(tag.map(Markup(map),
-                               id='G' + sha_key, name='G'+sha_key),
+                               id='G' + sha_key, name='G' + sha_key),
                        tag.img(src=img_url, usemap="#G" + sha_key,
                                alt=_("GraphViz image")))
         else:
