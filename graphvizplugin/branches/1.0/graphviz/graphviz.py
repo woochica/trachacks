@@ -34,7 +34,7 @@ from trac.util.html import escape, find_element
 from trac.util.text import to_unicode
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
-from trac.wiki.api import IWikiMacroProvider
+from trac.wiki.api import IWikiMacroProvider, WikiSystem
 from trac.wiki.formatter import extract_link
 
 
@@ -424,15 +424,19 @@ class Graphviz(Component):
             else:
                 href = wiki_text
                 description = None
-            if out_format == 'svg':
-                format = '="javascript:window.parent.location.href=\'%s\'"'
-            else:
-                format = '="%s"'
-            attribs = attrib + format % href
+                if not WikiSystem(self.env).render_unsafe_content:
+                    href = ''
+            attribs = []
+            if href:
+                if out_format == 'svg':
+                    format = '="javascript:window.parent.location.href=\'%s\'"'
+                else:
+                    format = '="%s"'
+                attribs.append(attrib + format % href)
             if description:
-                attribs += '\ntooltip="%s"' % (description.replace('"', '')
-                                               .replace('\n', ''))
-            return attribs
+                attribs.append('tooltip="%s"' % (description.replace('"', '')
+                                                 .replace('\n', '')))
+            return '\n'.join(attribs)
         return re.sub(r'(URL|href)="(.*?)"', expand, content)
 
     def _load_config(self):
