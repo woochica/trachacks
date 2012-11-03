@@ -185,7 +185,8 @@ class DiscussionEmailNotification(Component):
     # Configuration options.
 
     smtp_always_cc = ListOption('discussion', 'smtp_always_cc', [],
-      _('Always send discussion notification to listed e-mail addresses.'))
+        doc=_('''Always send discussion notifications to the listed e-mail
+                 addresses.'''))
 
     # IForumChangeListener methods.
 
