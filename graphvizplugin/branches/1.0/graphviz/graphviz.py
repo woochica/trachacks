@@ -24,18 +24,21 @@ import sha
 import subprocess
 import sys
 
+from StringIO import StringIO
+
 from genshi.builder import Element, tag
-from genshi.core import Markup
+from genshi.core import Markup, Stream
+from genshi.input import HTMLParser
 
 from trac.config import BoolOption, IntOption, Option
 from trac.core import *
 from trac.mimeview.api import Context, IHTMLPreviewRenderer, MIME_MAP
-from trac.util.html import escape, find_element
+from trac.util.html import TracHTMLSanitizer, escape, find_element
 from trac.util.text import to_unicode
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
 from trac.wiki.api import IWikiMacroProvider, WikiSystem
-from trac.wiki.formatter import extract_link
+from trac.wiki.formatter import extract_link, WikiProcessor
 
 
 class Graphviz(Component):
@@ -161,8 +164,13 @@ class Graphviz(Component):
             """)
 
 
+    sanitizer = None
+
     def __init__(self):
         self.log.info('version: %s - id: %s', __version__, str(__id__))
+        wiki = WikiSystem(self.env)
+        if not wiki.render_unsafe_content:
+            self.sanitizer = TracHTMLSanitizer(wiki.safe_schemes)
 
 
     # IHTMLPreviewRenderer methods
@@ -318,6 +326,9 @@ class Graphviz(Component):
         if not os.path.exists(img_path):
             self._clean_cache()
 
+            if self.sanitizer:
+                content = self._sanitize_html_labels(content)
+
             if URL_in_graph: # translate wiki TracLinks in URL
                 if isinstance(formatter_or_context, Context):
                     context = formatter_or_context
@@ -424,7 +435,7 @@ class Graphviz(Component):
             else:
                 href = wiki_text
                 description = None
-                if not WikiSystem(self.env).render_unsafe_content:
+                if self.sanitizer:
                     href = ''
             attribs = []
             if href:
@@ -438,6 +449,14 @@ class Graphviz(Component):
                                                  .replace('\n', '')))
             return '\n'.join(attribs)
         return re.sub(r'(URL|href)="(.*?)"', expand, content)
+
+    def _sanitize_html_labels(self, content):
+        def sanitize(match):
+            html = match.group(1)
+            stream = Stream(HTMLParser(StringIO(html)))
+            sanitized = (stream | self.sanitizer).render('xhtml', encoding=None)
+            return "label=<%s>" % sanitized
+        return re.sub(r'label=<(.*)>', sanitize, content)
 
     def _load_config(self):
         """Preprocess the graphviz trac.ini configuration."""
