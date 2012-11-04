@@ -305,6 +305,71 @@ class AnnouncementSystemTestCase(unittest.TestCase):
             # Shouldn't raise an TypeError with appropriate column type.
             result = priority[0] + 0
 
+    def test_upgrade_to_schema_v5(self):
+        # Schema from r9210 - 29-Sep-2010 for announcer-0.12.1 by R. Corsaro.
+        schema = [
+            Table('subscription', key='id')[
+                Column('id', auto_increment=True),
+                Column('time', type='int64'),
+                Column('changetime', type='int64'),
+                Column('class'),
+                Column('sid'),
+                Column('authenticated', type='int'),
+                Column('distributor'),
+                Column('format'),
+                Column('priority', type='int'),
+                Column('adverb')
+            ],
+            Table('subscription_attribute', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('class'),
+                Column('realm'),
+                Column('target')
+            ]
+        ]
+        self._schema_init(schema)
+
+        # Populate tables with test data.
+        cursor = self.db.cursor()
+        cursor.executemany("""
+            INSERT INTO session
+                   (sid,authenticated,last_visit)
+            VALUES (%s,%s,%s)
+        """, (('somebody','0','0'), ('user','1','0')))
+        cursor.executemany("""
+            INSERT INTO subscription_attribute
+                   (sid,class,realm,target)
+            VALUES (%s,%s,%s,%s)
+        """, (('somebody','GeneralWikiSubscriber','wiki', '*'),
+              ('somebody','UserChangeSubscriber','wiki','created'),
+              ('user','GeneralWikiSubscriber','wiki', 'TracWiki')))
+
+        self.assertEquals(4, self.an_sys.get_schema_version(self.db))
+        target = 5
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        # From r9235 - 01-Oct-2010 for announcer-0.12.1 by Robert Corsaro.
+        # + 'subscription_attribute.authenticated'
+        self.an_sys.upgrade_environment(self.db)
+
+        self.assertEquals(target, self.an_sys.get_schema_version(self.db))
+        self._verify_version_unregistered()
+        cursor = self.db.cursor()
+        cursor.execute("SELECT * FROM subscription_attribute")
+        columns = [col[0] for col in self._get_cursor_description(cursor)]
+        self.assertTrue('name' not in columns)
+        self.assertTrue('value' not in columns)
+        self.assertEquals(
+            ['id', 'sid', 'authenticated', 'class', 'realm', 'target'],
+            columns
+        )
+        # Check authenticated attribute for session IDs.
+        subscriptions = [(row[1],(row[2])) for row in cursor]
+        for sub in subscriptions:
+            self.assertTrue((sub[0] == 'user' and sub[1] == 1) or sub[1] == 0)
+
 
 class SubscriptionResolverTestCase(unittest.TestCase):
     def setUp(self):
