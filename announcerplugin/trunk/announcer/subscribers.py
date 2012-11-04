@@ -807,8 +807,7 @@ class WatchSubscriber(Component):
     def ticket_deleted(self, ticket):
         klass = self.__class__.__name__
         SubscriptionAttribute.delete_by_class_realm_and_target(
-                self.env, klass, 'ticket', page.name)
-        db = self.env.get_db_cnx()
+                self.env, klass, 'ticket', self._get_target_id(ticket.id))
 
     def matches(self, event):
         klass = self.__class__.__name__
