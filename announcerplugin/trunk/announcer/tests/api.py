@@ -183,6 +183,53 @@ class AnnouncementSystemTestCase(unittest.TestCase):
                           columns
         )
 
+    def test_upgrade_to_schema_v3(self):
+        # Schema from r3047 - 13-Jan-2008 for announcer-0.2 by Stephen Hansen.
+        schema = [
+            Table('subscriptions', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('authenticated', type='int'),
+                Column('enabled', type='int'),
+                Column('managed'),
+                Column('realm'),
+                Column('category'),
+                Column('rule'),
+                Column('transport'),
+                Index(['id']),
+                Index(['realm', 'category', 'enabled']),
+            ]
+        ]
+        self._schema_init(schema)
+
+        # Populate tables with test data.
+        cursor = self.db.cursor()
+        cursor.executemany("""
+            INSERT INTO session_attribute
+                   (sid,authenticated,name,value)
+            VALUES (%s,1,%s,%s)
+        """, (('user','announcer_email_format_ticket','text/html'),
+              ('user','announcer_email_format_wiki','text/plain'),
+              ('user','announcer_specified_email','')))
+        cursor.executemany("""
+            INSERT INTO subscriptions
+                   (sid,authenticated,enabled,managed,
+                    realm,category,rule,transport)
+            VALUES (%s,%s,1,%s,%s,%s,%s,%s)
+        """, (('user',1,'watcher','ticket','changed','1','email'),
+              ('user',1,'watcher','wiki','*','WikiStart','email')))
+
+        self.assertEquals(2, self.an_sys.get_schema_version(self.db))
+        target = 3
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        # From r9116 - 25-Sep-2010 for announcer-0.12.1 by Robert Corsaro.
+        # + table 'subscription', 'subscription_attribute'
+        self.an_sys.upgrade_environment(self.db)
+
+        self.assertEquals(target, self.an_sys.get_schema_version(self.db))
+
 
 class SubscriptionResolverTestCase(unittest.TestCase):
     def setUp(self):
