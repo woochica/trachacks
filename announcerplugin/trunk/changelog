@@ -3,7 +3,11 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
 announcer-1.0 (not yet released) - branch 0.11 again
  resolved issues
+ * #7974: UnboundLocalError: local variable 'tid' referenced before assignment
+          with announcements from AccountManager plugin
+ * #8062: Database upgrade silently fails when no i18n is available
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'
+ * #9522: Announcer Plugin doesn't work
  * #10083: HTML notifications for attachments do not include the author name
  * #10483: Move license to COPYING file
  * #10584: Attachment description field not formatted to HTML
