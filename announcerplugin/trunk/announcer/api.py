@@ -441,6 +441,9 @@ class AnnouncementSystem(Component):
         return row and int(row[0]) or 0
 
     def _upgrade_db(self, db):
+        """Each schema version should have its own upgrade module, named
+        upgrades/dbN.py, where 'N' is the version number (int).
+        """
         db_mgr = DatabaseManager(self.env)
         schema_ver = self.get_schema_version(db)
 
@@ -457,6 +460,26 @@ class AnnouncementSystem(Component):
                 cursor.executemany("INSERT INTO %s (%s) VALUES (%s)" % (table,
                                    ','.join(cols),
                                    ','.join(['%s' for c in cols])), vals)
+        else:
+            # Perform incremental upgrades.
+            for i in range(schema_ver + 1, db_default.schema_version + 1):
+                name  = 'db%i' % i
+                try:
+                    upgrades = __import__('announcer.upgrades', globals(),
+                                          locals(), [name])
+                    script = getattr(upgrades, name)
+                except AttributeError:
+                    raise TracError(_("""
+                        No upgrade module for version %(num)i (%(version)s.py)
+                        """, num=i, version=name))
+                script.do_upgrade(self.env, i, cursor)
+        cursor.execute("""
+            UPDATE system
+               SET value=%s
+             WHERE name='announcer_version'
+            """, (db_default.schema_version,))
+        self.log.info("Upgraded TracAnnouncer db schema from version %d to %d"
+                      % (schema_ver, db_default.schema_version))
         db.commit()
 
     # AnnouncementSystem core methods
