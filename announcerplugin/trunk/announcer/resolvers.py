@@ -2,6 +2,7 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009, Robert Corsaro
+# Copyright (c) 2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -13,8 +14,9 @@ from trac.util.compat import sorted
 
 from announcer.api import IAnnouncementAddressResolver
 from announcer.api import IAnnouncementPreferenceProvider
-from announcer.util.settings import SubscriptionSetting
 from announcer.api import _
+from announcer.util.settings import SubscriptionSetting
+
 
 class DefaultDomainEmailResolver(Component):
     implements(IAnnouncementAddressResolver)
@@ -26,6 +28,7 @@ class DefaultDomainEmailResolver(Component):
         if self.default_domain:
             return '%s@%s' % (name, self.default_domain)
         return None
+
 
 class SessionEmailResolver(Component):
     implements(IAnnouncementAddressResolver)
@@ -39,7 +42,7 @@ class SessionEmailResolver(Component):
              WHERE sid=%s
                AND authenticated=%s
                AND name=%s
-        """, (name, authenticated and 1 or 0, 'email'))
+        """, (name, int(authenticated), 'email'))
         result = cursor.fetchone()
         if result:
             return result[0]

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2010, Robert Corsaro
+# Copyright (c) 2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -13,14 +14,20 @@
 # checking for unauthenticated users should be done against the 'anonymous'
 # user.
 
+from datetime import datetime
+
 from trac.util.datefmt import utc
 
+from announcer.compat import to_utimestamp
+
+
 __all__ = ['Subscription', 'SubscriptionAttribute']
+
 
 class Subscription(object):
 
     fields = ('id', 'sid', 'authenticated', 'distributor', 'format',
-            'priority', 'adverb', 'class')
+              'priority', 'adverb', 'class')
 
     def __init__(self, env):
         self.env = env
@@ -45,15 +52,16 @@ class Subscription(object):
             priority = len(cls.find_by_sid_and_distributor(env,
                 subscription['sid'], subscription['authenticated'],
                 subscription['distributor'], db))+1
+            now = to_utimestamp(datetime.now(utc))
             cursor.execute("""
-            INSERT INTO subscription
-                        (time, changetime, sid, authenticated, distributor,
-                        format, priority, adverb, class)
-                 VALUES (CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s, %s, %s)
-            """, (subscription['sid'], subscription['authenticated'],
-            subscription['distributor'], subscription['format'],
-            int(priority), subscription['adverb'],
-            subscription['class']))
+                INSERT INTO subscription
+                       (time,changetime,sid,authenticated,
+                        distributor,format,priority,adverb,class)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+            """, (now, now, subscription['sid'], subscription['authenticated'],
+                  subscription['distributor'], subscription['format'],
+                  int(priority), subscription['adverb'], subscription['class'])
+            )
 
     @classmethod
     def delete(cls, env, rule_id, db=None):
@@ -61,17 +69,18 @@ class Subscription(object):
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            SELECT sid, authenticated, distributor
-              FROM subscription
-             WHERE id=%s
+                SELECT sid,authenticated,distributor
+                  FROM subscription
+                 WHERE id=%s
             """, (rule_id,))
             sid, authenticated, distributor = cursor.fetchone()
             cursor.execute("""
-            DELETE FROM subscription
-                  WHERE id = %s
+                DELETE FROM subscription
+                 WHERE id=%s
             """, (rule_id,))
             i = 1
-            for s in cls.find_by_sid_and_distributor(env, sid, authenticated, distributor, db):
+            for s in cls.find_by_sid_and_distributor(env, sid, authenticated,
+                                                     distributor, db):
                 s['priority'] = i
                 s._update_priority(db)
                 i += 1
@@ -82,15 +91,17 @@ class Subscription(object):
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            SELECT sid, authenticated, distributor
-              FROM subscription
-             WHERE id=%s
+                SELECT sid,authenticated,distributor
+                  FROM subscription
+                 WHERE id=%s
             """, (rule_id,))
             sid, authenticated, distributor = cursor.fetchone()
-            if priority > len(cls.find_by_sid_and_distributor(env, sid, authenticated, distributor, db)):
+            if priority > len(cls.find_by_sid_and_distributor(env,
+                                  sid, authenticated, distributor, db)):
                 return
             i = 1
-            for s in cls.find_by_sid_and_distributor(env, sid, authenticated, distributor, db):
+            for s in cls.find_by_sid_and_distributor(env, sid, authenticated,
+                                                     distributor, db):
                 if int(s['id']) == int(rule_id):
                     s['priority'] = priority
                     s._update_priority(db)
@@ -102,37 +113,39 @@ class Subscription(object):
                 else:
                     s['priority'] = i
                     s._update_priority(db)
-                i+=1
+                i += 1
 
     @classmethod
-    def update_format_by_distributor_and_sid(cls, env, distributor, sid, authenticated, format, db=None):
+    def update_format_by_distributor_and_sid(cls, env, distributor, sid,
+                                             authenticated, format, db=None):
         @env.with_transaction(db)
         def do_update(db):
             cursor = db.cursor()
             cursor.execute("""
-            UPDATE subscription
-               SET format=%s
-             WHERE distributor=%s
-               AND sid=%s
-               AND authenticated=%s
-            """, (format, distributor, sid, authenticated))
+                UPDATE subscription
+                   SET format=%s
+                 WHERE distributor=%s
+                   AND sid=%s
+                   AND authenticated=%s
+            """, (format, distributor, sid, int(authenticated)))
 
     @classmethod
-    def find_by_sid_and_distributor(cls, env, sid, authenticated, distributor, db=None):
+    def find_by_sid_and_distributor(cls, env, sid, authenticated, distributor,
+                                    db=None):
         subs = []
 
         @env.with_transaction(db)
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-              SELECT id, sid, authenticated, distributor,
-                     format, priority, adverb, class
-                FROM subscription
-               WHERE sid=%s
-                 AND authenticated=%s
-                 AND distributor=%s
-            ORDER BY priority
-            """, (sid,authenticated,distributor))
+                SELECT id,sid,authenticated,distributor,
+                       format,priority,adverb,class
+                  FROM subscription
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND distributor=%s
+                 ORDER BY priority
+            """, (sid, int(authenticated), distributor))
             for i in cursor.fetchall():
                 sub = Subscription(env)
                 sub['id'] = i[0]
@@ -160,13 +173,13 @@ class Subscription(object):
             cursor = db.cursor()
             for sid, authenticated in uids:
                 cursor.execute("""
-                    SELECT id, sid, authenticated, distributor,
-                           format, priority, adverb, class
+                    SELECT id,sid,authenticated,distributor,
+                           format,priority,adverb,class
                       FROM subscription
                      WHERE class=%s
-                       AND sid = %s
-                       AND authenticated = %s
-                """, (klass,sid,authenticated))
+                       AND sid=%s
+                       AND authenticated=%s
+                """, (klass, sid, int(authenticated)))
                 for i in cursor.fetchall():
                     sub = Subscription(env)
                     sub['id'] = i[0]
@@ -189,8 +202,8 @@ class Subscription(object):
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-                SELECT id, sid, authenticated, distributor,
-                       format, priority, adverb, class
+                SELECT id,sid,authenticated,distributor,
+                       format,priority,adverb,class
                   FROM subscription
                  WHERE class=%s
             """, (klass,))
@@ -224,12 +237,13 @@ class Subscription(object):
         @self.env.with_transaction(db)
         def do_update(db):
             cursor = db.cursor()
+            now = to_utimestamp(datetime.now(utc))
             cursor.execute("""
-            UPDATE subscription
-               SET changetime=CURRENT_TIMESTAMP,
-                   priority=%s
-             WHERE id=%s
-            """, (int(self.values['priority']), self.values['id']))
+                UPDATE subscription
+                   SET changetime=%s,
+                       priority=%s
+                 WHERE id=%s
+            """, (now, int(self.values['priority']), self.values['id']))
 
 
 class SubscriptionAttribute(object):
@@ -258,10 +272,10 @@ class SubscriptionAttribute(object):
             cursor = db.cursor()
             for a in attributes:
                 cursor.execute("""
-                INSERT INTO subscription_attribute
-                            (sid, authenticated, class, realm, target)
-                     VALUES (%s, %s, %s, %s, %s)
-                """, (sid, authenticated, klass, realm, a))
+                    INSERT INTO subscription_attribute
+                           (sid,authenticated,class,realm,target)
+                    VALUES (%s,%s,%s,%s,%s)
+                """, (sid, int(authenticated), klass, realm, a))
 
     @classmethod
     def delete(cls, env, attribute_id, db=None):
@@ -269,9 +283,9 @@ class SubscriptionAttribute(object):
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            DELETE FROM subscription_attribute
-                  WHERE id = %s
-            """, (attribute_id,))
+                DELETE FROM subscription_attribute
+                 WHERE id=%s
+             """, (attribute_id,))
 
     @classmethod
     def delete_by_sid_and_class(cls, env, sid, authenticated, klass, db=None):
@@ -279,35 +293,37 @@ class SubscriptionAttribute(object):
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            DELETE FROM subscription_attribute
-                  WHERE sid = %s
-                    AND authenticated = %s
-                    AND class = %s
-            """, (sid, authenticated, klass))
+                DELETE FROM subscription_attribute
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND class=%s
+            """, (sid, int(authenticated), klass))
 
     @classmethod
-    def delete_by_sid_class_and_target(cls, env, sid, authenticated, klass, target, db=None):
+    def delete_by_sid_class_and_target(cls, env, sid, authenticated, klass,
+                                       target, db=None):
         @env.with_transaction(db)
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            DELETE FROM subscription_attribute
-                  WHERE sid = %s
-                    AND authenticated = %s
-                    AND class = %s
-                    AND target = %s
-            """, (sid, authenticated, klass, target))
+                DELETE FROM subscription_attribute
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND class=%s
+                   AND target=%s
+            """, (sid, int(authenticated), klass, target))
 
     @classmethod
-    def delete_by_class_realm_and_target(cls, env, klass, realm, target, db=None):
+    def delete_by_class_realm_and_target(cls, env, klass, realm, target,
+                                         db=None):
         @env.with_transaction(db)
         def do_delete(db):
             cursor = db.cursor()
             cursor.execute("""
-            DELETE FROM subscription_attribute
-                  WHERE realm = %s
-                    AND class = %s
-                    AND target = %s
+                DELETE FROM subscription_attribute
+                 WHERE realm=%s
+                   AND class=%s
+                   AND target=%s
             """, (realm, klass, target))
 
     @classmethod
@@ -318,13 +334,13 @@ class SubscriptionAttribute(object):
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-              SELECT id, sid, authenticated, class, realm, target
-                FROM subscription_attribute
-               WHERE sid=%s
-                 AND authenticated=%s
-                 AND class=%s
-            ORDER BY target
-            """, (sid,authenticated,klass))
+                SELECT id,sid,authenticated,class,realm,target
+                  FROM subscription_attribute
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND class=%s
+                 ORDER BY target
+            """, (sid, int(authenticated), klass))
             for i in cursor.fetchall():
                 attr = SubscriptionAttribute(env)
                 attr['id'] = i[0]
@@ -338,21 +354,22 @@ class SubscriptionAttribute(object):
         return attrs
 
     @classmethod
-    def find_by_sid_class_and_target(cls, env, sid, authenticated, klass, target, db=None):
+    def find_by_sid_class_and_target(cls, env, sid, authenticated, klass,
+                                     target, db=None):
         attrs = []
 
         @env.with_transaction(db)
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-              SELECT id, sid, authenticated, class, realm, target
-                FROM subscription_attribute
-               WHERE sid=%s
-                 AND authenticated=%s
-                 AND class=%s
-                 AND target=%s
-            ORDER BY target
-            """, (sid,authenticated,klass,target))
+                SELECT id,sid,authenticated,class,realm,target
+                  FROM subscription_attribute
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND class=%s
+                   AND target=%s
+                 ORDER BY target
+            """, (sid, int(authenticated), klass, target))
             for i in cursor.fetchall():
                 attr = SubscriptionAttribute(env)
                 attr['id'] = i[0]
@@ -366,22 +383,23 @@ class SubscriptionAttribute(object):
         return attrs
 
     @classmethod
-    def find_by_sid_class_realm_and_target(cls, env, sid, authenticated, klass, realm, target, db=None):
+    def find_by_sid_class_realm_and_target(cls, env, sid, authenticated,
+                                           klass, realm, target, db=None):
         attrs = []
 
         @env.with_transaction(db)
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-              SELECT id, sid, authenticated, class, realm, target
-                FROM subscription_attribute
-               WHERE sid=%s
-                 AND authenticated=%s
-                 AND class=%s
-                 AND realm=%s
-                 AND target=%s
-            ORDER BY target
-            """, (sid,authenticated,klass,realm,target))
+                SELECT id,sid,authenticated,class,realm,target
+                  FROM subscription_attribute
+                 WHERE sid=%s
+                   AND authenticated=%s
+                   AND class=%s
+                   AND realm=%s
+                   AND target=%s
+                 ORDER BY target
+            """, (sid, int(authenticated), klass, realm, target))
             for i in cursor.fetchall():
                 attr = SubscriptionAttribute(env)
                 attr['id'] = i[0]
@@ -395,14 +413,15 @@ class SubscriptionAttribute(object):
         return attrs
 
     @classmethod
-    def find_by_class_realm_and_target(cls, env, klass, realm, target, db=None):
+    def find_by_class_realm_and_target(cls, env, klass, realm, target,
+                                       db=None):
         attrs = []
 
         @env.with_transaction(db)
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-                SELECT id, sid, authenticated, class, realm, target
+                SELECT id,sid,authenticated,class,realm,target
                   FROM subscription_attribute
                  WHERE class=%s
                    AND realm=%s
@@ -428,7 +447,7 @@ class SubscriptionAttribute(object):
         def do_select(db):
             cursor = db.cursor()
             cursor.execute("""
-                SELECT id, sid, authenticated, class, realm, target
+                SELECT id,sid,authenticated,class,realm,target
                   FROM subscription_attribute
                  WHERE class=%s
                    AND realm=%s

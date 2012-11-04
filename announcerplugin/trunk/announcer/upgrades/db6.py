@@ -4,13 +4,7 @@ from datetime import datetime
 
 from trac.util.datefmt import utc
 
-try:
-    from trac.util.datefmt  import to_utimestamp
-except ImportError:
-    # Cheap fallback for Trac 0.11 compatibility.
-    from trac.util.datefmt  import to_timestamp
-    def to_utimestamp(dt):
-        return to_timestamp(dt) * 1000000L
+from announcer.compat import to_utimestamp
  
 
 def do_upgrade(env, ver, cursor):
