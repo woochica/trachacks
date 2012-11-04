@@ -889,7 +889,7 @@ class GeneralWikiSubscriber(Component):
                         req.session.sid, req.session.authenticated, klass, db)
                 SubscriptionAttribute.add(self.env, req.session.sid,
                     req.session.authenticated, klass,
-                    'wiki', req.args.get('wiki_interests', db))
+                    'wiki', (req.args.get('wiki_interests'),), db)
 
         (interests,) = SubscriptionAttribute.find_by_sid_and_class(
             self.env, req.session.sid, req.session.authenticated, klass

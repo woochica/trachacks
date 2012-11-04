@@ -16,6 +16,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #10384: Properly cast `authenticated` field for subscription_attribute table
  * #10483: Move license to COPYING file
  * #10584: Attachment description field not formatted to HTML
+ * fix argument assignment issues in `SubscriptionAttribute.add`
 
 
 announcer-0.12.1 (14-Sep-2010) |r8853| by Robert Corsaro

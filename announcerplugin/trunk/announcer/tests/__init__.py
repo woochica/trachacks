@@ -13,6 +13,7 @@ import unittest
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(announcer.api.suite())
+    suite.addTest(announcer.model.suite())
     suite.addTest(announcer.formatter.suite())
     return suite
 

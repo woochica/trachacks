@@ -45,13 +45,13 @@ class Subscription(object):
 
     @classmethod
     def add(cls, env, subscription, db=None):
-        """id and priority overwritten."""
+        """ID and priority get overwritten."""
         @env.with_transaction(db)
         def do_insert(db):
             cursor = db.cursor()
             priority = len(cls.find_by_sid_and_distributor(env,
                 subscription['sid'], subscription['authenticated'],
-                subscription['distributor'], db))+1
+                subscription['distributor'], db)) + 1
             now = to_utimestamp(datetime.now(utc))
             cursor.execute("""
                 INSERT INTO subscription
