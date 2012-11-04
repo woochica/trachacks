@@ -435,10 +435,67 @@ class AnnouncementSystem(Component):
         """)
         row = cursor.fetchone()
         if not (row and int(row[0]) > 5):
+            # Care for pre-announcer-1.0 installations.
+            dburi = self.config.get('trac', 'database')
+            tables = self._get_tables(dburi, cursor)
+            if 'subscription' in tables:
+                # Version > 2
+                cursor.execute("SELECT * FROM subscription_attribute")
+                columns = [col[0] for col in
+                           self._get_cursor_description(cursor)]
+                if 'authenticated' in columns:
+                    self.env.log.debug(
+                        "TracAnnouncer needs to register schema version")
+                    return 5
+                if 'realm' in columns:
+                    self.env.log.debug(
+                        "TracAnnouncer needs to change a table")
+                    return 4
+                self.env.log.debug("TracAnnouncer needs to change tables")
+                return 3
+            if 'subscriptions' in tables:
+                cursor.execute("SELECT * FROM subscriptions")
+                columns = [col[0] for col in
+                           self._get_cursor_description(cursor)]
+                if not 'format' in columns:
+                    self.env.log.debug("TracAnnouncer needs to add new tables")
+                    return 2
+                self.env.log.debug("TracAnnouncer needs to add/change tables")
+                return 1
             # This is a new installation.
             return 0
         # The expected outcome for any up-to-date installation.
         return row and int(row[0]) or 0
+
+    def _get_cursor_description(self, cursor):
+        # Cursors don't look the same across Trac versions
+        if trac_version < '0.12':
+            return cursor.description
+        else:
+            return cursor.cursor.description
+
+    def _get_tables(self, dburi, cursor):
+        """Code from TracMigratePlugin by Jun Omae (see tracmigrate.admin)."""
+        if dburi.startswith('sqlite:'):
+            sql = """
+                SELECT name
+                  FROM sqlite_master
+                 WHERE type='table'
+                   AND NOT name='sqlite_sequence'
+            """
+        elif dburi.startswith('postgres:'):
+            sql = """
+                SELECT tablename
+                  FROM pg_tables
+                 WHERE schemaname = ANY (current_schemas(false))
+            """
+        elif dburi.startswith('mysql:'):
+            sql = "SHOW TABLES"
+        else:
+            raise TracError('Unsupported database type "%s"'
+                            % dburi.split(':')[0])
+        cursor.execute(sql)
+        return sorted([row[0] for row in cursor])
 
     def _upgrade_db(self, db):
         """Each schema version should have its own upgrade module, named

@@ -101,6 +101,15 @@ class AnnouncementSystemTestCase(unittest.TestCase):
         version = int(cursor.fetchone()[0])
         self.assertEquals(db_default.schema_version, version)
 
+    def _verify_version_unregistered(self):
+        cursor = self.db.cursor()
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='announcer_version'
+        """)
+        self.assertFalse(cursor.fetchone())
+
     # Tests
 
     def test_new_install(self):
@@ -112,6 +121,67 @@ class AnnouncementSystemTestCase(unittest.TestCase):
 
         self.an_sys.upgrade_environment(self.db)
         self._verify_curr_schema()
+
+    def test_upgrade_to_schema_v2(self):
+        # The initial db schema from r3015 - 10-Jan-2008 by Stephen Hansen.
+        schema = [
+            Table('subscriptions', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('enabled', type='int'),
+                Column('managed', type='int'),
+                Column('realm'),
+                Column('category'),
+                Column('rule'),
+                Column('destination'),
+                Column('format'),
+                Index(['id']),
+                Index(['realm', 'category', 'enabled']),
+            ]
+        ]
+        self._schema_init(schema)
+
+        # Populate tables with test data.
+        cursor = self.db.cursor()
+        cursor.executemany("""
+            INSERT INTO session
+                   (sid,authenticated,last_visit)
+            VALUES (%s,%s,%s)
+        """, (('somebody','0','0'), ('user','1','0')))
+        cursor.executemany("""
+            INSERT INTO session_attribute
+                   (sid,authenticated,name,value)
+            VALUES (%s,1,%s,%s)
+        """, (('user','announcer_email_format_ticket','text/html'),
+              ('user','announcer_specified_email','')))
+        cursor.executemany("""
+            INSERT INTO subscriptions
+                   (sid,enabled,managed,
+                    realm,category,rule,destination,format)
+            VALUES (%s,%s,0,%s,%s,%s,%s,%s)
+        """, (('somebody',1,'ticket','changed','1','1','email'),
+              ('user',1,'ticket','attachment added','1','1','email')))
+
+        self.assertEquals(1, self.an_sys.get_schema_version(self.db))
+        target = 2
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        # Change from r3047 - 13-Jan-2008 for announcer-0.2 by Stephen Hansen.
+        # - 'subscriptions.destination', 'subscriptions.format'
+        # + 'subscriptions.authenticated', 'subscriptions.transport'
+        # 'subscriptions.managed' type='int' --> (default == char)
+        self.an_sys.upgrade_environment(self.db)
+
+        self.assertEquals(target, self.an_sys.get_schema_version(self.db))
+        self._verify_version_unregistered()
+        cursor = self.db.cursor()
+        cursor.execute("SELECT * FROM subscriptions")
+        columns = [col[0] for col in self._get_cursor_description(cursor)]
+        self.assertEquals(['id', 'sid', 'authenticated', 'enabled', 'managed',
+                           'realm', 'category', 'rule', 'transport'],
+                          columns
+        )
 
 
 class SubscriptionResolverTestCase(unittest.TestCase):
