@@ -163,6 +163,7 @@ class TicketFormatter(Component):
 
     def _format_html(self, event):
         ticket = event.target
+        attachment = event.attachment
         short_changes = {}
         long_changes = {}
         chrome = Chrome(self.env)
@@ -187,7 +188,7 @@ class TicketFormatter(Component):
             else:
                 short_changes[field.capitalize()] = (old_value, new_value)
 
-        def render_wiki_to_html_without_req(event, wikitext):
+        def wiki_to_html(event, wikitext):
             if wikitext is None:
                 return ""
             try:
@@ -211,15 +212,19 @@ class TicketFormatter(Component):
                 self.log.error(exception_to_unicode(e, traceback=True))
                 return wikitext
 
-        description = render_wiki_to_html_without_req(event, ticket['description'])
-        temp        = render_wiki_to_html_without_req(event, event.comment)
+        description = wiki_to_html(event, ticket['description'])
+
+        if attachment:
+            comment = wiki_to_html(event, attachment.description)
+        else:
+            comment = wiki_to_html(event, event.comment)
 
         data = dict(
             ticket = ticket,
             description = description,
             author = event.author,
             fields = self._header_fields(ticket),
-            comment = temp,
+            comment = comment,
             category = event.category,
             ticket_link = self._ticket_link(ticket),
             project_name = self.env.project_name,

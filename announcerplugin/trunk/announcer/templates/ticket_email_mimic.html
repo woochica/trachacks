@@ -144,7 +144,7 @@
     <py:if test="attachment">
       <div class="commentstitle" style="font-size: small; margin: 1em;">Attachments:</div>
       <ul>
-        <li>File <span class="fieldname" style="font-weight: bold; font-style: italic;">${attachment.filename}</span> added<py:if test="attachment.description">: <span style="font-style: italic">${attachment.description}</span></py:if></li>
+        <li>File <span class="fieldname" style="font-weight: bold; font-style: italic;">${attachment.filename}</span> added<py:if test="attachment.description">: <span style="font-style: italic">${comment}</span></py:if></li>
       </ul>
     </py:if>
     <py:if test="comment">

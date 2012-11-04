@@ -6,6 +6,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'
  * #10083: HTML notifications for attachments do not include the author name
  * #10483: Move license to COPYING file
+ * #10584: Attachment description field not formatted to HTML
 
 
 announcer-0.12.1 (14-Sep-2010) |r8853| by Robert Corsaro
