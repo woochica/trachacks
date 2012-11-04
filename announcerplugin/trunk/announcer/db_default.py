@@ -14,7 +14,7 @@ schema_version = 6
 ## Database schema
 #
 
-"""The 'subscriptions' db table is deprecated in favor of the new
+"""The 'subscriptions' db table has been dropped in favor of the new
 subscriber interface, that uses two other tables.
 
 TODO: We still need to create an upgrade script, that will port subscriptions

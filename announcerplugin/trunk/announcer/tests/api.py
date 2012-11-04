@@ -230,6 +230,81 @@ class AnnouncementSystemTestCase(unittest.TestCase):
 
         self.assertEquals(target, self.an_sys.get_schema_version(self.db))
 
+    def test_upgrade_to_schema_v4(self):
+        # Schema from r9116 - 25-Sep-2010 for announcer-0.12.1 by R. Corsaro.
+        schema = [
+            Table('subscriptions', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('authenticated', type='int'),
+                Column('enabled', type='int'),
+                Column('managed'),
+                Column('realm'),
+                Column('category'),
+                Column('rule'),
+                Column('transport'),
+                Index(['id']),
+                Index(['realm', 'category', 'enabled']),
+            ],
+            Table('subscription', key='id')[
+                Column('id', auto_increment=True),
+                Column('time', type='int64'),
+                Column('changetime', type='int64'),
+                Column('class'),
+                Column('sid'),
+                Column('authenticated', type='int'),
+                Column('distributor'),
+                Column('format'),
+                Column('priority'),
+                Column('adverb')
+            ],
+            Table('subscription_attribute', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('class'),
+                Column('name'),
+                Column('value')
+            ]
+        ]
+        self._schema_init(schema)
+
+        # Populate tables with test data.
+        cursor = self.db.cursor()
+        cursor.execute("""
+            INSERT INTO subscription
+                   (time,changetime,class,sid,authenticated,
+                    distributor,format,priority,adverb)
+            VALUES ('0','0','GeneralWikiSubscriber','user','1',
+                    'email','text/plain','1','always')
+        """)
+        cursor.executemany("""
+            INSERT INTO subscription_attribute
+                   (sid,class,name,value)
+            VALUES (%s,%s,%s,%s)
+        """, (('somebody','GeneralWikiSubscriber','wiki', '*'),
+              ('somebody','UserChangeSubscriber','wiki','created'),
+              ('user','GeneralWikiSubscriber','wiki', 'TracWiki')))
+
+        self.assertEquals(3, self.an_sys.get_schema_version(self.db))
+        target = 4
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        # From r9210 - 29-Sep-2010 for announcer-0.12.1 by Robert Corsaro.
+        # - table 'subscriptions'
+        # 'subscription.priority' type=(default == char) --> 'int'
+        # 'subscription_attribute.name --> 'subscription_attribute.realm'
+        # 'subscription_attribute.value --> 'subscription_attribute.target'
+        self.an_sys.upgrade_environment(self.db)
+
+        self.assertEquals(target, self.an_sys.get_schema_version(self.db))
+        # Check type of priority value.
+        cursor = self.db.cursor()
+        cursor.execute("SELECT priority FROM subscription")
+        for priority in cursor:
+            # Shouldn't raise an TypeError with appropriate column type.
+            result = priority[0] + 0
+
 
 class SubscriptionResolverTestCase(unittest.TestCase):
     def setUp(self):
