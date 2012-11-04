@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009, Robert Corsaro
-# Copyright (c) 2010-2012 Steffen Hoffmann
+# Copyright (c) 2010-2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -13,12 +13,14 @@ import time
 from operator import itemgetter
 from pkg_resources import resource_filename
 
+from trac import __version__ as trac_version
 from trac.config import ExtensionOption
 from trac.core import Component, ExtensionPoint, Interface, TracError, \
                       implements
-from trac.db import Table, Column, Index
 from trac.db import DatabaseManager
 from trac.env import IEnvironmentSetupParticipant
+
+from announcer import db_default
 
 
 class IAnnouncementProducer(Interface):
@@ -392,92 +394,79 @@ class AnnouncementSystem(Component):
 
     resolver = ExtensionOption('announcer', 'subscription_resolvers',
         IAnnouncementSubscriptionResolver, 'SubscriptionResolver',
-        """Comma seperated list of subscription resolver components in the
+        """Comma-separated list of subscription resolver components in the
         order they will be called.
         """)
-
-
-
-    # IEnvironmentSetupParticipant implementation
-    """Subscriptions table will is deprecated in favor of the new
-    subscriber interface.
-
-    TODO: We still need to create an upgrade script that will port
-    subscriptions from the subscription table and the session_attribute
-    table to the subscription_attribute table.
-    """
-    SCHEMA = [
-        Table('subscription', key='id')[
-            Column('id', auto_increment=True),
-            Column('time', type='int64'),
-            Column('changetime', type='int64'),
-            Column('class'),
-            Column('sid'),
-            Column('authenticated', type='int'),
-            Column('distributor'),
-            Column('format'),
-            Column('priority', type='int'),
-            Column('adverb')
-        ],
-        Table('subscription_attribute', key='id')[
-            Column('id', auto_increment=True),
-            Column('sid'),
-            Column('authenticated', type='int'),
-            Column('class'),
-            Column('realm'),
-            Column('target')
-        ]
-    ]
 
     def __init__(self):
         # Bind the 'announcer' catalog to the specified locale directory.
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
+    # IEnvironmentSetupParticipant methods
+
     def environment_created(self):
         self._upgrade_db(self.env.get_db_cnx())
 
     def environment_needs_upgrade(self, db):
-        cursor = db.cursor()
-        for table in self.SCHEMA:
-            try:
-                cursor.execute("select count(*) from %s"%table.name)
-                cursor.fetchone()
-            except:
-                db.rollback()
-                return True
-        return False
+        schema_ver = self.get_schema_version(db)
+        if schema_ver == db_default.schema_version:
+            return False
+        if schema_ver > db_default.schema_version:
+            raise TracError(_("""A newer plugin version has been installed
+                              before, but downgrading is unsupported."""))
+        self.log.info("TracAnnouncer db schema version is %d, should be %d"
+                      % (schema_ver, db_default.schema_version))
+        return True
 
     def upgrade_environment(self, db):
         self._upgrade_db(db)
 
+    # Internal methods
+
+    def get_schema_version(self, db=None):
+        """Return the current schema version for this plugin."""
+        db = db and db or self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("""
+            SELECT value
+              FROM system
+             WHERE name='announcer_version'
+        """)
+        row = cursor.fetchone()
+        if not (row and int(row[0]) > 5):
+            # This is a new installation.
+            return 0
+        # The expected outcome for any up-to-date installation.
+        return row and int(row[0]) or 0
+
     def _upgrade_db(self, db):
-        try:
-            db_backend, _ = DatabaseManager(self.env)._get_connector()
-            for table in self.SCHEMA:
-                try:
-                    cursor = db.cursor()
-                    cursor.execute("select count(*) from %s"%table.name)
-                    cursor.fetchone()
-                except:
-                    db.rollback()
-                    cursor = db.cursor()
-                    for stmt in db_backend.to_sql(table):
-                        self.log.debug(stmt)
-                        cursor.execute(stmt)
-                        db.commit()
-        except Exception, e:
-            db.rollback()
-            self.log.error(e, exc_info=True)
-            raise TracError(str(e))
-    # The actual AnnouncementSystem now..
+        db_mgr = DatabaseManager(self.env)
+        schema_ver = self.get_schema_version(db)
+
+        cursor = db.cursor()
+        # Is this a new installation?
+        if not schema_ver:
+            # Perform a single-step install: Create plugin schema and
+            # insert default data into the database.
+            connector = db_mgr._get_connector()[0]
+            for table in db_default.schema:
+                for stmt in connector.to_sql(table):
+                    cursor.execute(stmt)
+            for table, cols, vals in db_default.get_data(db):
+                cursor.executemany("INSERT INTO %s (%s) VALUES (%s)" % (table,
+                                   ','.join(cols),
+                                   ','.join(['%s' for c in cols])), vals)
+        db.commit()
+
+    # AnnouncementSystem core methods
 
     def send(self, evt):
         start = time.time()
         self._real_send(evt)
         stop = time.time()
-        self.log.debug("AnnouncementSystem sent event in %s seconds."\
-                %(round(stop-start,2)))
+        self.log.debug("AnnouncementSystem sent event in %s seconds."
+                       % (round(stop - start, 2)))
 
     def _real_send(self, evt):
         """Accepts a single AnnouncementEvent instance (or subclass), and
