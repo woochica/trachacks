@@ -122,6 +122,54 @@ class AnnouncementSystemTestCase(unittest.TestCase):
         self.an_sys.upgrade_environment(self.db)
         self._verify_curr_schema()
 
+    def test_upgrade_v1_to_current(self):
+        # The initial db schema from r3015 - 10-Jan-2008 by Stephen Hansen.
+        schema = [
+            Table('subscriptions', key='id')[
+                Column('id', auto_increment=True),
+                Column('sid'),
+                Column('enabled', type='int'),
+                Column('managed', type='int'),
+                Column('realm'),
+                Column('category'),
+                Column('rule'),
+                Column('destination'),
+                Column('format'),
+                Index(['id']),
+                Index(['realm', 'category', 'enabled']),
+            ]
+        ]
+        self._schema_init(schema)
+
+        # Populate tables with test data.
+        cursor = self.db.cursor()
+        cursor.executemany("""
+            INSERT INTO session
+                   (sid,authenticated,last_visit)
+            VALUES (%s,%s,%s)
+        """, (('somebody','0','0'), ('user','1','0')))
+        cursor.executemany("""
+            INSERT INTO session_attribute
+                   (sid,authenticated,name,value)
+            VALUES (%s,1,%s,%s)
+        """, (('user','announcer_email_format_ticket','text/html'),
+              ('user','announcer_specified_email','')))
+        cursor.executemany("""
+            INSERT INTO subscriptions
+                   (sid,enabled,managed,
+                    realm,category,rule,destination,format)
+            VALUES (%s,%s,0,%s,%s,%s,%s,%s)
+        """, (('somebody',1,'ticket','changed','1','1','email'),
+              ('user',1,'ticket','attachment added','1','1','email')))
+
+        self.assertEquals(1, self.an_sys.get_schema_version(self.db))
+        target = 6
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        self.an_sys.upgrade_environment(self.db)
+        self._verify_curr_schema()
+
     def test_upgrade_to_schema_v2(self):
         # The initial db schema from r3015 - 10-Jan-2008 by Stephen Hansen.
         schema = [
@@ -369,6 +417,55 @@ class AnnouncementSystemTestCase(unittest.TestCase):
         subscriptions = [(row[1],(row[2])) for row in cursor]
         for sub in subscriptions:
             self.assertTrue((sub[0] == 'user' and sub[1] == 1) or sub[1] == 0)
+
+    def test_upgrade_to_schema_v6(self):
+        # Check data migration and registration of unversioned schema.
+
+        # Table definitions are identical to current schema here, see
+        # schema from r9235 - 01-Oct-2010 for announcer-0.12.1 by R. Corsaro.
+        self._schema_init(db_default.schema)
+
+        # Populate table with test data.
+        cursor = self.db.cursor()
+        if self.env.config.get('trac', 'database').startswith('sqlite'):
+            # Add dataset with CURRENT_TIMESTAMP strings.
+            cursor.execute("""
+                INSERT INTO subscription
+                       (time,changetime,
+                        class,sid,authenticated,
+                        distributor,format,priority,adverb)
+                VALUES ('1970-01-01 00:00:00','2012-10-31 23:59:59',
+                        'GeneralWikiSubscriber','user','1',
+                        'email','text/plain','1','always')
+            """)
+        else:
+            cursor.execute("""
+                INSERT INTO subscription
+                       (time,changetime,
+                        class,sid,authenticated,
+                        distributor,format,priority,adverb)
+                VALUES ('0','1351724399',
+                        'GeneralWikiSubscriber','user','1',
+                        'email','text/plain','1','always')
+            """)
+        cursor.execute("""
+            INSERT INTO subscription_attribute
+                   (sid,authenticated,class,realm,target)
+            VALUES ('user','1','GeneralWikiSubscriber','wiki', 'TracWiki')
+        """)
+        self.assertEquals(5, self.an_sys.get_schema_version(self.db))
+        target = 6
+        db_default.schema_version = target
+        self.assertTrue(self.an_sys.environment_needs_upgrade(self.db))
+
+        # Data migration and registration of unversioned schema.
+        self.an_sys.upgrade_environment(self.db)
+
+        self._verify_curr_schema()
+        cursor.execute("SELECT time,changetime FROM subscription")
+        for time in cursor:
+            # Shouldn't raise an TypeError with proper int/long values.
+            check = time[1] - time[0]
 
 
 class SubscriptionResolverTestCase(unittest.TestCase):
