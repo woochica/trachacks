@@ -106,7 +106,7 @@ class IniAdminPlugin(Component):
 
     def _get_doc(self, obj):
         doc = to_unicode(inspect.getdoc(obj))
-        if hasattr(obj, 'doc_domain'):
+        if doc and hasattr(obj, 'doc_domain') and obj.doc_domain:
             doc = dgettext(obj.doc_domain, doc)
         return doc
 
