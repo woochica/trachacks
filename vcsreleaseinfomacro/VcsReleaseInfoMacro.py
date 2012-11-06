@@ -10,6 +10,8 @@ from operator import itemgetter, attrgetter
 from trac.versioncontrol import Node
 from trac.versioncontrol.api import RepositoryManager
 
+# NOTE to self: debug: self.env.log.debug('woot');
+
 class VcsReleaseInfoMacro(WikiMacroBase):
     """ Provides the macro VcsReleaseInfoMacro to display latest releases from VCS path.
 
@@ -156,7 +158,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     " [/browser%(path)s/trunk trunk]"
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " ("
-                    "[/log%(path)s/trunk?stop_rev=%(stop_rev)s changes]"
+                    "[/log%(path)s/trunk?revs=%(stop_rev)s-%(rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/trunk diffs]"
                     ")"
                 % {
@@ -181,7 +183,7 @@ class VcsReleaseInfoMacro(WikiMacroBase):
                     " @[changeset:%(rev)s/%(reponame)s %(rev)s]"
                     " by %(author)s"
                     " ("
-                    "[/log%(path)s/trunk?rev=%(rev)s&stop_rev=%(stop_rev)s changes]"
+                    "[/log%(path)s/trunk?revs=%(stop_rev)s-%(rev)s changes]"
                     " [/changeset?old_path=%(path)s/tags/%(old_tag)s&new_path=%(path)s/tags/%(new_tag)s diffs]"
                     "%(release_link)s"
                     ")"
