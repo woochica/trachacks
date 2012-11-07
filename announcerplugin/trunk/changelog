@@ -7,6 +7,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #7974: UnboundLocalError: local variable 'tid' referenced before assignment
           with announcements from AccountManager plugin
  * #7975: Subscription incorrectly uses CURRENT_TIMESTAMP on BIGINT column
+ * #7976: filter_exception_realms is ignored in DefaultPermissionFilter
  * #8062: Database upgrade silently fails when no i18n is available
  * #8577: NameError: when trying to delete a ticket
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'

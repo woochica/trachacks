@@ -30,7 +30,10 @@ class DefaultPermissionFilter(Component):
             """)
 
     def filter_subscriptions(self, event, subscriptions):
-        action = '%s_VIEW'%event.realm.upper()
+        if event.realm in self.exception_realms:
+            return subscriptions
+
+        action = '%s_VIEW' % event.realm.upper()
         for subscription in subscriptions:
             sid, auth = subscription[1:3]
             # PermissionCache already takes care of sid = None
