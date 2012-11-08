@@ -1686,15 +1686,29 @@ class ResourceScheduler(Component):
             eligible = [ticketsByID[tid] for tid in unscheduled \
                             if ticketsByID[tid][eligibleField] == 0]
 
+            details = False
             while unscheduled and eligible:
                 # FIXME - Maybe sort after adding some. I may not need
                 # to sort every loop.)
                 eligible.sort(self.sorter.compareTasks)
-
+                if details:
+                    self.env.log.debug('Eligible tickets:%s' %
+                                       [t['id'] for t in eligible])
                 # Schedule the best eligible task
                 ticket = eligible.pop(nextIndex)
                 tid = ticket['id']
-                unscheduled.remove(tid)
+                if tid in unscheduled:
+                    unscheduled.remove(tid)
+                    if details:
+                        self.env.log.debug('  scheduling:%s' % tid)
+                        self.env.log.debug('  unscheduled:%s' % unscheduled)
+                else:
+                    self.env.log.debug('Could not remove %s from unscheduled list' % tid)
+                    self.env.log.debug(' unscheduled:%s' % unscheduled)
+                    self.env.log.debug(' ticket:%s' % ticket)
+                    self.env.log.debug(' eligible:%s' % eligible)
+                    raise TracError('Could not remove %s from unscheduled list' % tid)
+
                 scheduleFunction(ticket)
 
                 # Decrement number of unscheduled successors for each
@@ -1709,6 +1723,7 @@ class ResourceScheduler(Component):
                             eligible.append(other)
 
                 if not eligible and len(unscheduled):
+                    details = True
                     self.env.log.error('Not all tickets scheduled')
                     self.env.log.error('%s remain ineligible.  Scheduling.' %
                                        unscheduled)
