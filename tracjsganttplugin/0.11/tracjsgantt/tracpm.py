@@ -36,9 +36,6 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 #  start - accessed with TracPM.start(t)
 #  finish - accessed with TracPM.finish(t)
 #
-# FIXME - we should probably have some weird, unique prefix on the
-# field names ("pm_", etc.).  Perhaps configurable.
-#
 # FIXME - do we need access methods for estimate and worked?
 
 class TracPM(Component):
@@ -339,11 +336,11 @@ class TracPM(Component):
 
     # Return computed start for ticket
     def start(self, ticket):
-        return ticket['calc_start'][0]
+        return ticket['_calc_start'][0]
 
     # Return computed start for ticket
     def finish(self, ticket):
-        return ticket['calc_finish'][0]
+        return ticket['_calc_finish'][0]
 
 
     # Return a list of custom fields that PM needs to work.  The
@@ -903,7 +900,7 @@ class TracPM(Component):
 
         # Copy back the schedule results
         for t in tickets:
-            for field in [ 'calc_start', 'calc_finish']:
+            for field in [ '_calc_start', '_calc_finish']:
                 t[field] = ticketsByID[t['id']][field]
 
 
@@ -1278,9 +1275,9 @@ class ResourceScheduler(Component):
                         if pid in ticketsByID:
                             parent = ticketsByID[pid]
                             _schedule_task_alap(parent)
-                            if _betterDate(ticketsByID[pid]['calc_finish'],
+                            if _betterDate(ticketsByID[pid]['_calc_finish'],
                                            finish):
-                                finish = ticketsByID[pid]['calc_finish']
+                                finish = ticketsByID[pid]['_calc_finish']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart. ' +
@@ -1324,7 +1321,7 @@ class ResourceScheduler(Component):
             self.taskStack.append(t['id'])
 
             # If we haven't scheduled this yet, do it now.
-            if t.get('calc_finish') == None:
+            if t.get('_calc_finish') == None:
                 # If there is a finish set, use it
                 if self.pm.isSet(t, 'finish'):
                     # Don't adjust for work week; use the explicit date.
@@ -1378,9 +1375,9 @@ class ResourceScheduler(Component):
                                  (t['id'], finish))
 
                 # Set the field
-                t['calc_finish'] = finish
+                t['_calc_finish'] = finish
 
-            if t.get('calc_start') == None:
+            if t.get('_calc_start') == None:
                 if self.pm.isSet(t, 'start'):
                     start = self.pm.parseStart(t)
                     start = [start, True]
@@ -1390,25 +1387,25 @@ class ResourceScheduler(Component):
                         finish[0] = start[0] + _calendarOffset(t,
                                                                hours,
                                                                start[0])
-                        t['calc_finish'] = finish
+                        t['_calc_finish'] = finish
                 else:
                     hours = self.pm.workHours(t)
-                    start = t['calc_finish'][0] + \
+                    start = t['_calc_finish'][0] + \
                         _calendarOffset(t, 
                                         -1*hours, 
-                                        t['calc_finish'][0])
-                    start = [start, t['calc_finish'][1]]
+                                        t['_calc_finish'][0])
+                    start = [start, t['_calc_finish'][1]]
 
-                t['calc_start'] = start
+                t['_calc_start'] = start
 
             # Remember the limit
             limit = self.limits.get(t['owner'])
-            if not limit or limit > t['calc_start'][0]:
-                self.limits[t['owner']] = t['calc_start'][0]
+            if not limit or limit > t['_calc_start'][0]:
+                self.limits[t['owner']] = t['_calc_start'][0]
 
             self.taskStack.pop()
             
-            return t['calc_start']
+            return t['_calc_start']
 
         # Schedule a task As Soon As Possible
         # Return the finish of the task as a date object
@@ -1424,9 +1421,9 @@ class ResourceScheduler(Component):
                         if pid in ticketsByID:
                             parent = ticketsByID[pid]
                             _schedule_task_asap(parent)
-                            if _betterDate(ticketsByID[pid]['calc_start'], 
+                            if _betterDate(ticketsByID[pid]['_calc_start'], 
                                            start):
-                                start = ticketsByID[pid]['calc_start']
+                                start = ticketsByID[pid]['_calc_start']
                         else:
                             self.env.log.info(('Ticket %s has parent %s ' +
                                                'but %s is not in the chart. ' +
@@ -1466,7 +1463,7 @@ class ResourceScheduler(Component):
             self.taskStack.append(t['id'])
 
             # If we haven't scheduled this yet, do it now.
-            if t.get('calc_start') == None:
+            if t.get('_calc_start') == None:
                 # If there is a start set, use it
                 if self.pm.isSet(t, 'start'):
                     # Don't adjust for work week; use the explicit date.
@@ -1511,9 +1508,9 @@ class ResourceScheduler(Component):
                     start = [s, start[1]]
                 
                 # Set the field
-                t['calc_start'] = start
+                t['_calc_start'] = start
                 
-            if t.get('calc_finish') == None:
+            if t.get('_calc_finish') == None:
                 if self.pm.isSet(t, 'finish'):
                     # Don't adjust for work week; use the explicit date.
                     finish = self.pm.parseFinish(t)
@@ -1525,24 +1522,24 @@ class ResourceScheduler(Component):
                         start[0] = finish[0] + _calendarOffset(t, 
                                                                -1*hours, 
                                                                finish[0])
-                        t['calc_start'] = start
+                        t['_calc_start'] = start
                 else:
                     hours = self.pm.workHours(t)
-                    finish = t['calc_start'][0] + \
+                    finish = t['_calc_start'][0] + \
                         _calendarOffset(t,
                                         +1*hours,
-                                        t['calc_start'][0])
+                                        t['_calc_start'][0])
                     finish = [finish, start[1]]
-                t['calc_finish'] = finish
+                t['_calc_finish'] = finish
 
             # Remember the limit
             limit = self.limits.get(t['owner'])
-            if not limit or limit < t['calc_finish'][0]:
-                self.limits[t['owner']] = t['calc_finish'][0]
+            if not limit or limit < t['_calc_finish'][0]:
+                self.limits[t['owner']] = t['_calc_finish'][0]
 
             self.taskStack.pop()
 
-            return t['calc_finish']
+            return t['_calc_finish']
 
         # Augment tickets in a scheduler-specific way to make
         # scheduling easier 
