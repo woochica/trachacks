@@ -12,13 +12,14 @@ import unittest
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTest(announcer.api.suite())
-    suite.addTest(announcer.model.suite())
-    suite.addTest(announcer.formatter.suite())
+    suite.addTest(announcer.tests.api.suite())
+    suite.addTest(announcer.tests.model.suite())
+    suite.addTest(announcer.tests.formatter.suite())
+    suite.addTest(announcer.tests.pref.suite())
     return suite
 
 
 # Start test suite directly from command line like so:
-#   $> PYTHONPATH=$PWD python tractags/tests/__init__.py
+#   $> PYTHONPATH=$PWD python announcer/tests/__init__.py
 if __name__ == '__main__':
     unittest.main(defaultTest="test_suite")

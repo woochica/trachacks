@@ -2,21 +2,22 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009,2010 Robert Corsaro
+# Copyright (c) 2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
 
 import re
+
+from genshi.filters.transform import Transformer
 from operator import itemgetter
 from pkg_resources import resource_filename
 
-from trac.core import Component, implements, ExtensionPoint
+from trac.core import Component, ExtensionPoint, implements
 from trac.prefs.api import IPreferencePanelProvider
 from trac.web.api import ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome
-
-from genshi.filters.transform import Transformer
+from trac.web.chrome import Chrome, ITemplateProvider, add_stylesheet
 
 from announcer.api import _, tag_, N_
 from announcer.api import IAnnouncementDefaultSubscriber
@@ -27,23 +28,42 @@ from announcer.api import IAnnouncementSubscriber
 from announcer.model import Subscription
 from announcer.util.settings import encode, decode
 
+
 def truth(v):
     if v in (False, 'False', 'false', 0, '0', ''):
         return None
     return True
 
-class AnnouncerPreferences(Component):
-    implements(IPreferencePanelProvider)
+
+class AnnouncerTemplateProvider(Component):
+    """Provides templates and static resources for the announcer plugin."""
+
     implements(ITemplateProvider)
 
-    preference_boxes = ExtensionPoint(IAnnouncementPreferenceProvider)
+    abstract = True
+
+    # ITemplateProvider methods
 
     def get_htdocs_dirs(self):
+        """Return the absolute path of a directory containing additional
+        static resources (such as images, style sheets, etc).
+        """
         return [('announcer', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        resource_dir = resource_filename(__name__, 'templates')
-        return [resource_dir]
+        """Return the absolute path of the directory containing the provided
+        Genshi templates.
+        """
+        return [resource_filename(__name__, 'templates')]
+
+
+class AnnouncerPreferences(AnnouncerTemplateProvider):
+
+    implements(IPreferencePanelProvider)
+
+    preference_boxes = ExtensionPoint(IAnnouncementPreferenceProvider)
+
+    # IPreferencePanelProvider methods
 
     def get_preference_panels(self, req):
         if self.preference_boxes:
@@ -55,9 +75,12 @@ class AnnouncerPreferences(Component):
             boxdata = {}
             if boxes:
                 for boxname, boxlabel in boxes:
-                    if boxname == 'general_wiki' and not req.perm.has_permission('WIKI_VIEW'):
+                    if boxname == 'general_wiki' and \
+                            not req.perm.has_permission('WIKI_VIEW'):
                         continue
-                    if (boxname == 'legacy' or boxname == 'joinable_groups') and not req.perm.has_permission('TICKET_VIEW'):
+                    if (boxname == 'legacy' or
+                        boxname == 'joinable_groups') and \
+                            not req.perm.has_permission('TICKET_VIEW'):
                         continue
                     yield ((boxname, boxlabel) +
                         pr.render_announcement_preference_box(req, boxname))
@@ -76,10 +99,11 @@ class AnnouncerPreferences(Component):
         add_stylesheet(req, 'announcer/css/announcer_prefs.css')
         return 'prefs_announcer.html', {"boxes": streams}
 
-class SubscriptionManagementPanel(Component):
-    implements(IPreferencePanelProvider)
-    implements(ITemplateProvider)
-    implements(ITemplateStreamFilter)
+
+class SubscriptionManagementPanel(AnnouncerTemplateProvider):
+
+    implements(IPreferencePanelProvider,
+               ITemplateStreamFilter)
 
     subscribers = ExtensionPoint(IAnnouncementSubscriber)
     default_subscribers = ExtensionPoint(IAnnouncementDefaultSubscriber)
@@ -94,12 +118,7 @@ class SubscriptionManagementPanel(Component):
             'set-format': self._set_format
         }
 
-    def get_htdocs_dirs(self):
-        return [('announcer', resource_filename(__name__, 'htdocs'))]
-
-    def get_templates_dirs(self):
-        resource_dir = resource_filename(__name__, 'templates')
-        return [resource_dir]
+    # IPreferencePanelProvider methods
 
     def get_preference_panels(self, req):
         yield ('subscriptions', _('Subscriptions'))
@@ -117,15 +136,15 @@ class SubscriptionManagementPanel(Component):
                     pass
             else:
                 pass
+            # Refresh page after saving changes.
             req.redirect(req.href.prefs('subscriptions'))
 
         data = {'rules':{}, 'subscribers':[]}
-
-        desc_map = {}
-
         data['formatters'] = ('text/plain', 'text/html')
         data['selected_format'] = {}
         data['adverbs'] = ('always', 'never')
+
+        desc_map = {}
 
         for i in self.subscribers:
             if not i.description():
@@ -137,7 +156,6 @@ class SubscriptionManagementPanel(Component):
                 'description': i.description()
             })
             desc_map[i.__class__.__name__] = i.description()
-
 
         for i in self.distributors:
             for j in i.transports():
@@ -171,10 +189,11 @@ class SubscriptionManagementPanel(Component):
         add_stylesheet(req, 'announcer/css/announcer_prefs.css')
         return "prefs_announcer_manage_subscriptions.html", dict(data=data)
 
-    #ITemplateStreamFilter
+    # ITemplateStreamFilter method
     def filter_stream(self, req, method, filename, stream, data):
         if re.match(r'/prefs/subscription', req.path_info):
-            stream |= Transformer('//form[@id="userprefs"]//div[@class="buttons"]').empty()
+            xpath_match = '//form[@id="userprefs"]//div[@class="buttons"]'
+            stream |= Transformer(xpath_match).empty()
         return stream
 
     def _add_rule(self, arg, req):
@@ -198,4 +217,4 @@ class SubscriptionManagementPanel(Component):
     def _set_format(self, arg, req):
         Subscription.update_format_by_distributor_and_sid(self.env, arg,
                 req.session.sid, req.session.authenticated,
-                req.args['format-%s'%arg])
+                req.args['format-%s' % arg])
