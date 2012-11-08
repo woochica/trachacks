@@ -351,7 +351,9 @@ class TracPM(Component):
     # when the tickets are passed back to PM the necessary data is
     # there.
     def queryFields(self):
-        fields = []
+        # Start with Trac core fields related to PM/scheduling
+        fields = [ 'owner', 'status', 'milestone', 'priority', 'type' ]
+        # Add configured custom fields for dependendencies, etc.
         for field in self.fields:
             fields.append(self.fields[field])
         return fields

@@ -301,21 +301,21 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 query_args['id'] = pm_id
 
         # Start with values that are always needed
-        fields = [
+        fields = set([
             'description', 
             'owner', 
             'type', 
             'status', 
             'summary', 
             'milestone', 
-            'priorty'] 
+            'priorty'])
 
         # Add configured PM fields
-        fields += self.pm.queryFields()
+        fields |= set(self.pm.queryFields())
 
         # Make sure the coloring field is included
         if 'colorBy' in options and options['colorBy'] not in fields:
-            fields.append(options['colorBy'])
+            fields.add(options['colorBy'])
 
         # Make the query argument
         query_args['col'] = "|".join(fields)  
