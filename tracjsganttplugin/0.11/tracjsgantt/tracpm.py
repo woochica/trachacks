@@ -37,6 +37,22 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 #  finish - accessed with TracPM.finish(t)
 #
 # FIXME - do we need access methods for estimate and worked?
+#
+#
+# Some notes on terminology
+#
+# goal
+#
+# There is potential confusion about what a "milestone" is.  In
+# Project Management terms, a milestone is a due date for a
+# deliverable.  In Trac, a milestone is more like a project: a set of
+# tickets and an optional date when those tickets are due.  To avoid
+# confusion (or excessive use of adjectives leading to variables like
+# pmMilestone and tracMiletone, etc.) TracPM uses the term "goal."
+#
+# A goal may be an instance of a user-specific ticket type (e.g.,
+# "goal", "inchpebble", "milestone") or a pseudo-ticket representing a
+# Trac milestone.
 
 class TracPM(Component):
     cfgSection = 'TracPM'
@@ -85,7 +101,9 @@ class TracPM(Component):
 
     Option(cfgSection, 'parent_format', '%s',
            """Format of ticket IDs in parent field""")
-    Option(cfgSection, 'milestone_type', 'milestone', 
+    Option(cfgSection, 'milestone_type', '*deprecated*', 
+           """Ticket type for milestone-like tickets (Deprecated; use goal_ticket_type.)""")
+    Option(cfgSection, 'goal_ticket_type', 'milestone', 
            """Ticket type for milestone-like tickets""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
@@ -159,9 +177,15 @@ class TracPM(Component):
                         self.sources[f] = r
                     self.relations[r] = relations[r] + value
                     
-        # Tickets of this type will be displayed as milestones.
-        self.milestoneType = self.config.get(self.cfgSection, 'milestone_type')
-
+        # Tickets of this type will be treated as goals
+        self.goalTicketType = self.config.get(self.cfgSection, 'milestone_type')
+        if self.goalTicketType == '*deprecated*':
+            self.goalTicketType = self.config.get(self.cfgSection, 
+                                                  'goal_ticket_type')
+        else:
+            self.env.log.info('The milestone_type setting is deprecated.'
+                              ' Use goal_ticket_type.')
+        
         # Hours per estimate unit.  
         #
         # If estimate is in hours, this is 1.
@@ -360,7 +384,7 @@ class TracPM(Component):
 
     # Return True if ticket is a milestone, False otherwise.
     def isMilestone(self, ticket):
-        return ticket['type'] == self.milestoneType
+        return ticket['type'] == self.goalTicketType
 
 
     # Return total hours of work in ticket as a floating point number
@@ -376,7 +400,7 @@ class TracPM(Component):
             work = None
 
         # Milestones have no work.
-        if ticket['type'] == self.milestoneType:
+        if ticket['type'] == self.goalTicketType:
             est = 0.0
         # Closed tickets took as long as they took
         elif ticket['status'] == 'closed' and work:
@@ -646,7 +670,7 @@ class TracPM(Component):
 
         # A milestone has no owner
         ticket['owner'] = ''
-        ticket['type'] = self.milestoneType
+        ticket['type'] = self.goalTicketType
         ticket['status'] = ''
 
         if self.isCfg('estimate'):
@@ -1358,7 +1382,7 @@ class ResourceScheduler(Component):
                 # NOTE: Milestones don't require any work so they
                 # don't need to be resource leveled.
                 if options.get('doResourceLeveling') == '1' and \
-                        t['type'] != self.pm.milestoneType:
+                        t['type'] != self.pm.goalTicketType:
                     limit = self.limits.get(t['owner'])
                     if limit and limit < finish[0]:
                         finish = [limit, True]
