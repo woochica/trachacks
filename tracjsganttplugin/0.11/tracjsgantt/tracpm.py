@@ -53,6 +53,12 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 # A goal may be an instance of a user-specific ticket type (e.g.,
 # "goal", "inchpebble", "milestone") or a pseudo-ticket representing a
 # Trac milestone.
+#
+# A Trac milestone may be complete or incomplete.  The goal
+# pseudo-ticket for a Trac milestone has a status of "closed" if the
+# milestone has a completed date or a configurable open status if not
+# yet completed.
+
 
 class TracPM(Component):
     cfgSection = 'TracPM'
@@ -105,6 +111,8 @@ class TracPM(Component):
            """Ticket type for milestone-like tickets (Deprecated; use goal_ticket_type.)""")
     Option(cfgSection, 'goal_ticket_type', 'milestone', 
            """Ticket type for milestone-like tickets""")
+    Option(cfgSection, 'incomplete_milestone_goal_status', 'active', 
+           """Status to give goal-type tickets representing incomplete Trac milestones""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
                                 ITaskScheduler, 'ResourceScheduler')
@@ -186,6 +194,13 @@ class TracPM(Component):
             self.env.log.info('The milestone_type setting is deprecated.'
                               ' Use goal_ticket_type.')
         
+        # An open goal-type pseudo-ticket representing a Trac
+        # milestone has this status. (Closed milestones will have
+        # status of "closed".)
+        self.incompleteMilestoneStatus = \
+            self.config.get(self.cfgSection,
+                            'incomplete_milestone_goal_status')
+
         # Hours per estimate unit.  
         #
         # If estimate is in hours, this is 1.
@@ -725,19 +740,28 @@ class TracPM(Component):
             cursor = db.cursor()
             # See explanation in _followLink()
             inClause = "IN (%s)" % ','.join(('%s',) * len(milestones))
-            cursor.execute("SELECT name, due FROM milestone " +
+            cursor.execute("SELECT name, due, completed FROM milestone " +
                            "WHERE name " + inClause,
                            milestones)
             for row in cursor:
+                msName, msDueDate, msCompletedDate = row
+
                 tid = tid - 1
                 milestoneTicket = self._pseudoTicket(tid, 
-                                                     row[0],
-                                                     'Milestone %s' % row[0],
-                                                     row[0])
+                                                     msName,
+                                                     'Milestone %s' % msName,
+                                                     msName)
+
+                # If the completed date is set (non-0), the milestone is closed"
+                if msCompletedDate:
+                    milestoneTicket['status'] = 'closed'
+                # Otherwise, use the configured open status
+                else:
+                    milestoneTicket['status'] = self.incompleteMilestoneStatus
 
                 # If there's no due date, let the scheduler set it.
                 if self.isCfg('finish'):
-                    ts = row[1]
+                    ts = msDueDate
                     if ts:
                         milestoneTicket[self.fields['finish']] = \
                             format_date(ts, self.dbDateFormat)
@@ -758,7 +782,7 @@ class TracPM(Component):
                 if self.isCfg(['pred', 'succ']):
                     pred = []
                     for t in tickets:
-                        if t['milestone'] == row[0] and \
+                        if t['milestone'] == msName and \
                                 self.successors(t) == []:
                             if self.isField('succ'):
                                 t[self.fields[self.sources['succ']]] = \
