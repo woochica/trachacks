@@ -4,10 +4,12 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 announcer-1.0 (not yet released) - branch 0.11 again
  resolved issues
  * #5774: No such table: subscriptions
+ * #7759: Update Account Manager Announcer for new subscription system
  * #7974: UnboundLocalError: local variable 'tid' referenced before assignment
           with announcements from AccountManager plugin
  * #7975: Subscription incorrectly uses CURRENT_TIMESTAMP on BIGINT column
  * #7976: filter_exception_realms is ignored in DefaultPermissionFilter
+ * #7977: AccountManager plugin does not work
  * #8062: Database upgrade silently fails when no i18n is available
  * #8458: PrivateTicketsPlugin is incompatible with TracAnnouncer plugin
  * #8577: NameError: when trying to delete a ticket
