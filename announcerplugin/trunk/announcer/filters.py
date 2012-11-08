@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2009, Robert Corsaro
+# Copyright (c) 2010-2012, Steffen Hoffmann
+#
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
@@ -12,6 +17,8 @@ from trac.perm import PermissionCache
 
 from announcer.api import IAnnouncementSubscriptionFilter
 from announcer.api import _
+from announcer.util import get_target_id
+
 
 class DefaultPermissionFilter(Component):
     """DefaultPermissionFilter simply checks that each subscription
@@ -40,10 +47,16 @@ class DefaultPermissionFilter(Component):
             if not auth:
                 sid = 'anonymous'
             perm = PermissionCache(self.env, sid)
-            if perm.has_permission(action):
+            self.log.debug(
+                'Checking *_VIEW permission on event for resource %s:%s'
+                % (event.realm, resource_id)
+            )
+            resource_id = get_target_id(event.target)
+            if perm.has_permission(action) and action in perm(event.realm,
+                                                              resource_id):
                 yield subscription
             else:
                 self.log.debug(
-                    "Filtering %s because of rule: DefaultPermissionFilter"\
-                    %sid
+                    "Filtering %s because of rule: DefaultPermissionFilter"
+                    % sid
                 )
