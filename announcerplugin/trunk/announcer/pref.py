@@ -25,7 +25,7 @@ from announcer.api import IAnnouncementFormatter
 from announcer.api import IAnnouncementPreferenceProvider
 from announcer.api import IAnnouncementSubscriber
 from announcer.model import Subscription
-from announcer.util.settings import SubscriptionSetting, encode, decode
+from announcer.util.settings import encode, decode
 
 def truth(v):
     if v in (False, 'False', 'false', 0, '0', ''):

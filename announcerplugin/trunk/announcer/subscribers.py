@@ -2,7 +2,7 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009, Robert Corsaro
-# Copyright (c) 2010, Steffen Hoffmann
+# Copyright (c) 2010,2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -33,8 +33,7 @@ from announcer.api import IAnnouncementPreferenceProvider
 from announcer.api import IAnnouncementSubscriber
 from announcer.api import _, istrue
 from announcer.model import Subscription, SubscriptionAttribute
-from announcer.util.settings import BoolSubscriptionSetting
-from announcer.util.settings import SubscriptionSetting
+from announcer.util import get_target_id
 
 """Subscribers should return a list of subscribers based on event rules.
 The subscriber interface is very simple and flexible.  Subscription have
@@ -650,16 +649,16 @@ class UserChangeSubscriber(Component):
 
 
 class WatchSubscriber(Component):
-    """Allows user to subscribe to ticket or wikinotification on a per
+    """Allows user to subscribe to ticket or wiki notification on a per
     resource basis.  Watch, Unwatch links are added to wiki pages and tickets
     that the user can select to start watching a resource.
     """
 
-    implements(IRequestFilter)
-    implements(IRequestHandler)
-    implements(IAnnouncementSubscriber)
-    implements(ITicketChangeListener)
-    implements(IWikiChangeListener)
+    implements(IRequestFilter,
+               IRequestHandler,
+               IAnnouncementSubscriber,
+               ITicketChangeListener,
+               IWikiChangeListener)
 
     watchable_paths = ListOption('announcer', 'watchable_paths',
         'wiki/*,ticket/*',
@@ -672,6 +671,7 @@ class WatchSubscriber(Component):
     path_match = re.compile(r'/watch(/.*)')
 
     # IRequestHandler methods
+
     def match_request(self, req):
         m = self.path_match.match(req.path_info)
         if m:
@@ -732,6 +732,7 @@ class WatchSubscriber(Component):
             SubscriptionAttribute.delete(self.env, attr['id'])
 
     # IRequestFilter methods
+
     def pre_process_request(self, req, handler):
         return handler
 
@@ -749,6 +750,7 @@ class WatchSubscriber(Component):
         return (template, data, content_type)
 
     # Internal methods
+
     def render_watcher(self, req):
         if not self.ctxtnav_names:
           return
@@ -779,10 +781,10 @@ class WatchSubscriber(Component):
             realm = 'wiki'
         if not target and realm == 'wiki':
             target = 'WikiStart'
-
         return realm, target
 
-    # IWikiChangeListener
+    # IWikiChangeListener methods
+
     def wiki_page_added(*args):
         pass
 
@@ -792,12 +794,13 @@ class WatchSubscriber(Component):
     def wiki_page_deleted(self, page):
         klass = self.__class__.__name__
         SubscriptionAttribute.delete_by_class_realm_and_target(
-                self.env, klass, 'wiki', page.name)
+                self.env, klass, 'wiki', get_target_id(page))
 
     def wiki_page_version_deleted(*args):
         pass
 
-    # ITicketChangeListener
+    # ITicketChangeListener methods
+
     def ticket_created(*args):
         pass
 
@@ -807,13 +810,15 @@ class WatchSubscriber(Component):
     def ticket_deleted(self, ticket):
         klass = self.__class__.__name__
         SubscriptionAttribute.delete_by_class_realm_and_target(
-                self.env, klass, 'ticket', self._get_target_id(ticket.id))
+                self.env, klass, 'ticket', get_target_id(ticket))
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         klass = self.__class__.__name__
 
         attrs = SubscriptionAttribute.find_by_class_realm_and_target(self.env,
-                klass, event.realm, self._get_target_id(event.target))
+                klass, event.realm, get_target_id(event.target))
         sids = set(map(lambda x: (x['sid'],x['authenticated']), attrs))
 
         for i in Subscription.find_by_sids_and_class(self.env, sids, klass):
@@ -825,14 +830,6 @@ class WatchSubscriber(Component):
     def requires_authentication(self):
         return False
 
-    def _get_target_id(self, target):
-        if hasattr(target, 'id'):
-            tid = str(target.id)
-        elif hasattr(target, 'name'):
-            tid = target.name
-        else:
-            tid = str(target)
-        return tid
 
 class GeneralWikiSubscriber(Component):
     """Allows users to subscribe to wiki announcements based on a pattern

@@ -7,32 +7,16 @@
 #
 
 from base64 import b32encode, b32decode
+
 try:
     from email.header import Header
 except:
     from email.Header import Header
 
-from trac.util.text import to_unicode
-try:
-    # Method only available in Trac 0.11.3 or higher.
-    from trac.util.text import exception_to_unicode
-except:
-    def exception_to_unicode(e, traceback=False):
-        """Convert an `Exception` to an `unicode` object.
-
-        In addition to `to_unicode`, this representation of the exception
-        also contains the class name and optionally the traceback.
-        This replicates the Trac core method for backwards-compatibility.
-        """
-        message = '%s: %s' % (e.__class__.__name__, to_unicode(e))
-        if traceback:
-            from trac.util import get_last_traceback
-            traceback_only = get_last_traceback().split('\n')[:-2]
-            message = '\n%s\n%s' % (to_unicode('\n'.join(traceback_only)),
-                                    message)
-        return message
+from announcer.util import get_target_id
 
 MAXHEADERLEN = 76
+
 
 def next_decorator(event, message, decorates):
     """
@@ -61,17 +45,11 @@ def uid_encode(projurl, realm, target):
     """
     Unique identifier used to track resources in relation to emails.
 
-    Returns a base64 encode UID string.  projurl included to avoid
-    Message-ID collisions.  Returns a base64 encode UID string.
+    Returns a base32 encode UID string.  projurl included to avoid
+    Message-ID collisions.  Returns a base32 encode UID string.
     Set project_url in trac.ini for proper results.
     """
-    if hasattr(target, 'id'):
-        id = str(target.id)
-    elif hasattr(target, 'name'):
-        id = target.name
-    else:
-        id = str(target)
-    uid = ','.join((projurl, realm, id))
+    uid = ','.join((projurl, realm, get_target_id(target)))
     return b32encode(uid.encode('utf8'))
 
 def uid_decode(encoded_uid):
@@ -87,4 +65,3 @@ def msgid(uid, host='localhost'):
     ie. <UIDUIDUIDUIDUID@localhost>
     """
     return "<%s@%s>"%(uid, host)
-

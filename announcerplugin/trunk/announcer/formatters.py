@@ -25,7 +25,7 @@ from trac.wiki.formatter import HtmlFormatter
 from trac.wiki.model import WikiPage
 
 from announcer.api import IAnnouncementFormatter
-from announcer.util.mail import exception_to_unicode
+from announcer.compat import exception_to_unicode
 
 
 def diff_cleanup(gen):
