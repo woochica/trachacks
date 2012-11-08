@@ -114,6 +114,7 @@ class TracPM(Component):
         # table, src, dst.
         relations = {}
         relations['pred-succ'] = [ 'pred', 'succ' ]
+        relations['parent-child'] = [ 'parent', 'children' ]
 
         # Process field configuration
         self.fields = {}
@@ -287,10 +288,15 @@ class TracPM(Component):
             return ticket[field]
 
     # Return the integer ID of the parent ticket
-    # 0 if no parent
-    # None if parent is not configured
+    # None if no parent or parent is not configured
     def parent(self, ticket):
-        return self._fieldValue(ticket, 'parent')
+        value = self._fieldValue(ticket, 'parent')
+        if value == None:
+            return value
+        elif value == []:
+            return None
+        else:
+            return value[0]
 
     # Return list of integer IDs of children.
     # None if parent is not configured.
@@ -305,7 +311,7 @@ class TracPM(Component):
             # Find the roots of the trees
             for tid in ticketsByID:
                 pid = self.parent(ticketsByID[tid])
-                if pid == 0 or pid not in ticketsByID:
+                if not pid or pid not in ticketsByID:
                     roots.append(tid)
         # If there is no parent field, all tickets are roots.
         else:
@@ -571,8 +577,10 @@ class TracPM(Component):
             ticket[self.fields['percent']] = 0
 
         # A milestone has no children or parent
-        if self.isCfg('parent'):
-            ticket[self.fields['parent']] = 0
+        if self.isField('parent'):
+            ticket[self.fields['parent']] = [ ]
+        else:
+            ticket['parent'] = [ ]
         ticket['children'] = []
 
         # Place holder.
@@ -697,7 +705,7 @@ class TracPM(Component):
 
         # Normalize parent field values.  All parent values must be
         # done before building child lists, below.
-        if self.isCfg('parent'):
+        if self.isField('parent'):
             for t in tickets:
                 # ChildTicketsPlugin puts '#' at the start of the
                 # parent field.  Strip it for simplicity.
@@ -706,20 +714,36 @@ class TracPM(Component):
                 if len(parent) > 0 and parent[0] == '#':
                     t[fieldName] = parent[1:]
 
-                # An empty parent default to 0 (no such ticket)
+                # An empty parent field string, default empty list (no parent)
                 if t[fieldName] == '':
-                    t[fieldName] = 0
-                # Otherwise, convert the string to an integer
+                    t[fieldName] = []
+                # Otherwise, convert the string to an integer and put
+                # it in a list.
+                #
+                # NOTE: Subtickets plugin allows multiple parents.
+                # The parent field is then in the form "123, 234". In
+                # that case, the int() call will raise an exception
+                # and the overall query will crash.  To fail
+                # gracefully, we'd have to use a try around the
+                # parsing (which would add overhead on every call that
+                # almost never provided any benefit because there is
+                # usually no exception to catch), use a regular
+                # expression to look for non-digit characters (again,
+                # expensive) or split the string (which works for
+                # Subtickets but may not handle another plugin which
+                # uses a different separator).  I choose to let the
+                # exception be unhandled.
                 else:
-                    t[fieldName] = int(t[fieldName])
+                    t[fieldName] = [ int(t[fieldName]) ]
                         
         # Build child lists
         for t in tickets:
             if not self.isCfg('parent'):
                 t['children'] = []
             elif self.isField('parent'):
+                fieldName = self.fields[self.sources['parent']]
                 t['children'] = [c['id'] for c in tickets \
-                                     if c[fieldName] == t['id']]
+                                     if t['id'] in c[fieldName]]
 
         # Clean up successor, predecessor lists
         for t in tickets:
@@ -1169,7 +1193,7 @@ class ResourceScheduler(Component):
                 if self.pm.isCfg(['finish', 'parent']):
                     pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
-                    if pid != 0:
+                    if pid:
                         if pid in ticketsByID:
                             parent = ticketsByID[pid]
                             _schedule_task_alap(parent)
@@ -1315,7 +1339,7 @@ class ResourceScheduler(Component):
                 if self.pm.isCfg(['start', 'parent']):
                     pid = self.pm.parent(t)
                     # If this ticket has a parent, process it
-                    if pid != 0:
+                    if pid:
                         if pid in ticketsByID:
                             parent = ticketsByID[pid]
                             _schedule_task_asap(parent)
