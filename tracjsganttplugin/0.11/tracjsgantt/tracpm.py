@@ -430,6 +430,73 @@ class TracPM(Component):
             
         return percent
 
+    # Find all the tasks connected (directly or indirectly) to the
+    # specified origins via dependencies (parent-child or pred-succ).
+    #
+    # We expand a border between tasks we have explored and those yet
+    # to explore until there are no more to explore.  This is a
+    # variation on a graph coloring algorithm which colors explored
+    # nodes black, border nodes grey, and nodes to explore white.
+    # Such labeling doesn't fit well with the Trac database structure.
+    # We could name our sets white, grey, and black, but that's much
+    # less clear than naming them for what they contain.
+    #
+    # @param origins list of integer ticket IDs to fan out from
+    # @param depth how how many times to traverse links (-1=all, default)
+    # @return list of ticket ID strings for tickets reachable from
+    #   origins (including origins)
+    def _reachable(self, origins, depth=-1):
+        # Helper to find the immediate neighbors of a set of nodes.
+        # @param nodes a set of nodes to find neighbors of
+        def neighbors(nodes):
+            n = set()
+            nodes = list(nodes)
+            # Get parents of nodes
+            if self.isCfg('parent'):
+                n |= set(self._followLink(nodes,
+                                         'parent', 
+                                         self.parent_format, 
+                                         1))
+            # Get children of nodes
+            if self.isRelation('parent'):
+                n |= set(self._followLink(nodes,
+                                         'children',
+                                         '%s',
+                                         1))
+            # Get immediate predecessors of nodes
+            if self.isCfg('pred'):
+                n |= set(self._followLink(nodes,
+                                         'pred',
+                                         '%s',
+                                         1))
+            # Get immedicate successors of nodes
+            if self.isCfg('succ'):
+                n |= set(self._followLink(nodes,
+                                         'succ',
+                                         '%s',
+                                         1))
+
+            return n
+
+        # We haven't explored anything yet.
+        explored = set()
+        # We'll explore out from the initial set
+        toExplore = set(origins)
+        # While we have more exploring to do
+        while toExplore != set() and depth != 0:
+            depth -= 1
+            # Our border is what we're about to explore
+            border = toExplore
+            # Find neighbors of the border nodes
+            toExplore = neighbors(border)
+            # Some of the neighbors of the border are already in the
+            # explored set.  Remove them.
+            toExplore -= explored
+            # Now we've explored the border
+            explored |= border
+
+        return list(explored)
+
 
     # Expand the list of tickets in origins to include those
     # related through field.
