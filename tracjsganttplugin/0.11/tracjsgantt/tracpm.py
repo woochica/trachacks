@@ -431,73 +431,85 @@ class TracPM(Component):
         return percent
 
 
+    # Expand the list of tickets in origins to include those
+    # related through field.
+    # 
+    # Recurses following link until 
+    #  * no new items are found, or
+    #  * field has been followed depth times
+    # 
+    # @param origins a list of ticket IDs as strings
+    # @param field the field to follow
+    # @param format the format of ticket IDs in field
+    # @param depth how many steps to follow the link (default -1, no limit)
+    #
+    # @return a list of integer ticket IDs of tickets up to depth
+    # steps from origins via field
+    def _followLink(self, origins, field, format, depth = -1):
+        if len(origins) == 0 or depth == 0:
+            return []
+
+        node_list = [format % tid for tid in origins]
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        # Query from external table
+        if self.isRelation(field):
+            relation = self.relations[self.sources[field]]
+            # Forward query
+            if field == relation[0]:
+                (f1, f2, tbl, src, dst) = relation
+            # Reverse query
+            elif field == relation[1]:
+                (f1, f2, tbl, dst, src) = relation
+            else:
+                raise TracError('Relation configuration error for %s' % 
+                                field)
+
+            # Build up enough instances of %s to represent all the
+            # nodes.  The DB API will replace them with items from
+            # node_list, properly quoted for the DB back-end.
+            #
+            # In 0.12, we could do
+            #
+            #   ','.join([db.quote(node) for node in node_list])
+            #
+            # but 0.11 doesn't have db.quote()
+            inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
+            cursor.execute("SELECT %s FROM %s WHERE %s " % \
+                               (dst, tbl, src) + \
+                               inClause,
+                           node_list)
+        # Query from custom field
+        elif self.isField(field):
+            fieldName = self.fields[self.sources[field]]
+            # See explantion in relation handling, above.
+            inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
+            cursor.execute("SELECT t.id "
+                           "FROM ticket AS t "
+                           "LEFT OUTER JOIN ticket_custom AS p ON "
+                           "    (t.id=p.ticket AND p.name=%s) "
+                           "WHERE p.value " + inClause,
+                           [fieldName] + node_list)
+        # We really can't get here because the callers test for
+        # isCfg() but it's nice form to have an else.
+        else:
+            raise TracError('Cannot expand %s; '
+                            'Not configured as a field or relation.' %
+                            field)
+
+        # Get tickets IDs of related tickets as strings
+        nodes = ['%s' % row[0] for row in cursor] 
+        # Filter out ticket IDs we already know about
+        nodes = [tid for tid in nodes if tid not in origins]
+
+        return nodes + self._followLink(nodes, field, format, depth - 1)
+
+
     # Returns pipe-delimited, possibily empty string of ticket IDs
     # meeting PM constraints.  Suitable for use as id field in ticket
     # query engine.  
     # FIXME - dumb name
     def preQuery(self, options, this_ticket = None):
-        # Expand the list of tickets in origins to include those
-        # related through field.
-        # origins is a list of strings
-        def _expand(origins, field, format):
-            if len(origins) == 0:
-                return []
-
-            node_list = [format % tid for tid in origins]
-            db = self.env.get_db_cnx()
-            cursor = db.cursor()
-            # Query from external table
-            if self.isRelation(field):
-                relation = self.relations[self.sources[field]]
-                # Forward query
-                if field == relation[0]:
-                    (f1, f2, tbl, src, dst) = relation
-                # Reverse query
-                elif field == relation[1]:
-                    (f1, f2, tbl, dst, src) = relation
-                else:
-                    raise TracError('Relation configuration error for %s' % 
-                                    field)
-
-                # Build up enough instances of %s to represent all the
-                # nodes.  The DB API will replace them with items from
-                # node_list, properly quoted for the DB back-end.
-                #
-                # In 0.12, we could do
-                #
-                #   ','.join([db.quote(node) for node in node_list])
-                #
-                # but 0.11 doesn't have db.quote()
-                inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
-                cursor.execute("SELECT %s FROM %s WHERE %s " % \
-                                   (dst, tbl, src) + \
-                                   inClause,
-                               node_list)
-            # Query from custom field
-            elif self.isField(field):
-                fieldName = self.fields[self.sources[field]]
-                # See explantion in relation handling, above.
-                inClause = "IN (%s)" % ','.join(('%s',) * len(node_list))
-                cursor.execute("SELECT t.id "
-                               "FROM ticket AS t "
-                               "LEFT OUTER JOIN ticket_custom AS p ON "
-                               "    (t.id=p.ticket AND p.name=%s) "
-                               "WHERE p.value " + inClause,
-                               [fieldName] + node_list)
-            # We really can't get here because the callers test for
-            # isCfg() but it's nice form to have an else.
-            else:
-                raise TracError('Cannot expand %s; '
-                                'Not configured as a field or relation.' %
-                                field)
-                
-            # Get tickets IDs of related tickets as strings
-            nodes = ['%s' % row[0] for row in cursor] 
-            # Filter out ticket IDs we already know about
-            nodes = [tid for tid in nodes if tid not in origins]
-
-            return origins + _expand(nodes, field, format)
-
         ids = ''
 
         if options.get('root'):
@@ -513,9 +525,9 @@ class TracPM(Component):
                 else:
                     nodes = options['root'].split('|')
 
-                ids += '|'.join(_expand(nodes, 
-                                       'parent',
-                                       self.parent_format))
+                ids += '|'.join(nodes + self._followLink(nodes, 
+                                                         'parent',
+                                                         self.parent_format))
 
         if options.get('goal'):
             if not self.isCfg('succ'):
@@ -537,11 +549,13 @@ class TracPM(Component):
                 nodes2 = []
                 while nodes != nodes2:
                     # Get all the predecessors
-                    nodes2 = _expand(nodes, 'succ', '%s')
+                    nodes2 = nodes + self._followLink(nodes, 'succ', '%s')
 
                     # Get the children, if parent configured
                     if self.isCfg('parent'):
-                        nodes = _expand(nodes2, 'parent', self.parent_format)
+                        nodes = nodes2 + self._followLink(nodes2, 
+                                                          'parent', 
+                                                          self.parent_format)
                     else:
                         nodes = nodes2
 
@@ -616,7 +630,7 @@ class TracPM(Component):
             # Get the milestones and their due dates
             db = self.env.get_db_cnx()
             cursor = db.cursor()
-            # See explanation in _expand()
+            # See explanation in _followLink()
             inClause = "IN (%s)" % ','.join(('%s',) * len(milestones))
             cursor.execute("SELECT name, due FROM milestone " +
                            "WHERE name " + inClause,
@@ -769,7 +783,7 @@ class TracPM(Component):
             # Get the elements of the relationship ...
             (f1, f2, tbl, src, dst) = self.relations[r]
             # ... query all relations with the desired IDs on either end ...
-            # See explanation in _expand()
+            # See explanation in _followLink()
             inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
             cursor.execute("SELECT %s, %s FROM %s " % (src, dst, tbl) + \
                                "WHERE %s " % src + inClause + \
