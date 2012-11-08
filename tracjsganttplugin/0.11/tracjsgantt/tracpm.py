@@ -214,13 +214,21 @@ class TracPM(Component):
     # FIXME - Many of these should be marked as more private.  Perhaps
     # an leading underscore?
 
+    def parseDbDate(self, dateString):
+        if not dateString:
+            d = None
+        else:
+            d = datetime(*time.strptime(dateString, 
+                                        self.dbDateFormat)[0:7])
+            d = d.replace(hour=0, minute=0, second=0, microsecond=0)
+        return d
+
     # Parse the start field and return a datetime
     # Return None if the field is not configured or empty.
     def parseStart(self, ticket):
         if self.isSet(ticket, 'start'):
             try:
-                start = datetime(*time.strptime(ticket[self.fields['start']], 
-                                                self.dbDateFormat)[0:7])
+                start = self.parseDbDate(ticket[self.fields['start']])
             except:
                 raise TracError('Ticket %s has an invalid %s value, "%s".' \
                                     ' It should match the format "%s".' %
@@ -228,8 +236,6 @@ class TracPM(Component):
                                  self.fields['start'],
                                  ticket[self.fields['start']],
                                  self.dbDateFormat))
-                
-            start.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             start = None
         return start
@@ -239,8 +245,7 @@ class TracPM(Component):
     def parseFinish(self, ticket):
         if self.isSet(ticket, 'finish'):
             try:
-                finish = datetime(*time.strptime(ticket[self.fields['finish']], 
-                                                 self.dbDateFormat)[0:7])
+                finish = self.parseDbDate(ticket[self.fields['finish']]) 
             except:
                 raise TracError('Ticket %s has an invalid %s value, "%s".' \
                                     ' It should match the format "%s".' %
@@ -248,8 +253,6 @@ class TracPM(Component):
                                  self.fields['finish'],
                                  ticket[self.fields['finish']],
                                  self.dbDateFormat))
-                
-            finish.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
             finish = None
         return finish
@@ -334,11 +337,11 @@ class TracPM(Component):
         else:
             return value
 
-    # Return computed start for ticket
+    # Return computed start for ticket as a Python datetime object
     def start(self, ticket):
         return ticket['_calc_start'][0]
 
-    # Return computed start for ticket
+    # Return computed start for ticket as a Python datetime object
     def finish(self, ticket):
         return ticket['_calc_finish'][0]
 
