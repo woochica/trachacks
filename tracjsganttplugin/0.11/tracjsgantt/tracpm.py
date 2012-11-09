@@ -17,15 +17,14 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 # dates and ticket relationships and business rules about what the
 # default estimate for a ticket is, etc.
 #
-# It provides utility functions to augment TicketQuery so that you can
-# find all the descendants of a ticket (root=id) or all the tickets
-# required for a specified ticket (goal=id).
-#
-# After querying, TracPM can be used to post-process the query results
-# to augment the tickets in memory with normalized meta-data about
-# their relationships.  After that processing, a ticket may have the
-# properties listed below.  Which properties are present depends on
-# what is configured in the [TracPM] section of trac.ini.
+# TracPM.query() augments TicketQuery so that you can find all the
+# descendants of a ticket (root=id) or all the tickets required for a
+# specified ticket (goal=id).  After querying, TracPM post-processes
+# the query results to augment the tickets in memory with normalized
+# meta-data about their relationships.  After that processing, a
+# ticket may have the properties listed below.  (Which properties are
+# present depends on what is configured in the [TracPM] section of
+# trac.ini.)
 #
 #  parent - accessed with TracPM.parent(t)
 #  children - accessed with TracPM.children(t)
@@ -384,22 +383,25 @@ class TracPM(Component):
     def finish(self, ticket):
         return ticket['_calc_finish'][0]
 
-
-    # Return a list of custom fields that PM needs to work.  The
+    # Return a set of custom fields that PM needs to work.  The
     # caller can add this to the list of fields in a query so that
     # when the tickets are passed back to PM the necessary data is
     # there.
     def queryFields(self):
         # Start with Trac core fields related to PM/scheduling
-        fields = [ 'owner', 'status', 'milestone', 'priority', 'type' ]
+        fields = set([ 'owner', 'status', 'milestone', 'priority', 'type' ])
         # Add configured custom fields for dependendencies, etc.
         for field in self.fields:
-            fields.append(self.fields[field])
+            fields.add(self.fields[field])
         return fields
 
     # Return True if ticket is a milestone, False otherwise.
     def isMilestone(self, ticket):
         return ticket['type'] == self.goalTicketType
+
+    # Return True if ticket is a Trac milestone, False otherwise.
+    def isTracMilestone(self, ticket):
+        return self.isMilestone(ticket) and ticket['id'] < 0
 
 
     # Return total hours of work in ticket as a floating point number
@@ -613,61 +615,65 @@ class TracPM(Component):
         return nodes + self._followLink(nodes, field, format, depth - 1)
 
 
-    # Returns pipe-delimited, possibily empty string of ticket IDs
-    # meeting PM constraints.  Suitable for use as id field in ticket
-    # query engine.  
+    # Returns (possibily empty) set of ID strings of tickets
+    # meeting PM constraints.
     # FIXME - dumb name
     def preQuery(self, options, this_ticket = None):
-        ids = ''
+        ids = set()
 
         if options.get('root'):
             if not self.isCfg('parent'):
                 self.env.log.info('Cannot get tickets under root ' +
                                   'without "parent" field configured')
             else:
+                nodes = set()
                 if options['root'] == 'self':
                     if this_ticket:
-                        nodes = [ this_ticket ]
+                        nodes.add(this_ticket)
                     else:
-                        nodes = []
+                        # FIXME - display an error here that self needs a ticket
+                        pass
                 else:
-                    nodes = options['root'].split('|')
+                    nodes |= set(options['root'].split('|'))
 
-                ids += '|'.join(nodes + self._followLink(nodes, 
-                                                         'parent',
-                                                         self.parent_format))
+                ids |= nodes
+                ids |= set(self._followLink(nodes, 
+                                            'parent', 
+                                            self.parent_format))
 
         if options.get('goal'):
             if not self.isCfg('succ'):
                 self.env.log.info('Cannot get tickets for goal ' +
                                   'without "succ" field configured')
             else:
+                nodes = set()
                 if options['goal'] == 'self':
                     if this_ticket:
-                        nodes = [ this_ticket ]
+                        nodes.add(this_ticket)
                     else:
-                        nodes = []
+                        # FIXME - display an error here that self needs a ticket
+                        pass
                 else:
-                    nodes = options['goal'].split('|')
+                    nodes |= set(options['goal'].split('|'))
 
                 # Loop getting all the predecessors of the tickets
                 # gathered so far then the children of the tickets
                 # gathered so far until the list doesn't change with a
                 # new query.
-                nodes2 = []
+                nodes2 = set()
                 while nodes != nodes2:
                     # Get all the predecessors
-                    nodes2 = nodes + self._followLink(nodes, 'succ', '%s')
+                    nodes2 = nodes | set(self._followLink(nodes, 'succ', '%s'))
 
                     # Get the children, if parent configured
                     if self.isCfg('parent'):
-                        nodes = nodes2 + self._followLink(nodes2, 
-                                                          'parent', 
-                                                          self.parent_format)
+                        nodes = nodes2 | set(self._followLink(nodes2, 
+                                                              'parent', 
+                                                              self.parent_format))
                     else:
                         nodes = nodes2
 
-                ids += '|'.join(nodes)
+                ids |= nodes
 
         return ids
 
@@ -720,16 +726,11 @@ class TracPM(Component):
         else:
             milestones = []
 
-        # FIXME - Really?  This is a display option
-        if options.get('omitMilestones') \
-                and int(options['omitMilestones']) == 1:
-            pass
-        else:
-            for t in tickets:
-                if 'milestone' in t and \
-                        t['milestone'] != '' and \
-                        t['milestone'] not in milestones:
-                    milestones.append(t['milestone'])
+        for t in tickets:
+            if 'milestone' in t and \
+                    t['milestone'] != '' and \
+                    t['milestone'] not in milestones:
+                milestones.append(t['milestone'])
 
         # Need a unique ID for each task.
         if len(milestones) > 0:
@@ -804,6 +805,7 @@ class TracPM(Component):
                 
                 tickets.append(milestoneTicket)
 
+
     # Process the tickets to normalize formats, etc. to simplify
     # access functions.
     #
@@ -813,6 +815,10 @@ class TracPM(Component):
     # is configured for PM, then 'children' is the (possibly empty)
     # list of children.  if there is no 'parent' field, then
     # 'children' is set to None.
+    #
+    # Any "dangling references" are cleaned up.  That is, if A is a
+    # parent of B but A is not in tickets then the returned set shows
+    # B with no parent.  Similarly for predecessors and successors.
     #
     # Milestones for the tickets are added as pseudo-tickets.
     def postQuery(self, options, tickets):
@@ -834,6 +840,9 @@ class TracPM(Component):
                     if t[fieldName] == '--':
                         t[fieldName] = ''
 
+        # Get all the IDs we care about
+        ids = [t['id'] for t in tickets]
+
         # Normalize parent field values.  All parent values must be
         # done before building child lists, below.
         if self.isField('parent'):
@@ -847,6 +856,10 @@ class TracPM(Component):
 
                 # An empty parent field string, default empty list (no parent)
                 if t[fieldName] == '':
+                    t[fieldName] = []
+                # If the parent isn't in the list we're processing,
+                # pretend there is no parent.
+                elif int(t[fieldName]) not in ids:
                     t[fieldName] = []
                 # Otherwise, convert the string to an integer and put
                 # it in a list.
@@ -871,6 +884,9 @@ class TracPM(Component):
         for t in tickets:
             if not self.isCfg('parent'):
                 t['children'] = []
+            # NOTE: This can't build dangling references becuase it is
+            # built from the parent field which is set to None, above,
+            # if the parent isn't in the set we're processing.
             elif self.isField('parent'):
                 fieldName = self.fields[self.sources['parent']]
                 t['children'] = [c['id'] for c in tickets \
@@ -885,15 +901,17 @@ class TracPM(Component):
                     if t[fieldName] == '':
                         t[fieldName] = []
                     else:
+                        # Get all the related tickets
                         t[fieldName] = \
                             [int(s.strip()) \
                                  for s in t[fieldName].split(',')]
+                        # Prune the list to tickets we care about
+                        t[fieldName] = [tid for tid in t[fieldName] \
+                                            if tid in ids]
 
         # Fill in relations
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        # Get all the IDs we care about relations from.
-        ids = ['%s' % t['id'] for t in tickets]
 
         # For each configured relation ...
         for r in self.relations:
@@ -902,13 +920,17 @@ class TracPM(Component):
             # ... query all relations with the desired IDs on either end ...
             # See explanation in _followLink()
             inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+            # Use AND, not OR, here so we only get links between the
+            # tickets were care about and don't create dangling
+            # references.
             cursor.execute("SELECT %s, %s FROM %s " % (src, dst, tbl) + \
                                "WHERE %s " % src + inClause + \
-                               " OR %s " % dst + inClause,
+                               " AND %s " % dst + inClause,
                            ids + ids)
 
             # ... quickly build a local cache of the forward and
-            # reverse links ...
+            # reverse links (where both ends are in the list we care
+            # about) ...
             fwd = {}
             rev = {}
             for row in cursor:
@@ -934,7 +956,60 @@ class TracPM(Component):
                 else:
                     t[f2] = []
 
+        # Add pseudo-tickets for Trac milestones
         self._add_milestones(options, tickets)
+
+    # Something like ticket.query.Query() with a slightly different
+    # interface.
+    # 
+    # @param options hash of query options (e.g., id, milestone, owner)
+    # @param fields set of names of fields that the caller needs
+    #     (e.g., 'status')
+    # @param ticket ticket to use for "root=this", "goal=this".
+    #
+    # @return a list of ticket results, each item is a hash of ticket
+    #   fields including those named in fields and those required for PM
+    #
+    def query(self, options, fields, ticket=None):
+        query_args = {}
+        # Copy query args from caller (e.g., q_a['owner'] = 'monty|phred')
+        for key in options.keys():
+            # FIXME - This test is a kludge.  Need a way to exclude
+            # those handled by preQuery() in a data-driven way.
+            if key not in [ 'goal', 'root' ]:
+                query_args[str(key)] = options[key]
+        
+        # Expand (or set) list of IDs to include those specified by PM
+        # query meta-options (e.g., root)
+        pm_ids = self.preQuery(options, ticket)
+        if len(pm_ids) != 0:
+            if 'id' in query_args:
+                query_args['id'] += '|' + '|'.join(pm_ids)
+            else:
+                query_args['id'] = '|'.join(pm_ids)
+
+        # Default to getting all tickets
+        if 'max' not in query_args:
+            quary_args['max'] = 0
+
+        # Tell the query what columns to return
+        query_args['col'] = "|".join(self.queryFields() | fields)
+
+        # Construct the querystring. 
+        query_string = '&'.join(['%s=%s' % 
+                                 (str(f), unicode(v)) for (f, v) in 
+                                 query_args.iteritems()]) 
+
+        # Get the Query object. 
+        query = Query.from_string(self.env, query_string)
+
+        # Get all tickets
+ 	tickets = query.execute() 
+
+        # Post process to add more PM stuff
+        self.postQuery(options, tickets)
+
+        return tickets
 
     # tickets is an unordered list of tickets.  Each ticket contains
     # at least the fields returned by queryFields() and the whole list

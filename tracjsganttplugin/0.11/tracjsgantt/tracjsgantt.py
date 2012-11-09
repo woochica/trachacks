@@ -71,10 +71,6 @@ class TracJSGanttSupport(Component):
            """Field to use to color tasks""")
     IntOption('trac-jsgantt', 'option.lwidth', None, 
               """Width (in pixels) of left table""")
-    IntOption('trac-jsgantt', 'option.root', None,
-              """Ticket(s) to show descendants of""")
-    IntOption('trac-jsgantt', 'option.goal', None,
-              """Ticket(s) to show predecessors of""")
     IntOption('trac-jsgantt', 'option.showdep', 1, 
               """Show dependencies in Gantt""")
     IntOption('trac-jsgantt', 'option.userMap', 1, 
@@ -182,7 +178,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         options = ('format', 'formats', 'sample', 'res', 'dur', 'comp', 
                    'caption', 'startDate', 'endDate', 'dateDisplay', 
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
-                   'root', 'goal', 'showdep', 'userMap', 'omitMilestones',
+                   'showdep', 'userMap', 'omitMilestones',
                    'schedule', 'hoursPerDay', 'doResourceLeveling',
                    'display', 'order')
 
@@ -286,21 +282,12 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
     # Get the required columns for the tickets which match the
     # criteria in options.
     def _query_tickets(self, options):
-        query_args = {}
+        query_options = {}
         for key in options.keys():
             if not key in self.options:
-                query_args[key] = options[key]
+                query_options[key] = options[key]
 
-        # Expand (or set) list of IDs to include those specified by PM
-        # query meta-options (e.g., root)
-        pm_id = self.pm.preQuery(options, self._this_ticket())
-        if pm_id != '':
-            if 'id' in query_args:
-                query_args['id'] += '|' + pm_id
-            else:
-                query_args['id'] = pm_id
-
-        # Start with values that are always needed
+        # The fields always needed by the Gantt
         fields = set([
             'description', 
             'owner', 
@@ -308,28 +295,13 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             'status', 
             'summary', 
             'milestone', 
-            'priorty'])
-
-        # Add configured PM fields
-        fields |= set(self.pm.queryFields())
+            'priority'])
 
         # Make sure the coloring field is included
-        if 'colorBy' in options and options['colorBy'] not in fields:
-            fields.add(options['colorBy'])
+        if 'colorBy' in options:
+            fields.add(str(options['colorBy']))
 
-        # Make the query argument
-        query_args['col'] = "|".join(fields)  
-
-        # Construct the querystring. 
-        query_string = '&'.join(['%s=%s' % 
-                                 (f, unicode(v)) for (f, v) in 
-                                 query_args.iteritems()]) 
-
-        # Get the Query Object. 
-        query = Query.from_string(self.env, query_string)
-
-        # Get all tickets 
- 	rawtickets = query.execute(self.req) 
+        rawtickets = self.pm.query(query_options, fields, self._this_ticket())
 
  	# Do permissions check on tickets 
  	tickets = [t for t in rawtickets  
@@ -524,21 +496,9 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
             task += '%s,' % 0
         
         # pParent (parent task ID) 
-        # If there's no parent field configured, don't link to parents
+        # If there's no parent, don't link to it
         if self.pm.parent(ticket) == None:
             task += '%s,' % 0
-        # If there's a parent field, but the ticket is in root, don't
-        # link to parent
-        elif options['root'] and \
-                str(ticket['id']) in options['root'].split('|'):
-            task += '%s,' % 0
-        # If there's a parent field, root == self and this ticket is self, 
-        # don't link to parents
-        elif options['root'] and \
-                options['root'] == 'self' and \
-                str(ticket['id']) == self._this_ticket():
-            task += '%s,' % 0
-        # If there's a parent, and the ticket is not a root, link to parent
         else:
             task += '%s,' % self.pm.parent(ticket)
 
@@ -618,10 +578,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         else:
             tasks = ''
             self.tickets = self._query_tickets(options)
-
-            # Post process the query to add and compute fields so
-            # displaying the tickets is easy
-            self.pm.postQuery(options, self.tickets)
 
             # Faster lookups for WBS and scheduling.
             self.ticketsByID = {}

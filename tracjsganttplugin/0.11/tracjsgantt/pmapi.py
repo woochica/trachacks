@@ -7,7 +7,7 @@ class ITaskSorter(Interface):
         """Called to prepare tasks for sorting."""
 
     # Provide a compare function for sorting tasks.
-    # Maybe be used as cmp argument for sorted(), and list.sort().
+    # May be used as cmp argument for sorted(), and list.sort().
     # Returns -1 if t1 < t2, 0 if they are equal, 1 if t1 > t2.
     def compareTasks(self, t1, t2):
         """Called to compare two tasks"""
@@ -28,14 +28,10 @@ class ITaskScheduler(Interface):
     # Schedule each the ticket in tickets with consideration for
     # dependencies, estimated work, hours per day, etc.
     # 
-    # Assumes tickets is a list, each element contains at least the
-    # fields returned by queryFields() and the whole list was
-    # processed by postQuery().
+    # Assumes tickets is a list returned by TracPM.query(). 
     #
-    # On exit, each ticket has t['calc_start'] and t['calc_finish']
-    # set and can be accessed with TracPM.start() and finish().  No
-    # other changes are made.  (FIXME - we should probably be able to
-    # configure those field names.)
+    # On exit, each ticket has a start and finish that can be accessed
+    # with TracPM.start() and finish().  No other changes are made.
     def scheduleTasks(self, options, tickets):
         """Called to schedule tasks"""
 
