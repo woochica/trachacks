@@ -116,12 +116,13 @@ class AccountManagerAnnouncement(Component):
 
     # IAnnouncementSubscriptionFilter method
     def filter_subscriptions(self, event, subscriptions):
-        if event.realm != 'acct_mgr':
-            return subscriptions
-
-        # Make subscriptions available only for admins.
         action = 'ACCTMGR_USER_ADMIN'
+
         for subscription in subscriptions:
+            if event.realm != 'acct_mgr':
+                yield subscription
+
+            # Make acct_mgr subscriptions available only for admins.
             sid, auth = subscription[1:3]
             # PermissionCache already takes care of sid = None
             if not auth:

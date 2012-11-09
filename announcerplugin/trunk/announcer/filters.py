@@ -37,21 +37,22 @@ class DefaultPermissionFilter(Component):
             """)
 
     def filter_subscriptions(self, event, subscriptions):
-        if event.realm in self.exception_realms:
-            return subscriptions
-
         action = '%s_VIEW' % event.realm.upper()
+
         for subscription in subscriptions:
+            if event.realm in self.exception_realms:
+                yield subscription
+
             sid, auth = subscription[1:3]
             # PermissionCache already takes care of sid = None
             if not auth:
                 sid = 'anonymous'
             perm = PermissionCache(self.env, sid)
+            resource_id = get_target_id(event.target)
             self.log.debug(
                 'Checking *_VIEW permission on event for resource %s:%s'
                 % (event.realm, resource_id)
             )
-            resource_id = get_target_id(event.target)
             if perm.has_permission(action) and action in perm(event.realm,
                                                               resource_id):
                 yield subscription
