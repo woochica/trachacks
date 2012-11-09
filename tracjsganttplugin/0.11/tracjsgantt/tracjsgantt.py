@@ -571,6 +571,71 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         return tickets
 
+    def _filter_tickets(self, options, tickets):
+        # Build the list of display filters from the configured value
+        if not options.get('display') or options['display'] == '':
+            displayFilter = {}
+        else:
+            # The general form is
+            # 'display=field:value|field:value...'. Split on pipe to
+            # get each part
+            displayList = options['display'].split('|')
+
+            # Process each part into the display filter
+            displayFilter = {}
+            field = None
+            for f in displayList:
+                parts = f.split(':')
+                # Just one part, it's a value for the previous field
+                if len(parts) == 1:
+                    if field == None:
+                        raise TracError(('display option error in "%s".' +
+                                         ' Should be "display=f1:v1|f2:v2"' +
+                                         ' or "display=f:v1|v2".') %
+                                        options['display'])
+                    else:
+                        value = parts[0]
+                else:
+                    field = parts[0]
+                    value = parts[1]
+
+                if field in displayFilter:
+                    displayFilter[field].append(value)
+                else:
+                    displayFilter[field] = [ value ]
+
+        # If present and 1, true, otherwise false.
+        if options.get('omitMilestones') == 1:
+            omitMilestones = True
+        else:
+            omitMilestones = False
+        
+        # Filter the tickets
+        filteredTickets = []
+        for ticket in tickets:
+            # Default to showing every ticket
+            fieldDisplay = True
+
+            if omitMilestones and \
+                    self.pm.isTracMilestone(ticket):
+                fieldDisplay = False
+            else:
+                # Process each element and disable display if all
+                # filters fail to match. ((or) disjunction)
+                for f in displayFilter:
+                    display = True
+                    for v in displayFilter[f]:
+                        if ticket[f] == v:
+                            display = True
+                            break
+                        display = False
+                    fieldDisplay = fieldDisplay & display
+
+            if fieldDisplay:
+                filteredTickets.append(ticket)
+
+        
+        return filteredTickets
 
     def _add_tasks(self, options):
         if options.get('sample') and int(options['sample']) != 0:
@@ -600,58 +665,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                 else:
                     t['link'] = self.req.href.milestone(t['summary'])
 
-
-            # If no display filter, just display all tickets
-            if not options.get('display') or options['display'] == '':
-                displayTickets = self.tickets
-            # Otherwise, process the filter
-            else:
-                # Build the list of display filters from the configured value
-                # The general form is
-                # 'display=field:value|field:value...'. Split on pipe
-                # to get each part
-                displayList = options['display'].split('|')
-
-                # Process each part into the display filter
-                displayFilter = {}
-                field = None
-                for f in displayList:
-                    parts = f.split(':')
-                    # Just one part, it's a value for the previous field
-                    if len(parts) == 1:
-                        if field == None:
-                            raise TracError(('display option error in "%s".' +
-                                             ' Should be "display=f1:v1|f2:v2"' +
-                                             ' or "display=f:v1|v2".') %
-                                            options['display'])
-                        else:
-                            value = parts[0]
-                    else:
-                        field = parts[0]
-                        value = parts[1]
-
-                    if field in displayFilter:
-                        displayFilter[field].append(value)
-                    else:
-                        displayFilter[field] = [ value ]
-
-                # Filter the tickets
-                displayTickets = []
-                for ticket in self.tickets:
-                    # Default to showing every ticket
-                    fieldDisplay = True
-                    # Process each element and disable display if all
-                    # filters fail to match. ((or) disjunction)
-                    for f in displayFilter:
-                        display = True
-                        for v in displayFilter[f]:
-                            if ticket[f] == v:
-                                display = True
-                                break
-                            display = False
-                        fieldDisplay = fieldDisplay & display
-                    if fieldDisplay:
-                        displayTickets.append(ticket)
+            # Filter tickets based on options (omitMilestones, display, etc.)
+            displayTickets = self._filter_tickets(options, self.tickets)
 
             # Sort the remaining tickets for display (based on order option).
             displayTickets = self._sortTickets(displayTickets, options)
