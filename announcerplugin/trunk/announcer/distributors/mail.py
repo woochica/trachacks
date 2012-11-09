@@ -98,7 +98,7 @@ class EmailDistributor(Component):
     from_name = Option('announcer', 'email_from_name', '',
         """Sender name to use in notification emails.""")
 
-    replyto = Option('announcer', 'email_replyto', 'trac@localhost',
+    reply_to = Option('announcer', 'email_replyto', 'trac@localhost',
         """Reply-To address to use in notification emails.""")
 
     mime_encoding = Option('announcer', 'mime_encoding', 'base64',
@@ -126,8 +126,8 @@ class EmailDistributor(Component):
         will disable it.
         """)
 
-    to = Option('announcer', 'email_to', 'undisclosed-recipients: ;',
-        'Default To: field')
+    to_default = 'undisclosed-recipients: ;'
+    to = Option('announcer', 'email_to', to_default, 'Default To: field')
 
     use_threaded_delivery = BoolOption('announcer', 'use_threaded_delivery',
         'false',
@@ -403,9 +403,47 @@ class EmailDistributor(Component):
     def _do_send(self, transport, event, format, recipients, formatter,
                  pubkey_ids=[]):
 
+        # Prepare sender for use in IEmailSender component and message header.
+        from_header = formataddr(
+            (self.from_name and self.from_name or self.env.project_name,
+             self.email_from)
+        )
+        headers = dict()
+        headers['Message-ID'] = self._message_id(event.realm)
+        headers['Date'] = formatdate()
+        headers['From'] = from_header
+        headers['Reply-To'] = self.reply_to
+
+        recip_adds = [x[2] for x in recipients if x]
+
+        if self.use_public_cc:
+            headers['Cc'] = ', '.join(recip_adds)
+        else:
+            # Use localized Bcc: hint for default To: content.
+            if self.to == self.to_default:
+                headers['To'] = _('undisclosed-recipients: ;')
+            else:
+                headers['To'] = '"%s"' % self.to
+                if self.to:
+                    recip_adds += [self.to]
+        if not recip_adds:
+            self.log.debug(
+                "EmailDistributor stopped (no recipients)."
+            )
+            return
+        self.log.debug("All email recipients: %s" % recip_adds)
+
+        rootMessage = MIMEMultipart("related")
+        # TODO: Is this good? (from jabber branch)
+        #rootMessage.set_charset(self._charset)
+
+        # Write header data into message object.
+        for k, v in headers.iteritems():
+            set_header(rootMessage, k, v)
+
         output = formatter.format(transport, event.realm, format, event)
 
-        # DEVEL: force message body plaintext style for crypto operations
+        # DEVEL: Currently crypto operations work with format text/plain only.
         if self.crypto != '' and pubkey_ids != []:
             if self.crypto == 'sign':
                 output = self.enigma.sign(output, self.private_key)
@@ -414,9 +452,8 @@ class EmailDistributor(Component):
             elif self.crypto == 'sign,encrypt':
                 output = self.enigma.sign_encrypt(output, pubkey_ids,
                                                      self.private_key)
-
             self.log.debug(output)
-            self.log.debug(_("EmailDistributor crypto operaton successful."))
+            self.log.debug("EmailDistributor crypto operation successful.")
             alternate_output = None
         else:
             alternate_style = formatter.alternative_style_for(
@@ -434,32 +471,13 @@ class EmailDistributor(Component):
             else:
                 alternate_output = None
 
-        # sanity check
+        # Sanity check for suitable encoding setting.
         if not self._charset.body_encoding:
             try:
                 dummy = output.encode('ascii')
             except UnicodeDecodeError:
                 raise TracError(_("Ticket contains non-ASCII chars. " \
                                   "Please change encoding setting"))
-
-        rootMessage = MIMEMultipart("related")
-        # TODO: is this good? (from jabber branch)
-        #rootMessage.set_charset(self._charset)
-
-        headers = dict()
-        headers['Message-ID'] = self._message_id(event.realm)
-        headers['Date'] = formatdate()
-        from_header = formataddr((
-            self.from_name or self.env.project_name,
-            self.email_from
-        ))
-        headers['From'] = from_header
-        headers['To'] = '"%s"'%(self.to)
-        if self.use_public_cc:
-            headers['Cc'] = ', '.join([x[2] for x in recipients if x])
-        headers['Reply-To'] = self.replyto
-        for k, v in headers.iteritems():
-            set_header(rootMessage, k, v)
 
         rootMessage.preamble = 'This is a multi-part message in MIME format.'
         if alternate_output:
@@ -476,24 +494,16 @@ class EmailDistributor(Component):
         msgText = MIMEText(output, msg_format)
         del msgText['Content-Transfer-Encoding']
         msgText.set_charset(self._charset)
+        # According to RFC 2046, the last part of a multipart message is best
+        #   and preferred.
         parentMessage.attach(msgText)
+
+        # DEVEL: Decorators can interfere with crypto operation here. Fix it.
         decorators = self._get_decorators()
         if len(decorators) > 0:
             decorator = decorators.pop()
             decorator.decorate_message(event, rootMessage, decorators)
 
-        recip_adds = [x[2] for x in recipients if x]
-        # Append any to, cc or bccs added to the recipient list
-        for field in ('To', 'Cc', 'Bcc'):
-            if rootMessage[field] and \
-                    len(str(rootMessage[field]).split(',')) > 0:
-                for addy in str(rootMessage[field]).split(','):
-                    self._add_recipient(recip_adds, addy)
-        # replace with localized bcc hint
-        if headers['To'] == 'undisclosed-recipients: ;':
-            set_header(rootMessage, 'To', _('undisclosed-recipients: ;'))
-
-        self.log.debug("Content of recip_adds: %s" %(recip_adds))
         package = (from_header, recip_adds, rootMessage.as_string())
         start = time.time()
         if self.use_threaded_delivery:
@@ -501,8 +511,8 @@ class EmailDistributor(Component):
         else:
             self.send(*package)
         stop = time.time()
-        self.log.debug("EmailDistributor took %s seconds to send."\
-                %(round(stop-start,2)))
+        self.log.debug("EmailDistributor took %s seconds to send."
+                       % (round(stop - start, 2)))
 
     def send(self, from_addr, recipients, message):
         """Send message to recipients via e-mail."""
@@ -512,11 +522,6 @@ class EmailDistributor(Component):
 
     def _get_decorators(self):
         return self.decorators[:]
-
-    def _add_recipient(self, recipients, addy):
-        if addy.strip() != '"undisclosed-recipients: ;"':
-            recipients.append(addy)
-
 
 
 class SmtpEmailSender(Component):
