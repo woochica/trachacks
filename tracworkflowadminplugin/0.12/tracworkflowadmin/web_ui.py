@@ -20,6 +20,7 @@ from trac.config import Configuration, Option, BoolOption, ListOption, \
                         FloatOption, ChoiceOption
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import PermissionSystem
+from trac.util import arity
 from trac.util.compat import md5, any
 from trac.util.text import to_unicode, exception_to_unicode
 from trac.util.translation import dgettext, domain_functions
@@ -27,7 +28,34 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
                             add_script_data
 
 
-_, add_domain = domain_functions('tracworkflowadmin', '_', 'add_domain')
+_, N_, add_domain = domain_functions('tracworkflowadmin',
+                                     '_', 'N_', 'add_domain')
+
+
+if arity(Option.__init__) <= 5:
+    def _option_with_tx(Base): # Trac 0.12.x
+        class Option(Base):
+            def __getattribute__(self, name):
+                val = Base.__getattribute__(self, name)
+                if name == '__doc__':
+                    val = dgettext('tracworkflowadmin', val)
+                return val
+        return Option
+else:
+    def _option_with_tx(Base): # Trac 1.0 or later
+        class Option(Base):
+            def __init__(self, *args, **kwargs):
+                kwargs['doc_domain'] = 'tracworkflowadmin'
+                Base.__init__(self, *args, **kwargs)
+        return Option
+
+
+Option = _option_with_tx(Option)
+BoolOption = _option_with_tx(BoolOption)
+ListOption = _option_with_tx(ListOption)
+FloatOption = _option_with_tx(FloatOption)
+ChoiceOption = _option_with_tx(ChoiceOption)
+
 
 __all__ = ['TracWorkflowAdminModule']
 
@@ -48,31 +76,31 @@ class TracWorkflowAdminModule(Component):
     operations = ListOption('workflow-admin', 'operations',
         'del_owner, set_owner, set_owner_to_self, del_resolution, '
         'set_resolution, leave_status',
-        doc="Operations in workflow admin")
+        doc=N_("Operations in workflow admin"))
     dot_path = Option('workflow-admin', 'dot_path', 'dot',
-        doc="Path to the dot executable")
+        doc=N_("Path to the dot executable"))
     diagram_cache = BoolOption('workflow-admin', 'diagram_cache', 'false',
-        doc="Enable cache of workflow diagram image")
+        doc=N_("Enable cache of workflow diagram image"))
     diagram_size = Option('workflow-admin', 'diagram_size', '6, 6',
-        doc="Image size in workflow diagram")
+        doc=N_("Image size in workflow diagram"))
     diagram_font = Option('workflow-admin', 'diagram_font', 'sans-serif',
-        doc="Font name in workflow diagram")
+        doc=N_("Font name in workflow diagram"))
     diagram_fontsize = FloatOption('workflow-admin', 'diagram_fontsize', '10',
-        doc="Font size in workflow diagram")
+        doc=N_("Font size in workflow diagram"))
     diagram_colors = ListOption('workflow-admin', 'diagram_colors',
         '#0000ff, #006600, #ff0000, #666600, #ff00ff',
-        doc="Colors of arrows in workflow diagram")
+        doc=N_("Colors of arrows in workflow diagram"))
     default_editor = ChoiceOption(
         'workflow-admin', 'default_editor', ['gui', 'text'],
-        doc="Default mode of the workflow editor")
-    auto_update_interval = Option('workflow-admin', 'auto_update_interval', '3000',
-        doc="""An automatic-updating interval for text mode is specified by a
-        milli second bit. It is not performed when 0 is specified.""")
+        doc=N_("Default mode of the workflow editor"))
+    auto_update_interval = Option(
+        'workflow-admin', 'auto_update_interval', '3000',
+        doc=N_("An automatic-updating interval for text mode is specified by "
+               "a milli second bit. It is not performed when 0 is specified."))
 
     msgjs_locales = _msgjs_locales()
     _action_name_re = re.compile(r'\A[A-Za-z0-9_-]+\Z')
     _number_re = re.compile(r'\A[0-9]+\Z')
-    _editor_mode = 'gui'
 
     def __init__(self):
         locale_dir = resource_filename(__name__, 'locale')
