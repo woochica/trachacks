@@ -42,6 +42,7 @@ class DefaultPermissionFilter(Component):
         for subscription in subscriptions:
             if event.realm in self.exception_realms:
                 yield subscription
+                continue
 
             sid, auth = subscription[1:3]
             # PermissionCache already takes care of sid = None
@@ -58,6 +59,6 @@ class DefaultPermissionFilter(Component):
                 yield subscription
             else:
                 self.log.debug(
-                    "Filtering %s because of rule: DefaultPermissionFilter"
-                    % sid
+                    "Filtering %s because of %s rule" 
+                    % (sid, self.__class__.__name__)
                 )

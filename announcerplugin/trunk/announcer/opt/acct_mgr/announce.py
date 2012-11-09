@@ -121,6 +121,7 @@ class AccountManagerAnnouncement(Component):
         for subscription in subscriptions:
             if event.realm != 'acct_mgr':
                 yield subscription
+                continue
 
             # Make acct_mgr subscriptions available only for admins.
             sid, auth = subscription[1:3]
@@ -132,8 +133,8 @@ class AccountManagerAnnouncement(Component):
                 yield subscription
             else:
                 self.log.debug(
-                    "Filtering %s because of AccountManagerAnnouncement rule"
-                    % sid
+                    "Filtering %s because of %s rule"
+                    % (sid, self.__class__.__name__)
                 )
 
     # IAnnouncementFormatter methods
