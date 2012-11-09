@@ -46,7 +46,8 @@ class TracWorkflowAdminModule(Component):
                IEnvironmentSetupParticipant)
 
     operations = ListOption('workflow-admin', 'operations',
-        'del_owner,set_owner,set_owner_to_self,del_resolution,set_resolution,leave_status',
+        'del_owner, set_owner, set_owner_to_self, del_resolution, '
+        'set_resolution, leave_status',
         doc="Operations in workflow admin")
     dot_path = Option('workflow-admin', 'dot_path', 'dot',
         doc="Path to the dot executable")
@@ -59,7 +60,7 @@ class TracWorkflowAdminModule(Component):
     diagram_fontsize = FloatOption('workflow-admin', 'diagram_fontsize', '10',
         doc="Font size in workflow diagram")
     diagram_colors = ListOption('workflow-admin', 'diagram_colors',
-        '#0000ff,#006600,#ff0000,#666600,#ff00ff',
+        '#0000ff, #006600, #ff0000, #666600, #ff00ff',
         doc="Colors of arrows in workflow diagram")
     default_editor = ChoiceOption(
         'workflow-admin', 'default_editor', ['gui', 'text'],
