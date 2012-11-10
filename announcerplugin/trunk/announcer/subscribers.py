@@ -118,22 +118,41 @@ class TicketOwnerSubscriber(Component):
             return
         ticket = event.target
 
-        if not ticket['owner'] or ticket['owner'] == 'anonymous':
+        if (not ticket['owner'] or ticket['owner'] == 'anonymous') and \
+                not 'owner' in event.changes:
             return
 
-        if re.match(r'^[^@]+@.+', ticket['owner']):
-            sid, auth, addr = None, 0, ticket['owner']
+        if ticket['owner'] and ticket['owner'] != 'anonymous':
+            if re.match(r'^[^@]+@.+', ticket['owner']):
+                sid, auth, addr = None, 0, ticket['owner']
+            else:
+                sid, auth, addr = ticket['owner'], 1, None
+            sid = None
+        if 'owner' in event.changes:
+            previous_owner = event.changes['owner']
+            if re.match(r'^[^@]+@.+', previous_owner):
+                sid_old, auth_old, addr_old = None, 0, previous_owner
+            else:
+                sid_old, auth_old, addr_old = previous_owner, 1, None
         else:
-            sid, auth, addr = ticket['owner'], 1, None
+            sid_old = None
 
         # Default subscription
         for s in self.default_subscriptions():
-            yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
-
+            if sid:
+                yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
+            if sid_old:
+                yield (s[0], s[1], sid_old, auth_old, addr_old, None, s[2],
+                       s[3])
         if sid:
             klass = self.__class__.__name__
             for s in Subscription.find_by_sids_and_class(self.env,
-                    ((sid,auth),), klass):
+                    ((sid, auth),), klass):
+                yield s.subscription_tuple()
+        if sid_old:
+            klass = self.__class__.__name__
+            for s in Subscription.find_by_sids_and_class(self.env,
+                    ((sid_old, auth_old),), klass):
                 yield s.subscription_tuple()
 
     def description(self):

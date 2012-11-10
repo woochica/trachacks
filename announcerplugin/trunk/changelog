@@ -4,6 +4,7 @@ Maintainer: Steffen Hoffmann <hoff.st@web.de>
 announcer-1.0 (not yet released) - branch 0.11 again
  resolved issues
  * #5774: No such table: subscriptions
+ * #6452: No notification sent to previous owner when a ticket is reassigned
  * #7759: Update Account Manager Announcer for new subscription system
  * #7834: Emails are attempted to be sent even when there are no recipients
  * #7974: UnboundLocalError: local variable 'tid' referenced before assignment
