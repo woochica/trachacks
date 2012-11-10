@@ -122,20 +122,18 @@ class TicketOwnerSubscriber(Component):
                 not 'owner' in event.changes:
             return
 
+        sid = sid_old = None
         if ticket['owner'] and ticket['owner'] != 'anonymous':
             if re.match(r'^[^@]+@.+', ticket['owner']):
                 sid, auth, addr = None, 0, ticket['owner']
             else:
                 sid, auth, addr = ticket['owner'], 1, None
-            sid = None
         if 'owner' in event.changes:
             previous_owner = event.changes['owner']
             if re.match(r'^[^@]+@.+', previous_owner):
                 sid_old, auth_old, addr_old = None, 0, previous_owner
             else:
                 sid_old, auth_old, addr_old = previous_owner, 1, None
-        else:
-            sid_old = None
 
         # Default subscription
         for s in self.default_subscriptions():
