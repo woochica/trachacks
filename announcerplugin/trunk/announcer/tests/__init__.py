@@ -13,9 +13,10 @@ import unittest
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(announcer.tests.api.suite())
-    suite.addTest(announcer.tests.model.suite())
     suite.addTest(announcer.tests.formatter.suite())
+    suite.addTest(announcer.tests.model.suite())
     suite.addTest(announcer.tests.pref.suite())
+    suite.addTest(announcer.tests.subscribers.suite())
     return suite
 
 

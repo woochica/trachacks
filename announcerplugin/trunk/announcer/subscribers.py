@@ -11,22 +11,22 @@
 # TODO: Test all anonymous subscribers
 # TODO: Subscriptions admin page
 
-import re, urllib
+import re
+import urllib
 
 from fnmatch import fnmatch
+from genshi.builder import tag
 
 from trac.config import BoolOption, Option, ListOption
-from trac.core import *
+from trac.core import Component, implements
 from trac.resource import ResourceNotFound, get_resource_url
 from trac.ticket import model
 from trac.ticket.api import ITicketChangeListener
 from trac.util.text import to_unicode
 from trac.web.api import IRequestFilter, IRequestHandler, Href
-from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_stylesheet
-from trac.web.chrome import add_warning, add_script, add_notice
+from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_notice
+from trac.web.chrome import add_script, add_stylesheet, add_warning
 from trac.wiki.api import IWikiChangeListener
-
-from genshi.builder import tag
 
 from announcer.api import IAnnouncementDefaultSubscriber
 from announcer.api import IAnnouncementPreferenceProvider
@@ -36,17 +36,17 @@ from announcer.model import Subscription, SubscriptionAttribute
 from announcer.util import get_target_id
 
 """Subscribers should return a list of subscribers based on event rules.
-The subscriber interface is very simple and flexible.  Subscription have
-an 'adverb' attached, always or never.  A subscription can also stop a
-subscriber from recieving a notification if it's adverb is 'never' and it
+The subscriber interface is very simple and flexible.  Subscriptions have
+an 'adverb' attached, 'always' or 'never'.  A subscription can also stop a
+subscriber from recieving a notification, if it's adverb is 'never' and it
 is the highest priority matching subscription.
 
-One thing that remains to be done is to allow admin to control defaults for
-users that never login and set their subscriptions up.  Some of these
-should look to see if the user has any subscriptions in the subscription
-table, and if it doesn't, then use the default setting from trac.ini.
+One thing, that remains to be done, is to allow admin to control defaults for
+users, that never login and setup their subscriptions.  Some of these
+should look to see, if the user has any subscriptions in the subscription
+table, and if not, then use the default setting from trac.ini.
 
-There should also be a screen in the admin section of the site that let's the
+There should also be a screen in the admin section of the site, that let's the
 admin setup rules for users.  It should be possible to copy rules from one
 user to another.
 
@@ -54,24 +54,25 @@ We must also support unauthenticated users in the form of email addresses.
 An email address can be used in place of an sid in many places in Trac.
 Here's what I can think of:
 
+ * Cc: field
+ * Custom Cc: field
  * Component owner
- * CC field
- * Custom cc field
  * Ticket owner
  * Ticket reporter
 
-The final thing to consider is unauthenticated users who have entered an email
+The final thing to consider is unauthenticated users, who have entered an email
 address in the preferences panel.  To me this is the least important case and
 will probably be lowest priority.
 
 """
 
+
 class AllTicketSubscriber(Component):
     """Subscriber for all ticket changes."""
+
     implements(IAnnouncementSubscriber)
 
-    def description(self):
-        return _("notify me when any ticket changes")
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'ticket':
@@ -83,26 +84,32 @@ class AllTicketSubscriber(Component):
         for i in Subscription.find_by_class(self.env, klass):
             yield i.subscription_tuple()
 
+    def description(self):
+        return _("notify me when any ticket changes")
+
     def requires_authentication(self):
         return False
 
 
 class TicketOwnerSubscriber(Component):
     """Allows ticket owners to subscribe to their tickets."""
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementDefaultSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     default_on = BoolOption("announcer", "always_notify_owner", 'true',
         """The always_notify_owner option mimics the option of the same name
-        in the notification section, except users can override in their
+        in the notification section, except users can override it in their
         preferences.
         """)
 
     default_distributor = ListOption("announcer",
         "always_notify_owner_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != "ticket":
@@ -121,8 +128,7 @@ class TicketOwnerSubscriber(Component):
 
         # Default subscription
         for s in self.default_subscriptions():
-            yield (s[0], s[1], sid, auth, addr, None, s[2],
-                    s[3])
+            yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
 
         if sid:
             klass = self.__class__.__name__
@@ -130,25 +136,26 @@ class TicketOwnerSubscriber(Component):
                     ((sid,auth),), klass):
                 yield s.subscription_tuple()
 
-
     def description(self):
         return _("notify me when a ticket that I own is created or modified")
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
             for d in self.default_distributor:
                 yield (self.__class__.__name__, d, 101, 'always')
-
-    def requires_authentication(self):
-        return True
 
 
 class TicketComponentOwnerSubscriber(Component):
     """Allows component owners to subscribe to tickets assigned to their
     components.
     """
-    implements(IAnnouncementDefaultSubscriber)
-    implements(IAnnouncementSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     default_on = BoolOption("announcer", "always_notify_component_owner",
         'true',
@@ -158,9 +165,11 @@ class TicketComponentOwnerSubscriber(Component):
 
     default_distributor = ListOption("announcer",
         "always_notify_component_owner_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != "ticket":
@@ -181,8 +190,7 @@ class TicketComponentOwnerSubscriber(Component):
 
             # Default subscription
             for s in self.default_subscriptions():
-                yield (s[0], s[1], sid, auth, addr, None,
-                        s[2], s[3])
+                yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
 
             if sid:
                 klass = self.__class__.__name__
@@ -191,25 +199,29 @@ class TicketComponentOwnerSubscriber(Component):
                     yield s.subscription_tuple()
 
         except:
-            self.log.debug("Component for ticket (%s) not found"%ticket['id'])
+            self.log.debug(
+                "Component for ticket (%s) not found" % ticket['id']
+            )
 
     def description(self):
         return _("notify me when a ticket that belongs to a component "
-                "that I own is created or modified")
+                 "that I own is created or modified")
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
             for d in self.default_distributor:
                 yield (self.__class__.__name__, d, 101, 'always')
 
-    def requires_authentication(self):
-        return True
-
 
 class TicketUpdaterSubscriber(Component):
     """Allows updaters to subscribe to their own updates."""
-    implements(IAnnouncementDefaultSubscriber)
-    implements(IAnnouncementSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     default_on = BoolOption("announcer", "never_notify_updater", 'false',
         """The never_notify_updater stops users from recieving announcements
@@ -218,9 +230,11 @@ class TicketUpdaterSubscriber(Component):
 
     default_distributor = ListOption("announcer",
         "never_notify_updater_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != "ticket":
@@ -237,8 +251,7 @@ class TicketUpdaterSubscriber(Component):
 
         # Default subscription
         for s in self.default_subscriptions():
-            yield (s[0], s[1], sid, auth, addr, None,
-                    s[2], s[3])
+            yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
 
         if sid:
             klass = self.__class__.__name__
@@ -249,18 +262,21 @@ class TicketUpdaterSubscriber(Component):
     def description(self):
         return _("notify me when I update a ticket")
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
             for d in self.default_distributor:
                 yield (self.__class__.__name__, d, 100, 'never')
 
-    def requires_authentication(self):
-        return True
 
 class TicketReporterSubscriber(Component):
     """Allows the users to subscribe to tickets that they report."""
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementDefaultSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     default_on = BoolOption("announcer", "always_notify_reporter", 'true',
         """The always_notify_reporter will notify the ticket reporter when a
@@ -269,9 +285,11 @@ class TicketReporterSubscriber(Component):
 
     default_distributor = ListOption("announcer",
         "always_notify_reporter_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != "ticket":
@@ -290,8 +308,7 @@ class TicketReporterSubscriber(Component):
 
         # Default subscription
         for s in self.default_subscriptions():
-            yield (s[0], s[1], sid, auth, addr, None,
-                    s[2], s[3])
+            yield (s[0], s[1], sid, auth, addr, None, s[2], s[3])
 
         if sid:
             klass = self.__class__.__name__
@@ -302,19 +319,21 @@ class TicketReporterSubscriber(Component):
     def description(self):
         return _("notify me when a ticket that I reported is modified")
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
             for d in self.default_distributor:
                 yield (self.__class__.__name__, d, 101, 'always')
 
-    def requires_authentication(self):
-        return True
-
 
 class CarbonCopySubscriber(Component):
     """Carbon copy subscriber for cc ticket field."""
-    implements(IAnnouncementDefaultSubscriber)
-    implements(IAnnouncementSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     default_on = BoolOption("announcer", "always_notify_cc", 'true',
         """The always_notify_cc will notify the users in the cc field by
@@ -323,9 +342,11 @@ class CarbonCopySubscriber(Component):
 
     default_distributor = ListOption("announcer",
         "always_notify_cc_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'ticket':
@@ -361,21 +382,25 @@ class CarbonCopySubscriber(Component):
         return _("notify me when I'm listed in the CC field of a ticket "
                  "that is modified")
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
             for d in self.default_distributor:
                 yield (self.__class__.__name__, d, 101, 'always')
-
-    def requires_authentication(self):
-        return True
 
 
 class TicketComponentSubscriber(Component):
     """Allows users to subscribe to ticket assigned to the components of their
     choice.
     """
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementPreferenceProvider)
+
+    implements(IAnnouncementPreferenceProvider,
+               IAnnouncementSubscriber)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'ticket':
@@ -402,6 +427,8 @@ class TicketComponentSubscriber(Component):
 
     def requires_authentication(self):
         return False
+
+    # IAnnouncementPreferenceProvider methods
 
     def get_announcement_preference_boxes(self, req):
         if req.authname == "anonymous" and 'email' not in req.session:
@@ -445,8 +472,9 @@ class TicketCustomFieldSubscriber(Component):
     field that has a name in the custom_cc_fields list.  The custom_cc_fields
     list must be configured by the system administrator.
     """
-    implements(IAnnouncementDefaultSubscriber)
-    implements(IAnnouncementSubscriber)
+
+    implements(IAnnouncementDefaultSubscriber,
+               IAnnouncementSubscriber)
 
     custom_cc_fields = ListOption('announcer', 'custom_cc_fields',
             doc="Field names that contain users that should be notified on "
@@ -459,10 +487,11 @@ class TicketCustomFieldSubscriber(Component):
 
     default_distributor = ListOption("announcer",
         "always_notify_custom_cc_distributor", "email",
-        doc="""Comma seperated list of distributors to send the message to
+        doc="""Comma-separated list of distributors to send the message to
         by default.  ex. email, xmpp
         """)
 
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'ticket':
@@ -501,14 +530,15 @@ class TicketCustomFieldSubscriber(Component):
             return _("notify me when I'm listed in any of the (%s) "
                      "fields"%(','.join(self.custom_cc_fields),))
 
+    def requires_authentication(self):
+        return True
+
+    # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.custom_cc_fields:
             if self.default_on:
                 for d in self.default_distributor:
                     yield (self.__class__.__name__, d, 101, 'always')
-
-    def requires_authentication(self):
-        return True
 
 
 class JoinableGroupSubscriber(Component):
@@ -516,8 +546,9 @@ class JoinableGroupSubscriber(Component):
     administrator.  Any ticket with the said group listed in the cc
     field will trigger announcements to users in the group.
     """
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementPreferenceProvider)
+
+    implements(IAnnouncementPreferenceProvider,
+               IAnnouncementSubscriber)
 
     joinable_groups = ListOption('announcer', 'joinable_groups', [],
         doc="""Joinable groups represent 'opt-in' groups that users may
@@ -529,6 +560,8 @@ class JoinableGroupSubscriber(Component):
         a ticket, everyone in that group will receive an announcement when that
         ticket is changed.
         """)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'ticket':
@@ -560,6 +593,8 @@ class JoinableGroupSubscriber(Component):
 
     def requires_authentication(self):
         return False
+
+    # IAnnouncementPreferenceProvider methods
 
     def get_announcement_preference_boxes(self, req):
         if req.authname == "anonymous" and 'email' not in req.session:
@@ -600,8 +635,11 @@ class UserChangeSubscriber(Component):
     """Allows users to get notified anytime a particular user change
     triggers an event.
     """
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementPreferenceProvider)
+
+    implements(IAnnouncementPreferenceProvider,
+               IAnnouncementSubscriber)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         klass = self.__class__.__name__
@@ -619,6 +657,8 @@ class UserChangeSubscriber(Component):
     def requires_authentication(self):
         return False
 
+    # IAnnouncementPreferenceProvider methods
+
     def get_announcement_preference_boxes(self, req):
         if req.authname == "anonymous" and 'email' not in req.session:
             return
@@ -630,12 +670,14 @@ class UserChangeSubscriber(Component):
         if req.method == "POST":
             @self.env.with_transaction()
             def do_update(db):
+                sess = req.session
                 SubscriptionAttribute.delete_by_sid_and_class(self.env,
-                        req.session.sid, req.session.authenticated, klass, db)
+                        sess.sid, sess.authenticated, klass, db)
                 users = map(lambda x: x.strip(),
-                        req.args.get("announcer_watch_users").split(','))
-                SubscriptionAttribute.add(self.env, req.session.sid,
-                        req.session.authenticated, klass, 'user', users, db)
+                            req.args.get("announcer_watch_users").split(','))
+                SubscriptionAttribute.add(self.env, sess.sid,
+                                          sess.authenticated, klass, 'user',
+                                          users, db)
 
         attrs = filter(None, map(
             lambda x: x['target'],
@@ -742,8 +784,8 @@ class WatchSubscriber(Component):
         if req.authname != "anonymous" or 'email' in req.session:
             for pattern in self.watchable_paths:
                 realm, target = self.path_info_to_realm_target(req.path_info)
-                if fnmatch('%s/%s'%(realm,target), pattern):
-                    if '%s_VIEW'%realm.upper() not in req.perm:
+                if fnmatch('%s/%s' % (realm, target), pattern):
+                    if '%s_VIEW' % realm.upper() not in req.perm:
                         return (template, data, content_type)
                     self.render_watcher(req)
                     break
@@ -753,10 +795,10 @@ class WatchSubscriber(Component):
 
     def render_watcher(self, req):
         if not self.ctxtnav_names:
-          return
+            return
         realm, target = self.path_info_to_realm_target(req.path_info)
-        if self.is_watching(req.session.sid, req.session.authenticated,
-                realm, target):
+        sess = req.session
+        if self.is_watching(sess.sid, sess.authenticated, realm, target):
             action_name = len(self.ctxtnav_names) >= 2 and \
                     self.ctxtnav_names[1] or 'Unwatch This'
         else:
@@ -783,6 +825,19 @@ class WatchSubscriber(Component):
             target = 'WikiStart'
         return realm, target
 
+    # ITicketChangeListener methods
+
+    def ticket_created(*args):
+        pass
+
+    def ticket_changed(*args):
+        pass
+
+    def ticket_deleted(self, ticket):
+        klass = self.__class__.__name__
+        SubscriptionAttribute.delete_by_class_realm_and_target(
+                self.env, klass, 'ticket', get_target_id(ticket))
+
     # IWikiChangeListener methods
 
     def wiki_page_added(*args):
@@ -798,19 +853,6 @@ class WatchSubscriber(Component):
 
     def wiki_page_version_deleted(*args):
         pass
-
-    # ITicketChangeListener methods
-
-    def ticket_created(*args):
-        pass
-
-    def ticket_changed(*args):
-        pass
-
-    def ticket_deleted(self, ticket):
-        klass = self.__class__.__name__
-        SubscriptionAttribute.delete_by_class_realm_and_target(
-                self.env, klass, 'ticket', get_target_id(ticket))
 
     # IAnnouncementSubscriber methods
 
@@ -833,12 +875,14 @@ class WatchSubscriber(Component):
 
 class GeneralWikiSubscriber(Component):
     """Allows users to subscribe to wiki announcements based on a pattern
-    that they define.  Any wiki announcements whose page name matches the
-    pattern will be recieved by the user.
+    that they define.  Any wiki announcements, whose page name matches the
+    pattern, will be recieved by the user.
     """
 
-    implements(IAnnouncementSubscriber)
-    implements(IAnnouncementPreferenceProvider)
+    implements(IAnnouncementPreferenceProvider,
+               IAnnouncementSubscriber)
+
+    # IAnnouncementSubscriber methods
 
     def matches(self, event):
         if event.realm != 'wiki':
@@ -859,7 +903,8 @@ class GeneralWikiSubscriber(Component):
                     if re.match(pat, event.target.name):
                         return True
 
-        sids = set(map(lambda x: (x['sid'],x['authenticated']), filter(match, attrs)))
+        sids = set(map(lambda x: (x['sid'],x['authenticated']),
+                                  filter(match, attrs)))
 
         for i in Subscription.find_by_sids_and_class(self.env, sids, klass):
             yield i.subscription_tuple()
@@ -872,25 +917,27 @@ class GeneralWikiSubscriber(Component):
     def requires_authentication(self):
         return False
 
+    # IAnnouncementPreferenceProvider methods
+
     def get_announcement_preference_boxes(self, req):
         if req.perm.has_permission('WIKI_VIEW'):
             yield "general_wiki", _("General Wiki Announcements")
 
     def render_announcement_preference_box(self, req, panel):
         klass = self.__class__.__name__
+        sess = req.session
 
         if req.method == "POST":
             @self.env.with_transaction()
             def do_update(db):
                 SubscriptionAttribute.delete_by_sid_and_class(self.env,
-                        req.session.sid, req.session.authenticated, klass, db)
-                SubscriptionAttribute.add(self.env, req.session.sid,
-                    req.session.authenticated, klass,
+                    sess.sid, sess.authenticated, klass, db)
+                SubscriptionAttribute.add(self.env,
+                    sess.sid, sess.authenticated, klass,
                     'wiki', (req.args.get('wiki_interests'),), db)
 
         (interests,) = SubscriptionAttribute.find_by_sid_and_class(
-            self.env, req.session.sid, req.session.authenticated, klass
-        ) or ({'target':''},)
+            self.env, sess.sid, sess.authenticated, klass) or ({'target':''},)
 
         return "prefs_announcer_wiki.html", dict(
             wiki_interests = '\n'.join(
