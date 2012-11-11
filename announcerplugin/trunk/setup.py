@@ -81,7 +81,7 @@ setup(
             'announcer.opt.fullblog.announce = announcer.opt.fullblog.announce[fullblog]',
         ]
     },
-    test_suite = 'announcer.tests',
+    test_suite = 'announcer.tests.test_suite',
     tests_require = [],
     **extra
 )

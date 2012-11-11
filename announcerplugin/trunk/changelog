@@ -21,9 +21,12 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #9742: AttributeError on db.rollback() in environment_needs_upgrade
  * #10083: HTML notifications for attachments do not include the author name
  * #10384: Properly cast `authenticated` field for subscription_attribute table
- * #10483: Move license to COPYING file
  * #10584: Attachment description field not formatted to HTML
  * fix argument assignment issues in `SubscriptionAttribute.add`
+
+ new features
+ * #7763: Separate subscribers
+ * #10483: Move license to COPYING file
 
 
 announcer-0.12.1 (14-Sep-2010) |r8853| by Robert Corsaro
