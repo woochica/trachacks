@@ -80,7 +80,6 @@ class TicketsPerUserDay(RenderImpl):
 
     self.statistics_class = '' # default
     try:
-      #self.macroenv.tracenv.log.error('fields: '+self.macroenv.macrokw.get('statistics'))
       tmp = self.macroenv.macrokw.get('statistics').split('/')
       self.statistics_fields = []
       for field in tmp:
@@ -324,10 +323,32 @@ class TicketTableAvsB(RenderImpl):
     generic approach to show the tickets over two dimensions
     examples: 
       [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B)]]
+         (A) (B)
+      (X) .   .
+      (Y) .   .
       [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y,coltype=owner,cols=A;B, summary=chart)]]
+           (A,B)
+      (X,Y)  .
       [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;Y|Z|Q,coltype=owner,cols=A|B;C)]]
-    TODO: allow multiple col/row values, like coltype=priority, cols=minor|trivial;major
-  '''
+             (A,B) (C)
+      (X)      .    .
+      (Y,Z,Q)  .    .
+      [[ProjectPlan(renderer=tableavsb,rowtype=component,rows=X;*;Y|Z|Q,coltype=owner,cols=A|B;C)]]
+                 (A,B) (C)
+      (X)          .    .
+      (all other)  .    .
+      (Y,Z,Q)      .    .
+      
+'''
+  myMarkerForAllValues = ['*']
+  myMarkerForAllValuesInline = ['?']
+  positionForNewCols = 0
+  positionForNewRows = 0
+  addAllRows = False
+  addAllRowsInline = False
+  addAllCols = False
+  addAllColsInline = False
+  
   def __init__(self,macroenv):
     '''
       Initialize
@@ -347,6 +368,28 @@ class TicketTableAvsB(RenderImpl):
       self.rows = [ s.split('|') for s in self.rows ]
     else :
       self.rows = None
+    
+    # rows: get position of '*'
+    if self.myMarkerForAllValues in self.rows or self.myMarkerForAllValuesInline in self.rows:
+      if self.myMarkerForAllValues in self.rows:
+        mymarker = self.myMarkerForAllValues
+        self.addAllRows = True
+      elif self.myMarkerForAllValuesInline in self.rows:  # TODO: will be implemented later
+        mymarker = self.myMarkerForAllValuesInline
+        self.addAllRowsInline = True
+      self.positionForNewRows = self.rows.index(mymarker)
+      self.rows.remove(mymarker) # remove '*'
+    
+    # cols: get position of '*'
+    if self.myMarkerForAllValues in self.cols or self.myMarkerForAllValuesInline in self.cols:
+      if self.myMarkerForAllValues in self.cols:
+        mymarker = self.myMarkerForAllValues
+        self.addAllCols = True
+      elif self.myMarkerForAllValuesInline in self.cols: # TODO: will be implemented later
+        mymarker = self.myMarkerForAllValuesInline
+        self.addAllColsInline = True
+      self.positionForNewCols = self.cols.index(mymarker)
+      self.cols.remove(mymarker) # remove '*'
     
     cssclass = self.macroenv.macrokw.get('cssclass')
     if cssclass == None:
@@ -369,6 +412,17 @@ class TicketTableAvsB(RenderImpl):
         pass
     
 
+  def isAddAllRows( self ):
+    return self.addAllRows
+  
+  def isAddAllRowsInline( self ):
+    return self.addAllRowsInline
+
+  def isAddAllCols( self ):
+    return self.addAllCols
+  
+  def isAddAllColsInline( self ):
+    return self.addAllColsInline
 
   def render(self, ticketset):
     return_div = tag.div(class_=self.cssclass+' projectplanrender' )
@@ -417,7 +471,7 @@ class TicketTableAvsB(RenderImpl):
         transform a list of keys to a user readable string
         in: ['a','b'] --> out: 'a|b'
       '''
-      return '|'.join(mylist)
+      return ', '.join(mylist)
     
     def tableKeyQueryParameter( parameter, mylist ) :
       '''
@@ -433,31 +487,65 @@ class TicketTableAvsB(RenderImpl):
     data = {}
     statistics = {}
     
-    # init table data 
-    for row in self.rows :
+    def setAllCols( row, data, statistics ):
       colstatistics = {}
       colkeys = {}
       for col in self.cols :
-        # colkeys[col] = []
         setKV( colkeys, col, [] )
-        # colstatistics[col] = {}
         setKV( colstatistics, col, {} )
-      # data[row] = colkeys
       setKV( data, row, colkeys )
-      # statistics[row] = colstatistics
       setKV( statistics, row, colstatistics )
+    
+    def allListValues( myListOfList ):
+      ret = []
+      for i in myListOfList:
+        for j in i:
+          ret.append(j)
+      return ret
+    
+    positionForNewRows = self.positionForNewRows
+    positionForNewCols = self.positionForNewCols
+    
+    # init table data 
+    for row in self.rows :
+      setAllCols( row, data, statistics )
     
     for tid in ticketset.getIDSortedList():
       ticket = ticketset.getTicket(tid)
       ticket_rowtype = ticket.getfield(self.rowtype)
       ticket_coltype =  ticket.getfield(self.coltype)
       
+      
+      # create new rows and cols if the parameter contains a '*'
+      if self.isAddAllRows(): # all rows have to be created and initialized
+        if not ticket_rowtype in allListValues(self.rows):
+          # add a new value at the current position of the marker, needed for e.g. ['a', '*', 'b']
+          self.rows.insert( positionForNewRows, [ticket_rowtype] )
+          positionForNewRows += 1
+          setAllCols( [ticket_rowtype], data, statistics )
+      
+      if self.isAddAllCols(): # all colums have to be created and initialized
+        if not ticket_coltype in allListValues(self.cols):
+          self.cols.insert( positionForNewCols, [ticket_coltype])
+          positionForNewCols += 1
+          for row in self.rows: # new cols means an update of each row
+            colkeys = data[str(row)]
+            setKV( colkeys, [ticket_coltype], [] )
+            setKV( data, row, colkeys )
+            
+            colstatistics = statistics[str(row)]
+            setKV( colstatistics, [ticket_coltype], {} )
+            setKV( statistics, row, colstatistics )
+      
+      
       # determine the data cell where the ticket has to be added, keep in mind that rows and cols are list of lists
       for row in self.rows :
         for col in self.cols :
           if ticket_rowtype in row and ticket_coltype in col :
             data[str(row)][str(col)].append(ticket) # save tickets at precise values of row and col
-            self.log_debug('row:%s col:%s append:%s' % (row,col,tid))
+      
+      
+      
       
       # if ticket_rowtype in self.rows and ticket_coltype in self.cols :
     
