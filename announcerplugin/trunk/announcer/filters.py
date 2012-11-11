@@ -8,31 +8,43 @@
 #
 
 """Filters can remove subscriptions after they are collected.
-"""
-import re
 
-from trac.core import *
+This is commonly done based on access restrictions for Trac realm and
+resource ID, that the event is referring to (alias 'event target').
+In some contexts like AccountManagerPlugin account change notifications
+(realm 'acct_mgr') an `IAnnouncementSubscriptionFilter` implementation is
+essential for meaningful operation
+(see announcer.opt.acct_mgr.announce.AccountManagerAnnouncement).
+
+Only subscriptions, that pass all filters, can trigger a distributor to emit a
+notification about an event for shipment via one of its associated transports.
+"""
+
+from trac.core import Component, implements
 from trac.config import ListOption
 from trac.perm import PermissionCache
 
 from announcer.api import IAnnouncementSubscriptionFilter
-from announcer.api import _
+from announcer.api import _, N_
 from announcer.util import get_target_id
 
 
 class DefaultPermissionFilter(Component):
-    """DefaultPermissionFilter simply checks that each subscription
-    has ${REALM}_VIEW permissions before allow the subscription notice
-    to be sent.
+    """Simple view permission enforcement for common Trac realms.
+
+    It checks, that each subscription has ${REALM}_VIEW permission for the
+    corresponding event target, before the subscription is allowed to
+    propagate to distributors.
     """
     implements(IAnnouncementSubscriptionFilter)
 
-    exception_realms = ListOption('announcer', 'filter_exception_realms', '',
-            """The PermissionFilter will filter an announcements for with the
+    exception_realms = ListOption(
+            'announcer', 'filter_exception_realms', 'acct_mgr', doc=N_(
+            """The PermissionFilter will filter announcements, for which the
             user doesn't have ${REALM}_VIEW permission.  If there is some
-            realm that doesn't use a permission called ${REALM}_VIEW then
+            realm that doesn't use a permission called ${REALM}_VIEW, then
             you should add it to this list and create a custom filter to
-            enforce it's permissions.  Be careful because permissions can be
+            enforce it's permissions.  Be careful, or permissions could be
             bypassed using the AnnouncerPlugin.
             """)
 

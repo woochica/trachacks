@@ -11,13 +11,15 @@ import tempfile
 import unittest
 
 from trac import __version__ as trac_version
+from trac.core import Component, implements
 from trac.db import Table, Column, Index
 from trac.db.api import DatabaseManager
 from trac.test import EnvironmentStub
 
 from announcer import db_default
-from announcer.api import AnnouncementSystem, AnnouncementEvent, \
-                          SubscriptionResolver
+from announcer.api import AnnouncementSystem, AnnouncementEvent
+from announcer.api import IAnnouncementSubscriptionFilter
+from announcer.api import SubscriptionResolver
 
 
 class AnnouncementEventTestCase(unittest.TestCase):
@@ -44,7 +46,7 @@ class AnnouncementEventTestCase(unittest.TestCase):
         self.assertEquals(self.event.get_session_terms('anonymous'), tuple())
 
 
-class AnnouncementSystemTestCase(unittest.TestCase):
+class AnnouncementSystemSetupTestCase(unittest.TestCase):
     def setUp(self):
         self.env = EnvironmentStub(enable=['trac.*'])
         self.env.path = tempfile.mkdtemp()
@@ -490,10 +492,40 @@ class SubscriptionResolverTestCase(unittest.TestCase):
         pass
 
 
+class AnnouncementSystemSendTestCase(unittest.TestCase):
+    def setUp(self):
+        self.env = EnvironmentStub(enable=['trac.*', 'announcer.*'])
+        self.env.path = tempfile.mkdtemp()
+        self.db_mgr = DatabaseManager(self.env)
+        self.db = self.env.get_db_cnx()
+        self.an_sys = AnnouncementSystem(self.env)
+
+    def tearDown(self):
+        self.db.close()
+        # Really close db connections.
+        self.env.shutdown()
+        shutil.rmtree(self.env.path)
+
+    # Tests
+
+    def test_filter_added(self):
+        class DummySubscriptionFilter(Component):
+            """Test implementation for checking the filter ExtensionPoint."""
+            implements(IAnnouncementSubscriptionFilter)
+
+            def filter_subscriptions(self, event, subscriptions):
+                """Just a pass-through."""
+                return subscriptions
+
+        dummy = DummySubscriptionFilter(self.env)
+        self.assertTrue(dummy in self.an_sys.subscription_filters)
+
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(unittest.makeSuite(AnnouncementEventTestCase, 'test'))
-    suite.addTest(unittest.makeSuite(AnnouncementSystemTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(AnnouncementSystemSetupTestCase, 'test'))
+    suite.addTest(unittest.makeSuite(AnnouncementSystemSendTestCase, 'test'))
     suite.addTest(unittest.makeSuite(SubscriptionResolverTestCase, 'test'))
     return suite
 
