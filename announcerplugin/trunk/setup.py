@@ -79,6 +79,7 @@ setup(
             'announcer.opt.acct_mgr.announce = announcer.opt.acct_mgr.announce[acct_mgr]',
             'announcer.opt.bitten.announce = announcer.opt.bitten.announce[bitten]',
             'announcer.opt.fullblog.announce = announcer.opt.fullblog.announce[fullblog]',
+            'announcer.opt.subscribers = announcer.opt.subscribers',
         ]
     },
     test_suite = 'announcer.tests.test_suite',
