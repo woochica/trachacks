@@ -6,6 +6,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #5774: No such table: subscriptions
  * #6452: No notification sent to previous owner when a ticket is reassigned
  * #7759: Update Account Manager Announcer for new subscription system
+ * #7791: charset="us-ascii" in text part of html announcement
  * #7834: Emails are attempted to be sent even when there are no recipients
  * #7974: UnboundLocalError: local variable 'tid' referenced before assignment
           with announcements from AccountManager plugin
