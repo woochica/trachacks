@@ -2,22 +2,21 @@
 # you should have received as part of this distribution.
 #
 
-import announcer
 import re
-import trac
 
 from email.utils import parseaddr
+from genshi.template import NewTextTemplate, TemplateError
 
+from trac import __version__ as trac_version
 from trac.config import ListOption, Option
-from trac.core import *
+from trac.core import Component, implements
 from trac.util.text import to_unicode
 
-from genshi.template import NewTextTemplate
-
+from announcer import __version__ as announcer_version
 from announcer.distributors.mail import IAnnouncementEmailDecorator
-from announcer.util.mail import set_header, msgid, next_decorator, uid_encode
+from announcer.util.mail import msgid, next_decorator, set_header, uid_encode
 
-"""Email decorators have the chance to modify emails or their headers before
+"""Email decorators have the chance to modify emails or their headers, before
 the email distributor sends them out.
 """
 
@@ -110,17 +109,17 @@ class AnnouncerEmailDecorator(Component):
     implements(IAnnouncementEmailDecorator)
 
     def decorate_message(self, event, message, decorators):
-        mailer = 'AnnouncerPlugin v%s on Trac v%s'%(
-            announcer.__version__,
-            trac.__version__
+        mailer = 'AnnouncerPlugin v%s on Trac v%s' % (
+            announcer_version,
+            trac_version
         )
         set_header(message, 'Auto-Submitted', 'auto-generated')
         set_header(message, 'Precedence', 'bulk')
-        set_header(message, 'X-Announcer-Version', announcer.__version__)
+        set_header(message, 'X-Announcer-Version', announcer_version)
         set_header(message, 'X-Mailer', mailer)
         set_header(message, 'X-Trac-Announcement-Realm', event.realm)
         set_header(message, 'X-Trac-Project', self.env.project_name)
-        set_header(message, 'X-Trac-Version', trac.__version__)
+        set_header(message, 'X-Trac-Version', trac_version)
 
         return next_decorator(event, message, decorators)
 
@@ -141,23 +140,35 @@ class TicketSubjectEmailDecorator(Component):
 
     def decorate_message(self, event, message, decorates=None):
         if event.realm == 'ticket':
-            if event.changes:
-                if 'status' in event.changes:
-                    action = 'Status -> %s' % (event.target['status'])
-            template = NewTextTemplate(self.ticket_email_subject.encode('utf8'))
-            subject = template.generate(
-                ticket=event.target,
-                event=event,
-                action=event.category
-            ).render('text', encoding=None)
+            if 'status' in event.changes:
+                action = 'Status -> %s' % (event.target['status'])
+            template = NewTextTemplate(
+                self.ticket_email_subject.encode('utf8'))
+            # Create a fallback for invalid custom Genshi template in option.
+            default_template = NewTextTemplate(
+                Option.registry[('announcer', 'ticket_email_subject')
+                    ].default.encode('utf8'))
+            try:
+                subject = template.generate(
+                    ticket=event.target,
+                    event=event,
+                    action=event.category
+                ).render('text', encoding=None)
+            except TemplateError:
+                # Use fallback template.
+                subject = default_template.generate(
+                    ticket=event.target,
+                    event=event,
+                    action=event.category
+                ).render('text', encoding=None)
 
             prefix = self.config.get('announcer', 'email_subject_prefix')
             if prefix == '__default__':
                 prefix = '[%s] ' % self.env.project_name
             if prefix:
-                subject = "%s%s"%(prefix, subject)
+                subject = "%s%s" % (prefix, subject)
             if event.category != 'created':
-                subject = 'Re: %s'%subject
+                subject = 'Re: %s' % subject
             set_header(message, 'Subject', subject)
 
         return next_decorator(event, message, decorates)

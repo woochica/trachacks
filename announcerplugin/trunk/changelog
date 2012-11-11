@@ -15,6 +15,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #8062: Database upgrade silently fails when no i18n is available
  * #8458: PrivateTicketsPlugin is incompatible with TracAnnouncer plugin
  * #8577: NameError: when trying to delete a ticket
+ * #8677: "prefix" not defined when sending email
  * #9206: AttributeError: 'XmppPreferencePanel' has no 'xmpp_format_setting'
  * #9522: Announcer Plugin doesn't work
  * #9742: AttributeError on db.rollback() in environment_needs_upgrade
