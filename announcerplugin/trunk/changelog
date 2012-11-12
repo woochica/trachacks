@@ -41,9 +41,14 @@ announcer-0.12 from '0.11' (13-Feb-10) |r7569| by Robert Corsaro
 
 
 announcer-0.11.1.9 from '1.0-a1' (26-Sep-2010) |r9147| - branch 0.11.2dev
+ resolved issues
+ * #9021: show correct default in prefs for ticket email format
 
 
 announcer-0.11.1 from '1.0-a1' (26-Sep-2010) |r9146| - branch 0.11.1
+ resolved issues
+ * #9021: show correct default in prefs for ticket email format
+ * #9616: AnnouncementSystem fail on ticket change with set_message_id = false
 
 
 announcer-0.11 from '0.2' (26-Sep-2010) |r9145| by Robert Corsaro

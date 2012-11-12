@@ -337,9 +337,9 @@ class EmailDistributor(Component):
         if self.set_message_id:
             msgid = self._message_id(event.realm)
             rootMessage['Message-ID'] = msgid
-        if event.category is not 'created':
-            rootMessage['In-Reply-To'] = msgid
-            rootMessage['References'] = msgid
+            if event.category is not 'created':
+                rootMessage['In-Reply-To'] = msgid
+                rootMessage['References'] = msgid
         rootMessage['Precedence'] = 'bulk'
         rootMessage['Auto-Submitted'] = 'auto-generated'
         provided_headers = formatter.format_headers(transport, event.realm, 
