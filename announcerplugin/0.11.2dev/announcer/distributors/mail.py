@@ -31,7 +31,6 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # ----------------------------------------------------------------------------
 import Queue
-import random
 import re
 import smtplib
 import sys
@@ -413,11 +412,9 @@ class EmailDistributor(Component):
             raise TracError(_('Invalid email encoding setting: %s'%pref))
 
     def _message_id(self, realm):
-        """Generate a predictable, but sufficiently unique message ID."""
+        """Generate an unique message ID."""
         modtime = time.time()
-        rand = random.randint(0,32000)
-        s = '%s.%d.%d.%s' % (self.env.project_url,
-                          modtime, rand,
+        s = '%s.%d.%s' % (self.env.project_url, modtime,
                           realm.encode('ascii', 'ignore'))
         dig = md5(s).hexdigest()
         host = self.email_from[self.email_from.find('@') + 1:]
@@ -473,6 +470,10 @@ class EmailDistributor(Component):
 
         headers = dict()
         if self.set_message_id:
+            # A different, predictable, but still sufficiently unique
+            # message ID will be generated as replacement in
+            # announcer.email_decorators.generic.ThreadingEmailDecorator
+            # for email threads to work.
             headers['Message-ID'] = self._message_id(event.realm)
         headers['Date'] = formatdate()
         from_header = formataddr((

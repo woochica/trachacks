@@ -68,6 +68,7 @@ class ThreadingEmailDecorator(Component):
             host = re.sub('^.+@', '', email_addr)
             mymsgid = msgid(uid, host)
             if event.category == 'created':
+                # Replace really unique message ID with a predictable one.
                 set_header(message, 'Message-ID', mymsgid)
             else:
                 set_header(message, 'In-Reply-To', mymsgid)

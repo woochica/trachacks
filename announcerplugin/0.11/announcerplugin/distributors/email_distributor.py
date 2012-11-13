@@ -20,7 +20,7 @@ try:
     from email.header import Header
 except:
     from email.Header import Header
-import time, Queue, threading, smtplib, random
+import time, Queue, threading, smtplib
 
 class DeliveryThread(threading.Thread):
     def __init__(self, queue, sender):
@@ -287,13 +287,9 @@ class EmailDistributor(Component):
         else:
             raise TracError(_('Invalid email encoding setting: %s'%pref))
 
-    def _message_id(self, realm):
+    def _message_id(self, event, event_id, modtime):
         """Generate a predictable, but sufficiently unique message ID."""
-        modtime = time.time()
-        rand = random.randint(0,32000)
-        s = '%s.%d.%d.%s' % (self.env.project_url,
-                          modtime, rand,
-                          realm.encode('ascii', 'ignore'))
+        s = '%s.%s.%d' % (self.env.project_url, event_id, modtime)
         dig = md5(s).hexdigest()
         host = self.smtp_from[self.smtp_from.find('@') + 1:]
         msgid = '<%03d.%s@%s>' % (len(s), dig, host)
@@ -333,13 +329,15 @@ class EmailDistributor(Component):
         rootMessage['X-Announcer-Version'] = announcer_version
         rootMessage['X-Trac-Project'] = proj_name
         rootMessage['X-Trac-Announcement-Realm'] = event.realm
-        rootMessage['X-Trac-Announcement-ID'] = self._event_id(event)
+        event_id = self._event_id(event)
+        rootMessage['X-Trac-Announcement-ID'] = event_id
         if self.set_message_id:
-            msgid = self._message_id(event.realm)
-            rootMessage['Message-ID'] = msgid
+            msgid = self._message_id(event, event_id, 0)
             if event.category is not 'created':
                 rootMessage['In-Reply-To'] = msgid
                 rootMessage['References'] = msgid
+                msgid = self._message_id(event, event_id, time.time()) 
+            rootMessage['Message-ID'] = msgid
         rootMessage['Precedence'] = 'bulk'
         rootMessage['Auto-Submitted'] = 'auto-generated'
         provided_headers = formatter.format_headers(transport, event.realm, 
