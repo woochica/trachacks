@@ -45,7 +45,7 @@ from announcer.api import IAnnouncementFormatter
 from announcer.api import IAnnouncementPreferenceProvider
 from announcer.api import IAnnouncementProducer
 from announcer.api import _
-
+from announcer.model import Subscription
 from announcer.util.mail import set_header
 from announcer.util.mail_crypto import CryptoTxt
 
@@ -342,18 +342,11 @@ class EmailDistributor(Component):
     def _get_preferred_format(self, realm, sid, authenticated):
         if authenticated is None:
             authenticated = 0
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("""
-            SELECT value
-              FROM session_attribute
-             WHERE sid=%s
-               AND authenticated=%s
-               AND name=%s
-        """, (sid, int(authenticated), 'announcer_email_format_%s' % realm))
-        result = cursor.fetchone()
+        # Format is unified for all subscriptions of a user.
+        result = Subscription.find_by_sid_and_distributor(
+                 self.env, sid, authenticated, 'email')
         if result:
-            chosen = result[0]
+            chosen = result[0]['format']
             self.log.debug("EmailDistributor determined the preferred format" \
                     " for '%s (%s)' is: %s"%(sid, authenticated and \
                     'authenticated' or 'not authenticated', chosen))
