@@ -130,7 +130,9 @@
       <ul>
         <li py:for="change in short_changes" class="changeitem" style="font-size: small;">
           <span class="fieldname" style="font-weight: bold; font-style: italic;">${change}</span> changed 
-          from <span class="from" style="font-weight: bold;">${short_changes[change][0]}</span>
+          <py:if test="short_changes[change][0]">
+            from <span class="from" style="font-weight: bold;">${short_changes[change][0]}</span>
+          </py:if>
           to <span class="to" style="font-weight: bold;">${short_changes[change][1]}</span>.
         </li>
       </ul>
