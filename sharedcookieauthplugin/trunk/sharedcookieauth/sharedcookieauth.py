@@ -54,14 +54,15 @@ class SharedCookieAuth(Component):
             return req.remote_user
 
         if 'shared_cookie_auth' in req.environ:
-            return None
+            return req.environ['shared_cookie_auth']
         else:
-            req.environ['shared_cookie_auth'] = True
+            req.environ['shared_cookie_auth'] = None
             if req.incookie.has_key('trac_auth'):
                 for project, dispatcher in self.dispatchers().items():
                     agent = dispatcher.authenticate(req)
                     if agent != 'anonymous':
                         req.authname = agent
+                        req.environ['shared_cookie_auth'] = agent
                         return agent
 
         return None
@@ -81,7 +82,7 @@ class SharedCookieAuth(Component):
         Should return `True` if this participant needs an upgrade to be
         performed, `False` otherwise.
         """
-        self.patch()
+        #self.patch()
         return False
         
 
