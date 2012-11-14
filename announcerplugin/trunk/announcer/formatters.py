@@ -19,7 +19,7 @@ from trac.test import Mock, MockPerm
 from trac.ticket.api import TicketSystem
 from trac.util.text import wrap, to_unicode
 from trac.versioncontrol.diff import diff_blocks, unified_diff
-from trac.web.chrome import Chrome, ITemplateProvider
+from trac.web.chrome import Chrome
 from trac.web.href import Href
 from trac.wiki.formatter import HtmlFormatter
 from trac.wiki.model import WikiPage
@@ -50,7 +50,7 @@ diff_header = """Index: %(name)s
 """
 
 class TicketFormatter(Component):
-    implements(IAnnouncementFormatter, ITemplateProvider)
+    implements(IAnnouncementFormatter)
 
     ticket_email_header_fields = ListOption('announcer',
             'ticket_email_header_fields',
@@ -247,18 +247,9 @@ class TicketFormatter(Component):
             stream = template.generate(**data)
             output = stream.render()
         return output
-    
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        return []
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
-
 
 class WikiFormatter(Component):
-    implements(IAnnouncementFormatter, ITemplateProvider)
+    implements(IAnnouncementFormatter)
 
     wiki_email_diff = BoolOption('announcer', 'wiki_email_diff',
             "true",
@@ -316,11 +307,3 @@ class WikiFormatter(Component):
             stream = template.generate(**data)
             output = stream.render('text')
         return output
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        return []
-
-    def get_templates_dirs(self):
-        from pkg_resources import resource_filename
-        return [resource_filename(__name__, 'templates')]
