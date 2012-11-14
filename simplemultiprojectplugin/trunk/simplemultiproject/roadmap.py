@@ -53,10 +53,10 @@ class SmpRoadmapProjectFilter(Component):
                     data['milestones'] = filtered_milestones
                     data['milestone_stats'] = filtered_milestone_stats
             
-                    if VERSION <= '0.12':
-                        data['infodivclass'] = 'info'
-                    else:
-                        data['infodivclass'] = 'info trac-progress'
+            if VERSION <= '0.12':
+                data['infodivclass'] = 'info'
+            else:
+                data['infodivclass'] = 'info trac-progress'
 
         return template, data, content_type
 
