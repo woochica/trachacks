@@ -70,8 +70,11 @@ class FullBlogAllSubscriber(Component):
             yield i.subscription_tuple()
 
     def description(self):
-        return _("notify me when any blog is modified, "
-                "changed, deleted or commented on.")
+        return _("""notify me when any blog post or comment is created,
+                    modified or deleted.""")
+
+    def requires_authentication(self):
+        return False
 
 
 class FullBlogNewSubscriber(Component):
@@ -92,6 +95,9 @@ class FullBlogNewSubscriber(Component):
     def description(self):
         return "notify me when any blog post is created."
 
+    def requires_authentication(self):
+        return False
+
 
 class FullBlogMyPostSubscriber(Component):
     """Subscriber for any blog changes to my posts."""
@@ -100,7 +106,7 @@ class FullBlogMyPostSubscriber(Component):
 
     always_notify_author = BoolOption('fullblog-announcement',
             'always_notify_author', 'true',
-            """Notify the blog author of any changes to her blogs,
+            """Notify the author of any changes to his or her posts,
             including changes to comments.
             """)
 
@@ -120,8 +126,10 @@ class FullBlogMyPostSubscriber(Component):
             yield i.subscription_tuple()
 
     def description(self):
-        return _("notify me when any blog that I posted "
-            "is modified or commented on.")
+        return _("""notify me when any blog post that I created changes.""")
+
+    def requires_authentication(self):
+        return True
 
 class FullBlogWatchSubscriber(Component):
     """Subscriber to watch individual blogs."""
@@ -152,7 +160,10 @@ class FullBlogWatchSubscriber(Component):
             yield i.subscription_tuple()
 
     def description(self):
-        return "notify me when a blog that I'm watching changes."
+        return "notify me when any blog post that I'm watching changes."
+
+    def requires_authentication(self):
+        return True
 
     # IRequestFilter
     def pre_process_request(self, req, handler):
@@ -244,7 +255,10 @@ class FullBlogBloggerSubscriber(Component):
             yield i.subscription_tuple()
 
     def description(self):
-        return "notify me when any blogger that I follow has a blog update."
+        return "notify me when any blog post for an author that I'm watching changes."
+
+    def requires_authentication(self):
+        return True
 
     # IAnnouncementPreferenceProvider interface
     def get_announcement_preference_boxes(self, req):
