@@ -3,10 +3,14 @@
      xmlns:py="http://genshi.edgewall.org/"
      xmlns:i18n="http://genshi.edgewall.org/i18n"
      i18n:domain="announcer">
-     A comma separated list of users you would like to watch. A watched user 
+
+  <p>A comma-separated list of users you would like to watch. A watched user
      will create an announcement each time he/she creates or changes
-     a wiki page or ticket.  <br />
-     <label for="announcer_watch_users">Watch Users:
-     <input type="text" id="announcer_watch_users" name="announcer_watch_users"
-       value="${data.announcer_watch_users}"/></label>
+     a wiki page or ticket.
+  </p>
+  <label for="announcer_watch_users">Watch Users:
+    <input type="text" id="announcer_watch_users"
+           name="announcer_watch_users"
+           value="${announcer_watch_users}"/>
+  </label>
 </span>

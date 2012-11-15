@@ -24,6 +24,7 @@ announcer-1.0 (not yet released) - branch 0.11 again
  * #10083: HTML notifications for attachments do not include the author name
  * #10384: Properly cast `authenticated` field for subscription_attribute table
  * #10584: Attachment description field not formatted to HTML
+ * #10620: UndefinedError when navigating to the Announcements preference panel
  * fix argument assignment issues in `SubscriptionAttribute.add`
 
  new features
