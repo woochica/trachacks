@@ -19,7 +19,8 @@ setup(
     entry_points={
         'trac.plugins': [
             'ContextChrome = contextchrome.style',
-            'DecayedWiki = decayed.wiki'
+            'DecayedWiki = decayed.wiki',
+            'z.LinkDecorator = contextchrome.linkdeco',
         ]
     },
 )
