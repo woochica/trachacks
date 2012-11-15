@@ -46,7 +46,7 @@ class DefaultPermissionFilter(Component):
             you should add it to this list and create a custom filter to
             enforce it's permissions.  Be careful, or permissions could be
             bypassed using the AnnouncerPlugin.
-            """)
+            """))
 
     def filter_subscriptions(self, event, subscriptions):
         action = '%s_VIEW' % event.realm.upper()
