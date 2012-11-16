@@ -32,13 +32,8 @@ class TicketLastCommentJump(Component):
             clist = [x for x in data['changes'] if x.has_key('cnum')]
             cnum = len(clist)
             if cnum > 0:
-                link = '<div class="trac-topnav" sizcache="0" sizset="17">'\
-                   + '[<a href="#comment:' + str(cnum) + '">'\
-                   + _('Last Comment')\
-                   + '</a>]'\
-                   + '</div>\n'
-                return stream | Transformer( '//div[@id="main"]/div[@class="ticket"]/div[@class="trac-topnav"]' )\
-                      .before( MarkupTemplate( link ).generate() )
+                return stream | Transformer( '//div[@id="ticket"]/div[@class="date"]/p[2]/text()[1]' )\
+                    .wrap(tag.a(href='#comment:%s' % str(cnum)))
         return stream
 
 
