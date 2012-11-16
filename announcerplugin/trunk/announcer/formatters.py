@@ -2,6 +2,8 @@
 #
 # Copyright (c) 2008, Stephen Hansen
 # Copyright (c) 2009, Robert Corsaro
+# Copyright (c) 2012, Ryan J Ollos
+# Copyright (c) 2012, Steffen Hoffmann
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -12,8 +14,8 @@ import difflib
 from genshi import HTML
 from genshi.template import NewTextTemplate, MarkupTemplate, TemplateLoader
 
-from trac.config import Option, IntOption, ListOption, BoolOption
-from trac.core import *
+from trac.config import BoolOption, ListOption
+from trac.core import implements
 from trac.mimeview import Context
 from trac.test import Mock, MockPerm
 from trac.ticket.api import TicketSystem
@@ -25,7 +27,9 @@ from trac.wiki.formatter import HtmlFormatter
 from trac.wiki.model import WikiPage
 
 from announcer.api import IAnnouncementFormatter
+from announcer.api import _, N_
 from announcer.compat import exception_to_unicode
+from announcer.pref import AnnouncerTemplateProvider
 
 
 def diff_cleanup(gen):
@@ -43,25 +47,21 @@ def lineup(gen):
     for value in gen:
         yield ' ' + value
 
-diff_header = """Index: %(name)s
-==============================================================================
---- %(name)s (version: %(oldversion)s)
-+++ %(name)s (version: %(version)s)
-"""
 
-class TicketFormatter(Component):
+class TicketFormatter(AnnouncerTemplateProvider):
+
     implements(IAnnouncementFormatter)
 
     ticket_email_header_fields = ListOption('announcer',
             'ticket_email_header_fields',
             'owner, reporter, milestone, priority, severity',
-            doc="""Comma seperated list of fields to appear in tickets.
-            Use * to include all headers.""")
+            doc=N_("""Comma-separated list of fields to appear in tickets.
+            Use * to include all headers."""))
 
     ticket_link_with_comment = BoolOption('announcer',
             'ticket_link_with_comment',
             'false',
-            """Include last change anchor in the ticket URL.""")
+            N_("""Include last change anchor in the ticket URL."""))
 
     def styles(self, transport, realm):
         if realm == "ticket":
@@ -248,12 +248,14 @@ class TicketFormatter(Component):
             output = stream.render()
         return output
 
-class WikiFormatter(Component):
+
+class WikiFormatter(AnnouncerTemplateProvider):
+
     implements(IAnnouncementFormatter)
 
     wiki_email_diff = BoolOption('announcer', 'wiki_email_diff',
             "true",
-            """Should a wiki diff be sent with emails?""")
+            N_("""Should a wiki diff be sent with emails?"""))
 
     def styles(self, transport, realm):
         if realm == "wiki":
@@ -287,6 +289,14 @@ class WikiFormatter(Component):
             data["diff_link"] = self.env.abs_href('wiki', page.name,
                     action="diff", version=page.version)
             if self.wiki_email_diff:
+                # DEVEL: Formatter needs req object to get preferred language.
+                diff_header = _("""
+Index: %(name)s
+==============================================================================
+--- %(name)s (version: %(oldversion)s)
++++ %(name)s (version: %(version)s)
+""")
+
                 diff = "\n"
                 diff += diff_header % { 'name': page.name,
                                        'version': page.version,
@@ -302,7 +312,7 @@ class WikiFormatter(Component):
             dirs += provider.get_templates_dirs()
         templates = TemplateLoader(dirs, variable_lookup='lenient')
         template = templates.load('wiki_email_plaintext.txt',
-                cls=NewTextTemplate)
+                                  cls=NewTextTemplate)
         if template:
             stream = template.generate(**data)
             output = stream.render('text')
