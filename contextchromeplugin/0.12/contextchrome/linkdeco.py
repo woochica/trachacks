@@ -5,6 +5,7 @@ from trac.core import Component, implements
 from trac.ticket.api import TicketSystem
 from trac.web.api import IRequestHandler
 from trac.config import ListOption
+from trac.util import Ranges
 
 class TicketLinkDecorator(Component):
     """ set css-class to ticket link as ticket field value. field name can set in [ticket]-decorate_fields in trac.ini"""
@@ -34,7 +35,10 @@ class TicketLinkDecorator(Component):
         ticketsystem._format_link = _format_link
 
     def get_deco(self, formatter, ns, target, label, fullmatch=None):
-            num = target
+        link, params, fragment = formatter.split_link(target)
+        r = Ranges(link)
+        if len(r) == 1:
+            num = r.a
             ticket = formatter.resource('ticket', num)
             from trac.ticket.model import Ticket
             if Ticket.id_is_valid(num) and \
