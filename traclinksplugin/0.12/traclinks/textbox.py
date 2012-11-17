@@ -113,6 +113,7 @@ class TextBox(Component):
 # Implemented and tested:
 """
  - wiki:WikiStart
+ - wiki:/TracGuide#AdministratorGuide
  - ticket:1
  - ticket:1?version=1    # NOTE: ticket:1@1 is not work
  - report:1 (SQL)
@@ -130,7 +131,7 @@ class TextBox(Component):
  - diff:trunk@1//tags@2
  - diff:anotherrepo/trunk@2//anotherrepo/tags@3
  - milestone:milestone1
- - timeline:2012-02-22
+ - timeline:2012-02-22T15:31:04+09:00
  - search:searchtext
  - source:/trunk/file.txt
  - source:/trunk/file.txt@2
@@ -138,6 +139,7 @@ class TextBox(Component):
  - source:anotherrepo/trunk/file.txt@3
  - comment:1:ticket:1
  - source:/trunk/file.txt#L20
+ - ticket:1#no1
 """
 
 # Not Implemented Yet
