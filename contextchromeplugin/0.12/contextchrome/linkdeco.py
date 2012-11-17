@@ -6,6 +6,7 @@ from trac.ticket.api import TicketSystem
 from trac.web.api import IRequestHandler
 from trac.config import ListOption
 from trac.util import Ranges
+from genshi.builder import Element
 
 class TicketLinkDecorator(Component):
     """ set css-class to ticket link as ticket field value. field name can set in [ticket]-decorate_fields in trac.ini"""
@@ -26,10 +27,11 @@ class TicketLinkDecorator(Component):
         ticketsystem = self.compmgr[TicketSystem]
         def _format_link(*args, **kwargs): # hook method
             element = self.wrapped(*args, **kwargs)
-            class_ = element.attrib.get('class')
-            if class_ and element.attrib.get('href'): # existing ticket
-                deco = self.get_deco(*args, **kwargs) or []
-                element.attrib = element.attrib | [('class', ' '.join(deco + [class_]))]
+            if isinstance(element, Element):
+                class_ = element.attrib.get('class')
+                if class_ and element.attrib.get('href'): # existing ticket
+                    deco = self.get_deco(*args, **kwargs) or []
+                    element.attrib = element.attrib | [('class', ' '.join(deco + [class_]))]
             return element
         self.wrapped = ticketsystem._format_link
         ticketsystem._format_link = _format_link
