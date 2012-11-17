@@ -13,7 +13,7 @@ class TicketLinkDecorator(Component):
 
     wrapped = None
     
-    decorate_fields = ListOption('ticket','decorate_fields',
+    decorate_fields = ListOption('ticket','decorate_fields',default='type',
                         doc=
                         """ comma separated List of field names to add css class of ticket link.
                             (Provided by !ContextChrome.!TicketLinkDecorator) """)
