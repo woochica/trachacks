@@ -44,8 +44,8 @@ class TicketLinkDecorator(Component):
             if Ticket.id_is_valid(num) and \
                     'TICKET_VIEW' in formatter.perm(ticket):
                 ticket = Ticket(self.env, num)
-                decorate_fields = self.config.getlist('ticket','decorate_fields')
-                return [x for x in [ticket.get_value_or_default(field) for field in decorate_fields] if x is not None]
+                fields = self.config.getlist('ticket','decorate_fields')
+                return ['%s_is_%s' % (field, ticket.values[field]) for field in fields if field in ticket.values]
 
     # IRequestHandler Methods
     def match_request(self, req):
