@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from trac.core import *
-from trac.perm import IPermissionRequestor, IPermissionGroupProvider,IPermissionPolicy,PermissionSystem
+from trac.perm import IPermissionRequestor, IPermissionGroupProvider, IPermissionPolicy, PermissionSystem
 from trac.wiki.model import WikiPage
 from trac.config import IntOption, ListOption
 
@@ -35,7 +35,7 @@ class PrivateWikiSystem(Component):
             if self._protected_page(page):
                 return False
 
-        if resource.realm == 'wiki' and action in ('WIKI_VIEW','WIKI_MODIFY'):
+        if resource.realm == 'wiki' and action in ('WIKI_VIEW', 'WIKI_MODIFY'):
             wiki = WikiPage(self.env, resource.id)
             return self.check_wiki_access(perm, resource, action, wiki.name)
         return None
@@ -46,10 +46,10 @@ class PrivateWikiSystem(Component):
         edit_actions = ['PRIVATE_EDIT_' + a for a in self.wikis]
         return view_actions + edit_actions + \
                [('PRIVATE_VIEW_ALL', view_actions),
-                ('PRIVATE_EDIT_ALL', edit_actions+view_actions)]
+                ('PRIVATE_EDIT_ALL', edit_actions + view_actions)]
 
     def _prep_page(self, page):
-        return page.upper().replace('/','_')
+        return page.upper().replace('/', '_')
 
     def _protected_page(self, page):
         self.env.log.debug('Checking privacy of page %s' % (page))
@@ -61,7 +61,7 @@ class PrivateWikiSystem(Component):
 
         self.env.log.debug('Privacy check results %s' % str(member_of))
         return member_of
-        
+
     # Public methods
     def check_wiki_access(self, perm, res, action, page):
         """Return if this req is permitted access to the given ticket ID."""
