@@ -8,7 +8,7 @@ from trac.web.chrome import prevnext_nav, add_link
 from trac.wiki.api import WikiSystem
 
 class NeighborPage(Component):
-    """ Add 'previous page / next page' link to wiki navigation bar"""
+    """ Add 'Previous Page / Next Page' link to wiki navigation bar"""
     implements (IRequestFilter)
     
     # IRequestFilter methods
@@ -31,7 +31,7 @@ class NeighborPage(Component):
                 index = pages.index(page.name)
                 if index > 0: add_link(req, 'prev', req.href.wiki(pages[index - 1]))
                 if index < len(pages) - 1: add_link(req, 'next', req.href.wiki(pages[index + 1]))
-                prevnext_nav(req, _('previous page'), _('next page'))
+                prevnext_nav(req, _('Previous Page'), _('Next Page'))
         return template, data, content_type
     
     
