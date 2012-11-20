@@ -3,6 +3,7 @@
 import sys
 
 from trac.core import *
+from trac.config import BoolOption
 from trac.web.api import IRequestFilter, RequestDone
 from trac.perm import PermissionError
 from trac.admin.web_ui import AdminModule
@@ -11,9 +12,27 @@ class PermRedirectModule(Component):
     """Redirect users to the login screen on PermissionError."""
     
     implements(IRequestFilter)
-    
+
+    redirect_login_https = BoolOption(
+        'permredirect', 'redirect_login_https', 'false',
+        """Redirect all requests to /login/ to HTTPS""")
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
+        if not self.redirect_login_https:
+            return handler
+
+        path = req.base_path + req.path_info
+
+        pos = req.base_url.find(':')
+        base_scheme = req.base_url[:pos]
+        base_noscheme = req.base_url[pos:]
+        base_noscheme_norm = base_noscheme.rstrip('/')
+        if path == req.href.login() and base_scheme == 'http':
+            login_url = 'https' + base_noscheme_norm + req.path_info
+            if req.query_string:
+                login_url = login_url + '?' + req.query_string
+            req.redirect(login_url)
         return handler
             
     def post_process_request(self, req, template, data, content_type):    
