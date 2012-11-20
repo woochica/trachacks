@@ -17,6 +17,10 @@ class PermRedirectModule(Component):
         'permredirect', 'redirect_login_https', 'false',
         """Redirect all requests to /login/ to HTTPS""")
 
+    redirect_login = BoolOption(
+        'permredirect', 'redirect_login', 'true',
+        """Redirect unauthenticated users to /login/ on PermissionError""")
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         if not self.redirect_login_https:
@@ -36,6 +40,9 @@ class PermRedirectModule(Component):
         return handler
             
     def post_process_request(self, req, template, data, content_type):    
+        if not self.redirect_login:
+            return template, data, content_type
+
         if template is None:
             # Some kind of exception in progress
             if req.authname != 'anonymous':
