@@ -17,7 +17,7 @@ setup(
     packages = ['changelog'],
     author = 'Alec Thomas',
     maintainer = 'Ryan Ollos',
-    maintainer_email = 'rjollos@gmail.com',
+    maintainer_email = 'ryan.j.ollos@gmail.com',
     description = 'Adds a Wiki macro that displays the changelog for a repository path',
     keywords = 'trac scm macro plugin',
     license = '3-Clause BSD',
