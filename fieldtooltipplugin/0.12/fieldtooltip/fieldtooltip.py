@@ -31,7 +31,10 @@ class FieldTooltip(Component):
                         'resolution': 'Reason for why a ticket was closed. One of fixed, invalid, wontfix, duplicate, worksforme.',
                         'status': 'What is the current status? One of new, assigned, closed, reopened.',
                         'summary': 'A brief description summarizing the problem or issue. Simple text without WikiFormatting.',
-                        'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.'}
+                        'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.',
+                        # workflow
+                        'leave': 'makes no change to the ticket.',
+                        }
     # blocking, blockedby for MasterTicketsPlugin, TicketRelationsPlugin
     # position for QueuesPlugin
     # estimatedhours for EstimationToolsPlugin, TracHoursPlugin, SchedulingToolsPlugin
@@ -130,6 +133,7 @@ class FieldTooltipFilter(object):
             if kind is START:
                 depth += 1
                 # add title and rel attribute to the element
+                data = self._add_title(data, 'label', 'for', 'action_', after_stream, depth)
                 data = self._add_title(data, 'label', 'for', 'field-', after_stream, depth)
                 data = self._add_title(data, 'th', 'id', 'h_', after_stream, depth)
                 yield kind, data, pos
