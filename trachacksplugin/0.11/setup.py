@@ -1,8 +1,19 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2005-2008 Alec Thomas
+# Copyright (C) 2009-2010 Michael Renzmann
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from setuptools import setup
 
 setup(
     name='TracHacks',
-    license='GPL',
+    license='3-Clause BSD',
     version='2.0',
     packages=['trachacks'],
     package_data={

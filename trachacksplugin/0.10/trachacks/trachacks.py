@@ -1,4 +1,12 @@
-# vim: expandtab
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2005-2007 Alec Thomas
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from trac.core import *
 from trac.wiki.api import IWikiMacroProvider
 from tracrpc.api import IXMLRPCHandler

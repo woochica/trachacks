@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2009, 2010 Michael Renzmann <mrenzmann@otaku42.de>
+# Copyright (C) 2009-2010 Michael Renzmann
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # The Borg class implementation is taken from:
 # http://code.activestate.com/recipes/66531/#c20
