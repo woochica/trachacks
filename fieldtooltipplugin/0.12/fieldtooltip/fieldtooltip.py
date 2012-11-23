@@ -11,11 +11,13 @@ from trac.web.api import ITemplateStreamFilter
 from trac.wiki.api import IWikiChangeListener, WikiSystem
 from trac.wiki.formatter import format_to_html
 from trac.wiki.model import WikiPage
+from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
+from pkg_resources import ResourceManager
 
 class FieldTooltip(Component):
     """ Provides tooltip for ticket fields. (In Japanese/KANJI) チケットフィールドのツールチップを提供します。
         if wiki page named 'help/field-name is supplied, use it for tooltip text. """
-    implements(ITemplateStreamFilter, IWikiChangeListener)
+    implements(ITemplateStreamFilter, ITemplateProvider, IWikiChangeListener)
     _default_pages = {  'reporter': 'The author of the ticket.',
                         'type': 'The nature of the ticket (for example, defect or enhancement request). See TicketTypes for more details.',
                         'component': 'The project module or subsystem this ticket concerns.',
@@ -56,9 +58,34 @@ class FieldTooltip(Component):
             pages[page[prefix_len:]] = WikiPage(self.env, page, db=db).text
         return pages
 
+    # ITemplateProvider methods
+    def get_templates_dirs(self):
+        return []
+    
+    def get_htdocs_dirs(self):
+        return [('fieldtooltip', ResourceManager().resource_filename(__name__, 'htdocs'))]
+    
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if filename == 'ticket.html': 
+        if filename == 'ticket.html':
+            # jquery tools tooltip ... tested
+            add_script(req, 'fieldtooltip/jquerytools/jquery.tools.min.js')
+            add_script(req, 'fieldtooltip/jquerytools/enabler.js')
+            add_stylesheet(req, 'fieldtooltip/jquerytools/jquery_tools_tooltip.css')
+            # jquery tooltip ... dont work collectly
+#            add_script(req, 'fieldtooltip/jquerytooltip/jquery.dimensions.js')
+#            add_script(req, 'fieldtooltip/jquerytooltip/jquery.tooltip.js')
+#            add_script(req, 'fieldtooltip/jquerytooltip/enabler.js')
+            # jquery powertip ... tested
+#            add_script(req, 'fieldtooltip/jquerypowertip/jquery.powertip.js')
+#            add_script(req, 'fieldtooltip/jquerypowertip/enabler.js')
+#            add_stylesheet(req, 'fieldtooltip/jquerypowertip/jquery.powertip.css')
+            # cluetip ... dont work collectly
+#            add_script(req, 'fieldtooltip/cluetip/jquery.hoverIntent.js')
+#            add_script(req, 'fieldtooltip/cluetip/jquery.cluetip.js')
+#            add_script(req, 'fieldtooltip/cluetip/enabler.js')
+#            add_stylesheet(req, 'fieldtooltip/cluetip/jquery.cluetip.css')
+
             return stream | FieldTooltipFilter(self, req)
         return stream
 
@@ -89,7 +116,7 @@ class FieldTooltipFilter(object):
                通常のHTMLでは title属性がポップアップします。
         jquery cluetip plugin を使う場合、{local:true} と指定することで、relで指定したIDのdivがポップアップします。
         jquery tooltip plugin を使う場合、bodyHandler で 当該divを返すようにすることで、そのdivがポップアップします。
-        jquery tools tooltop を使う場合、remoteAttr('title') することで next要素(=div)がポップアップします。
+        jquery tools tooltip を使う場合、removeAttr('title') することで next要素(=div)がポップアップします。
         """
 
     def __init__(self, parent, req):
