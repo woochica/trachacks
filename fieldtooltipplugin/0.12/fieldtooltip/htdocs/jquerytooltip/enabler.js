@@ -1,5 +1,5 @@
 jQuery(document).ready(function() {
-	jQuery('th[title][rel]').each(function() {
+	jQuery('th[title][rel], label[title][rel]').each(function() {
 		$(this).tooltip( 
 		{
 			bodyHandler : function() {
