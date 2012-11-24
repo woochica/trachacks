@@ -48,7 +48,7 @@ class TagModelTestCase(unittest.TestCase):
     def tearDown(self):
         self.db.close()
         # Really close db connections.
-	self.env.shutdown()
+        self.env.shutdown()
         shutil.rmtree(self.env.path)
 
     # Helpers
