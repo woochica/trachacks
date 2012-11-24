@@ -3,10 +3,10 @@ jQuery(document).ready(function() {
 		$(this)
 		.removeAttr('title')
 		.tooltip({ relative: "true",
-			effect: "fade", position: "north center",
+			effect: "fade",
+			position: "north center",
+			predelay: 1000,
 			tip: $(this).attr('rel')
 			});
 	});
 });
-
-
