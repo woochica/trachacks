@@ -81,9 +81,9 @@ class PlantUmlMacro(WikiMacroBase):
             args = formatter.code_processor.args
         except AttributeError:
             args = None
-        
+
         path = None
-        if not args: #Could be WikiProcessor or WikiMacro call
+        if not 'path' in args: #Could be WikiProcessor or WikiMacro call
             if content.strip().startswith("@startuml"):
                 markup = content
                 path = None
@@ -99,7 +99,7 @@ class PlantUmlMacro(WikiMacroBase):
         if path:
             markup, exists = self._read_source_from_repos(formatter, path)
             if not exists:
-                return markup
+                return system_message(_("File not found in repository: " + path))
         else:
             if not content:
                 return system_message(_("No UML text defined"))
