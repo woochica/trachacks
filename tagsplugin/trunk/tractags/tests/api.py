@@ -74,6 +74,7 @@ class TagSystemTestCase(unittest.TestCase):
     def test_set_tags_no_perms(self):
         resource = Resource('wiki', 'WikiStart')
         tags = ['tag1']
+        # Mock an anonymous request.
         self.req.perm = PermissionCache(self.env)
         self.assertRaises(PermissionError, self.tag_s.set_tags, self.req,
                           resource, tags)

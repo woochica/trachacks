@@ -63,6 +63,8 @@ tractags-0.7 (not yet released)
  * #9063: Allow excluding realms from queries by default
  * #9064: More rendering options for ListTagged macro and tag-handler
  * #9194: Add unittest and functional test infrastructure
+ * #9636: Exclude PageTemplates from tag-extraction
+   by adding an optional filter argument to ITagProvider.get_tagged_resources
  * render_cloud() now passes a percent to renderers instead of font pixel size
  * add `ignore_closed_tickets` option: skip closed tickets when collecting tags
  * remove redundant JavaScript files

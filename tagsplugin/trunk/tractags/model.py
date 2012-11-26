@@ -46,7 +46,8 @@ def tag_resource(env, realm, id, new_id=None, tags=None, db=None):
         """, [(realm, id, tag) for tag in tags])
     db.commit()
 
-def tagged_resources(env, perm_check, perm, realm, tags=None, db=None):
+def tagged_resources(env, perm_check, perm, realm, tags=None, filter=None,
+                     db=None):
     """Return Trac resources including their associated tags.
 
     This is currently known to be a major performance hog.
@@ -59,8 +60,10 @@ def tagged_resources(env, perm_check, perm, realm, tags=None, db=None):
         SELECT DISTINCT name
           FROM tags
          WHERE tagspace=%s"""
+    if filter:
+        sql += ''.join([" AND %s" % f for f in filter])
     if tags:
-        sql += " AND tags.tag IN (%s)" % ', '.join(['%s' for tag in tags])
+        sql += " AND tags.tag IN (%s)" % ','.join(['%s' for tag in tags])
         args += tags
     sql += " ORDER by name"
     cursor.execute(sql, args)

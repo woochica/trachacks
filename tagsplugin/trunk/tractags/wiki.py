@@ -11,6 +11,7 @@ import re
 
 from genshi.builder import Markup, tag
 from genshi.filters.transform import Transformer
+from trac.config import BoolOption
 from trac.core import Component, ExtensionPoint, implements
 from trac.mimeview.api import Context
 from trac.resource import Resource, render_resource_link, get_resource_url
@@ -20,6 +21,7 @@ from trac.web.chrome import add_stylesheet
 from trac.wiki.api import IWikiChangeListener, IWikiPageManipulator, \
                           IWikiSyntaxProvider
 from trac.wiki.model import WikiPage
+from trac.wiki.web_ui import WikiModule
 
 from tractags.api import DefaultTagProvider, TagSystem, _
 from tractags.macros import TagTemplateProvider
@@ -27,7 +29,12 @@ from tractags.macros import TagTemplateProvider
 
 class WikiTagProvider(DefaultTagProvider):
     """Tag provider for Trac wiki."""
+
     realm = 'wiki'
+
+    exclude_templates = BoolOption('tags', 'query_exclude_wiki_templates',
+        default=True,
+        doc="Whether tagged wiki page templates should be queried.")
 
     first_head = re.compile('=\s+([^=\n]*)={0,1}')
 
@@ -35,6 +42,15 @@ class WikiTagProvider(DefaultTagProvider):
         map = {'view': 'WIKI_VIEW', 'modify': 'WIKI_MODIFY'}
         return super(WikiTagProvider, self).check_permission(perm, action) \
             and map[action] in perm
+
+    def get_tagged_resources(self, req, tags, filter=None):
+        if self.exclude_templates:
+            db =  self.env.get_db_cnx()
+            like_templates = ''.join(
+                ["'", db.like_escape(WikiModule.PAGE_TEMPLATES_PREFIX), "%%'"])
+            filter = (' '.join(['name NOT', db.like() % like_templates]),)
+        return super(WikiTagProvider, self).get_tagged_resources(req, tags,
+                                                                 filter)
 
     def describe_tagged_resource(self, req, resource):
         if not self.check_permission(req.perm(resource), 'view'):
@@ -51,8 +67,6 @@ class WikiTagInterface(TagTemplateProvider):
     implements(IRequestFilter, ITemplateStreamFilter,
                IWikiChangeListener, IWikiPageManipulator)
 
-    PAGE_TEMPLATES_PREFIX = 'PageTemplates/'
-
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
@@ -63,7 +77,7 @@ class WikiTagInterface(TagTemplateProvider):
                 req.args.get('template') and 'tags' not in req.args:
             # Retrieve template resource to be queried for tags.
             template_page = WikiPage(self.env,''.join(
-                                     [self.PAGE_TEMPLATES_PREFIX,
+                                     [WikiModule.PAGE_TEMPLATES_PREFIX,
                                       req.args.get('template')]))
             if template_page and template_page.exists and \
                     'TAGS_VIEW' in req.perm(template_page.resource):

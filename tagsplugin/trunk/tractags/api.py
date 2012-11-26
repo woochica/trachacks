@@ -68,11 +68,12 @@ class ITagProvider(Interface):
     def get_taggable_realm():
         """Return the realm this provider supports tags on."""
 
-    def get_tagged_resources(req, tags=None):
+    def get_tagged_resources(req, tags=None, filter=None):
         """Return a sequence of resources and *all* their tags.
 
         :param tags: If provided, return only those resources with the given
                      tags.
+        :param filter: If provided, skip matching resources.
 
         :rtype: Sequence of (resource, tags) tuples.
         """
@@ -125,11 +126,11 @@ class DefaultTagProvider(Component):
     def get_taggable_realm(self):
         return self.realm
 
-    def get_tagged_resources(self, req, tags):
+    def get_tagged_resources(self, req, tags, filter=None):
         if not self.check_permission(req.perm, 'view'):
             return
         return tagged_resources(self.env, self.check_permission, req.perm,
-                                self.realm, tags)
+                                self.realm, tags, filter)
 
     def get_resource_tags(self, req, resource):
         assert resource.realm == self.realm
@@ -211,8 +212,9 @@ class TagSystem(Component):
 
         query_tags = set(query.terms())
         for provider in providers:
+            self.env.log.debug('Querying ' + repr(provider))
             for resource, tags in provider.get_tagged_resources(req,
-                                                                query_tags):
+                                                          query_tags) or []:
                 if query(tags, context=resource):
                     yield resource, tags
 
