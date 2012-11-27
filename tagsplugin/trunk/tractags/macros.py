@@ -181,9 +181,9 @@ class TagWikiMacros(TagTemplateProvider):
                 for realm in all_realms:
                     if re.search('(^|\W)realm:%s(\W|$)' % (realm), query):
                         realms = realms and realms.append(realm) or [realm]
-                if not realms:
-                    # Apply ListTagged defaults to macro call w/o realm.
-                    realms = list(set(all_realms)-set(self.exclude_realms))
+            if not realms:
+                # Apply ListTagged defaults to macro call w/o realm.
+                realms = list(set(all_realms)-set(self.exclude_realms))
             if not realms:
                 return ''
             else:

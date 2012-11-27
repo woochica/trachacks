@@ -86,6 +86,16 @@ class TagSystemTestCase(unittest.TestCase):
         # Shouldn't raise an error with appropriate permission.
         self.tag_s.set_tags(self.req, resource, tags)
 
+    def test_query_no_args(self):
+        # Regression test for query without argument,
+        #   reported as th:ticket:7857.
+
+        # Mock an anonymous request.
+        self.req.perm = PermissionCache(self.env)
+        self.assertEquals([(res, tags) for res, tags in
+                           self.tag_s.query(self.req, query='')],
+                          [])
+
 
 def test_suite():
     suite = unittest.TestSuite()
