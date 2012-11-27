@@ -26,6 +26,7 @@ tractags-0.7 (not yet released)
  * #5345: TracError: The Trac Environment needs to be upgraded
  * #5575: UnicodeEncodeError on Japanese tag
  * #5714: No documentation on WikiMacros page
+ * #7857: Regression in Tag query functionality
  * #8352: Chinese character in wiki name cause UnicodeEncodeError
  * #8684: Unexpected keyword argument 'tags_link'
  * #8995: Some missing HTML on wiki edit page

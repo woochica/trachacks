@@ -189,18 +189,18 @@ class TagWikiMacros(TagTemplateProvider):
             else:
                 self.query = query
                 self.realms = realms
-            query = '(%s) (%s)' % (query, ' or '.join(['realm:%s' % (r)
-                                                       for r in realms]))
+            query = '(%s) (%s)' % (query or '', ' or '.join(['realm:%s' % (r)
+                                                             for r in realms]))
             env.log.debug('LISTTAGGED_QUERY: ' + query)
             query_result = tag_system.query(req, query)
+            if not query_result:
+                return ''
 
             def _link(resource):
                 if resource.realm == 'tag':
                     # Keep realm selection in tag links.
-                    #if context.resource.realm == 'tag':
                     return builder.a(resource.id,
                                      href=self.get_href(req, tag=resource))
-                    #else:
                 elif resource.realm == 'ticket':
                     # Return resource link including ticket status dependend
                     #   class to allow for common Trac ticket link style.
@@ -284,16 +284,10 @@ class TagWikiMacros(TagTemplateProvider):
 
         Generate form-related arguments, strip arguments with default values.
         """
-#        form_realms = None
-#        if req.path_info == '/tags':
         form_realms = {}
         # Prepare realm arguments to keep form data consistent.
         for realm in self.realms:
             form_realms[realm] = 'on'
-#        realms = None
-#        elif set(self.realms) == set(self.all_realms):
-#            realms = None
-#        else:
         realms = self.realms
         if not page and not per_page:
             # We're not serving pager navigation here.
@@ -391,4 +385,3 @@ class TagWikiMacros(TagTemplateProvider):
             prev_href = self.get_href(req, items_per_page, current_page - 1)
             add_link(req, 'prev', prev_href, _('Previous Page'))
         return result
-

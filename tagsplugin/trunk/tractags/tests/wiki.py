@@ -84,10 +84,16 @@ class WikiTagProviderTestCase(unittest.TestCase):
             VALUES ('wiki', 'PageTemplates/Template', 'tag2')
         """)
         tags = ['tag1', 'tag2']
+        # Previous workaround for regression in query parser still works,
+        #   but the query without argument works again as well.
         self.assertEquals(self.tag_s.get_all_tags(self.req, '-invalid').keys(),
+                          self.tags)
+        self.assertEquals(self.tag_s.get_all_tags(self.req, '').keys(),
                           self.tags)
         self.env.config.set('tags', 'query_exclude_wiki_templates', False)
         self.assertEquals(self.tag_s.get_all_tags(self.req, '-invalid').keys(),
+                          tags)
+        self.assertEquals(self.tag_s.get_all_tags(self.req, '').keys(),
                           tags)
 
     def test_set_tags_no_perms(self):

@@ -341,7 +341,7 @@ class Query(QueryNode):
         'foo AND NOT bar OR baz'
         """
         def _convert(node):
-            if not node or node.type == node.NULL:
+            if not node or not node.type or node.type == node.NULL:
                 return ''
             if node.type == node.AND:
                 return '%s%s%s' % (_convert(node.left), and_,

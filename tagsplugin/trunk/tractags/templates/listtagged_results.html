@@ -31,20 +31,23 @@
         </thead>
 
         <tbody>
-        <tr py:if="not results" class="even">
-          <td colspan="${len(headers)}">
-            No resources found
-          </td>
-        </tr>
-        <py:for each="idx, result in enumerate(results)">
-          <tr class="${idx % 2 and 'odd' or 'even'}">
-            <td py:for="cell in result.cells">
-              ${cell}
+          <tr py:if="not results" class="even">
+            <td colspan="${len(headers)}">
+              No resources found
             </td>
           </tr>
-        </py:for>
+          <py:for each="idx, result in enumerate(results)">
+            <tr class="${idx % 2 and 'odd' or 'even'}">
+              <td py:for="cell in result.cells">
+                ${cell}
+              </td>
+            </tr>
+          </py:for>
         </tbody>
       </table>
+      <p py:when="not results">
+        No resources found
+      </p>
       <ul py:otherwise="" class="taglist">
         <py:choose>
           <li py:for="result in results" py:when="format == 'oldlist'">

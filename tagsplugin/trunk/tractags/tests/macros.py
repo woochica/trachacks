@@ -62,7 +62,7 @@ class ListTaggedMacroTestCase(unittest.TestCase):
             )
         context = Mock(env=self.env, href=Href('/'), req=req)
         formatter = Mock(context=context, req=req)
-        self.assertTrue('<li>' not in
+        self.assertTrue('No resources found' in
                         str(self.tag_twm.expand_macro(formatter,
                                                       'ListTagged', '')))
 
