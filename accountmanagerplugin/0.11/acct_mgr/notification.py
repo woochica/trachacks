@@ -1,29 +1,27 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2008 Pedro Algarvio <ufs@ufsoft.org>
+# All rights reserved.
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.   Matthew Good
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Pedro Algarvio <ufs@ufsoft.org>
 
 import re
 
 from trac import __version__
-from trac.core import *
+from trac.core import Component, implements
 from trac.admin import IAdminPanelProvider
 from trac.config import Option, ListOption
-from trac.web.chrome import ITemplateProvider
 from trac.notification import NotifyEmail
 
+from acct_mgr.api import IAccountChangeListener, CommonTemplateProvider, \
+                         _, dgettext
 
-from pkg_resources import resource_filename
-
-from acct_mgr.api import IAccountChangeListener, _, dgettext
 
 class AccountChangeListener(Component):
+
     implements(IAccountChangeListener)
 
     _notify_actions = ListOption(
@@ -162,10 +160,12 @@ class EmailVerificationNotification(SingleUserNotification):
         SingleUserNotification.notify(self, username, subject)
 
 
-class AccountChangeNotificationAdminPage(Component):
-    implements(IAdminPanelProvider, ITemplateProvider)
+class AccountChangeNotificationAdminPanel(CommonTemplateProvider):
 
-    # IAdminPageProvider
+    implements(IAdminPanelProvider)
+
+    # IAdminPageProvider methods
+
     def get_admin_panels(self, req):
         if req.perm.has_permission('ACCTMGR_CONFIG_ADMIN'):
             yield ('accounts', _("Accounts"), 'notification', _("Notification"))
@@ -193,10 +193,3 @@ class AccountChangeNotificationAdminPage(Component):
                 'notify_addresses': notify_addresses
                }
         return 'admin_accountsnotification.html', data
-
-    # ITemplateProvider methods
-    def get_htdocs_dirs(self):
-        return []
-
-    def get_templates_dirs(self):
-        return [resource_filename(__name__, 'templates')]

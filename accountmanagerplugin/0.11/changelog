@@ -1,20 +1,69 @@
 Author: Matthew Good <trac@matt-good.net>
 Maintainer: Steffen Hoffmann <hoff.st@web.de>
 
-acct_mgr-0.4 (not yet released) - branch 0.11
+acct_mgr-0.5 (not yet released) - branch 0.11
  resolved issues
- * #4677: Admin based chaining HtDigestStore & HtPasswdStore breaks config
-   by adding dedicated options 'htdigest_file' and 'htpasswd_file'
- * #8791: Obsolete patch needed for authentication against Jira
-   by adding sha256/sha512 hash support (needs `passlib` or extended `crypt`)
- * #8990: HtPasswdStore and SessionStore with HtPasswdHashMethod share option
-   by adding dedicated options 'db_htpasswd_hash_type' and 'db_htdigest_realm'
 
  new features
+
+
+acct_mgr-0.4 (01-Dec-2012) - branch 0.11
+ resolved issues
+ * #3459: Authentication information not available
+ * #4677: Admin based chaining HtDigestStore & HtPasswdStore breaks config
+   by adding dedicated options 'htdigest_file' and 'htpasswd_file'
+ * #5691: No cookie warning shown when trying to log in with Konqueror
+ * #6616: Invalid entries for usernames in table
+   by adding a cleaner macro implementation outside of `UserStatsMacro`
+ * #8685: User deletion ordering breaks 'deleted' notification for SessionStore
+ * #8770: AttributeError: Cannot find implementation of "IPasswordHashMethod"
+ * #8990: HtPasswdStore and SessionStore with HtPasswdHashMethod share option
+   by adding dedicated options 'db_htpasswd_hash_type' and 'db_htdigest_realm'
+ * #9052: acct_mgr.web_ui.emailverificationmodule - Doesn't send email
+ * #9079: PostgreSQL: Database error when creating new user with attributes
+ * #9090: AccountManager plugin does not email after user registration
+ * #9139: SvnServePasswordStore and case sensitivity
+ * #9246: InternalError when refresh_passwd = true
+ * #9252: All session attributes are deleted when user logs in first time
+ * #9547: Option `persistent_sessions` is not working in `0.4dev-r10747`
+ * #9843: New user missing in 'session' table.
+ * #9940: Admin unable to reset password
+ * #10023: SQL Injection in acct_mgr.api.AccountManager.lastseen()
+ * #10028: Account delete does not purge user's auth cookie
+ * #10123: Registration with EmailVerification should instruct more clearly
+ * #10204: Users can delete their email address even when verify_email=true
+ * #10276: "Unknown preference panel" when logging out from account tab
+ * #10397: Don't allow username with all capital letters
+ * #10412: acct_mgr-0.4dev breaking 2.4 compatibility
+ * #10594: Some options' docs are missing
+ * #10625: AssertionError in trac.db.pool.PooledConnection.__del__
+ * #10644: Add a real license
+ * do AccountManager class API cleanup by moving db access to model layer
+ * prevent duplicate action entries in Trac core permission select box
+
+ new features
+ * #874: Add new fields to register form and a registration validation system
+ * #5295: Add optional username regexp to registration checks
+ * #7577: Prevent spammers from registering
+ * #8076: Add optional account email regexp to registration checks
+ * #8791: Obsolete patch needed for authentication against Jira
+   by adding sha256/sha512 hash support (needs `passlib` or extended `crypt`)
+ * #9618: HttpAuthStore authentication enhancement
+   by allowing a relative URL for `authentication_url` configuration option
+ * #9676: Incorporate optional Single-Sign-On functionality
+ * #9852: Embed some user information in TracWiki
+   by introducing WikiMacros `ProjectStats` and `UserQuery`
+ * #10142: Allow admin to override verification status
  * add recursion to option parser for configuration admin page and provide
    available valid values for an `ExtensionOption` like `IPasswordHashMethod`
    by a select field (dropdown box) - or meaningful message on missing options
  * add cleanup page for purging `session_attribute` db table via admin web UI
+ * add randomized authentication cookie ID refreshment, average refresh rate
+   controlled by new option `cookie_refresh_pct`
+ * switch to case-less username duplicate checking
+ * add unit tests i.e. for hash creation and re-written registration checks
+   to significantly extend code coverage
+ * add Trac style shading of odd/even rows to user lists
 
 
 acct_mgr-0.3.2 (26-Aug-2011) - branch 0.11
@@ -179,9 +228,20 @@ acct_mgr-0.2.x (updates to 0.2.1, never officially released) - branch 0.11
 acct_mgr-0.2.1 (28-May-2008) - branch 0.11
  new features
  * #147: Email notification of account related events
- ToDo: add more historic enties
+
+
+ ToDo: historic entries below are still incomplete - more work needed
+
 
 acct_mgr-0.2 (10-Nov-2006) - new branch 0.11
+ * add SessionStore for storing user passwords as a Trac session attribute
+
+
+acct_mgr-0.1.3 (13-Nov-2006) branch 0.10
+ new features
+ * #173: Integrate login-related plugins
+   by adding HttpAuthStore
+
 
 acct_mgr-0.1.2 (10-Nov-2006) - new branch 0.10
 

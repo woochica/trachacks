@@ -1,174 +1,41 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
-# Copyright (C) 2010-2011 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2010-2012 Steffen Hoffmann <hoff.st@web.de>
+# All rights reserved.
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.   Matthew Good
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Matthew Good <trac@matt-good.net>
 
-import base64
 import random
-import re
 import string
 import time
 
 from datetime import timedelta
-from os import urandom
-from pkg_resources import resource_filename
-
-from trac import perm, util
-from trac.core import Component, TracError, implements
-from trac.config import Configuration, IntOption, BoolOption
-from trac.prefs import IPreferencePanelProvider
-from trac.util.presentation import separated
-from trac.util.text import to_unicode
-from trac.web import auth
-from trac.web.api import IAuthenticator
-from trac.web.main import IRequestHandler, IRequestFilter
-from trac.web import chrome
-from trac.web.chrome import INavigationContributor, ITemplateProvider, \
-                            add_script, add_stylesheet
 from genshi.core import Markup
 from genshi.builder import tag
 
-from acct_mgr.api import AccountManager, _, dgettext, ngettext, tag_, \
-                         set_user_attribute
+from trac import perm, util
+from trac.core import Component, implements
+from trac.config import Configuration, BoolOption, IntOption, Option
+from trac.env import open_environment
+from trac.prefs import IPreferencePanelProvider
+from trac.util import hex_entropy
+from trac.util.presentation import separated
+from trac.util.text import to_unicode
+from trac.web import auth, chrome
+from trac.web.main import IRequestHandler, IRequestFilter, get_environments
+from trac.web.chrome import INavigationContributor, add_script, add_stylesheet
+
+from acct_mgr.api import AccountManager, CommonTemplateProvider, \
+                         _, dgettext, ngettext, tag_
 from acct_mgr.db import SessionStore
 from acct_mgr.guard import AccountGuard
-from acct_mgr.util import containsAny, is_enabled
-
-
-def _create_user(req, env, check_permissions=True):
-    acctmgr = AccountManager(env)
-    username = acctmgr.handle_username_casing(
-                        req.args.get('username').strip())
-    name = req.args.get('name')
-    email = req.args.get('email').strip()
-    account = {'username' : username,
-               'name' : name,
-               'email' : email,
-              }
-    error = TracError('')
-    error.account = account
-
-    if not username:
-        error.message = _("Username cannot be empty.")
-        raise error
-
-    # Prohibit some user names that are important for Trac and therefor
-    # reserved, even if they're not in the permission store for some reason.
-    if username in ['authenticated', 'anonymous']:
-        error.message = _("Username %s is not allowed.") % username
-        raise error
-
-    # NOTE: A user may exist in the password store but not in the permission
-    #   store. I.e. this happens, when the user (from the password store)
-    #   never logged in into Trac. So we have to perform this test here
-    #   and cannot just check for the user being in the permission store.
-    #   And obfuscate whether an existing user or group name
-    #   was responsible for rejection of this user name.
-    if acctmgr.has_user(username):
-        error.message = _(
-            "Another account or group named %s already exists.") % username
-        raise error
-
-    # Check whether there is also a user or a group with that name.
-    if check_permissions:
-        # NOTE: We can't use 'get_user_permissions(username)' here
-        #   as this always returns a list - even if the user doesn't exist.
-        #   In this case the permissions of "anonymous" are returned.
-        #
-        #   Also note that we can't simply compare the result of
-        #   'get_user_permissions(username)' to some known set of permission,
-        #   i.e. "get_user_permissions('authenticated') as this is always
-        #   false when 'username' is the name of an existing permission group.
-        #
-        #   And again obfuscate whether an existing user or group name
-        #   was responsible for rejection of this username.
-        for (perm_user, perm_action) in \
-                perm.PermissionSystem(env).get_all_permissions():
-            if perm_user == username:
-                error.message = _(
-                    "Another account or group named %s already exists.") \
-                    % username
-                raise error
-
-    # Always exclude some special characters, i.e. 
-    #   ':' can't be used in HtPasswdStore
-    #   '[' and ']' can't be used in SvnServePasswordStore
-    blacklist = acctmgr.username_char_blacklist
-    if containsAny(username, blacklist):
-        pretty_blacklist = ''
-        for c in blacklist:
-            if pretty_blacklist == '':
-                pretty_blacklist = tag(' \'', tag.b(c), '\'')
-            else:
-                pretty_blacklist = tag(pretty_blacklist,
-                                       ', \'', tag.b(c), '\'')
-        error.message = tag(_(
-            "The username must not contain any of these characters:"),
-            pretty_blacklist)
-        raise error
-
-    # Validation of username passed.
-
-    password = req.args.get('password')
-    if not password:
-        error.message = _("Password cannot be empty.")
-        raise error
-
-    if password != req.args.get('password_confirm'):
-        error.message = _("The passwords must match.")
-        raise error
-
-    # Validation of password passed.
-
-    if if_enabled(EmailVerificationModule) and acctmgr.verify_email:
-        if not email:
-            error.message = _("You must specify a valid email address.")
-            raise error
-        elif not re.match('^[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+[A-Z]{2,6}$',
-                          email, re.IGNORECASE):
-            error.message = _("""The email address specified appears to be
-                              invalid. Please specify a valid email address.
-                              """)
-            raise error
-        elif acctmgr.has_email(email):
-            error.message = _("""The email address specified is already in
-                              use. Please specify a different one.
-                              """)
-            raise error
-
-    # Validation of email address passed.
-
-    acctmgr.set_password(username, password)
-
-    # INSERT new sid, needed as foreign key in some db schemata later on,
-    # at least for PostgreSQL.
-    db = env.get_db_cnx()
-    cursor = db.cursor()
-    cursor.execute("""
-        SELECT  COUNT(*)
-        FROM    session
-        WHERE   sid=%s
-        """, (username,))
-    exists = cursor.fetchone()
-    if not exists:
-        cursor.execute("""
-            INSERT INTO session
-                    (sid,authenticated,last_visit)
-            VALUES  (%s,0,0)
-            """, (username,))
-
-    for attribute in ('name', 'email'):
-        value = req.args.get(attribute)
-        if not value:
-            continue
-        set_user_attribute(env, username, attribute, value)
+from acct_mgr.model import set_user_attribute, user_known
+from acct_mgr.register import EmailVerificationModule, RegistrationModule
+from acct_mgr.util import if_enabled, is_enabled
 
 
 class ResetPwStore(SessionStore):
@@ -177,7 +44,7 @@ class ResetPwStore(SessionStore):
         self.key = 'password_reset'
 
 
-class AccountModule(Component):
+class AccountModule(CommonTemplateProvider):
     """Exposes methods for users to do account management on their own.
 
     Allows users to change their password, reset their password, if they've
@@ -185,7 +52,7 @@ class AccountModule(Component):
     AccountManager module must be set in trac.ini in order to use this.
     """
 
-    implements(IPreferencePanelProvider, IRequestHandler, ITemplateProvider,
+    implements(IPreferencePanelProvider, IRequestHandler,
                INavigationContributor, IRequestFilter)
 
     _password_chars = string.ascii_letters + string.digits
@@ -242,6 +109,12 @@ class AccountModule(Component):
     # IRequestFilter methods
 
     def pre_process_request(self, req, handler):
+        if req.path_info == '/prefs/account' and \
+                not (req.authname and req.authname != 'anonymous'):
+            # An anonymous session has no account associated with it, and
+            # no account properies too, but general session preferences should
+            # always be available.
+            req.redirect(req.href.prefs())
         return handler
 
     def post_process_request(self, req, template, data, content_type):
@@ -271,9 +144,7 @@ class AccountModule(Component):
     reset_password_enabled = property(_reset_password_enabled)
 
     def _do_account(self, req):
-        if not req.authname or req.authname == 'anonymous':
-            # DEVEL: Shouldn't this be a more generic URL?
-            req.redirect(req.href.wiki())
+        assert(req.authname and req.authname != 'anonymous')
         action = req.args.get('action')
         delete_enabled = self.acctmgr.supports('delete_user') and \
                              self.acctmgr.allow_delete_account
@@ -327,10 +198,10 @@ class AccountModule(Component):
         acctmgr = self.acctmgr
         new_password = self._random_password()
         try:
+            self.store.set_password(username, new_password)
             acctmgr._notify('password_reset', username, email, new_password)
         except Exception, e:
             return {'error': ','.join(map(to_unicode, e.args))}
-        self.store.set_password(username, new_password)
         if acctmgr.force_passwd_change:
             set_user_attribute(self.env, username, 'force_change_passwd', 1)
 
@@ -377,120 +248,8 @@ class AccountModule(Component):
         req.session.save()
         req.redirect(req.href.logout())
 
-    # ITemplateProvider methods
 
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        return []
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        Genshi templates.
-        """
-        return [resource_filename(__name__, 'templates')]
-
-
-class RegistrationModule(Component):
-    """Provides users the ability to register a new account.
-
-    Requires configuration of the AccountManager module in trac.ini.
-    """
-
-    implements(INavigationContributor, IRequestHandler, ITemplateProvider)
-
-    def __init__(self):
-        self.acctmgr = AccountManager(self.env)
-        self._enable_check(log=True)
-
-    def _enable_check(self, log=False):
-        env = self.env
-        writable = self.acctmgr.supports('set_password')
-        ignore_case = auth.LoginModule(env).ignore_case
-        if log:
-            if not writable:
-                self.log.warn('RegistrationModule is disabled because the '
-                              'password store does not support writing.')
-            if ignore_case:
-                self.log.debug('RegistrationModule will allow lowercase '
-                               'usernames only and convert them forcefully '
-                               'as required, while \'ignore_auth_case\' is '
-                               'enabled in [trac] section of your trac.ini.')
-        return is_enabled(env, self.__class__) and writable
-
-    enabled = property(_enable_check)
-
-    # INavigationContributor methods
-
-    def get_active_navigation_item(self, req):
-        return 'register'
-
-    def get_navigation_items(self, req):
-        loginmod = LoginModule(self.env)
-        if not self.enabled:
-            return
-        if req.authname == 'anonymous':
-            yield 'metanav', 'register', tag.a(_("Register"),
-                                               href=req.href.register())
-
-    # IRequestHandler methods
-
-    def match_request(self, req):
-        return req.path_info == '/register' and self._enable_check(log=True)
-
-    def process_request(self, req):
-        if req.authname != 'anonymous':
-            req.redirect(req.href.prefs('account'))
-        action = req.args.get('action')
-        data = {'acctmgr' : { 'username' : None,
-                              'name' : None,
-                              'email' : None,
-                            },
-                '_dgettext': dgettext,
-               }
-        data['verify_account_enabled'] = is_enabled(
-            self.env, EmailVerificationModule) and self.acctmgr.verify_email
-        if req.method == 'POST' and action == 'create':
-            try:
-                _create_user(req, self.env)
-            except TracError, e:
-                data['registration_error'] = e.message
-                data['acctmgr'] = getattr(e, 'acctmgr', '')
-            else:
-                chrome.add_notice(req, Markup(tag.span(Markup(_(
-                     """Registration has been finished successfully.
-                     You may login as user %(user)s now.""",
-                     user=tag.b(req.args.get('username')))))))
-                req.redirect(req.href.login())
-        data['reset_password_enabled'] = AccountModule(self.env
-                                                      ).reset_password_enabled
-        return 'register.html', data, None
-
-    # ITemplateProvider
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        return []
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        Genshi templates.
-        """
-        return [resource_filename(__name__, 'templates')]
-
-
-def if_enabled(func):
-    def wrap(self, *args, **kwds):
-        if not self.enabled:
-            return None
-        return func(self, *args, **kwds)
-    return wrap
-
-
-class LoginModule(auth.LoginModule):
+class LoginModule(auth.LoginModule, CommonTemplateProvider):
     """Custom login form and processing.
 
     This is woven with the trac.auth.LoginModule it inherits and overwrites.
@@ -498,12 +257,43 @@ class LoginModule(auth.LoginModule):
     must be disabled to use this one.
     """
 
-    implements(ITemplateProvider)
-
     login_opt_list = BoolOption(
         'account-manager', 'login_opt_list', False,
         """Set to True, to switch login page style showing alternative actions
         in a single listing together.""")
+
+    cookie_refresh_pct = IntOption(
+        'account-manager', 'cookie_refresh_pct', 10,
+        """Persistent sessions randomly get a new session cookie ID with
+        likelihood in percent per work hour given here (zero equals to never)
+        to decrease vulnerability of long-lasting sessions.""")
+
+    # Update cookies for persistant sessions only 1/day.
+    #   hex_entropy returns 32 chars per call equal to 128 bit of entropy,
+    #   so it should be technically impossible to explore the hash even within
+    #   a year by just throwing forged HTTP requests at the server.
+    #   I.e. it would require 1.000.000 machines, each at 5*10^24 requests/s,
+    #   equal to a full-scale DDoS attack - an entirely different issue.
+    UPDATE_INTERVAL = 86400
+
+    def __init__(self):
+        c = self.config
+        if is_enabled(self.env, self.__class__) and \
+                is_enabled(self.env, auth.LoginModule):
+            # Disable auth.LoginModule to handle login requests alone.
+            self.env.log.info("""Concurrent enabled login modules found,
+                              fixing configuration ...""")
+            c.set('components', 'trac.web.auth.loginmodule', 'disabled')
+            c.save()
+            self.env.log.info("""auth.LoginModule disabled, giving preference
+                              to %s now.""" % self.__class__)
+
+        self.cookie_lifetime = c.getint('trac', 'auth_cookie_lifetime', 0)
+        if not self.cookie_lifetime > 0:
+            # Set the session to expire after some time and not
+            #   when the browser is closed - what is Trac core default).
+            self.cookie_lifetime = 86400 * 30   # AcctMgr default = 30 days
+        self.auth_share_participants = []
 
     def authenticate(self, req):
         if req.method == 'POST' and req.path_info.startswith('/login'):
@@ -516,7 +306,7 @@ class LoginModule(auth.LoginModule):
                         # get user for failed authentication attempt
                         f_user = req.args.get('user')
                         req.args['user_locked'] = False
-                        if acctmgr.user_known(f_user) is True:
+                        if user_known(self.env, f_user):
                             if guard.user_locked(f_user) is False:
                                 # log current failed login attempt
                                 guard.failed_count(f_user, req.remote_addr)
@@ -622,17 +412,19 @@ class LoginModule(auth.LoginModule):
             self.env.config.set('trac', 'check_auth_ip', True)
         
         if acctmgr.persistent_sessions and name and \
-                'trac_auth_session' in req.incookie:
+                'trac_auth_session' in req.incookie and \
+                int(req.incookie['trac_auth_session'].value) < \
+                int(time.time()) - self.UPDATE_INTERVAL:
             # Persistent sessions enabled, the user is logged in
             # ('name' exists) and has actually decided to use this feature
             # (indicated by the 'trac_auth_session' cookie existing).
             # 
             # NOTE: This method is called on every request.
             
-            # Update the timestamp of the session so that it doesn't expire
+            # Refresh session cookie
+            # Update the timestamp of the session so that it doesn't expire.
             self.env.log.debug('Updating session %s for user %s' %
                                 (cookie.value, name))
-                                
             # Refresh in database
             db = self.env.get_db_cnx()
             cursor = db.cursor()
@@ -642,23 +434,34 @@ class LoginModule(auth.LoginModule):
                 WHERE   cookie=%s
                 """, (int(time.time()), cookie.value))
             db.commit()
-            
-            # Refresh session cookie
-            # TODO Change session id (cookie.value) now and then as it
-            #   otherwise never would change at all (i.e. stay the same
-            #   indefinitely and therefore is vulnerable to be hacked).
+
+            # Change session ID (cookie.value) now and then as it otherwise
+            #   never would change at all (i.e. stay the same indefinitely and
+            #   therefore is more vulnerable to be hacked).
+            if random.random() + self.cookie_refresh_pct / 100.0 > 1:
+                old_cookie = cookie.value
+                # Update auth cookie value
+                cookie.value = hex_entropy()
+                self.env.log.debug('Changing session id for user %s to %s'
+                                    % (name, cookie.value))
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute("""
+                    UPDATE  auth_cookie
+                        SET cookie=%s
+                    WHERE   cookie=%s
+                    """, (cookie.value, old_cookie))
+                db.commit()
+                self._distribute_cookie(req, cookie.value)
+
+            cookie_lifetime = self.cookie_lifetime
             cookie_path = self._get_cookie_path(req)
-            t = 86400 * 30 # AcctMgr default - Trac core defaults to 0 instead
-            cookie_lifetime = self.env.config.getint(
-                                         'trac', 'auth_cookie_lifetime', t)
             req.outcookie['trac_auth'] = cookie.value
             req.outcookie['trac_auth']['path'] = cookie_path
-            if cookie_lifetime > 0:
-                req.outcookie['trac_auth']['expires'] = cookie_lifetime
-            req.outcookie['trac_auth_session'] = 1
+            req.outcookie['trac_auth']['expires'] = cookie_lifetime
+            req.outcookie['trac_auth_session'] = int(time.time())
             req.outcookie['trac_auth_session']['path'] = cookie_path
-            if cookie_lifetime > 0:
-                req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
+            req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
             try:
                 if self.env.secure_cookies:
                     req.outcookie['trac_auth']['secure'] = True
@@ -686,24 +489,26 @@ class LoginModule(auth.LoginModule):
                 req.redirect(referer)
             self._redirect_back(req)
         res = auth.LoginModule._do_login(self, req)
+
+        cookie_path = self._get_cookie_path(req)
+        # Fix for Trac 0.11, that always sets path to `req.href()`.
+        req.outcookie['trac_auth']['path'] = cookie_path
+        # Inspect current cookie and try auth data distribution for SSO.
+        cookie = req.outcookie.get('trac_auth')
+        if cookie:
+            self._distribute_cookie(req, cookie.value)
+
         if req.args.get('rememberme', '0') == '1':
             # Check for properties to be set in auth cookie.
-            cookie_path = self._get_cookie_path(req)
-            t = 86400 * 30 # AcctMgr default - Trac core defaults to 0 instead
-            cookie_lifetime = self.env.config.getint(
-                                         'trac', 'auth_cookie_lifetime', t)
-            # Set the session to expire after some time
-            # (and not when the browser is closed - what is the default).
-            if cookie_lifetime > 0:
-                req.outcookie['trac_auth']['expires'] = cookie_lifetime
+            cookie_lifetime = self.cookie_lifetime
+            req.outcookie['trac_auth']['expires'] = cookie_lifetime
             
             # This cookie is used to indicate that the user is actually using
             # the "Remember me" feature. This is necessary for 
             # '_get_name_for_cookie()'.
             req.outcookie['trac_auth_session'] = 1
             req.outcookie['trac_auth_session']['path'] = cookie_path
-            if cookie_lifetime > 0:
-                req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
+            req.outcookie['trac_auth_session']['expires'] = cookie_lifetime
             try:
                 if self.env.secure_cookies:
                     req.outcookie['trac_auth_session']['secure'] = True
@@ -728,17 +533,51 @@ class LoginModule(auth.LoginModule):
                 self._expire_session_cookie(req)
         return res
 
+    def _distribute_cookie(self, req, trac_auth):
+        # Single Sign On authentication distribution between multiple
+        #   Trac environments managed by AccountManager.
+        all_envs = get_environments(req.environ)
+        local_environ = req.environ.get('SCRIPT_NAME', None)
+        self.auth_share_participants = []
+
+        for environ, path in all_envs.iteritems():
+            if not environ == local_environ.lstrip('/'):
+                # Cache environment for subsequent invocations.
+                env = open_environment(path, use_cache=True)
+                # Consider only Trac environments with equal, non-default
+                #   'auth_cookie_path', which enables cookies to be shared.
+                if self._get_cookie_path(req) == env.config.get('trac',
+                                                     'auth_cookie_path'):
+                    db = env.get_db_cnx()
+                    cursor = db.cursor()
+                    # Authentication cookie values must be unique. Ensure,
+                    #   there is no other session (or worst: session ID)
+                    #   associated to it.
+                    cursor.execute("""
+                        DELETE FROM auth_cookie
+                        WHERE  cookie=%s
+                        """, (trac_auth,))
+                    cursor.execute("""
+                        INSERT INTO auth_cookie
+                               (cookie,name,ipnr,time)
+                        VALUES (%s,%s,%s,%s)
+                        """, (trac_auth, req.remote_user, req.remote_addr,
+                              int(time.time())))
+                    db.commit()
+                    env.log.debug('Auth data received from: ' + local_environ)
+                    # Track env paths for easier auth revocation later on.
+                    self.auth_share_participants.append(path)
+                    self.log.debug('Auth distribution success: ' + environ)
+                else:
+                    self.log.debug('Auth distribution skipped: ' + environ)
+
     def _get_cookie_path(self, req):
         """Check request object for "path" cookie property.
 
         There is even a configuration option (since Trac 0.12).
         """
-        try:
-            cookie_path = self.auth_cookie_path or req.base_path or '/'
-        except AttributeError:
-            # Fallback for Trac 0.11 compatibility
-            cookie_path = req.base_path or '/'
-        return cookie_path
+        return self.env.config.get('trac', 'auth_cookie_path') or \
+                   req.base_path or '/'
 
     # overrides
     def _expire_cookie(self, req):
@@ -751,8 +590,28 @@ class LoginModule(auth.LoginModule):
         # First of all expire trac_auth_session cookie, if it exists.
         if 'trac_auth_session' in req.incookie:
             self._expire_session_cookie(req)
-        # And then let auth.LoginModule expire all other cookies.
+        # Capture current cookie value.
+        cookie = req.incookie.get('trac_auth')
+        if cookie:
+            trac_auth = cookie.value
+        else:
+            trac_auth = None
+        # Then let auth.LoginModule expire all other cookies.
         auth.LoginModule._expire_cookie(self, req)
+        # And finally revoke distributed authentication data too.
+        if trac_auth:
+            for path in self.auth_share_participants:
+                env = open_environment(path)
+                db = env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute("""
+                    DELETE FROM auth_cookie
+                    WHERE  cookie=%s
+                    """, (trac_auth,))
+                db.commit()
+                env.log.debug('Auth data revoked from: ' + \
+                              req.environ.get('SCRIPT_NAME', 'unknown'))
+                env.shutdown()
 
     # Keep this code in a separate methode to be able to expire the session
     # cookie trac_auth_session independently of the trac_auth cookie.
@@ -822,147 +681,8 @@ class LoginModule(auth.LoginModule):
         return list(separated(items, '|'))
 
     def enabled(self):
-        # Admin must disable the built-in authentication to use this one.
-        return not is_enabled(self.env, auth.LoginModule)
+        # Trac built-in authentication must be disabled to use this one.
+        return is_enabled(self.env, self.__class__) and \
+                not is_enabled(self.env, auth.LoginModule)
 
     enabled = property(enabled)
-
-    # ITemplateProvider methods
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        return []
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        Genshi templates.
-        """
-        return [resource_filename(__name__, 'templates')]
-
-
-class EmailVerificationModule(Component):
-    """Performs email verification on every new or changed address.
-
-    A working email sender for Trac (!TracNotification or !TracAnnouncer)
-    is strictly required to enable this module's functionality.
-
-    Anonymous users should register and perms should be tweaked, so that
-    anonymous users can't edit wiki pages and change or create tickets.
-    So this email verification code won't be used on them. 
-    """
-
-    implements(IRequestFilter, IRequestHandler, ITemplateProvider)
-
-    def __init__(self, *args, **kwargs):
-        self.email_enabled = True
-        if self.config.getbool('announcer', 'email_enabled') != True and \
-                self.config.getbool('notification', 'smtp_enabled') != True:
-            self.email_enabled = False
-            if is_enabled(self.env, self.__class__) == True:
-                self.env.log.warn(self.__class__.__name__ + \
-                    ' can\'t work because of missing email setup.')
-
-    # IRequestFilter methods
-
-    def pre_process_request(self, req, handler):
-        if not req.session.authenticated:
-            # Permissions for anonymous users remain unchanged.
-            return handler
-        if AccountManager(self.env).verify_email and handler is not self and \
-                'email_verification_token' in req.session and \
-                not req.perm.has_permission('ACCTMGR_ADMIN'):
-            # TRANSLATOR: Your permissions have been limited until you ...
-            link = tag.a(_("verify your email address"),
-                         href=req.href.verify_email())
-            # TRANSLATOR: ... verify your email address
-            chrome.add_warning(req, Markup(tag.span(Markup(_(
-                "Your permissions have been limited until you %(link)s.",
-                link=link)))))
-            req.perm = perm.PermissionCache(self.env, 'anonymous')
-        return handler
-
-    def post_process_request(self, req, template, data, content_type):
-        if not req.session.authenticated:
-            # Don't start the email verification precedure on anonymous users.
-            return template, data, content_type
-
-        email = req.session.get('email')
-        # Only send verification if the user entered an email address.
-        acctmgr = AccountManager(self.env)
-        if acctmgr.verify_email and self.email_enabled is True and email and \
-                email != req.session.get('email_verification_sent_to') and \
-                not req.perm.has_permission('ACCTMGR_ADMIN'):
-            req.session['email_verification_token'] = self._gen_token()
-            req.session['email_verification_sent_to'] = email
-            acctmgr._notify(
-                'email_verification_requested', 
-                req.authname, 
-                req.session['email_verification_token']
-            )
-            # TRANSLATOR: An email has been sent to %(email)s
-            # with a token to ... (the link label for following message)
-            link = tag.a(_("verify your new email address"),
-                         href=req.href.verify_email())
-            # TRANSLATOR: ... verify your new email address
-            chrome.add_notice(req, Markup(tag.span(Markup(_(
-                """An email has been sent to %(email)s with a token to
-                %(link)s.""",
-                email=email, link=link)))))
-        return template, data, content_type
-
-    # IRequestHandler methods
-
-    def match_request(self, req):
-        return req.path_info == '/verify_email'
-
-    def process_request(self, req):
-        if not req.session.authenticated:
-            chrome.add_warning(req, Markup(tag.span(tag_(
-                "Please log in to finish email verification procedure."))))
-            req.redirect(req.href.login())
-        if 'email_verification_token' not in req.session:
-            chrome.add_notice(req, _("Your email is already verified."))
-        elif req.method == 'POST' and 'resend' in req.args:
-            AccountManager(self.env)._notify(
-                'email_verification_requested', 
-                req.authname, 
-                req.session['email_verification_token']
-            )
-            chrome.add_notice(req,
-                    _("A notification email has been resent to <%s>."),
-                    req.session.get('email'))
-        elif 'verify' in req.args:
-            # allow via POST or GET (the latter for email links)
-            if req.args['token'] == req.session['email_verification_token']:
-                del req.session['email_verification_token']
-                chrome.add_notice(
-                    req, _("Thank you for verifying your email address."))
-                req.redirect(req.href.prefs())
-            else:
-                chrome.add_warning(req, _("Invalid verification token"))
-        data = {'_dgettext': dgettext}
-        if 'token' in req.args:
-            data['token'] = req.args['token']
-        if 'email_verification_token' not in req.session:
-            data['button_state'] = { 'disabled': 'disabled' }
-        return 'verify_email.html', data, None
-
-    def _gen_token(self):
-        return base64.urlsafe_b64encode(urandom(6))
-
-    # ITemplateProvider methods
-
-    def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
-        return []
-
-    def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        Genshi templates.
-        """
-        return [resource_filename(__name__, 'templates')]
-

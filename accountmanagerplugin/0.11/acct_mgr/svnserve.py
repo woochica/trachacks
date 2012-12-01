@@ -1,17 +1,16 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
+# All rights reserved.
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.   Matthew Good
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Matthew Good <trac@matt-good.net>
 
 import os
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.config import Configuration
 from trac.versioncontrol import RepositoryManager
 
@@ -42,6 +41,9 @@ class SvnServePasswordStore(Component):
             filename = self._svnserve_conf['general'].getpath('password-db')
         if self._userconf is None or filename != self._userconf.filename:
             self._userconf = Configuration(filename)
+            # Overwrite default with str class to preserve case.
+            self._userconf.parser.optionxform = str
+            self._userconf.parse_if_needed(force=True)
         else:
             self._userconf.parse_if_needed()
         return self._userconf

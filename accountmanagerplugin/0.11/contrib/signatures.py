@@ -86,6 +86,9 @@ def sign(action='r'):
         f = _open(path, 'rb')
         lines = f.readlines()
         path = path[len(top) + 1:]
+        # Skip SVN support files, if present.
+        if '.svn/' in path:
+            continue
 
         hashes[path] = {}
         m = md5()

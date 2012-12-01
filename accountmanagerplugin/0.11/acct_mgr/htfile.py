@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2005,2006,2007 Matthew Good <trac@matt-good.net>
+# Copyright (C) 2005-2007 Matthew Good <trac@matt-good.net>
 # Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
+# All rights reserved.
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.   Matthew Good
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Matthew Good <trac@matt-good.net>
 
@@ -16,7 +15,7 @@ import os # to get not only os.path method but os.linesep too
 #   taking care of Python 2.5, but not needed for Python >= 2.6
 #from __future__ import with_statement
 
-from trac.core import *
+from trac.core import Component, TracError, implements
 from trac.config import Option
 
 from acct_mgr.api import IPasswordStore, _, N_
@@ -35,8 +34,8 @@ class AbstractPasswordFileStore(Component):
 
     # DEVEL: This option is subject to removal after next major release.
     filename = EnvRelativePathOption('account-manager', 'password_file', '',
-        doc = N_("""Path relative to Trac environment or full host machine
-                path to password file"""))
+        doc = """Path to password file - depreciated in favor of other, more
+              store-specific options""")
 
     def has_user(self, user):
         return user in self.get_users()
@@ -68,6 +67,7 @@ class AbstractPasswordFileStore(Component):
         user = user.encode('utf-8')
         password = password.encode('utf-8')
         prefix = self.prefix(user)
+        f = None
         try:
             f = open(filename, 'rU')
             for line in f:
@@ -79,7 +79,6 @@ class AbstractPasswordFileStore(Component):
         except:
             self.log.error('acct_mgr: check_password() -- '
                            'Can\'t read password file "%s"' % filename)
-            pass
         if isinstance(f, file):
             f.close()
         return None
@@ -185,8 +184,8 @@ class HtPasswdStore(AbstractPasswordFileStore):
     {{{
     [account-manager]
     password_store = HtPasswdStore
-    password_file = /path/to/trac.htpasswd
-    htpasswd_hash_type = crypt|md5|sha <- None or one of these options
+    htpasswd_file = /path/to/trac.htpasswd
+    htpasswd_hash_type = crypt|md5|sha|sha256|sha512 <- None or one of these
     }}}
 
     Default behaviour is to detect presence of 'crypt' and use it or
@@ -195,6 +194,9 @@ class HtPasswdStore(AbstractPasswordFileStore):
 
     implements(IPasswordStore)
 
+    filename = EnvRelativePathOption('account-manager', 'htpasswd_file', '',
+        doc = N_("""Path relative to Trac environment or full host machine
+                path to password file"""))
     hash_type = Option('account-manager', 'htpasswd_hash_type', 'crypt',
         doc = N_("Default hash type of new/updated passwords"))
 
@@ -226,13 +228,16 @@ class HtDigestStore(AbstractPasswordFileStore):
     {{{
     [account-manager]
     password_store = HtDigestStore
-    password_file = /path/to/trac.htdigest
+    htdigest_file = /path/to/trac.htdigest
     htdigest_realm = TracDigestRealm
     }}}
     """
 
     implements(IPasswordStore)
 
+    filename = EnvRelativePathOption('account-manager', 'htdigest_file', '',
+        doc = N_("""Path relative to Trac environment or full host machine
+                path to password file"""))
     realm = Option('account-manager', 'htdigest_realm', '',
         doc = N_("Realm to select relevant htdigest file entries"))
 
@@ -257,4 +262,3 @@ class HtDigestStore(AbstractPasswordFileStore):
                 user, realm = args
                 if realm == _realm and user:
                     yield user.decode('utf-8')
-

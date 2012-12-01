@@ -1,15 +1,14 @@
-# -*- coding: utf8 -*-
+# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2007 Matthew Good <trac@matt-good.net>
+# All rights reserved.
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff. If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.   Matthew Good
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Matthew Good <trac@matt-good.net>
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.config import ExtensionOption
 
 from acct_mgr.api import IPasswordStore, _, N_
@@ -21,7 +20,7 @@ class SessionStore(Component):
 
     hash_method = ExtensionOption('account-manager', 'hash_method',
         IPasswordHashMethod, 'HtDigestHashMethod',
-        doc = N_("Default hash type of new/updated passwords"))
+        doc = N_("IPasswordHashMethod used to create new/updated passwords"))
 
     def __init__(self):
         self.key = 'password'
@@ -126,4 +125,3 @@ class SessionStore(Component):
                 """ + sql, (self.key, user))
             db.commit()
         return exists
-
