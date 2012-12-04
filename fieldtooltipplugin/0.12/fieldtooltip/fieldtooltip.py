@@ -13,6 +13,7 @@ from trac.wiki.formatter import format_to_html
 from trac.wiki.model import WikiPage
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from pkg_resources import ResourceManager
+from genshi.builder import tag
 
 class FieldTooltip(Component):
     """ Provides tooltip for ticket fields. (In Japanese/KANJI) チケットフィールドのツールチップを提供します。
@@ -154,9 +155,9 @@ class FieldTooltipFilter(object):
                        またそのとき、after_stream[depth] に DIV 要素を格納します。
         """
         text = None
-        tag, attrs = data
+        element, attrs = data
         attr_value = attrs.get(attr_name)
-        if tag.localname == tagname and attr_value and attr_value.startswith(prefix):
+        if element.localname == tagname and attr_value and attr_value.startswith(prefix):
             attr_value = attr_value[len(prefix):]
             if attr_value in self.parent.pages:
                 text = self.parent.pages.get(attr_value)
@@ -165,14 +166,16 @@ class FieldTooltipFilter(object):
             if text:
                 attrs |= [(QName('title'), attr_value + ' | ' + text)]
                 attrs |= [(QName('rel'), '#tooltip-' + attr_value)]
+                img = tag.img(src='%s/chrome/common/wiki.png' \
+                              % self.context.req.base_url,
+                              alt='?', align='right')
+                a = tag.a(img, href='%s/wiki/%s%s' \
+                           % (self.context.req.base_url, FieldTooltip._wiki_prefix, attr_value))
                 after_stream[str(depth)] = \
-                    XML('<div id="%s" class="tooltip" style="display: none">' \
-                        '<a href="%s/wiki/%s%s">' \
-                        '<img src="%s/chrome/common/wiki.png" align="right" alt="?"/>' \
-                        '</a>%s:\n%s</div>' \
-                        % ('tooltip-' + attr_value,
-                           self.context.req.base_url, FieldTooltip._wiki_prefix, attr_value, 
-                           self.context.req.base_url,
-                           attr_value, format_to_html(self.parent.env, self.context, text, False)))
-                data = tag, attrs
+                tag.div(a, '%s:\n' % attr_value, 
+                        format_to_html(self.parent.env, self.context, text, False),
+                        id='tooltip-' + attr_value,
+                        class_='tooltip',
+                        style='display: none')
+                data = element, attrs
         return data
