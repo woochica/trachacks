@@ -57,7 +57,7 @@ class TicketFormatterTestCase(FormatterTestCase):
         actual = self.tf.format([], 'ticket', 'text/html', event)
 
         filename = resource_filename(__name__, 'attachment_notification.html')
-        file = open('attachment_notification.html', 'r')
+        file = open(filename, 'r')
         expected = file.read()
         file.close()
         self.assertEqual(expected, actual)
