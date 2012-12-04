@@ -1,3 +1,7 @@
 .tooltip {
 	background: #ffff99;
+	padding: 3px;
+}
+.tooltip p {
+	margin: 0;
 }

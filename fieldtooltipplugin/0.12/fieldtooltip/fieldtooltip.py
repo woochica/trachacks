@@ -153,6 +153,7 @@ class FieldTooltipFilter(object):
             add title and rel attribute to the element.
                        またそのとき、after_stream[depth] に DIV 要素を格納します。
         """
+        href = None
         text = None
         tag, attrs = data
         attr_value = attrs.get(attr_name)
@@ -160,12 +161,17 @@ class FieldTooltipFilter(object):
             attr_value = attr_value[len(prefix):]
             if attr_value in self.parent.pages:
                 text = self.parent.pages.get(attr_value)
+                href = '%s/wiki/%s%s' % (
+                      self.context.req.base_url, FieldTooltip._wiki_prefix, attr_value)
             elif attr_value in FieldTooltip._default_pages:
                 text = FieldTooltip._default_pages.get(attr_value)
             if text:
                 attrs |= [(QName('title'), attr_value + ' | ' + text)]
                 attrs |= [(QName('rel'), '#tooltip-' + attr_value)]
                 text = attr_value + ":\n" + format_to_html(self.parent.env, self.context, text, False)
+                if href:
+                    text = '<a href="%s"><img src="%s/chrome/common/wiki.png" align="right" alt="?"/></a>%s' % \
+                     (href, self.context.req.base_url, text)
                 after_stream[str(depth)] = \
                     XML('<div id="%s" class="tooltip" style="display: none">%s</div>' \
                         % ('tooltip-' + attr_value, text))
