@@ -6,7 +6,7 @@ http://www.lukedingle.com/javascript/sortable-table-rows-with-jquery-draggable-r
 
 (C) Stepan Riha, 2009
 */
-
+  
 
 jQuery(document).ready(function ($) {
 
@@ -23,10 +23,6 @@ jQuery(document).ready(function ($) {
 	$().mousemove(function(e) {
 		mouseY = e.pageY;
 	});
-	
-	// Hide column with the "order" selects
-	//var index = $('#enumlist thead tr th:contains(Order)').hide().index()+1;
-	//$('#enumlist tbody tr td:nth-child('+index+')').hide();
 	
 	// Suppress behavior on elements that should capture mouse
 	$('#enumlist input, #enumlist a, #enumlist select').mousedown(function (e) {

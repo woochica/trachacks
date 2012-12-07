@@ -9,12 +9,9 @@ http://trac.edgewall.org
 from trac.core import *
 
 from pkg_resources import resource_filename
-from trac import __version__ as VERSION
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from trac.web.chrome import (
-    Chrome, ITemplateProvider, add_script, add_stylesheet, add_notice,
-    add_warning
-)
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
+                            add_warning, add_notice
 
 class AdminEnumListPlugin(Component):
 
@@ -29,11 +26,8 @@ class AdminEnumListPlugin(Component):
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/admin/'):
             add_script(req, 'adminenumlistplugin/adminenumlist.js')
-            if VERSION < '1.0':
-                add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
-            else:
-                Chrome(self.env).add_jquery_ui(req)
-
+            add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
+                                    
         return template, data, content_type
     
 
