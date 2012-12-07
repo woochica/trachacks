@@ -10,8 +10,8 @@ from trac.core import *
 
 from pkg_resources import resource_filename
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
-                            add_warning, add_notice
+from trac.web.chrome import Chrome, ITemplateProvider, add_script
+
 
 class AdminEnumListPlugin(Component):
 
@@ -22,12 +22,17 @@ class AdminEnumListPlugin(Component):
     
     def pre_process_request(self, req, handler):
         return handler
-        
+
+    _has_add_jquery_ui = hasattr(Chrome, 'add_jquery_ui')
+
     def post_process_request(self, req, template, data, content_type):
         if req.path_info.startswith('/admin/'):
             add_script(req, 'adminenumlistplugin/adminenumlist.js')
-            add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
-                                    
+            if not self._has_add_jquery_ui:
+                add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
+            else:
+                Chrome(self.env).add_jquery_ui(req)
+
         return template, data, content_type
     
 
