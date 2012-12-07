@@ -5,7 +5,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='Budgeting Plugin', 
-    version='0.6.1',
+    version='0.6.2',
     author = 'Gefasoft AG, Franz Mayer',
     author_email = 'franz.mayer@gefasoft.de', 
     description = 'Adds Budgeting Informations to Tickets',
