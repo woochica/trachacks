@@ -1,0 +1,12 @@
+adminenumlistplugin 1.1 (Not yet released)
+ resolved issues
+ * #10655: Use jQuery UI bundled in the Trac core when available.
+ * #10688: Workaround for incompatibility between jQuery UI < 1.8.22 and
+ 		   jQuery >= 1.8.
+ 
+ new features
+ * #10656: Prompt with a warning dialog when navigating away from a page
+           with unsaved changes to an enum list.
+
+adminenumlistplugin 1.0 (09-Nov-2009)
+ Initial release

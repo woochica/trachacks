@@ -23,7 +23,26 @@ jQuery(document).ready(function ($) {
 	var hasOnSelectStart = typeof $(document).attr('onselectstart') != 'undefined';
 
 	// Indicates whether we're dragging a row	
-	var dragging = false;
+	var dragging = false, unsaved_changes = false;
+	
+	// Prompt with a dialog if leaving the page with unsaved changes to the list
+	$(window).bind('beforeunload', function(){
+		if(unsaved_changes)
+			return "You have unsaved changes to the order of the list. Your " +
+				"changes will be lost if you Leave this Page before " +
+				"selecting  Apply changes."
+	})
+	
+	// Don't prompt with a dialog if the Apply changes button is pressed
+	var button_pressed
+	$('#enumtable div.buttons input').click(function(){
+		button_pressed = $(this).attr('name');
+	})
+	
+	$('#enumtable').submit(function(){
+		if(button_pressed === 'apply')
+			$(window).unbind('beforeunload');
+	});
 	
 	// This keep track of current vertical coordinates
 	$().mousemove(function(e) {
@@ -128,6 +147,7 @@ jQuery(document).ready(function ($) {
 			if(select.val() != position) {
 				select.val(position);
 				select.not(trSelect).parent().effect('highlight', {}, 1000);
+				unsaved_changes = true;
 			}
 			position += 1;
 		});
