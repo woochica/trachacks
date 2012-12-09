@@ -46,6 +46,11 @@ jQuery(document).ready(function ($) {
 	$('#enumtable').submit(function(){
 		if(button_pressed === 'apply' || button_pressed === 'revert')
 			$(window).unbind('beforeunload');
+		if(button_pressed === 'revert'){
+			// Send GET request instead of POST
+			location = location;
+			return false;
+		}
 	});
 	
 	// This keep track of current vertical coordinates
