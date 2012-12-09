@@ -16,7 +16,7 @@ setup(name='AdminEnumListPlugin',
       zip_safe=False,
       entry_points = """
       [trac.plugins]
-      adminenumlistplugin = adminenumlistplugin
+      adminenumlistplugin = adminenumlistplugin.adminenumlistplugin
       """,
       )
 
