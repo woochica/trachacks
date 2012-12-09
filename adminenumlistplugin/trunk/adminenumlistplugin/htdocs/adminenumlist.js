@@ -13,7 +13,7 @@ jQuery(document).ready(function ($) {
 	// Workaround for issue when using jQuery UI < 1.8.22 with jQuery 1.8
 	// Trac 1.1.1dev @r11479 provides jQuery UI 1.8.21 and jQuery 1.8.2
 	// http://bugs.jquery.com/ticket/11921
-	if(!$.isFunction($.fn.curCSS))
+	if(!$.isFunction($.curCSS))
 		$.curCSS = $.css;
 	
 	var mouseY, lastY = 0;
