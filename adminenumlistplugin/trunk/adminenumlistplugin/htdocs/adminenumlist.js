@@ -20,7 +20,7 @@ jQuery(document).ready(function ($) {
 	
 	//IE Doesn't stop selecting text when mousedown returns false we need to check
 	// That onselectstart exists and return false if it does
-	var hasOnSelectStart = typeof $(document).attr('onselectstart') != 'undefined';
+	var hasOnSelectStart = document.onselectstart !== undefined;
 
 	// Indicates whether we're dragging a row	
 	var dragging = false, unsaved_changes = false;

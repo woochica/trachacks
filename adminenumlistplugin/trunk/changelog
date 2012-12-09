@@ -1,8 +1,10 @@
 adminenumlistplugin 1.1 (Not yet released)
  resolved issues
  * #10655: Use jQuery UI bundled in the Trac core when available.
+ * #10664: Check for existence of onselectstart function was not compatible
+           with all browsers.
  * #10688: Workaround for incompatibility between jQuery UI < 1.8.22 and
- 		   jQuery >= 1.8.
+           jQuery >= 1.8.
  
  new features
  * #10656: Prompt with a warning dialog when navigating away from a page
