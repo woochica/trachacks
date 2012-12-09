@@ -25,6 +25,10 @@ jQuery(document).ready(function ($) {
 	// Indicates whether we're dragging a row	
 	var dragging = false, unsaved_changes = false;
 	
+	// Insert Revert changes button after the Apply changes button
+	$('<input type="submit" name="revert" value="Revert changes" disabled="disabled"/>')
+		.insertAfter('#enumtable div input[name="apply"]');
+	
 	// Prompt with a dialog if leaving the page with unsaved changes to the list
 	$(window).bind('beforeunload', function(){
 		if(unsaved_changes)
@@ -33,14 +37,14 @@ jQuery(document).ready(function ($) {
 				"selecting  Apply changes."
 	})
 	
-	// Don't prompt with a dialog if the Apply changes button is pressed
+	// Don't prompt with a dialog if the Apply or Revert changes button is pressed
 	var button_pressed
 	$('#enumtable div.buttons input').click(function(){
 		button_pressed = $(this).attr('name');
 	})
 	
 	$('#enumtable').submit(function(){
-		if(button_pressed === 'apply')
+		if(button_pressed === 'apply' || button_pressed === 'revert')
 			$(window).unbind('beforeunload');
 	});
 	
@@ -113,7 +117,7 @@ jQuery(document).ready(function ($) {
 		
 	e.preventDefault();
 	
-	// The workaround for IE based browers
+	// The workaround for IE browsers
 	if (hasOnSelectStart)
 			$(document).bind('selectstart', function () { return false; });
 		return false;
@@ -153,6 +157,8 @@ jQuery(document).ready(function ($) {
 		});
 
 		$(tr).effect('highlight', { }, 2000);
+		if(unsaved_changes)
+			$('#enumtable div input[name="revert"]').attr('disabled', false);
 	}
 	
 });
