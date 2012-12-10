@@ -1460,9 +1460,13 @@ class ResourceScheduler(Component):
                 else:
                     finish = _earliest_successor(t, _ancestor_finish(t))
                     
+                    # The finish derived from the earliest successor
+                    # is *not* a fixed (user-specified) date.
+                    if finish != None:
+                        finish[1] = False
                     # If dependencies don't give a date, default to
                     # today at close of business
-                    if finish == None:
+                    else:
                         # Start at midnight today
                         finish = datetime.today().replace(hour=0, 
                                                           minute=0, 
@@ -1601,8 +1605,12 @@ class ResourceScheduler(Component):
                 else:
                     start = _latest_predecessor(t, _ancestor_start(t))
                     
+                    # The start derived from the latest predecessor is
+                    # *not* a fixed (user-specified) date.
+                    if start != None:
+                        start[1] = False
                     # If dependencies don't give a date, default to today
-                    if start == None:
+                    else:
                         # Start at midnight today
                         start = datetime.today().replace(hour=0, 
                                                          minute=0, 
