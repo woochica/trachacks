@@ -365,8 +365,10 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         # a ticket's parent is not in the viewed tickets, consider it
         # top-level
         wbs = [ 1 ]
-        for tid in self.pm.roots(self.ticketsByID):
-            wbs = _setLevel(tid, wbs, 1)
+        roots = self.pm.roots(self.ticketsByID)
+        for t in self.tickets:
+            if t['id'] in roots:
+                wbs = _setLevel(t['id'], wbs, 1)
 
 
     def _task_display(self, t, options):

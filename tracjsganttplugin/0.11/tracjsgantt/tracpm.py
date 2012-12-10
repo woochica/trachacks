@@ -341,8 +341,8 @@ class TracPM(Component):
     def children(self, ticket):
         return ticket['children']
 
-    # Return a list of integer IDs of the roots (tickets without
-    # parents) in ticketsByID.
+    # Return an unordered list of integer IDs of the roots (tickets
+    # without parents) in ticketsByID.
     def roots(self, ticketsByID):
         if self.isCfg('parent'):
             roots = []
