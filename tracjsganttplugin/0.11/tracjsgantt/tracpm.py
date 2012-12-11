@@ -970,7 +970,7 @@ class TracPM(Component):
     # @return a list of ticket results, each item is a hash of ticket
     #   fields including those named in fields and those required for PM
     #
-    def query(self, options, fields, ticket=None):
+    def query(self, req, options, fields, ticket=None):
         query_args = {}
         # Copy query args from caller (e.g., q_a['owner'] = 'monty|phred')
         for key in options.keys():
@@ -1004,7 +1004,7 @@ class TracPM(Component):
         query = Query.from_string(self.env, query_string)
 
         # Get all tickets
- 	tickets = query.execute() 
+ 	tickets = query.execute(req) 
 
         # Post process to add more PM stuff
         self.postQuery(options, tickets)
