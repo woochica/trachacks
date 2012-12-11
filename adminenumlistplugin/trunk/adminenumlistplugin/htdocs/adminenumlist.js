@@ -25,6 +25,12 @@ jQuery(document).ready(function ($) {
 	// Indicates whether we're dragging a row	
 	var dragging = false, unsaved_changes = false;
 	
+	// Disable the Apply changes button until there is a change
+	$('#enumtable div input[name="apply"]').attr('disabled', true)
+	$('#enumtable tbody tr input[name="default"]').click(function(){
+		$('#enumtable div input[name="apply"]').attr('disabled', false)
+	});
+	
 	// Insert Revert changes button after the Apply changes button
 	$('<input type="submit" name="revert" value="Revert changes" disabled="disabled"/>')
 		.insertAfter('#enumtable div input[name="apply"]');
@@ -176,7 +182,10 @@ jQuery(document).ready(function ($) {
 
 		$(tr).effect('highlight', { }, 2000);
 		if(unsaved_changes)
+		{
 			$('#enumtable div input[name="revert"]').attr('disabled', false);
+			$('#enumtable div input[name="apply"]').attr('disabled', false);
+		}
 	}
 	
 });
