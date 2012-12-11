@@ -30,12 +30,21 @@ jQuery(document).ready(function ($) {
 		.insertAfter('#enumtable div input[name="apply"]');
 	
 	// Prompt with a dialog if leaving the page with unsaved changes to the list
-	$(window).bind('beforeunload', function(){
+	var support_beforeunload = jQuery.event.special.beforeunload !== undefined;
+	var beforeunload = function() {
 		if(unsaved_changes)
 			return "You have unsaved changes to the order of the list. Your " +
 				"changes will be lost if you Leave this Page before " +
 				"selecting  Apply changes."
-	})
+	};
+	if (support_beforeunload) {
+		$(window).bind('beforeunload', beforeunload);
+	} else {
+		// Workaround unsupported "beforeunload" event when jQuery < 1.4,
+		// e.g. Trac 0.11.x provides jQuery 1.2.x
+		window.onbeforeunload = beforeunload;
+		$(window).bind('unload', function() { window.onbeforeunload = null; });
+	}
 	
 	// Don't prompt with a dialog if the Apply or Revert changes button is pressed
 	var button_pressed
@@ -44,8 +53,12 @@ jQuery(document).ready(function ($) {
 	})
 	
 	$('#enumtable').submit(function(){
-		if(button_pressed === 'apply' || button_pressed === 'revert')
-			$(window).unbind('beforeunload');
+		if(button_pressed === 'apply' || button_pressed === 'revert') {
+			if (support_beforeunload)
+				$(window).unbind('beforeunload');
+			else
+				window.onbeforeunload = null;
+		}
 		if(button_pressed === 'revert'){
 			// Send GET request instead of POST
 			location = location;
