@@ -976,7 +976,7 @@ class TracPM(Component):
         for key in options.keys():
             # FIXME - This test is a kludge.  Need a way to exclude
             # those handled by preQuery() in a data-driven way.
-            if key not in [ 'goal', 'root' ]:
+            if key not in [ 'goal', 'root', 'start', 'finish' ]:
                 query_args[str(key)] = options[key]
         
         # Expand (or set) list of IDs to include those specified by PM
@@ -1464,10 +1464,12 @@ class ResourceScheduler(Component):
                     # is *not* a fixed (user-specified) date.
                     if finish != None:
                         finish[1] = False
-                    # If dependencies don't give a date, default to
-                    # today at close of business
+                    # If dependencies don't give a date, use finish of
+                    # project.  Default to today if none given.
                     else:
-                        # Start at midnight today
+                        # Finish at user-supplied finish for schedule.
+                        finish = self.pm.parseDbDate(options.get('finish'))
+                        # If none, finish at midnight today
                         finish = datetime.today().replace(hour=0, 
                                                           minute=0, 
                                                           second=0, 
@@ -1609,13 +1611,18 @@ class ResourceScheduler(Component):
                     # *not* a fixed (user-specified) date.
                     if start != None:
                         start[1] = False
-                    # If dependencies don't give a date, default to today
+                    # If dependencies don't give a date, use start of
+                    # project.  Default to today if none given.
                     else:
-                        # Start at midnight today
-                        start = datetime.today().replace(hour=0, 
-                                                         minute=0, 
-                                                         second=0, 
-                                                         microsecond=0)
+                        # Start at user-supplied start for schedule.
+                        start = self.pm.parseDbDate(options.get('start'))
+                        # If none, start at midnight today
+                        if start == None:
+                            start = datetime.today().replace(hour=0, 
+                                                             minute=0, 
+                                                             second=0, 
+                                                             microsecond=0)
+
                         # Move back to end of previous day so fixup
                         # below will handle work week.
                         start += timedelta(days=-1,
