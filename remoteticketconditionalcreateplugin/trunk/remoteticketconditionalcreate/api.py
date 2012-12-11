@@ -1,7 +1,7 @@
 '''
 Created on Dec 3, 2012
 
-@author: zack
+@author: Zack Shahan
 '''
 
 from trac.core import Component, implements
@@ -26,8 +26,8 @@ class RemoteTicketConditionalCreate(Component):
     rfield = {}
 
     def __init__(self):
-        status = self._ccs_config('status');
-        lintertrac = self._ccs_config('intertrac_name');
+        status = self._rtcc_config('status');
+        lintertrac = self._rtcc_config('intertrac_name');
         self.lintertrac = lintertrac
         self._get_config(status)
         self._intertracs = self._get_remotes_config()
@@ -35,13 +35,13 @@ class RemoteTicketConditionalCreate(Component):
     def _get_config(self, status):
         for c in (x.strip() for x in status.split(',')):
             self.status = '%s' % (c)
-            self.rtype = self._ccs_config('%s.type' % (c))
-            self.rcomponent = self._ccs_config('%s.component' % (c))
-            self.rintertrac = self._ccs_config('%s.remote_intertrac' % (c))
-            self.lfield = self._ccs_config('%s.local_cfield' % (c))
-            self.rfield = self._ccs_config('%s.remote_cfield' % (c))
-            self.ruser = self._ccs_config('%s.xmlrpc_user' % (c))
-            self.rpassword = self._ccs_config('%s.xmlrpc_password' % (c))
+            self.rtype = self._rtcc_config('%s.type' % (c))
+            self.rcomponent = self._rtcc_config('%s.component' % (c))
+            self.rintertrac = self._rtcc_config('%s.remote_intertrac' % (c))
+            self.lfield = self._rtcc_config('%s.local_cfield' % (c))
+            self.rfield = self._rtcc_config('%s.remote_cfield' % (c))
+            self.ruser = self._rtcc_config('%s.xmlrpc_user' % (c))
+            self.rpassword = self._rtcc_config('%s.xmlrpc_password' % (c))
             
     # IEnvironmentSetupParticipant methods
     def environment_created(self):
@@ -159,7 +159,7 @@ class RemoteTicketConditionalCreate(Component):
                         intertrac_link))
         db.commit()
 
-    def _ccs_config(self, varname):
+    def _rtcc_config(self, varname):
         config_option = self.config.get('remoteticketconditionalcreate', varname, '')
         if not config_option:
             raise ResourceNotFound("Missing option: %s" % (varname))
