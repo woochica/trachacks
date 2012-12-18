@@ -1,5 +1,6 @@
 # Created by Noah Kantrowitz on 2007-08-27.
 # Copyright (c) 2007-2008 Noah Kantrowitz. All rights reserved.
+from pprint import pformat
 import sys
 
 from trac.core import *
@@ -49,11 +50,17 @@ class PermRedirectModule(Component):
                 # Already logged in
                 return template, data, content_type
             
-            exctype, exc = sys.exc_info()[0:2]
-
             ref_url = req.base_url + req.path_info
             if req.query_string:
                 ref_url = ref_url + "?" + req.query_string
+
+            exctype, exc = sys.exc_info()[0:2]
+            if exctype is None:
+                self.log.debug("template and exctype both None for request "
+                               "to %s: %s" % (ref_url, pformat(req.environ)))
+                return template, data, content_type
+
+            
             login_url = req.href.login(referer=ref_url)
 
             if issubclass(exctype, PermissionError):
