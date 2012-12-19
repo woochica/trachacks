@@ -5,7 +5,6 @@ Created on Dec 3, 2012
 '''
 
 from trac.core import Component, implements
-from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.resource import ResourceNotFound
 from tracrpc import *
@@ -16,7 +15,6 @@ from urlparse import urlsplit
 
 class RemoteTicketConditionalCreate(Component):
     implements(ITicketChangeListener,
-               IEnvironmentSetupParticipant,
                ITicketManipulator)
 
     rtype = {}
@@ -43,31 +41,6 @@ class RemoteTicketConditionalCreate(Component):
             self.ruser = self._rtcc_config('%s.xmlrpc_user' % (c))
             self.rpassword = self._rtcc_config('%s.xmlrpc_password' % (c))
             
-    # IEnvironmentSetupParticipant methods
-    def environment_created(self):
-        self.found_db_version = 0
-        self.upgrade_environment(self.env.get_db_cnx())
-
-    def environment_needs_upgrade(self, db):
-        # check the custom field
-        if 'intertrac_name' not in self.config['remoteticketconditionalcreate']:
-            return True
-        if 'status' not in self.config['remoteticketconditionalcreate']:
-            return True
-
-        return False
-    
-    def upgrade_environment(self, db):
-        # add the custom field
-        cfield = self.config['remoteticketconditionalcreate']
-        if 'status' not in cfield:
-            cfield.set('status', '')
-            self.config.save()
-        cfield = self.config['remoteticketconditionalcreate']
-        if 'intertrac_name' not in cfield:
-            cfield.set('intertrac_name', '')
-            self.config.save()
-
     # create xmlrpc connection to remote intertrac    
     def _xmlrpc_connect(self, rintertrac):
         remote_trac = self._get_remote_trac(rintertrac)['url']
@@ -162,7 +135,7 @@ class RemoteTicketConditionalCreate(Component):
     def _rtcc_config(self, varname):
         config_option = self.config.get('remoteticketconditionalcreate', varname, '')
         if not config_option:
-            raise ResourceNotFound("Missing option: %s" % (varname))
+            raise ResourceNotFound("RemoteTicketConditionalCreate Plugin -- Missing option: %s" % (varname))
         return config_option
             
     
