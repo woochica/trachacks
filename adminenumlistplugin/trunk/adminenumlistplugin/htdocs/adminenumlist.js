@@ -2,7 +2,10 @@
 
 http://www.lukedingle.com/javascript/sortable-table-rows-with-jquery-draggable-rows/
 
-(C) Stepan Riha, 2009
+(C) Stepan Riha, 2009; Ryan J Ollos, 2012; Jun Omae, 2012
+
+This software is licensed as described in the file COPYING, which
+you should have received as part of this distribution.
 */
 
 jQuery(document).ready(function ($) {
@@ -11,6 +14,8 @@ jQuery(document).ready(function ($) {
     // Trac 1.1.1dev @r11479 provides jQuery UI 1.8.21 and jQuery 1.8.2
     // http://bugs.jquery.com/ticket/11921
     if(!$.isFunction($.curCSS)) $.curCSS = $.css;
+
+    if (window.hide_selects === undefined) hide_selects = false;
 
     var mouseY = 0;
     var unsaved_changes = false;
@@ -58,6 +63,11 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    // Hide the select boxes if the trac.ini option is true
+    if (hide_selects) {
+        $('#enumtable th:contains("Order"), td:has(select)').hide();
+    }
+
     // Prompt with a dialog if leaving the page with unsaved changes to the list
     var supports_beforeunload = jQuery.event.special.beforeunload !== undefined;
     var beforeunload = function() {
@@ -89,7 +99,7 @@ jQuery(document).ready(function ($) {
             else
                 window.onbeforeunload = null;
         }
-        if (button_pressed === 'revert'){
+        if (button_pressed === 'revert') {
             // Send GET request instead of POST
             location = location;
             return false;
@@ -113,7 +123,7 @@ jQuery(document).ready(function ($) {
         var tr = $(this);
 
         // This is just for flashiness. It fades the TR element out to an opacity of 0.2 while it is being moved.
-        tr.find('td').fadeTo('fast', 0.2);
+        tr.find('td:not(:has(select))').fadeTo('fast', 0.2);
 
         // jQuery has a fantastic function called mouseenter() which fires when the mouse enters
         // This code fires a function each time the mouse enters over any TR inside the tbody -- except $(this) one
@@ -132,8 +142,8 @@ jQuery(document).ready(function ($) {
 
         // When mouse is released, unhook events and update values
         $('body').mouseup(function () {
-            //Fade the TR element back to full opacity
-            tr.find('td').fadeTo('fast', 1);
+            // Fade the TR element back to full opacity
+            tr.find('td:not(:has(select))').fadeTo('fast', 1);
             // Remove the mouseenter events from the tbody so that the TR element stops being moved
             $('tr', tr.parent()).unbind('mouseenter');
             // Remove this mouseup function until next time
@@ -152,8 +162,9 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
 
         // The workaround for IE browsers
-        if (supports_onselectstart)
+        if (supports_onselectstart) {
             $(document).bind('selectstart', function () { return false; });
+        }
 
         return false;
     }).css('cursor', 'move');
@@ -178,23 +189,22 @@ jQuery(document).ready(function ($) {
     });
 
     // Set select values based on the row they're in and highlight those that have changed
-    function updateValues (tr) {
+    function updateValues(tr) {
         var position = 1;
-        var trSelect = $('select', $(tr))[0];
-        $('#enumlist tbody tr select').each(function () {
+        var trSelect = $('select', $(tr));
+        $('#enumlist tbody select').each(function () {
             var select = $(this);
             // select.val() does not work on IE8 with Trac 0.11.7 (#10693)
             if ($(':selected', select).val() != position) {
                 select.val(position);
-                select.not(trSelect).parent().effect('highlight', {}, 1000);
+                select.not(trSelect).closest('tr').effect('highlight', {color: '#ffb'}, 3000);
                 unsaved_changes = true;
             }
             position += 1;
         });
 
-        $(tr).effect('highlight', { }, 2000);
-        if (unsaved_changes)
-        {
+        $(tr).effect('highlight', {}, 3000);
+        if (unsaved_changes) {
             $revert_button.attr('disabled', false);
             $apply_button.attr('disabled', false);
         }
