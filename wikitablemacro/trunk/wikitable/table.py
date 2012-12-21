@@ -13,8 +13,11 @@ from StringIO import StringIO
 
 from trac.core import implements
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.wiki.formatter import system_message
 from trac.wiki.macros import WikiMacroBase
 from trac.util.html import Markup
+from trac.util.text import exception_to_unicode
+from trac.util.translation import _
 
 class SQLTable(WikiMacroBase):
     """Draw a table from a SQL query in a wiki page.
@@ -42,10 +45,12 @@ class SQLTable(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute(content)
+        try:
+            cursor.execute(content)
+        except Exception, e:
+            return system_message(_("Invalid SQL"), exception_to_unicode(e))
 
         out = StringIO()
-
         print >> out, "<table class='listing wikitable'>"
         print >> out, " <thead>"
         print >> out, "  <tr>"

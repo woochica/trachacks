@@ -13,8 +13,11 @@ from StringIO import StringIO
 
 from trac.core import implements
 from trac.web.chrome import ITemplateProvider, add_stylesheet
+from trac.wiki.formatter import system_message
 from trac.wiki.macros import WikiMacroBase
 from trac.util.html import Markup
+from trac.util.text import exception_to_unicode
+from trac.util.translation import _
 
 class SQLScalar(WikiMacroBase):
     """Output a number from a scalar (1x1) SQL query.
@@ -33,7 +36,10 @@ class SQLScalar(WikiMacroBase):
     def expand_macro(self, formatter, name, content):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        cursor.execute(content)
+        try:
+            cursor.execute(content)
+        except Exception, e:
+            return system_message(_("Invalid SQL"), exception_to_unicode(e))
 
         value = "Unknown"
         for row in cursor:
