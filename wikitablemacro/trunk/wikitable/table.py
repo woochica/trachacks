@@ -13,7 +13,7 @@ from StringIO import StringIO
 
 from trac.core import implements
 from trac.web.chrome import ITemplateProvider, add_stylesheet
-from trac.wiki.formatter import system_message
+from trac.wiki.formatter import system_message, format_to_html
 from trac.wiki.macros import WikiMacroBase
 from trac.util.html import Markup
 from trac.util.text import exception_to_unicode
@@ -64,7 +64,8 @@ class SQLTable(WikiMacroBase):
             css_class = (idx % 2 == 0) and 'odd' or 'even'
             print >> out, "  <tr class='%s'>" % css_class
             for col in row:
-                print >> out, "<td>%s</td>" % col
+                print >> out, "<td>%s</td>" % \
+                    format_to_html(self.env, formatter.context, col)
             print >> out, "  </tr>"
 
         print >> out, " </tbody>"
