@@ -39,7 +39,7 @@ class SQLTable(WikiMacroBase):
         return [('wikitable', resource_filename(__name__, 'htdocs'))]
 
     # IWikiMacroBase methods
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(content)
@@ -65,5 +65,5 @@ class SQLTable(WikiMacroBase):
         print >> out, " </tbody>"
         print >> out, "</table>"
 
-        add_stylesheet(req, 'wikitable/css/wikitable.css')
+        add_stylesheet(formatter.req, 'wikitable/css/wikitable.css')
         return Markup(out.getvalue())

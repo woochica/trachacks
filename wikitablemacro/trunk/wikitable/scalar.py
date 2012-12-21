@@ -30,7 +30,7 @@ class SQLScalar(WikiMacroBase):
     """
 
     # IWikiMacroBase methods
-    def render_macro(self, req, name, content):
+    def expand_macro(self, formatter, name, content):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute(content)
@@ -43,5 +43,5 @@ class SQLScalar(WikiMacroBase):
         out = StringIO()
         print >> out, u"<span class='wikiscalar'>%s</span>" % value
 
-        add_stylesheet(req, 'wikitable/css/wikitable.css')
+        add_stylesheet(formatter.req, 'wikitable/css/wikitable.css')
         return Markup(out.getvalue())
