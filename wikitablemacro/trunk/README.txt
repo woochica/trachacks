@@ -7,7 +7,7 @@ display the results as a table in a wiki page.
 
 Usage::
 
-	{{{
+    {{{
         #!SQLTable
             SELECT count(id) as 'Number of Tickets'
             FROM ticket
@@ -22,5 +22,5 @@ Installation
 Install as normal, using easy_install or 'python setup.py install'. Then
 add this to trac.ini::
 
-	[components]
-	wikitable.* = enabled
+    [components]
+    wikitable.* = enabled
