@@ -1,47 +1,72 @@
-/*
-
-Based on drag-and-drop sample code by Luke Dingle
+/* Based on drag-and-drop sample code by Luke Dingle
 
 http://www.lukedingle.com/javascript/sortable-table-rows-with-jquery-draggable-rows/
 
 (C) Stepan Riha, 2009
 */
 
-
 jQuery(document).ready(function ($) {
 
     // Workaround for issue when using jQuery UI < 1.8.22 with jQuery 1.8
     // Trac 1.1.1dev @r11479 provides jQuery UI 1.8.21 and jQuery 1.8.2
     // http://bugs.jquery.com/ticket/11921
-    if(!$.isFunction($.curCSS))
-        $.curCSS = $.css;
+    if(!$.isFunction($.curCSS)) $.curCSS = $.css;
 
     var mouseY = 0;
     var unsaved_changes = false;
 
-    //IE Doesn't stop selecting text when mousedown returns false we need to check
-    // That onselectstart exists and return false if it does
-    var hasOnSelectStart = document.onselectstart !== undefined;
+    // IE Doesn't stop selecting text when mousedown returns false we need to check
+    // that onselectstart exists and return false if it does
+    var supports_onselectstart = document.onselectstart !== undefined;
 
-    // Disable the Apply changes button until there is a change
-    $('#enumtable div input[name="apply"]').attr('disabled', true)
-    $('#enumtable tbody tr input[name="default"]').click(function(){
-        $('#enumtable div input[name="apply"]').attr('disabled', false)
+    var $remove_checkboxes = $('#enumtable tbody input:checkbox');
+    var $remove_button = $('#enumtable input[name="remove"]');
+    var $apply_button = $('#enumtable input[name="apply"]');
+
+    // Insert 'Revert changes' button after the 'Apply changes' button
+    var $revert_button = $('<input type="submit" name="revert" value="Revert changes" disabled="disabled"/>').insertAfter($apply_button);
+
+    // Disable the 'Apply changes' button until there is a change
+    $apply_button.attr('disabled', true);
+    $('#enumtable tbody tr input:radio').click(function() {
+        $apply_button.attr('disabled', false);
+        $revert_button.attr('disabled', false);
     });
 
-    // Insert Revert changes button after the Apply changes button
-    $('<input type="submit" name="revert" value="Revert changes" disabled="disabled"/>')
-        .insertAfter('#enumtable div input[name="apply"]');
+    // Add a checkbox for toggling the entire column of checkboxes
+    var $group_checkbox = $('#enumtable thead th.sel').html('<input type="checkbox" name="sel" value="all"/>').children();
+    $group_checkbox.click(function() {
+        $remove_checkboxes.attr('checked', this.checked);
+        $remove_button.attr('disabled', !this.checked);
+    });
+
+    // Disable the 'Remove selected items' button until a checkbox is selected
+    $remove_button.attr('disabled', true);
+    $('#enumtable tbody input:checkbox').click(function() {
+        var num_checked = $remove_checkboxes.filter(':checked').length;
+        if (num_checked === $remove_checkboxes.length) {
+            $group_checkbox.attr('checked', true).prop('indeterminate', false);
+            $remove_button.attr('disabled', false);
+        }
+        else if (num_checked === 0) {
+            $group_checkbox.attr('checked', false).prop('indeterminate', false);
+            $remove_button.attr('disabled', true);
+        }
+        else {
+            $group_checkbox.attr('checked', false).prop('indeterminate', true);
+            $remove_button.attr('disabled', false);
+        }
+    });
 
     // Prompt with a dialog if leaving the page with unsaved changes to the list
-    var support_beforeunload = jQuery.event.special.beforeunload !== undefined;
+    var supports_beforeunload = jQuery.event.special.beforeunload !== undefined;
     var beforeunload = function() {
         if(unsaved_changes)
             return "You have unsaved changes to the order of the list. Your " +
                 "changes will be lost if you Leave this Page before " +
                 "selecting  Apply changes."
     };
-    if (support_beforeunload) {
+    if (supports_beforeunload) {
         $(window).bind('beforeunload', beforeunload);
     } else {
         // Workaround unsupported "beforeunload" event when jQuery < 1.4,
@@ -51,27 +76,27 @@ jQuery(document).ready(function ($) {
         $(window).bind('unload', function() { window.onbeforeunload = null; });
     }
 
-    // Don't prompt with a dialog if the Apply or Revert changes button is pressed
+    // Don't prompt with a dialog if the 'Apply/Revert changes' button is pressed
     var button_pressed
-    $('#enumtable div.buttons input').click(function(){
+    $('#enumtable div.buttons input').click(function() {
         button_pressed = $(this).attr('name');
     })
 
     $('#enumtable').submit(function(){
-        if(button_pressed === 'apply' || button_pressed === 'revert') {
-            if (support_beforeunload)
+        if (button_pressed === 'apply' || button_pressed === 'revert') {
+            if (supports_beforeunload)
                 $(window).unbind('beforeunload');
             else
                 window.onbeforeunload = null;
         }
-        if(button_pressed === 'revert'){
+        if (button_pressed === 'revert'){
             // Send GET request instead of POST
             location = location;
             return false;
         }
     });
 
-    // This keep track of current vertical coordinates
+    // This keeps track of current vertical coordinates
     $('#enumlist tbody').mousemove(function(e) {
         mouseY = e.pageY;
     });
@@ -116,21 +141,21 @@ jQuery(document).ready(function ($) {
 
             // Make text selectable for IE again with
             // The workaround for IE based browers
-            if (hasOnSelectStart)
+            if (supports_onselectstart)
                 $(document).unbind('selectstart');
 
             updateValues(tr);
         });
 
-    // Preventing the default action and returning false will Stop any text in the table from being
-    // highlighted (this can cause problems when dragging elements)
-    e.preventDefault();
+        // Preventing the default action and returning false will Stop any text
+        // in the table from being highlighted (this can cause problems when dragging elements)
+        e.preventDefault();
 
-    // The workaround for IE browsers
-    if (hasOnSelectStart)
+        // The workaround for IE browsers
+        if (supports_onselectstart)
             $(document).bind('selectstart', function () { return false; });
-        return false;
 
+        return false;
     }).css('cursor', 'move');
 
     // When user changes a select value, reorder rows
@@ -139,12 +164,12 @@ jQuery(document).ready(function ($) {
         var tr = $(this).parents('tr')[0];
         // select.val() does not work on IE8 with Trac 0.11.7 (#10693)
         var val = $(':selected', this).val();
-        if(val == 1) {
+        if (val == 1) {
             $('#enumlist tbody').prepend(tr);
         } else {
             var rowIndex = 0;
             var sib = tr.previousSibling;
-            while(sib != null) { rowIndex++; sib = sib.previousSibling; }
+            while (sib != null) { rowIndex++; sib = sib.previousSibling; }
             var newIndex = val > rowIndex ? val - 1 : val - 2;
             var trBefore = $($('#enumlist tbody tr')[newIndex]);
             trBefore.after(tr);
@@ -159,7 +184,7 @@ jQuery(document).ready(function ($) {
         $('#enumlist tbody tr select').each(function () {
             var select = $(this);
             // select.val() does not work on IE8 with Trac 0.11.7 (#10693)
-            if($(':selected', select).val() != position) {
+            if ($(':selected', select).val() != position) {
                 select.val(position);
                 select.not(trSelect).parent().effect('highlight', {}, 1000);
                 unsaved_changes = true;
@@ -168,11 +193,10 @@ jQuery(document).ready(function ($) {
         });
 
         $(tr).effect('highlight', { }, 2000);
-        if(unsaved_changes)
+        if (unsaved_changes)
         {
-            $('#enumtable div input[name="revert"]').attr('disabled', false);
-            $('#enumtable div input[name="apply"]').attr('disabled', false);
+            $revert_button.attr('disabled', false);
+            $apply_button.attr('disabled', false);
         }
     }
-
 });
