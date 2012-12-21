@@ -17,36 +17,17 @@ class RemoteTicketConditionalCreate(Component):
     implements(ITicketChangeListener,
                ITicketManipulator)
 
-    rtype = {}
-    rcomponent = {}
-    rintertrac = {}
-    lfield = {}
-    rfield = {}
-
     def __init__(self):
-        status = self._rtcc_config('status');
-        lintertrac = self._rtcc_config('intertrac_name');
-        self.lintertrac = lintertrac
-        self._get_config(status)
+        self._rtccs = self._get_rtccs_config();
         self._intertracs = self._get_remotes_config()
         
-    def _get_config(self, status):
-        for c in (x.strip() for x in status.split(',')):
-            self.status = '%s' % (c)
-            self.rtype = self._rtcc_config('%s.type' % (c))
-            self.rcomponent = self._rtcc_config('%s.component' % (c))
-            self.rintertrac = self._rtcc_config('%s.remote_intertrac' % (c))
-            self.lfield = self._rtcc_config('%s.local_cfield' % (c))
-            self.rfield = self._rtcc_config('%s.remote_cfield' % (c))
-            self.ruser = self._rtcc_config('%s.xmlrpc_user' % (c))
-            self.rpassword = self._rtcc_config('%s.xmlrpc_password' % (c))
-            
     # create xmlrpc connection to remote intertrac    
     def _xmlrpc_connect(self, rintertrac):
         remote_trac = self._get_remote_trac(rintertrac)['url']
         addr_split = urlsplit(remote_trac)
-        if self.ruser:
-            final_url = ''.join((addr_split.scheme, '://', self.ruser, ':', self.rpassword, '@',
+        if self.rtcc['xmlrpc_user']:
+            final_url = ''.join((addr_split.scheme, '://', self.rtcc['xmlrpc_user'],
+                                 ':', self.rtcc['xmlrpc_password'], '@',
                                  addr_split.netloc, addr_split.path, '/login'))
         else:
             final_url = remote_trac
@@ -80,14 +61,14 @@ class RemoteTicketConditionalCreate(Component):
 
     # create the ticket on the specified intertrac
     def _create_remote_ticket(self, rintertrac, ticket):
-        server = self._xmlrpc_connect(rintertrac)        
+        server = self._xmlrpc_connect(rintertrac)
         tsummary = str(ticket.values['summary'])
         tdescription = str(ticket.values['description'])
         attrs = {
-                'type': self.rtype,
+                'type': self.rtcc['type'],
                 'status': 'new',
-                'component': self.rcomponent,
-                self.rfield : '%s:#%s' % (self.lintertrac, ticket.id),
+                'component': self.rtcc['component'],
+                self.rtcc['remote_cfield'] : '%s:#%s' % (self._rtccs['intertrac_name'], ticket.id),
                 'reporter' : '%s' % (self._get_email_addrs(ticket.values['reporter'])),
                 'cc' : '%s,%s' % (self._get_email_addrs(ticket.values['owner']),
                                   self._get_email_addrs(ticket.values['cc']))
@@ -99,13 +80,14 @@ class RemoteTicketConditionalCreate(Component):
     # main routine. if status falls into this scope, create the remote ticket and
     # add the remote ticket link to the current ticket
     def ticket_changed(self, ticket, comment, author, old_values):
-        self._get_config(ticket.values['status'])
-        if 'status' in old_values and old_values['status'] != self.status:
-            if 'status' in ticket.values and ticket.values['status'] == self.status:
-                if not ticket.values[str(self.lfield)]:
-                    rticket = self._create_remote_ticket(self.rintertrac, ticket)
-                    self._update_intertrac_link(rticket, self.rintertrac, ticket)
-
+        if 'status' in ticket.values:
+            new_status = ticket.values['status']
+        if new_status in self._rtccs.keys():
+            self.rtcc = self._get_rtcc(new_status)
+            print self._rtccs[new_status]
+            if 'status' in old_values and old_values['status'] != self._rtccs[new_status]:
+                rticket = self._create_remote_ticket(self.rtcc['remote_intertrac'], ticket)
+                self._update_intertrac_link(rticket, self.rtcc['remote_intertrac'], ticket)
 
     def ticket_created(self, ticket):
         pass 
@@ -115,10 +97,10 @@ class RemoteTicketConditionalCreate(Component):
     
     def validate_ticket(self, req, ticket):
         # Make sure custom field is empty before we add the link
-        if 'status' in ticket.values and ticket.values['status'] == self.status:
-            if ticket.values[str(self.lfield)]:
+        if 'status' in ticket.values and ticket.values['status'] in self._rtccs.keys():
+            if ticket.values[str(self._get_rtcc(ticket.values['status'])['local_cfield'])]:
                 return [(None, "Cannot update ticket that has already been %s." % 
-                         (self.status))]
+                        (ticket.values['status']))]
         return []
 
     # add the intertrac link to the ticket
@@ -128,16 +110,9 @@ class RemoteTicketConditionalCreate(Component):
         cursor = db.cursor()
         cursor.execute('replace into ticket_custom values (%s,%s,%s)',
                        (ticket.id,
-                        self.lfield,
+                        self.rtcc['local_cfield'],
                         intertrac_link))
         db.commit()
-
-    def _rtcc_config(self, varname):
-        config_option = self.config.get('remoteticketconditionalcreate', varname, '')
-        if not config_option:
-            raise ResourceNotFound("RemoteTicketConditionalCreate Plugin -- Missing option: %s" % (varname))
-        return config_option
-            
     
     def _get_remote_tracs(self):
         intertracs = [v for k, v in self._intertracs.items() 
@@ -159,6 +134,39 @@ class RemoteTicketConditionalCreate(Component):
                                    % rintertrac,
                                    "Invalid InterTrac alias")
         return intertrac
+    
+    def _get_rtcc(self, status):
+        try:
+            rtcc = self._rtccs[status]
+        except KeyError:
+            raise ResourceNotFound("status '%s' is unknown." 
+                                   % status)
+        try:
+            rtcc['component']
+        except KeyError:
+            raise ResourceNotFound("%s.component is unknown."
+                                   % status)
+        try:
+            rtcc['local_cfield']
+        except KeyError:
+            raise ResourceNotFound("%s.local_cfield is unknown."
+                                   % status)
+        try:
+            rtcc['remote_cfield']
+        except KeyError:
+            raise ResourceNotFound("%s.remote_cfield is unknown."
+                                   % status)
+        try:
+            rtcc['remote_intertrac']
+        except KeyError:
+            raise ResourceNotFound("%s.remote_intertrac is unknown."
+                                   % status)
+        try:
+            rtcc['type']
+        except KeyError:
+            raise ResourceNotFound("%s.type is unknown."
+                                   % status)
+        return rtcc
         
     def _get_remotes_config(self):
         '''Return dict of intertracs and intertrac aliases.
@@ -178,3 +186,19 @@ class RemoteTicketConditionalCreate(Component):
                 intertracs[key] = val
         
         return intertracs
+
+    def _get_rtccs_config(self):
+
+        defin_patt = re.compile(r'(\w+)\.(\w+)')
+        config = self.config['remoteticketconditionalcreate']
+        rtccs = {}
+        for key, val in config.options():
+            m = defin_patt.match(key)
+            if m:
+                prefix, attribute = m.groups()
+                rtcc = rtccs.setdefault(prefix, {})
+                rtcc[attribute] = val
+            else:
+                rtccs[key] = val
+        
+        return rtccs
