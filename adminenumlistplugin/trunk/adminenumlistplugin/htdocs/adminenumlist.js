@@ -16,14 +16,12 @@ jQuery(document).ready(function ($) {
     if(!$.isFunction($.curCSS))
         $.curCSS = $.css;
 
-    var mouseY, lastY = 0;
+    var mouseY = 0;
+    var unsaved_changes = false;
 
     //IE Doesn't stop selecting text when mousedown returns false we need to check
     // That onselectstart exists and return false if it does
     var hasOnSelectStart = document.onselectstart !== undefined;
-
-    // Indicates whether we're dragging a row
-    var dragging = false, unsaved_changes = false;
 
     // Disable the Apply changes button until there is a change
     $('#enumtable div input[name="apply"]').attr('disabled', true)
@@ -74,27 +72,18 @@ jQuery(document).ready(function ($) {
     });
 
     // This keep track of current vertical coordinates
-    $().mousemove(function(e) {
+    $('#enumlist tbody').mousemove(function(e) {
         mouseY = e.pageY;
-    });
-
-    // Suppress behavior on elements that should capture mouse
-    $('#enumlist input, #enumlist a, #enumlist select').mousedown(function (e) {
-        // Suppress drag behavior for controls and links
-        if(!dragging)
-            mouseY = 0;
     });
 
     // Begin drag
     $('#enumlist tbody tr').mousedown(function (e) {
-        // Suppress drag on elements that should capture mouse
-        if(mouseY == 0)
+        // Suppress behavior on elements that should be cells
+        if (/^(?:a|input|select)$/i.test(e.target.tagName))
             return;
 
-        dragging = true;
-
         // Remember starting mouseY
-        lastY = mouseY;
+        var lastY = mouseY;
 
         var tr = $(this);
 
@@ -131,15 +120,10 @@ jQuery(document).ready(function ($) {
                 $(document).unbind('selectstart');
 
             updateValues(tr);
-
-            dragging = false;
         });
-
-
 
     // Preventing the default action and returning false will Stop any text in the table from being
     // highlighted (this can cause problems when dragging elements)
-
     e.preventDefault();
 
     // The workaround for IE browsers
