@@ -14,6 +14,8 @@ jQuery(document).ready(function ($) {
     // Trac 1.1.1dev @r11479 provides jQuery UI 1.8.21 and jQuery 1.8.2
     // http://bugs.jquery.com/ticket/11921
     if(!$.isFunction($.curCSS)) $.curCSS = $.css;
+    // The prop function doesn't exist before jQuery 1.6
+    if(!$.isFunction($.fn.prop)) $.fn.prop = $.fn.attr;
 
     if (window.hide_selects === undefined) hide_selects = false;
 
@@ -32,34 +34,34 @@ jQuery(document).ready(function ($) {
     var $revert_button = $('<input type="submit" name="revert" value="Revert changes" disabled="disabled"/>').insertAfter($apply_button);
 
     // Disable the 'Apply changes' button until there is a change
-    $apply_button.attr('disabled', true);
+    $apply_button.prop('disabled', true);
     $('#enumtable tbody tr input:radio').click(function() {
-        $apply_button.attr('disabled', false);
-        $revert_button.attr('disabled', false);
+        $apply_button.prop('disabled', false);
+        $revert_button.prop('disabled', false);
     });
 
     // Add a checkbox for toggling the entire column of checkboxes
     var $group_checkbox = $('#enumtable thead th.sel').html('<input type="checkbox" name="sel" value="all"/>').children();
     $group_checkbox.click(function() {
-        $remove_checkboxes.attr('checked', this.checked);
-        $remove_button.attr('disabled', !this.checked);
+        $remove_checkboxes.prop('checked', this.checked);
+        $remove_button.prop('disabled', !this.checked);
     });
 
     // Disable the 'Remove selected items' button until a checkbox is selected
-    $remove_button.attr('disabled', true);
+    $remove_button.prop('disabled', true);
     $('#enumtable tbody input:checkbox').click(function() {
         var num_checked = $remove_checkboxes.filter(':checked').length;
         if (num_checked === $remove_checkboxes.length) {
-            $group_checkbox.attr('checked', true).prop('indeterminate', false);
-            $remove_button.attr('disabled', false);
+            $group_checkbox.prop('checked', true).prop('indeterminate', false);
+            $remove_button.prop('disabled', false);
         }
         else if (num_checked === 0) {
-            $group_checkbox.attr('checked', false).prop('indeterminate', false);
-            $remove_button.attr('disabled', true);
+            $group_checkbox.prop('checked', false).prop('indeterminate', false);
+            $remove_button.prop('disabled', true);
         }
         else {
-            $group_checkbox.attr('checked', false).prop('indeterminate', true);
-            $remove_button.attr('disabled', false);
+            $group_checkbox.prop('checked', false).prop('indeterminate', true);
+            $remove_button.prop('disabled', false);
         }
     });
 
@@ -197,7 +199,7 @@ jQuery(document).ready(function ($) {
             // select.val() does not work on IE8 with Trac 0.11.7 (#10693)
             if ($(':selected', select).val() != position) {
                 select.val(position);
-                select.not(trSelect).closest('tr').effect('highlight', {color: '#ffb'}, 3000);
+                select.not(trSelect).parents('tr').effect('highlight', {color: '#ffb'}, 3000);
                 unsaved_changes = true;
             }
             position += 1;
@@ -205,8 +207,8 @@ jQuery(document).ready(function ($) {
 
         $(tr).effect('highlight', {}, 3000);
         if (unsaved_changes) {
-            $revert_button.attr('disabled', false);
-            $apply_button.attr('disabled', false);
+            $revert_button.prop('disabled', false);
+            $apply_button.prop('disabled', false);
         }
     }
 });
