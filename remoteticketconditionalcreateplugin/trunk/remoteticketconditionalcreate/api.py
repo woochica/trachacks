@@ -18,7 +18,10 @@ class RemoteTicketConditionalCreate(Component):
                ITicketManipulator)
 
     def __init__(self):
-        self._rtccs = self._get_rtccs_config();
+        self.EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
+        self.sep = re.compile('[\s,]+')
+        self.defin_patt = re.compile(r'(\w+)\.(\w+)')
+        self._rtccs = self._get_rtccs_config()
         self._intertracs = self._get_remotes_config()
         
     # create xmlrpc connection to remote intertrac    
@@ -40,14 +43,12 @@ class RemoteTicketConditionalCreate(Component):
     # converts users in ticket to email addresses for remote intertrac
     def _get_email_addrs(self, user):
         addr_list = []
-        EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
-        sep = re.compile('[\s,]+')
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        for email in sep.split(user):
-            if not EMAIL_REGEX.match(email):
-                cursor.execute('select value from session_attribute where name = "email" and sid = %s',
-                               (email,))
+        for email in self.sep.split(user):
+            if not self.EMAIL_REGEX.match(email):
+                cursor.execute('''select value from session_attribute
+                                  where name = "email" and sid = %s''', (email,))
                 result = ','.join(rec[0] for rec in cursor.fetchall())
                 if not result:
                     result = email
@@ -60,19 +61,32 @@ class RemoteTicketConditionalCreate(Component):
 
 
     # create the ticket on the specified intertrac
-    def _create_remote_ticket(self, rintertrac, ticket):
+    def _create_remote_ticket(self, rintertrac, ticket, author, comment):
         server = self._xmlrpc_connect(rintertrac)
         tsummary = str(ticket.values['summary'])
-        tdescription = str(ticket.values['description'])
+        if comment:
+            message = ''.join(('\n\nLatest comment from ', self._rtccs['intertrac_name'],
+                                ':#', str(ticket.id), ' :\n\n Author: \'\'', author,
+                                '\'\'\n Comment: \'\'', comment, '\'\''))
+        else:
+            message = '' 
+        tdescription = str(ticket.values['description'] + message)
         attrs = {
-                'type': self.rtcc['type'],
                 'status': 'new',
+                'type': self.rtcc['type'],
                 'component': self.rtcc['component'],
-                self.rtcc['remote_cfield'] : '%s:#%s' % (self._rtccs['intertrac_name'], ticket.id),
                 'reporter' : '%s' % (self._get_email_addrs(ticket.values['reporter'])),
                 'cc' : '%s,%s' % (self._get_email_addrs(ticket.values['owner']),
-                                  self._get_email_addrs(ticket.values['cc']))
+                                  self._get_email_addrs(ticket.values['cc'])),
+                 self.rtcc['remote_cfield'] : '%s:#%s' % (self._rtccs['intertrac_name'],
+                                                         ticket.id)
             }
+        if self.rtcc['copy_fields']:
+            fields = self.rtcc['copy_fields']
+            for c in (x.strip() for x in fields.split(',')):
+                if c in ticket.values and ticket.values[str(c)] != '':
+                    if c not in self.rtcc.keys():
+                        attrs[str(c)] = ticket.values[str(c)]
         
         rticket = server.ticket.create(tsummary, tdescription, attrs)
         return rticket
@@ -84,9 +98,9 @@ class RemoteTicketConditionalCreate(Component):
             new_status = ticket.values['status']
         if new_status in self._rtccs.keys():
             self.rtcc = self._get_rtcc(new_status)
-            print self._rtccs[new_status]
             if 'status' in old_values and old_values['status'] != self._rtccs[new_status]:
-                rticket = self._create_remote_ticket(self.rtcc['remote_intertrac'], ticket)
+                rticket = self._create_remote_ticket(self.rtcc['remote_intertrac'],
+                                                     ticket, author, comment)
                 self._update_intertrac_link(rticket, self.rtcc['remote_intertrac'], ticket)
 
     def ticket_created(self, ticket):
@@ -169,15 +183,10 @@ class RemoteTicketConditionalCreate(Component):
         return rtcc
         
     def _get_remotes_config(self):
-        '''Return dict of intertracs and intertrac aliases.
-        
-        Adapted from code in trac.wiki.intertrac.InterTracDispatcher
-        '''
-        defin_patt = re.compile(r'(\w+)\.(\w+)')
         config = self.config['intertrac']
         intertracs = {}
         for key, val in config.options():
-            m = defin_patt.match(key)
+            m = self.defin_patt.match(key)
             if m:
                 prefix, attribute = m.groups()
                 intertrac = intertracs.setdefault(prefix, {})
@@ -188,12 +197,10 @@ class RemoteTicketConditionalCreate(Component):
         return intertracs
 
     def _get_rtccs_config(self):
-
-        defin_patt = re.compile(r'(\w+)\.(\w+)')
         config = self.config['remoteticketconditionalcreate']
         rtccs = {}
         for key, val in config.options():
-            m = defin_patt.match(key)
+            m = self.defin_patt.match(key)
             if m:
                 prefix, attribute = m.groups()
                 rtcc = rtccs.setdefault(prefix, {})
