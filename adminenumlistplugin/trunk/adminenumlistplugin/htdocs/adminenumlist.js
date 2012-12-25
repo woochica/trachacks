@@ -67,13 +67,22 @@ jQuery(document).ready(function ($) {
 
     // Hide the select boxes if the trac.ini option is true
     if (hide_selects) {
-        $('#enumtable th:contains("Order"), td:has(select)').hide();
+        var order_column = -1;
+        $('#enumtable td:has(select)').hide().each(function() {
+            order_column = $(this).parent().children().index(this);
+            return false;
+        });
+        if (order_column !== -1) {
+            $('#enumtable thead tr').each(function() {
+                $($(this).children()[order_column]).hide();
+            });
+        }
     }
 
     // Prompt with a dialog if leaving the page with unsaved changes to the list
     var supports_beforeunload = jQuery.event.special.beforeunload !== undefined;
     var beforeunload = function() {
-        if(unsaved_changes)
+        if (unsaved_changes)
             return "You have unsaved changes to the order of the list. Your " +
                 "changes will be lost if you Leave this Page before " +
                 "selecting  Apply changes."
@@ -89,7 +98,7 @@ jQuery(document).ready(function ($) {
     }
 
     // Don't prompt with a dialog if the 'Apply/Revert changes' button is pressed
-    var button_pressed
+    var button_pressed;
     $('#enumtable div.buttons input').click(function() {
         button_pressed = $(this).attr('name');
     })

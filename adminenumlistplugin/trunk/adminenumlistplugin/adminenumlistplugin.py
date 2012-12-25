@@ -11,8 +11,9 @@
 
 from genshi.builder import tag
 from genshi.filters import Transformer
-from trac.config import Option
+from trac.config import BoolOption
 from trac.core import Component, implements
+from trac.util.compat import any
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import Chrome, ITemplateProvider, add_script
 
@@ -21,7 +22,7 @@ class AdminEnumListPlugin(Component):
 
     implements(IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
 
-    hide_selects = Option('adminenumlist', 'hide_selects', False,
+    hide_selects = BoolOption('adminenumlist', 'hide_selects', 'false',
         "Hide the 'Order' column of select elements.")
 
     _panels = ('priority', 'resolution', 'severity', 'type')
@@ -33,7 +34,9 @@ class AdminEnumListPlugin(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if req.path_info.startswith(self._panels, len('/admin/ticket/')):
+        path_info = req.path_info
+        if any(path_info.startswith(panel, len('/admin/ticket/'))
+               for panel in self._panels):
             add_script(req, 'adminenumlistplugin/adminenumlist.js')
             if not self._has_add_jquery_ui:
                 add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
@@ -46,7 +49,7 @@ class AdminEnumListPlugin(Component):
 
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'admin_enums.html':
-            text = 'var hide_selects = %s' % ('true' if self.hide_selects else 'false')
+            text = 'var hide_selects = %s' % ('false', 'true')[bool(self.hide_selects)]
             stream |= Transformer('//head').append(tag.script(text, type='text/javascript'))
 
         return stream
