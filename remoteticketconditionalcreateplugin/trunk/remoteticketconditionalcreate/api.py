@@ -81,7 +81,7 @@ class RemoteTicketConditionalCreate(Component):
                  self.rtcc['remote_cfield'] : '%s:#%s' % (self._rtccs['intertrac_name'],
                                                          ticket.id)
             }
-        if self.rtcc['copy_fields']:
+        if self.rtcc['copy_fields'] and self.rtcc['copy_fields'] != '':
             fields = self.rtcc['copy_fields']
             for c in (x.strip() for x in fields.split(',')):
                 if c in ticket.values and ticket.values[str(c)] != '':
