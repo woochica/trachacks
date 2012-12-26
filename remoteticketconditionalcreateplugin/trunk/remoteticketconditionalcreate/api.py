@@ -131,6 +131,7 @@ class RemoteTicketConditionalCreate(Component):
                     self.rtcc = self._get_rtcc(x)
                     if isinstance(self.rtcc, dict):
                         if 'update_on_close' in self.rtcc.keys() \
+                        and self.rtcc['update_on_close'] != '' \
                         and str(self.rtcc['update_on_close']).lower() == 'true':
                             for k, v in result:
                                 if self.rtcc['local_cfield'] == k and v != '':
