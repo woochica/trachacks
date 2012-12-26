@@ -9,9 +9,9 @@ from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.resource import ResourceNotFound
 from tracrpc import *
 from trac.web.href import Href
+from urlparse import urlsplit
 import xmlrpclib
 import re
-from urlparse import urlsplit
 
 class RemoteTicketConditionalCreate(Component):
     implements(ITicketChangeListener,
@@ -91,17 +91,54 @@ class RemoteTicketConditionalCreate(Component):
         rticket = server.ticket.create(tsummary, tdescription, attrs)
         return rticket
     
+        # update the ticket on the specified intertrac
+    def _update_remote_ticket(self, rintertrac, rticket, ticket, author):
+        server = self._xmlrpc_connect(rintertrac)
+        comment = 'Ticket %s:#%s has been closed' % (self._rtccs['intertrac_name'],
+                                                    ticket.id)
+        attrs = server.ticket.get(int(rticket))
+        for x in attrs:
+            if isinstance(x, dict):
+                if 'status' in x:
+                    if x['status'] != 'closed':
+                        server.ticket.update(int(rticket), comment, {}, False, author)
+                        
+    
     # main routine. if status falls into this scope, create the remote ticket and
     # add the remote ticket link to the current ticket
     def ticket_changed(self, ticket, comment, author, old_values):
         if 'status' in ticket.values:
             new_status = ticket.values['status']
-        if new_status in self._rtccs.keys():
-            self.rtcc = self._get_rtcc(new_status)
-            if 'status' in old_values and old_values['status'] != self._rtccs[new_status]:
-                rticket = self._create_remote_ticket(self.rtcc['remote_intertrac'],
-                                                     ticket, author, comment)
-                self._update_intertrac_link(rticket, self.rtcc['remote_intertrac'], ticket)
+            
+            if new_status in self._rtccs.keys():
+                self.rtcc = self._get_rtcc(new_status)
+                if 'status' in old_values \
+                and old_values['status'] != self._rtccs[new_status]:
+                    rticket = self._create_remote_ticket(self.rtcc['remote_intertrac'],
+                                                         ticket, author, comment)
+                    self._update_intertrac_link(rticket,
+                                                self.rtcc['remote_intertrac'],
+                                                ticket)
+                
+            if new_status == 'closed':
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute('''select name, value from ticket_custom 
+                               where ticket = %s''', (ticket.id,))
+                result = cursor.fetchall()
+                db.commit()
+                for x in self._rtccs.keys():
+                    self.rtcc = self._get_rtcc(x)
+                    if isinstance(self.rtcc, dict):
+                        if 'update_on_close' in self.rtcc.keys() \
+                        and str(self.rtcc['update_on_close']).lower() == 'true':
+                            for k, v in result:
+                                if self.rtcc['local_cfield'] == k and v != '':
+                                    rticket = v.split(':#')
+                                    self._update_remote_ticket(rticket[0],
+                                                               rticket[1],
+                                                               ticket,
+                                                               author)
 
     def ticket_created(self, ticket):
         pass 
@@ -155,32 +192,33 @@ class RemoteTicketConditionalCreate(Component):
         except KeyError:
             raise ResourceNotFound("status '%s' is unknown." 
                                    % status)
-        try:
-            rtcc['component']
-        except KeyError:
-            raise ResourceNotFound("%s.component is unknown."
-                                   % status)
-        try:
-            rtcc['local_cfield']
-        except KeyError:
-            raise ResourceNotFound("%s.local_cfield is unknown."
-                                   % status)
-        try:
-            rtcc['remote_cfield']
-        except KeyError:
-            raise ResourceNotFound("%s.remote_cfield is unknown."
-                                   % status)
-        try:
-            rtcc['remote_intertrac']
-        except KeyError:
-            raise ResourceNotFound("%s.remote_intertrac is unknown."
-                                   % status)
-        try:
-            rtcc['type']
-        except KeyError:
-            raise ResourceNotFound("%s.type is unknown."
-                                   % status)
-        return rtcc
+        if not isinstance(rtcc, unicode):
+            try:
+                rtcc['component']
+            except KeyError:
+                raise ResourceNotFound("%s.component is unknown."
+                                       % status)
+            try:
+                rtcc['local_cfield']
+            except KeyError:
+                raise ResourceNotFound("%s.local_cfield is unknown."
+                                       % status)
+            try:
+                rtcc['remote_cfield']
+            except KeyError:
+                raise ResourceNotFound("%s.remote_cfield is unknown."
+                                       % status)
+            try:
+                rtcc['remote_intertrac']
+            except KeyError:
+                raise ResourceNotFound("%s.remote_intertrac is unknown."
+                                       % status)
+            try:
+                rtcc['type']
+            except KeyError:
+                raise ResourceNotFound("%s.type is unknown."
+                                       % status)
+            return rtcc
         
     def _get_remotes_config(self):
         config = self.config['intertrac']
