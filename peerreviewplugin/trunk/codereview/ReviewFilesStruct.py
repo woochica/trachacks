@@ -1,14 +1,10 @@
-#	
-# Copyright (C) 2005-2006 Team5	
-# All rights reserved.	
-#	
-# This software is licensed as described in the file COPYING.txt, which	
-# you should have received as part of this distribution.	
-#	
-# Author: Team5
+# -*- coding: utf-8 -*-
 #
-
-from codereview.dbEscape import dbEscape
+# Copyright (C) 2005-2006 Team5 
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 class ReviewFileStruct(object):
     "Stores a ReviewFile Entry"
@@ -32,8 +28,7 @@ class ReviewFileStruct(object):
     Version = ""
 
     def __init__(self, row):
-        if(row != None):
-            #initialize variables
+        if row != None:
             self.IDFile = row[0]
             self.IDReview = row[1]
             self.Path = row[2]
@@ -42,19 +37,25 @@ class ReviewFileStruct(object):
             self.Version = row[5]
 
     def save(self, db):
-        cursor = db.cursor()
         if self.IDFile == "":
-        #Add information to a new database entry
-            cursor.execute("INSERT INTO ReviewFiles "
-                           "(IDReview, Path, LineStart, LineEnd, Version) "
-                           "VALUES (%s, %s, %s, %s, %s) ",
-                           (self.IDReview, self.Path, self.LineStart, self.LineEnd, self.Version))
+            #Add information to a new database entry
+            cursor = db.cursor()
+            cursor.execute("""
+                INSERT INTO ReviewFiles (IDReview, Path, LineStart,
+                  LineEnd, Version)
+                VALUES (%s, %s, %s, %s, %s)""",
+                (self.IDReview, self.Path, self.LineStart, self.LineEnd,
+                 self.Version))
             self.IDFile = db.get_last_id(cursor, 'ReviewFiles', 'IDFile')
             db.commit()
         else:
-        #Update information in existing database entry
-            cursor.execute("UPDATE ReviewFiles SET "
-                           "IDReview=%s, Path=%s, LineStart=%s, LineEnd=%s, Version=%s WHERE IDFile=%s",
-                           (self.IDReview, self.Path, self.LineStart, self.LineEnd, self.Version, self.IDFile))
+            #Update information in existing database entry
+            cursor = db.cursor()
+            cursor.execute("""
+                UPDATE ReviewFiles SET IDReview=%s, Path=%s, LineStart=%s,
+                  LineEnd=%s, Version=%s
+                WHERE IDFile=%s""",
+                (self.IDReview, self.Path, self.LineStart, self.LineEnd,
+                 self.Version, self.IDFile))
             db.commit()
         return self.IDFile

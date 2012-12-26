@@ -1,15 +1,10 @@
-#	
-# Copyright (C) 2005-2006 Team5	
-# All rights reserved.	
-#	
-# This software is licensed as described in the file COPYING.txt, which	
-# you should have received as part of this distribution.	
-#	
-# Author: Team5
+# -*- coding: utf-8 -*-
 #
-
-
-from codereview.dbEscape import dbEscape
+# Copyright (C) 2005-2006 Team5 
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 class ReviewCommentStruct(object):
     "Stores a ReviewComment Entry"
@@ -42,7 +37,7 @@ class ReviewCommentStruct(object):
     Children = {}
 
     def __init__(self, row):
-        if(row != None):
+        if row != None:
             #initialize variables
             self.IDComment = row[0]
             self.IDFile = row[1]
@@ -55,19 +50,25 @@ class ReviewCommentStruct(object):
             self.Children = {}
 
     def save(self, db):
-        cursor = db.cursor()
-        #Add information to a new database entry
         if self.IDComment == "-1":
-            cursor.execute("INSERT INTO ReviewComments "
-                           "(IDFile, IDParent, LineNum, Author, Text, AttachmentPath, DateCreate) "
-                           "VALUES (%s, %s, %s, %s, %s, %s, %s)",
-                           (self.IDFile, self.IDParent, self.LineNum, self.Author, self.Text, self.AttachmentPath, self.DateCreate))
+            #Add information to a new database entry
+            cursor = db.cursor()
+            cursor.execute("""
+                INSERT INTO ReviewComments (IDFile, IDParent, LineNum,
+                  Author, Text, AttachmentPath, DateCreate)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (self.IDFile, self.IDParent, self.LineNum, self.Author,
+                 self.Text, self.AttachmentPath, self.DateCreate))
             self.IDComment = db.get_last_id(cursor, 'ReviewComments', 'IDComment')
             db.commit()
         else:
-        #Update information in existing database entry
-            cursor.execute("UPDATE ReviewComments SET "
-                           "IDFile=%s, IDParent=%s, LineNum=%s, Author=%s, Text=%s, AttachmentPath=%s, DateCreate=%s WHERE IDComment=%s",
-                           (self.IDFile, self.IDParent, self.LineNum, self.Author, self.Text, self.AttachmentPath, self.DateCreate, self.IDComment))
+            #Update information in existing database entry
+            cursor = db.cursor()
+            cursor.execute("""
+                UPDATE ReviewComments SET IDFile=%s, IDParent=%s, LineNum=%s,
+                  Author=%s, Text=%s, AttachmentPath=%s, DateCreate=%s
+                WHERE IDComment=%s""",
+                (self.IDFile, self.IDParent, self.LineNum, self.Author,
+                 self.Text, self.AttachmentPath, self.DateCreate, self.IDComment))
             db.commit()
         return self.IDComment
