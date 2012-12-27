@@ -16,7 +16,7 @@ setup(
     author="Team5",
     author_email="UNKNOWN",
     maintainer="Olemis Lang",
-    maintainer_email="olemis+trachacks@google.com",
+    maintainer_email="olemis+trac@gmail.com",
     description="Framework for code review in Trac.",
     license="3-Clause BSD",
     keywords="trac plugin code peer review",
