@@ -15,7 +15,7 @@ function DOMWindowGetInnerWidth() {
 }
 
 function DOMWindowGetInnerHeight() {
-   if (self.innerHeight)
+    if (self.innerHeight)
         return self.innerHeight;
     else if(document.documentElement && document.documentElement.clientHeight)
         return document.documentElement.clientHeight;
@@ -25,9 +25,9 @@ function DOMWindowGetInnerHeight() {
 
 function DOMWindowGetYOffset() {
     if (self.pageYOffset)
-	    return self.pageYOffset;
+        return self.pageYOffset;
     else if (document.documentElement && document.documentElement.scrollTop)
-	    return document.documentElement.scrollTop;
+        return document.documentElement.scrollTop;
     else if (document.body)
         return document.body.scrollTop;
 }
@@ -73,7 +73,7 @@ function resetLines()
     }
     if(range < 0)
     {
- 	range = 0;
+        range = 0;
     }
     lineRange = range;
     hideLines();
@@ -124,7 +124,7 @@ function resetInnerDivSize()
     }
     else
     {
-	innerDiv.style.height = (innerDiv.clientHeight + 5) + "px";
+        innerDiv.style.height = (innerDiv.clientHeight + 5) + "px";
     }
 
     innerDiv = document.getElementById('ViewCommentArea');
@@ -138,19 +138,19 @@ function collapseComments(parentID)
     for(var i =0; i<area.childNodes.length; i++)
     {
         if(area.childNodes[i].id != null)
-		{
-		    var ids = area.childNodes[i].id.split(':');
-		    if(ids.length == 2 && ids[0] == parentID)
-			{
-			    area.childNodes[i].style.display = "none";
-			    collapseComments(ids[1]);
-			}
-		}
-	}
-    
+        {
+            var ids = area.childNodes[i].id.split(':');
+            if(ids.length == 2 && ids[0] == parentID)
+            {
+                area.childNodes[i].style.display = "none";
+                collapseComments(ids[1]);
+            }
+        }
+    }
+
     var imgCell = document.getElementById(parentID + 'TreeButton');
     if(imgCell.innerHTML != "")
-	imgCell.innerHTML = "<img src=\"" + plusUrl + "\" onclick=\"expandComments('" + parentID + "')\">";
+        imgCell.innerHTML = "<img src=\"" + plusUrl + "\" onclick=\"expandComments('" + parentID + "')\">";
 
     resetInnerDivSize();
 }
@@ -159,20 +159,20 @@ function expandComments(parentID)
 {
     var area = document.getElementById('innerCommentSpan');
     for(var i =0; i<area.childNodes.length; i++)
+    {
+        if(area.childNodes[i].id != null)
         {
-            if(area.childNodes[i].id != null)
-		{
-		    var ids = area.childNodes[i].id.split(':');
-		    if(ids.length == 2 && ids[0] == parentID)
-			{
-			    area.childNodes[i].style.display = "";
-			}
-		}
-	}
-    
+            var ids = area.childNodes[i].id.split(':');
+            if(ids.length == 2 && ids[0] == parentID)
+            {
+                area.childNodes[i].style.display = "";
+            }
+        }
+    }
+
     var imgCell = document.getElementById(parentID + 'TreeButton');
     if(imgCell.innerHTML != "")
-	imgCell.innerHTML = "<img src=\"" + minusUrl + "\" onclick=\"collapseComments('" + parentID + "')\">";
+        imgCell.innerHTML = "<img src=\"" + minusUrl + "\" onclick=\"collapseComments('" + parentID + "')\">";
 
     resetInnerDivSize();
 }
@@ -201,7 +201,7 @@ function getCommentsFull(LineNum, fileID, wait)
     area.innerHTML = "<input type=button value=\"Add New Comment\" style=\"font-size: 10;\" onclick=\"addComment('" + LineNum + "', '" + fileID + "', '-1');\">&nbsp;&nbsp;";
 
     if(!wait)
-	getCommentsPart2(LineNum, fileID);
+        getCommentsPart2(LineNum, fileID);
 
 }
 
@@ -216,11 +216,11 @@ function addComment(LineNum, fileID, parentID)
     var titlePlace = document.getElementById('AddCommentTitleArea');
     if(parentID < 0)
     {
-	titlePlace.innerHTML = "Add Comment For Line " + LineNum;
+        titlePlace.innerHTML = "Add Comment For Line " + LineNum;
     }
     else
     {
-	titlePlace.innerHTML = "Reply To Comment On Line " + LineNum;
+        titlePlace.innerHTML = "Reply To Comment On Line " + LineNum;
     }
 
     GLOBAL_fileID = fileID;
@@ -234,47 +234,47 @@ function addComment(LineNum, fileID, parentID)
 
     area.style.display = "";
     area.style.zIndex = ++dragObj.zIndex;
-    
+
     if(window.frames['internalAddComment'])
     {
-	    var iDoc = window.frames['internalAddComment'].document;
-	    var button = iDoc.getElementById('AddCommentButtonArea');
-	    if(button != null)
-	    {
-    		button.innerHTML = "<input style=\"font-size: 10;\" type=button onclick=\"submitComment(" + LineNum + ", " + fileID + ", " +  parentID + ")\" value=\"Add Comment\">&nbsp;&nbsp;";
-        	GLOBAL_fileID = -1;
-	        GLOBAL_LineNum = -1;
-		window.setTimeout('resetAddCommentBoxSize()', 5);
-	    }
+        var iDoc = window.frames['internalAddComment'].document;
+        var button = iDoc.getElementById('AddCommentButtonArea');
+        if(button != null)
+        {
+            button.innerHTML = "<input style=\"font-size: 10;\" type=button onclick=\"submitComment(" + LineNum + ", " + fileID + ", " +  parentID + ")\" value=\"Add Comment\">&nbsp;&nbsp;";
+            GLOBAL_fileID = -1;
+            GLOBAL_LineNum = -1;
+            window.setTimeout('resetAddCommentBoxSize()', 5);
+        }
     }
 }
 
 function resetAddCommentBoxSize()
 {
-	if(window.frames['internalAddComment'])
-    	{
-        	var iDoc = window.frames['internalAddComment'].document;
-        	var acT = iDoc.getElementById('addCommentTable');
-		var iFr = document.getElementById('internalAddComment');
-		iFr.style.height = "";
-		iFr.style.height = (acT.clientHeight + 15) + "px";
-	}
+    if(window.frames['internalAddComment'])
+    {
+        var iDoc = window.frames['internalAddComment'].document;
+        var acT = iDoc.getElementById('addCommentTable');
+        var iFr = document.getElementById('internalAddComment');
+        iFr.style.height = "";
+        iFr.style.height = (acT.clientHeight + 15) + "px";
+    }
 
-	innerDiv = document.getElementById('AddCommentArea');
-	innerDiv.style.height = "";
-	innerDiv.style.height = (innerDiv.clientHeight + 3) + "px";
+    innerDiv = document.getElementById('AddCommentArea');
+    innerDiv.style.height = "";
+    innerDiv.style.height = (innerDiv.clientHeight + 3) + "px";
 }
 
 function submitComment(LineNum, fileID, parentID)
 {
     var area = document.getElementById('L' + LineNum);
     area.innerHTML = "<a href=\"javascript:getComments(" + LineNum + ", " + fileID + ")\"><img src=\"" + tacUrl + "\">&nbsp;" + LineNum + "</a>";
-    
+
     GLOBAL_fileID = fileID;
     GLOBAL_LineNum = LineNum;
     GLOBAL_gettingComment = true;
 
-    getCommentsFull(LineNum, fileID, true); 
+    getCommentsFull(LineNum, fileID, true);
 }
 
 function timeToHide(line, fileID, parentID)
@@ -282,41 +282,41 @@ function timeToHide(line, fileID, parentID)
     area = document.getElementById('AddCommentArea');
     area.style.top = "-10000px"
 
-    if(line != -1)
-    	submitComment(line, fileID, parentID);
+        if(line != -1)
+            submitComment(line, fileID, parentID);
 }
 
 function timeToGetTree()
 {
     area = document.getElementById('AddCommentArea');
-    
+
     if(GLOBAL_fileID != -1 && GLOBAL_LineNum != -1 && GLOBAL_gettingComment)
     {
-	area.style.display = "none";
-	window.setTimeout('getCommentsPart2('+GLOBAL_LineNum+', '+GLOBAL_fileID+')', 5); 
+        area.style.display = "none";
+        window.setTimeout('getCommentsPart2('+GLOBAL_LineNum+', '+GLOBAL_fileID+')', 5);
         GLOBAL_fileID = -1;
         GLOBAL_LineNum = -1;
         GLOBAL_gettingComment = false;
     }
     else if(GLOBAL_fileID != -1 && GLOBAL_LineNum != -1)
     {
-	var iDoc = window.frames['internalAddComment'].document;
-	var button = iDoc.getElementById('AddCommentButtonArea');
-	button.innerHTML = "<input style=\"font-size: 10;\" type=button onclick=\"submitComment(" + GLOBAL_LineNum + ", " + GLOBAL_fileID + ", " +  GLOBAL_parentID + ")\" value=\"Add Comment\">&nbsp;&nbsp;";
-	GLOBAL_fileID = -1;
+        var iDoc = window.frames['internalAddComment'].document;
+        var button = iDoc.getElementById('AddCommentButtonArea');
+        button.innerHTML = "<input style=\"font-size: 10;\" type=button onclick=\"submitComment(" + GLOBAL_LineNum + ", " + GLOBAL_fileID + ", " +  GLOBAL_parentID + ")\" value=\"Add Comment\">&nbsp;&nbsp;";
+        GLOBAL_fileID = -1;
         GLOBAL_LineNum = -1;
-	resetAddCommentBoxSize();
+        resetAddCommentBoxSize();
     }
     else
     {
-	area.style.display = "none";
+        area.style.display = "none";
     }
 }
 
 function closeCommentWindow(area)
 {
-	var area = document.getElementById(area);
-	area.style.display = "none";
+    var area = document.getElementById(area);
+    area.style.display = "none";
 }
 
 function Browser() {
@@ -331,25 +331,25 @@ function Browser() {
 
     s = "MSIE";
     if ((i = ua.indexOf(s)) >= 0) {
-	this.isIE = true;
-	this.version = parseFloat(ua.substr(i + s.length));
-	return;
+        this.isIE = true;
+        this.version = parseFloat(ua.substr(i + s.length));
+        return;
     }
 
     s = "Netscape6/";
     if ((i = ua.indexOf(s)) >= 0) {
-	this.isNS = true;
-	this.version = parseFloat(ua.substr(i + s.length));
-	return;
+        this.isNS = true;
+        this.version = parseFloat(ua.substr(i + s.length));
+        return;
     }
 
     // Treat any other "Gecko" browser as NS 6.1.
 
     s = "Gecko";
     if ((i = ua.indexOf(s)) >= 0) {
-	this.isNS = true;
-	this.version = 6.1;
-	return;
+        this.isNS = true;
+        this.version = 6.1;
+        return;
     }
 }
 
@@ -363,31 +363,31 @@ function dragStart(event, id)
     // clicked on.
 
     if (id)
-	{
-	dragObj.elNode = document.getElementById(id);
-	}
-    else 
-	{
-	    if (browser.isIE)
-		dragObj.elNode = window.event.srcElement;
-	    if (browser.isNS)
-		dragObj.elNode = event.target;
+    {
+        dragObj.elNode = document.getElementById(id);
+    }
+    else
+    {
+        if (browser.isIE)
+            dragObj.elNode = window.event.srcElement;
+        if (browser.isNS)
+            dragObj.elNode = event.target;
 
-	    // If this is a text node, use its parent element.
-	    
-	    if (dragObj.elNode.nodeType == 3)
-		dragObj.elNode = dragObj.elNode.parentNode;
-	}
+        // If this is a text node, use its parent element.
+
+        if (dragObj.elNode.nodeType == 3)
+            dragObj.elNode = dragObj.elNode.parentNode;
+    }
 
     if (browser.isIE) {
-    x = window.event.clientX + document.documentElement.scrollLeft
-	+ document.body.scrollLeft;
-    y = window.event.clientY + document.documentElement.scrollTop
-	+ document.body.scrollTop;
+        x = window.event.clientX + document.documentElement.scrollLeft
+        + document.body.scrollLeft;
+        y = window.event.clientY + document.documentElement.scrollTop
+        + document.body.scrollTop;
     }
     if (browser.isNS) {
-	x = event.clientX + window.scrollX;
-	y = event.clientY + window.scrollY;
+        x = event.clientX + window.scrollX;
+        y = event.clientY + window.scrollY;
     }
 
     dragObj.cursorStartX = x;
@@ -403,15 +403,15 @@ function dragStart(event, id)
     }
 
     if (browser.isIE) {
-	document.attachEvent("onmousemove", dragGo);
-	document.attachEvent("onmouseup",   dragStop);
-	window.event.cancelBubble = true;
-	window.event.returnValue = false;
+        document.attachEvent("onmousemove", dragGo);
+        document.attachEvent("onmouseup",   dragStop);
+        window.event.cancelBubble = true;
+        window.event.returnValue = false;
     }
     if (browser.isNS) {
-	document.addEventListener("mousemove", dragGo,   true);
-	document.addEventListener("mouseup",   dragStop, true);
-	event.preventDefault();
+        document.addEventListener("mousemove", dragGo,   true);
+        document.addEventListener("mouseup",   dragStop, true);
+        event.preventDefault();
     }
 
 }
@@ -423,27 +423,27 @@ function dragGo(event) {
     // Get cursor position with respect to the page.
 
     if (browser.isIE) {
-    x = window.event.clientX + document.documentElement.scrollLeft
-	+ document.body.scrollLeft;
-    y = window.event.clientY + document.documentElement.scrollTop
-	+ document.body.scrollTop;
+        x = window.event.clientX + document.documentElement.scrollLeft
+        + document.body.scrollLeft;
+        y = window.event.clientY + document.documentElement.scrollTop
+        + document.body.scrollTop;
     }
     if (browser.isNS) {
-	x = event.clientX + window.scrollX;
-	y = event.clientY + window.scrollY;
+        x = event.clientX + window.scrollX;
+        y = event.clientY + window.scrollY;
     }
 
-  dragObj.elNode.style.left =
-      (dragObj.elStartLeft + x - dragObj.cursorStartX) + "px";
-  dragObj.elNode.style.top  =
-      (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
+    dragObj.elNode.style.left =
+        (dragObj.elStartLeft + x - dragObj.cursorStartX) + "px";
+    dragObj.elNode.style.top  =
+        (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
 
-  if (browser.isIE) {
-      window.event.cancelBubble = true;
-      window.event.returnValue = false;
-  }
-  if (browser.isNS)
-      event.preventDefault();
+    if (browser.isIE) {
+        window.event.cancelBubble = true;
+        window.event.returnValue = false;
+    }
+    if (browser.isNS)
+        event.preventDefault();
 
 }
 
@@ -452,12 +452,12 @@ function dragStop(event) {
     // Stop capturing mousemove and mouseup events.
 
     if (browser.isIE) {
-	document.detachEvent("onmousemove", dragGo);
-	document.detachEvent("onmouseup",   dragStop);
+        document.detachEvent("onmousemove", dragGo);
+        document.detachEvent("onmouseup",   dragStop);
     }
     if (browser.isNS) {
-	document.removeEventListener("mousemove", dragGo,   true);
-	document.removeEventListener("mouseup",   dragStop, true);
+        document.removeEventListener("mousemove", dragGo,   true);
+        document.removeEventListener("mouseup",   dragStop, true);
     }
 
     var val = parseInt(dragObj.elNode.style.top) - DOMWindowGetYOffset();

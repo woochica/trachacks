@@ -8,18 +8,18 @@ function showHideAttachFile()
     if(area.style.display == "")
     {
         area.style.display = "none";
-	  area2.style.display = "none";
+        area2.style.display = "none";
 
         area = document.getElementById('addCommentText');
         area.focus();
     }
     else
     {
-        area.style.display = ""
-	area2.style.display = "";
+        area.style.display = "";
+        area2.style.display = "";
     }
 
-   top.resetAddCommentBoxSize();
+    top.resetAddCommentBoxSize();
 }
 
 function submitComment(LineNum, fileID, parentID)
@@ -52,7 +52,7 @@ function submitComment(LineNum, fileID, parentID)
     textField.value = "";
 
     var formEle = document.getElementById('HiddenCommentForm');
-    formEle.submit(); 
+    formEle.submit();
 }
 
 var GLOBAL_line = -1;
