@@ -35,12 +35,13 @@ setup(
     maintainer_email='ryan.j.ollos@gmail.com',
     url='http://trac-hacks.org/wiki/BacklogPlugin',
     license='BSD',
-    description="""Allows multiple backlogs """,
+    description="""Organize tickets within backlogs.""",
     zip_safe=True,
     entry_points={
-        'trac.plugins': ['backlog.db = backlog.db',
-                         'backlog.ticketchangelistener = backlog.ticketchangelistener',
-                         'backlog.web_ui = backlog.web_ui'],
+        'trac.plugins': [
+            'backlog.db = backlog.db',
+            'backlog.ticketchangelistener = backlog.ticketchangelistener',
+            'backlog.web_ui = backlog.web_ui'],
     },
     package_data={
         'backlog': ['templates/*.html',

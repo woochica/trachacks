@@ -229,11 +229,11 @@ class Backlog(object):
         sql = """UPDATE backlog_ticket SET tkt_order = -1
                  WHERE bklg_id = %s
                  AND tkt_id IN (SELECT id FROM ticket
-                  WHERE status = 'closed')"""
+                   WHERE status = 'closed')"""
         try:
             cursor = self.db.cursor()
             cursor.execute(sql, (self.id,))
-            self.db.commit() 
+            self.db.commit()
         except:
             self.env.log.error(traceback.format_exc())
             raise BacklogException("Failed to clean up closed tickets in backlog %s" % (tkt_id, self.name))

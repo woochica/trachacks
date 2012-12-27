@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-xmlns:py="http://genshi.edgewall.org/"
-xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -22,20 +22,14 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
               <table width="100%">
                 <th style="width: 20px;">#</th>
                 <th style="width: 60px;">ticket</th>
-                <th style="width: 300px;">
-                <div style="width: 280px; height: 1.2em; overflow: hidden;">
-                  summary
-                </div></th>
+                <th style="width: 300px;">summary</th>
                 <th style="width: 120px;">owner</th>
                 <th style="width: 60px;">milestone</th>
                 <th style="width: 90px;">impact</th>
                 <th style="width: 60px;">status</th>
                 <th style="width: 60px;">time open</th>
                 <th style="width: 80px;">deadline</th>
-                <th style="width: 100px;">
-                <div style="width: 90px; height: 1.2em; overflow: hidden;">
-                  keywords
-                </div></th>
+                <th style="width: 100px;">keywords</th>
               </table>
             </li>
           </ul>
@@ -81,20 +75,14 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
               <table width="100%">
                 <th style="width: 20px;"></th>
                 <th style="width: 60px;">ticket</th>
-                <th style="width: 300px;">
-                <div style="width: 280px; height: 1.2em; overflow: hidden;">
-                  summary
-                </div></th>
+                <th style="width: 300px;">summary</th>
                 <th style="width: 120px;">owner</th>
                 <th style="width: 60px;">milestone</th>
                 <th style="width: 90px;">impact</th>
                 <th style="width: 60px;">status</th>
                 <th style="width: 60px;">time open</th>
                 <th style="width: 80px;">deadline</th>
-                <th style="width: 100px;">
-                <div style="width: 90px; height: 1.2em; overflow: hidden;">
-                  keywords
-                </div></th>
+                <th style="width: 100px;">keywords</th>
               </table>
             </li>
           </ul>
@@ -131,11 +119,11 @@ xmlns:xi="http://www.w3.org/2001/XInclude">
       <form id="change_ticket_order" method="post" action="#">
         <div class="submit_form">
           <input type="hidden" id="ticket_order" name="ticket_order" value="" ></input>
-          <input type="hidden" id="delete_closed" name="delete_closed" value="" ></input>
           <input type="hidden" id="tickets_out" name="tickets_out" value="" ></input>
-          <input type="submit" class="save_order" value="save order" onclick="updateOrder();"></input>
-          <input type="submit" class="reset_order" value="reset" onclick="resetOrder();"></input>
-          <input type="submit" class="delete_closed" value="delete closed" onclick="deleteClosed();"></input>
+          <input type="hidden" id="remove_tickets" name="remove_tickets" value="" ></input>
+          <input type="submit" id="save_order" value="save order" disabled="disabled"></input>
+          <input type="submit" id="reset_order" value="reset order" disabled="disabled"></input>
+          <input type="submit" id="remove_closed" value="remove closed" disabled="disabled"></input>
         </div>
       </form>
     </div>

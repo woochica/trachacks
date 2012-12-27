@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Backlogs</title>
+  </head>
+  <body>
+    <h2>Manage Backlogs</h2>
+    <py:choose>
+     <form py:when="backlogs" id="backlog_table" method="post" action="">
+       <table class="listing" id="backlog_list">
+         <thead>
+           <tr><th>Name</th><th>Owner</th><th>Description</th></tr>
+         </thead>
+         <tr py:for="backlog in backlogs">
+           <td><a href="${panel_href(backlog.name)}">${backlog.name}</a></td>
+           <td>${backlog.owner}</td>
+           <td>${backlog.description}</td>
+         </tr>
+       </table>
+     </form>
+    </py:choose>
+  </body>
+</html>
