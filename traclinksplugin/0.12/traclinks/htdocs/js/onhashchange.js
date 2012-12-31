@@ -14,9 +14,9 @@ $(document).ready(function() {
 		if($('#main #wikipage').length == 1) { // wiki
 			start = $('link[rel="start"]')[0].href
 			hash = document.location.hash
-			pagename = document.location.href.slice(start.length, -hash.length)
+			pagename = document.location.href.slice(start.length+1, -hash.length)
 			// take care for WikiStart as start page ... pagename == "" in some case
-			traclinks = 'wiki:' + pagename + '#' + location.hash.slice(1)
+			traclinks = 'wiki:' + pagename + location.hash
 			$("#proj-search").attr('value', traclinks);
 		}
 		if($('#main #preview').length == 1) { //browser
