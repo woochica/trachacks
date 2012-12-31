@@ -13,6 +13,7 @@ from trac.util.datefmt import format_datetime, from_utimestamp, to_timestamp, \
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import add_script, ITemplateProvider, add_stylesheet
 import re
+from trac.config import ListOption
 
 is_trac_ja = ResourceManager().resource_exists('trac.wiki', 'default-pages/TracJa')
 # Is patch need or not, for trac-ja from interact
@@ -23,6 +24,13 @@ is_trac_ja = ResourceManager().resource_exists('trac.wiki', 'default-pages/TracJ
 class EpochField(Component):
     implements(ITemplateStreamFilter, ITemplateProvider, IRequestFilter, ITicketManipulator)
     
+    date_columns = ListOption('epochfield', 'date_columns', '.*_date', doc="""
+        field-names you want to translate from epoch to date-string in regular-expressions.""")
+    time_columns = ListOption('epochfield', 'time_columns', '.*_time', doc="""
+        field-names you want to translate from epoch to time-string in regular-expressions.""")
+    datetime_columns = ListOption('epochfield', 'datetime_columns', '.*_datetime', doc="""
+        field-names you want to translate from epoch to datetime-string in regular-expressions.""")
+
     @classmethod
     def should_be_ignored(self, col):    
         "because of translated in report_view.html, I don't replace them "
@@ -120,7 +128,7 @@ class EpochField(Component):
                                         if matcher.match(col):
                                             cell['value'] = value.isdigit() \
                                                 and formatter(from_utimestamp(long(value)), tzinfo=req.tz) \
-                                                or '--'
+                                                or value
         return (template, data, content_type)
 
     # ITemplateStreamFilter methods
