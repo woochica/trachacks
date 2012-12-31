@@ -3,7 +3,10 @@ jQuery(document).ready(function() {
 		$(this).removeAttr('title');
 		$(this).cluetip({  
 //			splitTitle: '|',  
-			local: true  
+			local: true,
+			sticky: true,
+			closeText: '',
+			mouseOutClose: 'both',
 		});
 	});
 });

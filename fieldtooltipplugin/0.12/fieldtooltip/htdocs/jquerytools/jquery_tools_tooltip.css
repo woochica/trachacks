@@ -1,6 +1,9 @@
 .tooltip {
 	background: #ffff99;
 	padding: 3px;
+	word-wrap: break-word;
+	width: 400px;
+	text-align: left;
 }
 .tooltip p {
 	margin: 0;

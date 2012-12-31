@@ -35,6 +35,10 @@ class FieldTooltip(Component):
                         'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.',
                         # workflow
                         'leave': 'makes no change to the ticket.',
+                        'resolve': '-',
+                        'reassign': '-',
+                        'accept': '-',
+                        'reopen': '-',
                         }
     # blocking, blockedby for MasterTicketsPlugin, TicketRelationsPlugin
     # position for QueuesPlugin
@@ -84,7 +88,7 @@ class FieldTooltip(Component):
 #            add_script(req, 'fieldtooltip/jquerypowertip/jquery.powertip.js')
 #            add_script(req, 'fieldtooltip/jquerypowertip/enabler.js')
 #            add_stylesheet(req, 'fieldtooltip/jquerypowertip/jquery.powertip.css')
-            # cluetip ... dont work collectly
+            # cluetip ... tested
 #            add_script(req, 'fieldtooltip/cluetip/jquery.hoverIntent.js')
 #            add_script(req, 'fieldtooltip/cluetip/jquery.cluetip.js')
 #            add_script(req, 'fieldtooltip/cluetip/enabler.js')
