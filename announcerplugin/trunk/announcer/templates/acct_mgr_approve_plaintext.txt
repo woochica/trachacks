@@ -1,0 +1,7 @@
+Please visit the user admin page to confirm a new account registration.
+
+Username: ${account.username}
+
+-- 
+${project.name} <${project.url}>
+${project.descr}

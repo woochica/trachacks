@@ -46,7 +46,7 @@ class AccountManagerAnnouncement(Component):
         IAnnouncementSubscriptionFilter
     )
 
-    categories = ('created', 'change', 'delete', 'reset', 'verify')
+    categories = ('created', 'change', 'delete', 'reset', 'verify', 'approve')
 
     default_on = BoolOption("announcer", "always_notify_user_admins", True,
         """Sent user account notification to admin users per default, so they
@@ -80,6 +80,9 @@ class AccountManagerAnnouncement(Component):
     def user_email_verification_requested(self, username, token):
         self._notify('verify', username, token=token)
 
+    def user_registration_approval_required(self, username):
+        self._notify('approve', username)
+
     # IAnnouncementDefaultSubscriber method
     def default_subscriptions(self):
         if self.default_on:
@@ -98,6 +101,8 @@ class AccountManagerAnnouncement(Component):
     def matches(self, event):
         if event.realm != 'acct_mgr':
             return
+        # DEVEL: Need a better plan, because the real issue is a missing
+        #   user_* method on AccountManager changes.
         if not event.category in self.categories:
             return
 
@@ -177,7 +182,8 @@ class AccountManagerAnnouncement(Component):
             'change': 'acct_mgr_user_change_plaintext.txt', 
             'delete': 'acct_mgr_user_change_plaintext.txt', 
             'reset': 'acct_mgr_reset_password_plaintext.txt', 
-            'verify': 'acct_mgr_verify_plaintext.txt'
+            'verify': 'acct_mgr_verify_plaintext.txt',
+            'approve': 'acct_mgr_approve_plaintext.txt'
         }
         data = {
             'account': {
