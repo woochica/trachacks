@@ -52,23 +52,28 @@ class ThemeEngineModule(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        try:
-            theme = self.system.theme
-        except ThemeNotFound, e:
-            add_warning(req, 'Unknown theme %s configured. Please check your trac.ini. You may need to enable the theme\'s plugin.'%e.theme_name)
-            theme = None
-        
-        if theme and 'css' in theme:
-            add_stylesheet(req, 'theme/'+theme['css'])
-        if theme and 'template' in theme:
-            req.chrome['theme'] = os.path.basename(theme['template'])
-        if theme and theme.get('disable_trac_css'):
-            links = req.chrome.get('links')
-            if links and 'stylesheet' in links:
-                for i, link in enumerate(links['stylesheet']):
-                    if link.get('href','').endswith('common/css/trac.css'):
-                        del links['stylesheet'][i]
-                        break
-        if self.custom_css:
-            add_stylesheet(req, '/themeengine/theme.css')
+        if (template, data) != (None, None):
+            try:
+                theme = self.system.theme
+            except ThemeNotFound, e:
+                add_warning(req, "Unknown theme %s configured. Please check "
+                        "your trac.ini. You may need to enable "
+                        "the theme\'s plugin." % e.theme_name)
+            else:
+                if 'css' in theme:
+                    add_stylesheet(req, 'theme/'+theme['css'])
+                if 'template' in theme:
+                    req.chrome['theme'] = os.path.basename(theme['template'])
+                if theme.get('disable_trac_css'):
+                    links = req.chrome.get('links')
+                    if links and 'stylesheet' in links:
+                        for i, link in enumerate(links['stylesheet']):
+                            if link.get('href','') \
+                                    .endswith('common/css/trac.css'):
+                                del links['stylesheet'][i]
+                                break
+            if self.custom_css:
+                add_stylesheet(req, '/themeengine/theme.css')
+
         return template, data, content_type
+
