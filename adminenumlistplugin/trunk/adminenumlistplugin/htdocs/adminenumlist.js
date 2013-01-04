@@ -41,7 +41,7 @@ jQuery(document).ready(function ($) {
     });
 
     // Add a checkbox for toggling the entire column of checkboxes
-    var $group_checkbox = $('#enumtable thead th.sel').html('<input type="checkbox" name="sel" value="all"/>').children();
+    var $group_checkbox = $('#enumtable thead th.sel').html('<input type="checkbox" />').children();
     $group_checkbox.click(function() {
         $remove_checkboxes.prop('checked', this.checked);
         $remove_button.prop('disabled', !this.checked);
