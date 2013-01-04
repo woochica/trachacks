@@ -86,7 +86,7 @@ class Budget:
         vals = None
         sql = None
         actionFound = False
-        
+
         if not ticket_id or not position:
             env.log.error('no ticket-id or position available!')
         elif self._action == 1:
@@ -407,23 +407,23 @@ class TicketBudgetingView(Component):
         budget_obj = None
         # searching budgetfields an send them to db
         for arg in req.args:
-            list = []
-            list = arg.split(":")
-            if len(list) == 3:
-                row_no = list[1]
+            arglist = []
+            arglist = arg.split(":")
+            if len(arglist) == 3:
+                row_no = arglist[1]
                 if budget_dict.has_key(row_no):
                     budget_obj = budget_dict[row_no]
                 else:
                     budget_obj = Budget()
                     budget_dict[row_no] = budget_obj
-                budget_obj.set(list[2], req.args.get(arg))
+                budget_obj.set(arglist[2], req.args.get(arg))
 
                 # New created field, should be insered
-                if list[0] == "GSfield":
+                if arglist[0] == "GSfield":
                     budget_obj.set_as_insert()
-                elif list[0] == "GSDBfield":
+                elif arglist[0] == "GSDBfield":
                     budget_obj.set_as_update()
-                elif list[0] == "DELGSDBfield":
+                elif arglist[0] == "DELGSDBfield":
                     budget_obj.set_as_delete()
 
         return budget_dict
@@ -434,7 +434,7 @@ class TicketBudgetingView(Component):
         ms = req.args['id']
 
         sql = ("SELECT SUM(b.cost), SUM(b.estimation), AVG(b.status)"
-               " FROM budgeting b, ticket t" 
+               " FROM budgeting b, ticket t"
                " WHERE b.ticket=t.id AND t.milestone='%s'" % ms)
 
         try:
@@ -674,7 +674,7 @@ class TicketBudgetingView(Component):
                                                      budget.get_value(6)))
                     elif action == 'update':
                         continue
-    
+
                     sql = ("INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)"
                            " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')"
                             % (tkt.id, cur_time, change_user, pos, old_value, new_value))
