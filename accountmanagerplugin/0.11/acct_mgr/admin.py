@@ -291,7 +291,7 @@ class AccountManagerAdminPanel(CommonTemplateProvider):
             'force_passwd_change': self.acctmgr.force_passwd_change,
             'persistent_sessions': self.acctmgr.persistent_sessions,
             'verify_email': self.acctmgr.verify_email,
-            'refresh_passwd': self.acctmgr.refresh_passwd,
+            'refresh_passwd': self.acctmgr.refresh_passwd
             }
         result = req.args.get('done')
         if result == 'restart':

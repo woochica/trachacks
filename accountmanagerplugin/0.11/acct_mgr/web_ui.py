@@ -50,6 +50,8 @@ class AccountModule(CommonTemplateProvider):
     Allows users to change their password, reset their password, if they've
     forgotten it, even delete their account.  The settings for the
     AccountManager module must be set in trac.ini in order to use this.
+    Password reset procedure depends on both, ResetPwStore and an
+    IPasswordHashMethod implementation being enabled as well.
     """
 
     implements(IPreferencePanelProvider, IRequestHandler,
@@ -73,8 +75,8 @@ class AccountModule(CommonTemplateProvider):
     def _write_check(self, log=False):
         writable = self.acctmgr.get_all_supporting_stores('set_password')
         if not writable and log:
-            self.log.warn('AccountModule is disabled because the password '
-                          'store does not support writing.')
+            self.log.warn("AccountModule is disabled because the password "
+                          "store does not support writing.")
         return writable
 
     # IPreferencePanelProvider methods
@@ -139,7 +141,9 @@ class AccountModule(CommonTemplateProvider):
 
     def _reset_password_enabled(self, log=False):
         return is_enabled(self.env, self.__class__) and \
-               self.reset_password and (self._write_check(log) != [])
+               self.reset_password and (self._write_check(log) != []) and \
+               is_enabled(self.env, self.store.__class__) and \
+               self.store.hash_method
 
     reset_password_enabled = property(_reset_password_enabled)
 
@@ -187,12 +191,10 @@ class AccountModule(CommonTemplateProvider):
             return {'error': _("Email is required")}
         for username_, name, email_ in self.env.get_known_users():
             if username_ == username and email_ == email:
-                self._reset_password(username, email)
-                break
-        else:
-            return {'error': _(
-                "The email and username must match a known account.")}
-        return {'sent_to_email': email}
+                error = self._reset_password(username, email)
+                return error and error or {'sent_to_email': email}
+        return {'error': _(
+            "The email and username must match a known account.")}
 
     def _reset_password(self, username, email):
         acctmgr = self.acctmgr
@@ -268,6 +270,11 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
         likelihood in percent per work hour given here (zero equals to never)
         to decrease vulnerability of long-lasting sessions.""")
 
+    environ_auth_overwrite = BoolOption(
+        'account-manager', 'environ_auth_overwrite', True,
+        """Whether environment variable REMOTE_USER should get overwritten after processing login
+        form input. Otherwise it will only be set, if unset at the time of authentication.""")
+
     # Update cookies for persistant sessions only 1/day.
     #   hex_entropy returns 32 chars per call equal to 128 bit of entropy,
     #   so it should be technically impossible to explore the hash even within
@@ -281,12 +288,12 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
         if is_enabled(self.env, self.__class__) and \
                 is_enabled(self.env, auth.LoginModule):
             # Disable auth.LoginModule to handle login requests alone.
-            self.env.log.info("""Concurrent enabled login modules found,
-                              fixing configuration ...""")
+            self.env.log.info("Concurrent enabled login modules found, "
+                              "fixing configuration ...")
             c.set('components', 'trac.web.auth.loginmodule', 'disabled')
             c.save()
-            self.env.log.info("""auth.LoginModule disabled, giving preference
-                              to %s now.""" % self.__class__)
+            self.env.log.info("trac.web.auth.LoginModule disabled, "
+                              "giving preference to %s." % self.__class__)
 
         self.cookie_lifetime = c.getint('trac', 'auth_cookie_lifetime', 0)
         if not self.cookie_lifetime > 0:
@@ -296,40 +303,43 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
         self.auth_share_participants = []
 
     def authenticate(self, req):
-        if req.method == 'POST' and req.path_info.startswith('/login'):
+        if req.method == 'POST' and req.path_info.startswith('/login') and \
+                req.args.get('user_locked') is None:
             user = self._remote_user(req)
             acctmgr = AccountManager(self.env)
             guard = AccountGuard(self.env)
             if guard.login_attempt_max_count > 0:
                 if user is None:
-                    if req.args.get('user_locked') is None:
-                        # get user for failed authentication attempt
-                        f_user = req.args.get('user')
-                        req.args['user_locked'] = False
-                        if user_known(self.env, f_user):
-                            if guard.user_locked(f_user) is False:
-                                # log current failed login attempt
-                                guard.failed_count(f_user, req.remote_addr)
-                                if guard.user_locked(f_user) is True:
-                                    # step up lock time prolongation
-                                    # only when just triggering the lock
-                                    guard.lock_count(f_user, 'up')
-                                    req.args['user_locked'] = True
-                            else:
-                                # enforce lock
-                                req.args['user_locked'] = True
-                else:
-                    if guard.user_locked(user) is not False:
+                    # Get user for failed authentication attempt.
+                    f_user = req.args.get('user')
+                    req.args['user_locked'] = False
+                    # Log current failed login attempt.
+                    guard.failed_count(f_user, req.remote_addr)
+                    if guard.user_locked(f_user):
+                        # Step up lock time prolongation only while locked.
+                        guard.lock_count(f_user, 'up')
                         req.args['user_locked'] = True
-                        # void successful login as long as user is locked
-                        user = None
-                    else:
-                        req.args['user_locked'] = False
-                        if req.args.get('failed_logins') is None:
-                            # Reset failed login attempts counter
-                            req.args['failed_logins'] = guard.failed_count(
-                                                         user, reset = True)
-            if 'REMOTE_USER' not in req.environ:
+                elif guard.user_locked(user):
+                    req.args['user_locked'] = True
+                    # Void successful login as long as user is locked.
+                    user = None
+                else:
+                    req.args['user_locked'] = False
+                    if req.args.get('failed_logins') is None:
+                        # Reset failed login attempts counter.
+                        req.args['failed_logins'] = guard.failed_count(user,
+                                                                 reset=True)
+            else:
+                req.args['user_locked'] = False
+            if not 'REMOTE_USER' in req.environ or self.environ_auth_overwrite:
+                if 'REMOTE_USER' in req.environ:
+                    # Complain about another component setting environment
+                    # variable for authenticated user.
+                    self.env.log.warn("LoginModule.authenticate: "
+                                      "'REMOTE_USER' was set to '%s'"
+                                      % req.environ['REMOTE_USER'])
+                self.env.log.debug("LoginModule.authenticate: Set "
+                                   "'REMOTE_USER' = '%s'" % user)
                 req.environ['REMOTE_USER'] = user
         return auth.LoginModule.authenticate(self, req)
 
@@ -338,37 +348,37 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
     match_request = if_enabled(auth.LoginModule.match_request)
 
     def process_request(self, req):
-        env = self.env
         if req.path_info.startswith('/login') and req.authname == 'anonymous':
-            guard = AccountGuard(env)
             try:
                 referer = self._referer(req)
             except AttributeError:
                 # Fallback for Trac 0.11 compatibility.
                 referer = req.get_header('Referer')
-            # Steer clear of requests going nowhere or loop to self
+            # Steer clear of requests going nowhere or loop to self.
             if referer is None or \
                     referer.startswith(str(req.abs_href()) + '/login'):
                 referer = req.abs_href()
             data = {
                 '_dgettext': dgettext,
-                'login_opt_list': self.login_opt_list == True,
-                'persistent_sessions': AccountManager(env
+                'login_opt_list': self.login_opt_list,
+                'persistent_sessions': AccountManager(self.env
                                        ).persistent_sessions,
                 'referer': referer,
-                'registration_enabled': RegistrationModule(env).enabled,
-                'reset_password_enabled': AccountModule(env
+                'registration_enabled': RegistrationModule(self.env).enabled,
+                'reset_password_enabled': AccountModule(self.env
                                           ).reset_password_enabled
             }
             if req.method == 'POST':
-                self.log.debug('user_locked: ' + \
-                               str(req.args.get('user_locked', False)))
-                if not req.args.get('user_locked') is True:
+                self.log.debug(
+                    "LoginModule.process_request: 'user_locked' = %s"
+                    % req.args.get('user_locked'))
+                if not req.args.get('user_locked'):
                     # TRANSLATOR: Intentionally obfuscated login error
                     data['login_error'] = _("Invalid username or password")
                 else:
                     f_user = req.args.get('user')
-                    release_time = guard.pretty_release_time(req, f_user)
+                    release_time = AccountGuard(self.env
+                                   ).pretty_release_time(req, f_user)
                     if not release_time is None:
                         data['login_error'] = _(
                             """Account locked, please try again after
@@ -601,7 +611,7 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
         # And finally revoke distributed authentication data too.
         if trac_auth:
             for path in self.auth_share_participants:
-                env = open_environment(path)
+                env = open_environment(path, use_cache=True)
                 db = env.get_db_cnx()
                 cursor = db.cursor()
                 cursor.execute("""
@@ -611,7 +621,6 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
                 db.commit()
                 env.log.debug('Auth data revoked from: ' + \
                               req.environ.get('SCRIPT_NAME', 'unknown'))
-                env.shutdown()
 
     # Keep this code in a separate methode to be able to expire the session
     # cookie trac_auth_session independently of the trac_auth cookie.
@@ -637,6 +646,7 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
     def _remote_user(self, req):
         """The real authentication using configured providers and stores."""
         user = req.args.get('user')
+        self.env.log.debug("LoginModule._remote_user: Authentication attempted for '%s'" % user)
         password = req.args.get('password')
         if not user or not password:
             return None
