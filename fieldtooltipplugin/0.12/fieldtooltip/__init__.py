@@ -1,4 +1,4 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from fieldtooltip import *
+from fieldtooltip import *  # @UnresolvedImport

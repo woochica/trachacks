@@ -1,45 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from genshi import XML
+from genshi.builder import tag
 from genshi.core import QName
 from genshi.filters.transform import START, END
+from pkg_resources import ResourceManager
 from trac.cache import cached
 from trac.core import Component, implements
 from trac.mimeview import Context
 from trac.web.api import ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.wiki.api import IWikiChangeListener, WikiSystem
 from trac.wiki.formatter import format_to_html
 from trac.wiki.model import WikiPage
-from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
-from pkg_resources import ResourceManager
-from genshi.builder import tag
+
 
 class FieldTooltip(Component):
     """ Provides tooltip for ticket fields. (In Japanese/KANJI) チケットフィールドのツールチップを提供します。
         if wiki page named 'help/field-name is supplied, use it for tooltip text. """
     implements(ITemplateStreamFilter, ITemplateProvider, IWikiChangeListener)
-    _default_pages = {  'reporter': 'The author of the ticket.',
-                        'type': 'The nature of the ticket (for example, defect or enhancement request). See TicketTypes for more details.',
-                        'component': 'The project module or subsystem this ticket concerns.',
-                        'version': 'Version of the project that this ticket pertains to.',
-                        'keywords': 'Keywords that a ticket is marked with. Useful for searching and report generation.',
-                        'priority': 'The importance of this issue, ranging from trivial to blocker. A pull-down if different priorities where defined.',
-                        'milestone': 'When this issue should be resolved at the latest. A pull-down menu containing a list of milestones.',
-                        'assigned to': 'Principal person responsible for handling the issue.',
-                        'owner': 'Principal person responsible for handling the issue.',
-                        'cc': 'A comma-separated list of other users or E-Mail addresses to notify. Note that this does not imply responsiblity or any other policy.',
-                        'resolution': 'Reason for why a ticket was closed. One of fixed, invalid, wontfix, duplicate, worksforme.',
-                        'status': 'What is the current status? One of new, assigned, closed, reopened.',
-                        'summary': 'A brief description summarizing the problem or issue. Simple text without WikiFormatting.',
-                        'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.',
-                        # workflow
-                        'leave': 'makes no change to the ticket.',
-                        'resolve': '-',
-                        'reassign': '-',
-                        'accept': '-',
-                        'reopen': '-',
-                        }
+    _default_pages = {'reporter': 'The author of the ticket.',
+                      'type': 'The nature of the ticket (for example, defect or enhancement request). See TicketTypes for more details.',
+                      'component': 'The project module or subsystem this ticket concerns.',
+                      'version': 'Version of the project that this ticket pertains to.',
+                      'keywords': 'Keywords that a ticket is marked with. Useful for searching and report generation.',
+                      'priority': 'The importance of this issue, ranging from trivial to blocker. A pull-down if different priorities where defined.',
+                      'milestone': 'When this issue should be resolved at the latest. A pull-down menu containing a list of milestones.',
+                      'assigned to': 'Principal person responsible for handling the issue.',
+                      'owner': 'Principal person responsible for handling the issue.',
+                      'cc': 'A comma-separated list of other users or E-Mail addresses to notify. Note that this does not imply responsiblity or any other policy.',
+                      'resolution': 'Reason for why a ticket was closed. One of fixed, invalid, wontfix, duplicate, worksforme.',
+                      'status': 'What is the current status? One of new, assigned, closed, reopened.',
+                      'summary': 'A brief description summarizing the problem or issue. Simple text without WikiFormatting.',
+                      'description': 'The body of the ticket. A good description should be specific, descriptive and to the point. Accepts WikiFormatting.',
+                      # workflow
+                      'leave': 'makes no change to the ticket.',
+                      'resolve': '-',
+                      'reassign': '-',
+                      'accept': '-',
+                      'reopen': '-',
+                      }
     # blocking, blockedby for MasterTicketsPlugin, TicketRelationsPlugin
     # position for QueuesPlugin
     # estimatedhours for EstimationToolsPlugin, TracHoursPlugin, SchedulingToolsPlugin
@@ -69,10 +69,10 @@ class FieldTooltip(Component):
     # ITemplateProvider methods
     def get_templates_dirs(self):
         return []
-    
+
     def get_htdocs_dirs(self):
         return [('fieldtooltip', ResourceManager().resource_filename(__name__, 'htdocs'))]
-    
+
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html':
@@ -120,7 +120,7 @@ class FieldTooltipFilter(object):
         rel="#tooltip-ZZZZZ" という属性を追加し、
         <div id="tooltip-ZZZZZ"> zzzzz </div> という要素を追加します。
         div要素の中身はWikiフォーマットされたHTMLで説明を追加します。太字やリンクなども表現されます。
-        
+
                通常のHTMLでは title属性がポップアップします。
         jquery cluetip plugin を使う場合、{local:true} と指定することで、relで指定したIDのdivがポップアップします。
         jquery tooltip plugin を使う場合、bodyHandler で 当該divを返すようにすることで、そのdivがポップアップします。
@@ -176,7 +176,7 @@ class FieldTooltipFilter(object):
                 a = tag.a(img, href='%s/wiki/%s%s' \
                            % (self.context.req.base_url, FieldTooltip._wiki_prefix, attr_value))
                 after_stream[str(depth)] = \
-                tag.div(a, '%s:\n' % attr_value, 
+                tag.div(a, '%s:\n' % attr_value,
                         format_to_html(self.parent.env, self.context, text, False),
                         id='tooltip-' + attr_value,
                         class_='tooltip',
