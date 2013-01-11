@@ -13,28 +13,30 @@ from datetime import datetime
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 from pkg_resources import ResourceManager
 
+
 class TicketLinkDecorator(Component):
     """ set css-class to ticket link as ticket field value. field name can set in [ticket]-decorate_fields in trac.ini"""
     implements(IRequestHandler)
 
     wrapped = None
-    
-    decorate_fields = ListOption('ticket','decorate_fields',default='type',
-                        doc=
-                        """ comma separated List of field names to add css class of ticket link.
-                            (Provided by !ContextChrome.!TicketLinkDecorator) """)
+
+    decorate_fields = ListOption('ticket', 'decorate_fields', default='type',
+        doc=""" comma separated List of field names to add css class of ticket link.
+            (Provided by !ContextChrome.!TicketLinkDecorator) """)
 
     def __init__(self):
         Component.__init__(self)
-        if not self.wrapped: self.wrap()
-  
+        if not self.wrapped:
+            self.wrap()
+
     def wrap(self):
         ticketsystem = self.compmgr[TicketSystem]
-        def _format_link(*args, **kwargs): # hook method
+
+        def _format_link(*args, **kwargs):  # hook method
             element = self.wrapped(*args, **kwargs)
             if isinstance(element, Element):
                 class_ = element.attrib.get('class')
-                if class_ and element.attrib.get('href'): # existing ticket
+                if class_ and element.attrib.get('href'):  # existing ticket
                     deco = self.get_deco(*args, **kwargs) or []
                     element.attrib = element.attrib | [('class', ' '.join(deco + [class_]))]
             return element
@@ -42,7 +44,7 @@ class TicketLinkDecorator(Component):
         ticketsystem._format_link = _format_link
 
     def get_deco(self, formatter, ns, target, label, fullmatch=None):
-        link, params, fragment = formatter.split_link(target)
+        link, params, fragment = formatter.split_link(target)  # @UnusedVariable
         r = Ranges(link)
         if len(r) == 1:
             num = r.a
@@ -51,37 +53,39 @@ class TicketLinkDecorator(Component):
             if Ticket.id_is_valid(num) and \
                     'TICKET_VIEW' in formatter.perm(ticket):
                 ticket = Ticket(self.env, num)
-                fields = self.config.getlist('ticket','decorate_fields')
+                fields = self.config.getlist('ticket', 'decorate_fields')
                 return ['%s_is_%s' % (field, ticket.values[field]) for field in fields if field in ticket.values]
 
     # IRequestHandler Methods
     def match_request(self, req):
         return False
-        
+
     def process_request(self, req):
         pass
-    
+
 
 class WikiLinkNewDecolator(Component):
     """ set \"new\" css-class to wiki link if the page is young. age can set in [wiki]-wiki_new_info_second in trac.ini"""
     implements(IRequestHandler)
 
     wrapped = None
-    
+
     wiki_new_info_day = IntOption('wiki', 'wiki_new_info_second', '432000',
         doc=u"""age in seconds to add new icon. (Provided by !ContextChrome.!WikiLinkNewDecolator) """)
 
     def __init__(self):
         Component.__init__(self)
-        if not self.wrapped: self.wrap()
-  
+        if not self.wrapped:
+            self.wrap()
+
     def wrap(self):
         wikisystem = self.compmgr[WikiSystem]
-        def _format_link(*args, **kwargs): # hook method
+
+        def _format_link(*args, **kwargs):  # hook method
             element = self.wrapped(*args, **kwargs)
             if isinstance(element, Element):
                 class_ = element.attrib.get('class')
-                if class_ and element.attrib.get('href'): # existing ticket
+                if class_ and element.attrib.get('href'):  # existing ticket
                     deco = self.get_deco(*args, **kwargs) or []
                     element.attrib = element.attrib | [('class', ' '.join(deco + [class_]))]
             return element
@@ -103,10 +107,11 @@ class WikiLinkNewDecolator(Component):
     # IRequestHandler Methods
     def match_request(self, req):
         return False
-        
+
     def process_request(self, req):
         pass
-    
+
+
 class InternalStylesheet(Component):
     """ Use internal stylesheet. Off to use your own site.css for \".new\" css-class."""
     implements(IRequestFilter, ITemplateProvider)
@@ -115,10 +120,10 @@ class InternalStylesheet(Component):
     def pre_process_request(self, req, handler):
         add_stylesheet(req, "contextchrome/css/newicon.css")
         return handler
-    
+
     def post_process_request(self, req, template, data, content_type):
         return template, data, content_type
-    
+
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
         return [('contextchrome', ResourceManager().resource_filename(__name__, 'htdocs'))]

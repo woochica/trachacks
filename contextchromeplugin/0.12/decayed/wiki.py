@@ -9,6 +9,7 @@ from trac.web.api import ITemplateStreamFilter
 import datetime
 import sys
 
+
 class DecayedWiki(Component):
     """ Indicate how old the wiki page is. colors can set in [wiki]-decayed_colors in trac.ini """
     implements(ITemplateStreamFilter)
@@ -21,10 +22,10 @@ class DecayedWiki(Component):
           maxint: '#777777'}
     colors = ListOption('wiki', 'decay_colors',
         "86400:#ffffff, 604800:#eeeeee, 2678400:#dddddd, 31536000:#aaaaaa, 2147483647: #777777",
-        doc=
-        """ List of (age_in_seconds: color) value pairs
+        doc="""
+            List of (age_in_seconds: color) value pairs
             e.g. "86400:#ffffff, 604800:#cccccc, 2147483647: !#777777";
-            
+
             means that the page modified in a day shows on white,
             in a week shows on light grey, and so on.
             (Provided by !ContextChrome.!DecayedWiki) """)
@@ -42,8 +43,8 @@ class DecayedWiki(Component):
             except:
                 errorinfo = sys.exc_info()
                 self.log.warning('Parse Error - using defaults, at trac.ini [wiki]/decay_colors;  %s', errorinfo)
-                colors = self.default_colors.items() #fallback
-            color = 'white' # centinel; avoid undefined error with empty list
+                colors = self.default_colors.items()  # fall back
+            color = 'white'  # sentinel; avoid undefined error with empty list
             for value, color in sorted(colors):
                 if value > delta:
                     break
