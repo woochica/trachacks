@@ -7,14 +7,15 @@ from trac.web.api import IRequestFilter
 from trac.web.chrome import prevnext_nav, add_link
 from trac.wiki.api import WikiSystem
 
+
 class NeighborPage(Component):
     """ Add 'Previous Page / Next Page' link to wiki navigation bar"""
-    implements (IRequestFilter)
-    
+    implements(IRequestFilter)
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
-    
+
     def post_process_request(self, req, template, data, content_type):
         if data and 'context' in data and \
                 data['context'].resource.realm == 'wiki' and \
@@ -29,9 +30,9 @@ class NeighborPage(Component):
                    and 'WIKI_VIEW' in req.perm('wiki', page))
             if page.name in pages:
                 index = pages.index(page.name)
-                if index > 0: add_link(req, 'prev', req.href.wiki(pages[index - 1]))
-                if index < len(pages) - 1: add_link(req, 'next', req.href.wiki(pages[index + 1]))
+                if index > 0:
+                    add_link(req, 'prev', req.href.wiki(pages[index - 1]))
+                if index < len(pages) - 1:
+                    add_link(req, 'next', req.href.wiki(pages[index + 1]))
                 prevnext_nav(req, _('Previous Page'), _('Next Page'))
         return template, data, content_type
-    
-    

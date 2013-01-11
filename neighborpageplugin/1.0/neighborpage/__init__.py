@@ -1,1 +1,1 @@
-from neighborpage import *
+from neighborpage import *  # @UnresolvedImport
