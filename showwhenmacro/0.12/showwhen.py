@@ -4,29 +4,30 @@
 # ShowWhen Macro; version 0.1
 # Copyright (C) 2012 MATOBA Akihiro (a.k.a. matobaa)
 # <matobaa+trac-hacks@gmail.com>
-   
+
 """ Licensed under the MIT License.
 See: http://trac-hacks.org/wiki/ShowWhenMacro
 """
 
 from datetime import datetime
-from genshi.builder import tag, Markup
+from genshi.builder import tag
 from trac.core import Component, implements
 from trac.util.datefmt import parse_date, utc
 from trac.wiki import IWikiMacroProvider
 from trac.wiki.formatter import format_to_html
 import re
 
+
 class ShowWhen(Component):
-    """ Shows content in spacified time range. """
+    """ Shows content in specified time range. """
     implements(IWikiMacroProvider)
-    
+
     # IWikiMacroProvider methods
     def get_macros(self):
         yield 'ShowWhen'
 
     def get_macro_description(self, name):
-        return """Shows content in spacified time range. 
+        return """Shows content in specified time range.
 time from, time to, and content will be specified like [wiki:WikiFormatting#SimpleTables wiki-table style] as follows:
 {{{
     {{{
@@ -45,7 +46,7 @@ datetime string should be specified as RFC:3339 5.6 Internet date/time format. I
 
     def expand_macro(self, formatter, name, content, args=None):
         hint = '|| yyyy-mm-ddThh:mm:ss || yyyy-mm-ddThh:mm:ss || message'
-        pattern = "\s*||(.*)||(.*)||(.*)".replace('|','\|')
+        pattern = "\s*||(.*)||(.*)||(.*)".replace('|', '\|')
         pattern = re.compile(pattern)
         try:
             if content == None:
@@ -57,10 +58,10 @@ datetime string should be specified as RFC:3339 5.6 Internet date/time format. I
                 if matched:
                     result = matched.groups()
                     by, to, text = result
-                    by, to = parse_date(by,None,hint), parse_date(to,None,hint)
-                    self.env.log.debug('parsed time range: %s / %s' % (by,to))
+                    by, to = parse_date(by, None, hint), parse_date(to, None, hint)
+                    self.env.log.debug('parsed time range: %s / %s' % (by, to))
                     if by <= now and now <= to:
                         return format_to_html(self.env, formatter.context, text)
             return None
-        except Exception,e:
+        except Exception, e:
             return tag.div(tag.strong(e.title), ': ' + e.message, class_="system-message")
