@@ -1,5 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from query import *
-from macro import *
+from query import *  # @UnresolvedImport
+from macro import *  # @UnresolvedImport

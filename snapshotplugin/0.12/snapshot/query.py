@@ -11,24 +11,25 @@ from trac.util.datefmt import format_datetime, format_time, from_utimestamp, \
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.model import WikiPage
 
+
 class Query(Component):
     """ add \"Save to wiki\" button in CUSTOM QUERY page.
 a \"page_name\" URL Parameter uses for default name if exists."""
-    implements (ITemplateStreamFilter)
-    
+    implements(ITemplateStreamFilter)
+
     @classmethod
     def formatter(self, obj):
         return isinstance(obj, datetime) and format_datetime(obj) or str(obj)
-    
+
     #ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if filename != 'query.html':
             return stream
-        query_string = 'query:' + '&'.join(['%s=%s' % (key, '|'.join([cond for cond in values])) 
+        query_string = 'query:' + '&'.join(['%s=%s' % (key, '|'.join([cond for cond in values]))
                                             for constraint in data['query'].constraints
                                             for key, values in constraint.items()])
         page_name = 'report_resource' in data and \
-            'report:%s' % data['report_resource'].id or query_string 
+            'report:%s' % data['report_resource'].id or query_string
         if 'page_name' in req.args:
             page_name = req.args['page_name']
             query_string += '&page_name=%s' % page_name
@@ -42,7 +43,7 @@ a \"page_name\" URL Parameter uses for default name if exists."""
         for (group_name, tickets) in data['groups']:
             text += '|| group: %s\n' % group_name
             for ticket in tickets:
-                text += '|| %s || %s\n' % (ticket['href'] ,
+                text += '|| %s || %s\n' % (ticket['href'],
                     ' || '.join([self.formatter(ticket[col]) for col in cols]))
         text += '}}}'
         div = tag.div(tag.input(value='Save as wiki:', type='submit'),
@@ -51,7 +52,8 @@ a \"page_name\" URL Parameter uses for default name if exists."""
                       tag.input(name='page', value=page_name))
         return stream | Transformer('//div[@id="content"]/div[@class="buttons"]') \
             .append(tag.form(div, action=get_resource_url(self.env, Resource('wiki'), self.env.href)))
-            
+
+
 class Report(Component):
     """ add \"Save to wiki\" button in REPORT page. """
 
@@ -79,8 +81,9 @@ class Report(Component):
         text = '= Snapshot of [%s %s]: =\n' % (page_name, page_label)
         text += '{{{#!QueryResults\n'
         cols = [header['col'] for header in data['header_groups'][0] if not header['hidden']]
-        cols_work = [t for t in cols] # copy
-        if 'ticket' in cols_work: cols_work[cols_work.index('ticket')] = 'id' # replace 'ticket' to 'id'
+        cols_work = [t for t in cols]  # copy
+        if 'ticket' in cols_work:
+            cols_work[cols_work.index('ticket')] = 'id'  # replace 'ticket' to 'id'
         text += '||= href =||= %s\n' % ' =||= '.join(cols_work)
         for  groupindex, row_group in data['row_groups']:
             text += '|| group: %s\n' % groupindex
@@ -90,7 +93,7 @@ class Report(Component):
                 for value in row:
                     ticket[value['header']['col']] = value['value']
                 ticket['href'] = get_resource_url(self.env, Resource('ticket', ticket.get('ticket', 0)), self.env.href)
-                text += '|| %s || %s\n' % (ticket['href'] ,
+                text += '|| %s || %s\n' % (ticket['href'],
                     ' || '.join([self.formatter(col, ticket[col]) for col in cols]))
         text += '}}}'
         div = tag.div(tag.input(value='Save as wiki:', type='submit'),

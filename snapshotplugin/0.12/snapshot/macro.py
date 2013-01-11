@@ -9,24 +9,25 @@ from trac.wiki.api import IWikiMacroProvider
 import sys
 from trac.wiki.formatter import format_to_html
 
+
 class QueryResults(Component):
     """ Show following static data in query table format. """
-    implements (IWikiMacroProvider)
-    
+    implements(IWikiMacroProvider)
+
     # IWikiMacroProvider methods
     def get_macros(self):
         yield 'QueryResults'
-        
+
     def get_macro_description(self, name):
         return """ @param group=column_name (Optional)
         Show following static data in query table format.
 Example:
 {{{
-    {{{#!QueryResults(group=milestone) 
+    {{{#!QueryResults(group=milestone)
     ||= href =||= id =||= summary =||= status =||= owner =||= time
     || group: milestone1
     || /trac/project1/ticket/1 || 1 || Example || accepted || admin || 2012/02/03 0:48:05
-    || group: 
+    || group:
     || /trac/project1/ticket/2 || 2 || Summary || assigned || matobaa || 2012/02/06 8:25:51
     || /trac/project1/ticket/3 || 3 || Closed || closed || admin || 2012/02/07 23:55:19
     || /trac/project1/ticket/4 || 4 || active ticket || new || somebody || 2012/02/11 15:21:29
@@ -35,8 +36,8 @@ Example:
 
     def expand_macro(self, formatter, name, content, args=[]):
         try:
-            cols = [] # Centinel
-            group = '' # Centinel
+            cols = []  # Sentinel
+            group = ''  # Sentinel
             groups = {}
             lines = content.split('\r\n')
             for line in lines:
@@ -44,11 +45,12 @@ Example:
                     cols = line[14:].split(' =||= ')
                 elif line.startswith('|| group: '):
                     group = line[10:]
-                    if group in [u'', u'None']: group = None
-                    groups[group] = [] # initialize for the group
+                    if group in [u'', u'None']:
+                        group = None
+                    groups[group] = []  # initialize for the group
                 elif line.startswith('|| '):
                     values = iter(line[3:].split(' || '))
-                    ticket = { 'href': values.next() }
+                    ticket = {'href': values.next()}
                     for col in cols:
                         ticket[col] = values.next()
                     groups[group].append(ticket)
@@ -57,23 +59,24 @@ Example:
             ticketsystem = TicketSystem(self.env)
             #
             labels = ticketsystem.get_ticket_field_labels()
-            headers = [{ 'name': col, 'label': labels.get(col, _('Ticket'))} for col in cols]
+            headers = [{'name': col, 'label': labels.get(col, _('Ticket'))} for col in cols]
             #
             fields = {}
             ticket_fields = ticketsystem.get_ticket_fields()
             for field in ticket_fields:
-                fields[field['name']] = {'label': field['label']} # transform list to expected dict
+                fields[field['name']] = {'label': field['label']}  # transform list to expected dict
             # fail safe
             fields[None] = 'NONE'
             for group in groups.keys():
-                if not fields.has_key(group):
+                if not 'group' in fields:
                     fields[group] = group
             #
             group_name = 'group' in args and args['group'] or None
-            if group_name not in fields: group_name = None
-            query = {'group':group_name}
+            if group_name not in fields:
+                group_name = None
+            query = {'group': group_name}
             #
-            groups = [(name, groups[name]) for name in groups] # transform dict to expected tuple
+            groups = [(name, groups[name]) for name in groups]  # transform dict to expected tuple
             #
             data = {
                 'paginator': None,
