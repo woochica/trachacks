@@ -14,9 +14,9 @@ setup(
     zip_safe=False,
     packages=find_packages(exclude=['*.tests']),
     include_package_data=True,
-    package_data={ 'hidefieldchanges': [
+    package_data={'hidefieldchanges': [
                       'templates/*.html',
-                      'htdocs/*/*'] },
+                      'htdocs/*/*']},
     entry_points={
         'trac.plugins': 'HideFieldChanges = hidefieldchanges.ticket'
         },

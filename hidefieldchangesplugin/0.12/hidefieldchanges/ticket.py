@@ -16,6 +16,7 @@ _, tag_, N_, add_domain = domain_functions('HideFieldChanges', ('_', 'tag_', 'N_
 #  - add hide field button
 #  - undone hiding fields
 
+
 class HideFieldChanges(Component):
     implements(IRequestFilter, ITemplateProvider, ITemplateStreamFilter)
 
@@ -24,21 +25,20 @@ class HideFieldChanges(Component):
         # when show a ticket, add script for 'hide customfield' buttons
         if req.path_info.startswith('/ticket'):
             add_script(req, 'hidefieldchanges/js/hidefieldchanges.js')
-                
+
         return handler
-        
+
     def post_process_request(self, req, template, data, content_type):
         # check preconditions
         if template != 'ticket.html'\
                 or not data \
                 or not 'changes' in data \
-                or not 'fields' in data \
-                :
+                or not 'fields' in data:
             return template, data, content_type
         hide_names = req.session.get('hidefieldchanges', '').split()
         # when submit 'Show these fields', set hiding-list
         if 'submit' in req.args and req.args['submit'] == u'Hide these fields':
-            hide_names = [name for name in req.args if req.args[name] == 'on'] # override it
+            hide_names = [name for name in req.args if req.args[name] == 'on']  # override it
             self.log.debug('NAMES: %s' % hide_names)
             req.session['hidefieldchanges'] = ' '.join(hide_names)
         # when submit 'hide field', add it to hiding-list
@@ -54,14 +54,15 @@ class HideFieldChanges(Component):
             for change in data['changes']:
                 fields = change['fields']
                 for key in hide_names:
-                    if key in fields: del fields[key]
+                    if key in fields:
+                        del fields[key]
         # done
         return template, data, content_type
 
     # ITemplateProvider methods
     def get_templates_dirs(self):
-        return [] # ResourceManager().resource_filename(__name__, 'templates')]
-    
+        return []  # ResourceManager().resource_filename(__name__, 'templates')]
+
     def get_htdocs_dirs(self):
         return [('hidefieldchanges', ResourceManager().resource_filename(__name__, 'htdocs'))]
 
@@ -84,9 +85,9 @@ class HideFieldChanges(Component):
         hide_fields.append(tag.input(name='submit', type='submit', value='Hide these fields'))
         transformer = transformer \
             .select('//div[@id="changelog"]') \
-            .before(tag.form(tag.input(value='hide changes', id='hidechangesbutton', type='button', style_='float: right;')
-                             , tag.div(hide_fields, style='display: none', id='hidefields')
-                             , action='#', class_='inlinebuttons hidechanges')).end()
+            .before(tag.form(tag.input(value='hide changes', id='hidechangesbutton', type='button', style_='float: right;'),
+                             tag.div(hide_fields, style='display: none', id='hidefields'),
+                             action='#', class_='inlinebuttons hidechanges')).end()
         # build 'show all changes' button
 #        showallbutton = tag.input(value='show all', name='showall', class_='showallbutton', type='submit', style_='float: right;')
 #        showallbutton = tag.form(showallbutton, action='#', method='get', class_='inlinebuttons hidechanges')
@@ -99,4 +100,3 @@ class HideFieldChanges(Component):
             .prepend(hidebutton).end()
         # return filtered stream
         return stream | transformer
-            
