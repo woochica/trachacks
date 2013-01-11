@@ -5,6 +5,7 @@ from genshi.builder import tag
 from genshi.filters.transform import Transformer
 from pkg_resources import ResourceManager
 from trac.cache import cached
+from trac.config import ListOption
 from trac.core import Component, implements
 from trac.ticket.api import ITicketManipulator, TicketSystem
 from trac.ticket.model import Ticket
@@ -13,7 +14,6 @@ from trac.util.datefmt import format_datetime, from_utimestamp, to_timestamp, \
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.web.chrome import add_script, ITemplateProvider, add_stylesheet
 import re
-from trac.config import ListOption
 
 is_trac_ja = ResourceManager().resource_exists('trac.wiki', 'default-pages/TracJa')
 # Is patch need or not, for trac-ja from interact
@@ -21,9 +21,10 @@ is_trac_ja = ResourceManager().resource_exists('trac.wiki', 'default-pages/TracJ
 # "まともな方法がなくて、前にやったのは trac/wiki/default-pages/TracJa
 # があるかどうかを pkg_resources.resource_filename で調べてました"
 
+
 class EpochField(Component):
     implements(ITemplateStreamFilter, ITemplateProvider, IRequestFilter, ITicketManipulator)
-    
+
     date_columns = ListOption('epochfield', 'date_columns', '.*_date', doc="""
         field-names you want to translate from epoch to date-string in regular-expressions.""")
     time_columns = ListOption('epochfield', 'time_columns', '.*_time', doc="""
@@ -32,13 +33,13 @@ class EpochField(Component):
         field-names you want to translate from epoch to datetime-string in regular-expressions.""")
 
     @classmethod
-    def should_be_ignored(self, col):    
+    def should_be_ignored(self, col):
         "because of translated in report_view.html, I don't replace them "
         return col in ['time', 'date', 'created', 'modified', 'datetime'] or \
             is_trac_ja and any(map(col.endswith, [u'日付', u'日時', u'時刻'])) or False
 
     _format = '%Y-%m-%d %H:%M:%S'   # NOTE: match a format in epochfield.js
-    
+
     def _e2s(self, req, data):
         """ Epoch to String """
         return data.isdigit() and format_datetime(from_utimestamp(long(data)), self._format, req.tz) or data
@@ -53,7 +54,7 @@ class EpochField(Component):
             self.log.debug(e)
             pass
         return data
-    
+
     @cached
     def epoch_fields_name(self, db):
         fields = TicketSystem(self.env).get_ticket_fields()
@@ -62,7 +63,7 @@ class EpochField(Component):
     @cached
     def function_map(self, db):
         """ map between translator method and field-names will be translated """
-        matcher = lambda x : re.compile(x + '$')
+        matcher = lambda x: re.compile(x + '$')
         return [
             (format_date, map(matcher, self.config.getlist('epochfield', 'date_columns', default='.*_date'))),
             (format_time, map(matcher, self.config.getlist('epochfield', 'time_columns', default='.*_time'))),
@@ -78,27 +79,27 @@ class EpochField(Component):
         """ String to Epoch, when modify ticket """
         for key in [key for key in ticket._old.keys() if key in self.epoch_fields_name]:
             ticket.values[key] = self._s2e(req, ticket.values[key])
-        return [] # returns no errors
+        return []  # returns no errors
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
         return [('epochfield', ResourceManager().resource_filename(__name__, 'htdocs'))]
-    
+
     def get_templates_dirs(self):
         return []
-    
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if template in ['ticket.html']: # e2s in ticket, changes, change_preview
+        if template in ['ticket.html']:  # e2s in ticket, changes, change_preview
             if 'ticket' in data and isinstance(data.get('ticket'), Ticket):
                 values = data.get('ticket').values
                 for e in self.epoch_fields_name:
                     if e in values:
                         values[e] = self._e2s(req, values[e])
-            changes = data.get('changes', [])[:] # shallow copy
+            changes = data.get('changes', [])[:]  # shallow copy
             if 'change_preview' in data:
                 changes += [data.get('change_preview')]
             for change in changes:
@@ -108,20 +109,21 @@ class EpochField(Component):
                         field['old'] = self._e2s(req, field['old'])
                     if 'new' in field:
                         field['new'] = self._e2s(req, field['new'])
-        if template in ['query.html']: # e2s in result
-            for results in [group for ignored, group in data.get('groups')]:
+        if template in ['query.html']:  # e2s in result
+            for results in [group for ignored, group in data.get('groups')]:  # @UnusedVariable
                 for values in results:
                     for e in self.epoch_fields_name:
                         if e in values:
                             values[e] = self._e2s(req, values[e])
-        if template in ['report_view.html']: # e2s in specified fields in trac.ini
-            for row_group in [r for ignored, r in data.get('row_groups', [])]:
+        if template in ['report_view.html']:  # e2s in specified fields in trac.ini
+            for row_group in [r for ignored, r in data.get('row_groups', [])]:  # @UnusedVariable
                 for row in row_group:
                     for cell_group in [c for c in row.get('cell_groups', [])]:
                         for cell in cell_group:
-                            if cell.has_key('header') and cell.has_key('value'):
+                            if 'header' in cell and 'value' in cell:
                                 col = cell.get('header').get('col')
-                                if EpochField.should_be_ignored(col): continue
+                                if EpochField.should_be_ignored(col):
+                                    continue
                                 value = cell['value']
                                 for formatter, matchers in self.function_map:
                                     for matcher in matchers:
@@ -143,9 +145,10 @@ class EpochField(Component):
                             .attr('class', 'datetimeEntry')
         return stream
 
+
 class CustomFieldAdminTweak(Component):
     implements(ITemplateStreamFilter)
-    
+
     def filter_stream(self, req, method, filename, stream, data):
         if filename in ['customfieldadmin.html']:
             stream = stream | Transformer('//select[@id="format"]').append(
