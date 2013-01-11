@@ -6,14 +6,14 @@ from pkg_resources import ResourceManager
 
 class Checkbox(Component):
     """at query when
-    double-click a checkbox clears neighbour checkboxes and check it.
-    double-click a label at left of checkboxes filps checked or not. """
-    
+    double-click a checkbox clears neighbor checkboxes and check it.
+    double-click a label at left of checkboxes flips checked or not. """
+
     implements(ITemplateProvider, ITemplateStreamFilter)
-    
+
     #ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if(filename=='query.html'):
+        if(filename == 'query.html'):
             add_script(req, 'querystatushelper/js/enabler.js')
         return stream
 

@@ -1,1 +1,1 @@
-from uiassist import *
+from uiassist import *  # @UnresolvedImport
