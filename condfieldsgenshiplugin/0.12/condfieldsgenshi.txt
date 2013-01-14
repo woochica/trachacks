@@ -1,4 +1,4 @@
-@(#) May 31 2012, 17:51:12
+@(#) Jan 11 2013, 17:53:45
 
 (C) Reinhard Wobst, r.wobst@gmx.de
 
@@ -30,16 +30,18 @@ First, configure trac.ini as in this example:
   ...
 
   [condfieldsgenshi]
-  tweaks = field1, field2
+  tweaks = field1, field2, field3
   default = disable
   field1.type_cond = defect
   field2.type_cond = task
+  field3.type_cond = !enhancement, task
 
 
 Effect:
 
 Now field1 will be shown only if the ticket type is "defect", field2
-only if the ticket type is "task".
+only if the ticket type is "task", and field3 only if the ticket type is
+neither "task" nor "enhancement".
 
 The entry "default = disable" means that the field listed under "tweaks"
 are NOT shown by default.

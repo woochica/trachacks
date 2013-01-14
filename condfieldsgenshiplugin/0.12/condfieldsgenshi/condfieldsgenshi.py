@@ -3,7 +3,7 @@ from trac.ticket import Ticket
 from trac.web.api import ITemplateStreamFilter
 from genshi.filters.transform import Transformer
 
-# R.Wobst, @(#) May 31 2012, 18:01:54
+# R.Wobst, @(#) Jan 11 2013, 17:50:43
 #
 # New plugin based on Condfield-Patch for BlackmagicPlugin
 # (http://www.trac-hacks.org/ticket/2486) which does not work for Trac 0.11 or
@@ -76,14 +76,30 @@ class CondfieldTweaks(Component):
 
             type_cond = self.config.get('condfieldsgenshi', field+'.type_cond', None)
 
-            if type_cond and \
-                    (
-                     (default == 'enable') ==
-                        (
-                         ticket_type in
-                            [x.strip() for x in type_cond.split(',')]
-                        )
-                    ):
+            # old version:
+            #if type_cond and \
+            #        (
+            #         (default == 'enable') ==
+            #            (
+            #             ticket_type in
+            #                [x.strip() for x in type_cond.split(',')]
+            #            )
+            #        ):
+
+            if not type_cond:
+                continue
+
+            neg = False
+            if type_cond.startswith('!'):
+                neg = True
+                type_cond = type_cond[1:].strip()
+
+            inlst = (ticket_type in [x.strip() for x in type_cond.split(',')])
+            if neg:
+                inlst = not inlst
+
+            if (default == 'enable' and inlst) or \
+                    (default == 'disable' and not inlst):
 
                 if field != 'type':
                     stream = stream | Transformer(

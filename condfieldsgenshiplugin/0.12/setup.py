@@ -31,7 +31,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = 'CondFieldsGenshiPlugin',
-    version = '0.1',
+    version = '0.2',
     author = 'Reinhard Wobst',
     author_email = 'rwobst@gmx.de',
     description = "CondFieldsGenshiPlugin for Trac >= 0.11 based on BlackMagicTicketTweaks",
