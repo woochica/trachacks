@@ -14,7 +14,7 @@ from setuptools import setup
 
 setup(
     name = 'TracThemeEngine',
-    version = '2.1.1',
+    version = '2.1.2',
     packages = ['themeengine'],
     package_data = { 'themeengine': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css', 'htdocs/img/*.gif',
                                      'htdocs/farbtastic/*.png', 'htdocs/farbtastic/*.js', 'htdocs/farbtastic/*.css' ] },

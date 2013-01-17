@@ -60,11 +60,11 @@ class ThemeEngineModule(Component):
                         "your trac.ini. You may need to enable "
                         "the theme\'s plugin." % e.theme_name)
             else:
-                if 'css' in theme:
+                if theme and 'css' in theme:
                     add_stylesheet(req, 'theme/'+theme['css'])
-                if 'template' in theme:
+                if theme and 'template' in theme:
                     req.chrome['theme'] = os.path.basename(theme['template'])
-                if theme.get('disable_trac_css'):
+                if theme and theme.get('disable_trac_css'):
                     links = req.chrome.get('links')
                     if links and 'stylesheet' in links:
                         for i, link in enumerate(links['stylesheet']):
