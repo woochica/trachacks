@@ -7,7 +7,6 @@
 from simplemultiproject.model import *
 
 #trac
-from trac import __version__ as VERSION
 from trac.attachment import AttachmentModule
 from trac.config import ExtensionOption
 from trac.core import *
@@ -23,8 +22,14 @@ from trac.util.datefmt import parse_date, utc, to_utimestamp, \
                               get_datetime_format_hint, format_date, \
                               format_datetime, from_utimestamp
 
-if VERSION > '0.12':
+try:
     from trac.util.datefmt import user_time
+except ImportError:
+    def user_time(req, func, *args, **kwargs):
+        """port from 1.0-stable"""
+        if 'tzinfo' not in kwargs:
+            kwargs['tzinfo'] = getattr(req, 'tz', None)
+        return func(*args, **kwargs)
 
 from trac.web.api import IRequestHandler, IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import add_link, add_notice, add_script, add_stylesheet, \
@@ -227,12 +232,9 @@ class SmpVersionProject(Component):
         
         version.description = req.args.get('description', '')
 
-        if 'time' in req.args:
-            time = req.args.get('time', '')
-            if VERSION <= '0.12':
-                version.time = time and parse_date(time, req.tz, 'datetime') or None
-            else:
-                version.time = user_time(req, parse_date, time, hint='datetime') if time else None
+        time = req.args.get('time', '')
+        if time:
+            version.time = user_time(req, parse_date, time, hint='datetime')
         else:
             version.time = None
 
