@@ -8,6 +8,7 @@
 #
 
 import os.path
+import sys
 
 from pkg_resources import resource_filename
 
@@ -52,7 +53,8 @@ class ThemeEngineModule(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if (template, data) != (None, None):
+        if (template, data) != (None, None) or \
+                sys.exc_info() != (None, None, None):
             try:
                 theme = self.system.theme
             except ThemeNotFound, e:
