@@ -19,7 +19,7 @@ class RemoteTicketConditionalCreate(Component):
 
     def __init__(self):
         self.EMAIL_REGEX = re.compile(r"[^@]+@[^@]+\.[^@]+")
-        self.sep = re.compile('[\s,]+')
+        self.sep = re.compile(r'[\s,]+')
         self.defin_patt = re.compile(r'(\w+)\.(\w+)')
         self._rtccs = self._get_rtccs_config()
         self._intertracs = self._get_remotes_config()
@@ -43,19 +43,18 @@ class RemoteTicketConditionalCreate(Component):
     # converts users in ticket to email addresses for remote intertrac
     def _get_email_addrs(self, user):
         addr_list = []
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        for email in self.sep.split(user):
-            if not self.EMAIL_REGEX.match(email):
-                cursor.execute('''select value from session_attribute
-                                  where name = "email" and sid = %s''', (email,))
+        with self.env.db_query as db:
+            cursor = db.cursor()
+            for email in self.sep.split(user):
+                if not self.EMAIL_REGEX.match(email):
+                    cursor.execute('''select value from session_attribute
+                                    where name = "email" and sid = %s''', (email,))
                 result = ','.join(rec[0] for rec in cursor.fetchall())
                 if not result:
                     result = email
-            else:
-                result = email
-            addr_list.append(result)
-        db.commit()
+                else:
+                    result = email
+        addr_list.append(result)
         final_addr_list = ','.join(addr_list)
         return final_addr_list
 
@@ -121,12 +120,11 @@ class RemoteTicketConditionalCreate(Component):
                                                 ticket)
                 
             if new_status == 'closed':
-                db = self.env.get_db_cnx()
-                cursor = db.cursor()
-                cursor.execute('''select name, value from ticket_custom 
-                               where ticket = %s''', (ticket.id,))
-                result = cursor.fetchall()
-                db.commit()
+                with self.env.db_query as db:
+                    cursor = db.cursor()
+                    cursor.execute('''select name, value from ticket_custom 
+                                    where ticket = %s''', (ticket.id,))
+                    result = cursor.fetchall()
                 for x in self._rtccs.keys():
                     self.rtcc = self._get_rtcc(x)
                     if isinstance(self.rtcc, dict):
@@ -158,14 +156,13 @@ class RemoteTicketConditionalCreate(Component):
     # add the intertrac link to the ticket
     def _update_intertrac_link(self, rticket, rintertrac, ticket):
         intertrac_link = '%s:#%s' % (rintertrac, rticket)
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute('replace into ticket_custom values (%s,%s,%s)',
-                       (ticket.id,
-                        self.rtcc['local_cfield'],
-                        intertrac_link))
-        db.commit()
-    
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            cursor.execute('replace into ticket_custom values (%s,%s,%s)',
+                           (ticket.id,
+                            self.rtcc['local_cfield'],
+                            intertrac_link))
+
     def _get_remote_tracs(self):
         intertracs = [v for k, v in self._intertracs.items() 
                       if isinstance(v, dict) and 'url' in v]

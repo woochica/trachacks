@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='RemoteTicketConditionalCreatePlugin',
-    version='0.3.6',
+    version='0.3.7',
     keywords='trac plugin ticket conditional remote',
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',
