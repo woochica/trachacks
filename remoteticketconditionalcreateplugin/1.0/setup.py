@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='RemoteTicketConditionalCreatePlugin',
-    version='0.3.6',
+    version='0.3.7',
     keywords='trac plugin ticket conditional remote',
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',
@@ -17,7 +17,7 @@ Allows ticket linking via "escalating" between trac environments on same instanc
 """,
     license='BSD',
 
-    install_requires=['Trac >= 0.12dev', 'TracXmlRpc'],
+    install_requires=['Trac >= 0.13dev', 'TracXmlRpc'],
 
     packages=['remoteticketconditionalcreate'],
 
