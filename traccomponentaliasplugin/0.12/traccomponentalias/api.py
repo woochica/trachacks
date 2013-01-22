@@ -1,5 +1,5 @@
 '''
-Created on Jan 14, 2013
+Created on Dec 3, 2012
 
 @author: Zack Shahan
 '''
@@ -27,11 +27,12 @@ class TracComponentAlias(Component):
         
     def _update_component(self, ticket, calias):
         if self._validate(calias['custom_field'], ticket, calias):
-            with self.env.db_transaction as db:
-                cursor = db.cursor()
-                cursor.execute("update ticket set component = %s where id = %s",
-                               (calias['alias'], ticket.id))
-                        
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("update ticket set component = %s where id = %s",
+                           (calias['alias'], ticket.id))
+            db.commit()
+        
     def ticket_created(self, ticket):
         for v in self._calias.keys():
             calias = self._calias[v]
