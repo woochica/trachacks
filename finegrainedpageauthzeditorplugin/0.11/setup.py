@@ -15,9 +15,11 @@ setup(
     version = '0.12',
     author = 'Robert Martin',
     author_email = 'robert.martin@arqiva.com',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryan.j.ollos@gmail.com',
     url = '',
     description = 'Page Authz File management plugin for Trac',
-    license = 'BSD',
+    license = '3-Clause BSD',
 
     zip_safe=True,
     packages=['page_authz_policy_editor'],
