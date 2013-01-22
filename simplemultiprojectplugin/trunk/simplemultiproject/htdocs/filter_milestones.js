@@ -12,7 +12,7 @@ function smp_updateSelect(id, newOptions, selectedOption)
     select.empty();
 
     var addedOptions = [];
-    if (newOptions) {
+    if (options && newOptions) {
         $.each(newOptions, function(val, text) {
             var isSelected = (selectedOption && text == selectedOption);
             options[options.length] = new Option(text, text, isSelected, isSelected);
@@ -20,7 +20,7 @@ function smp_updateSelect(id, newOptions, selectedOption)
         });
     }
 
-    if (selectedOption && $.inArray(selectedOption, addedOptions) == -1) {
+    if (options && selectedOption && $.inArray(selectedOption, addedOptions) == -1) {
         options[options.length] = new Option(selectedOption, selectedOption, true, true);
     }
 
