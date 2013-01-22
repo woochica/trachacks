@@ -52,7 +52,7 @@ class ServiceException(_CompositeRpcError):
     """The called method threw an exception. Helpful to identify bugs ;o)"""
 
 RPC_TYPES = {int: 'int', bool: 'boolean', str: 'string', float: 'double',
-             datetime: 'dateTime.iso8601', Binary: 'base64',
+             datetime: 'DateTime', Binary: 'Binary',
              list: 'array', dict: 'struct', None : 'int'}
 
 def expose_rpc(permission, return_type, *arg_types):
