@@ -10,7 +10,7 @@ from trac.util.datefmt import format_datetime
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script
 from trac.wiki.api import IWikiSyntaxProvider
-from trac.util.text import quote_query_string
+from trac.util.text import unicode_urlencode
 
 
 class TextBox(Component):
@@ -111,9 +111,11 @@ class TextBox(Component):
             traclinks = '%s:%s' % (resource.realm, traclinks)
             # new ticket template
             if resource.id == None and resource.realm == 'ticket':
-                v = data['ticket'].values
-                keyvalue = ['%s=%s' % (k, quote_query_string(v[k])) for k in v.keys() if v[k] not in (None, '')]
-                traclinks = '[/newticket?%s]' % '&'.join(keyvalue)
+                query_string = unicode_urlencode(
+                    [(k, v) for k, v in data['ticket'].values.iteritems()
+                            if v not in (None, '')])
+                traclinks = '[/newticket?%s]' % query_string
+
             return stream | Transformer('//input[@id="proj-search"]').attr('value', traclinks).attr('size', '50')
         return stream
 
