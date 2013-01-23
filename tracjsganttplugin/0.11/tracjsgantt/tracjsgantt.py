@@ -3,7 +3,11 @@ import time
 from datetime import timedelta, datetime
 from operator import itemgetter, attrgetter
 
-from trac.util.datefmt import to_utimestamp, localtz
+from trac.util.datefmt import localtz
+try:
+    from trac.util.datefmt import to_utimestamp
+except ImportError:
+    from trac.util.datefmt import to_timestamp as to_utimestamp
 from trac.util.text import to_unicode
 from trac.util.html import Markup
 from trac.wiki.macros import WikiMacroBase
