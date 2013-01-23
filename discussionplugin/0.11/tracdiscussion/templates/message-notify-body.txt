@@ -8,6 +8,6 @@ Moderators: ${', '.join(discussion.forum.moderators)}
 ${discussion.message.body}
 
 --
-Message URL: <${abs_href.discussion('message', discussion.message.id)}>
+Message URL: <${abs_href.discussion('topic', discussion.topic.id)}#message${discussion.message.id}>
 $project.name <${project.url or abs_href()}>
 $project.descr
