@@ -76,7 +76,7 @@ class DiscussionTimeline(Component):
                 title = 'New reply on %s created' % (message['forum_name'],)
                 description = format_to_oneliner(self.env, context,
                   message['topic_subject'])
-                ids = ('message', message['id'])
+                ids = (('topic',message['topic']),'message', message['id'])
                 yield ('discussion unsolved', to_datetime(message['time'], utc),
                   message['author'], (title, description, ids))
 
@@ -88,7 +88,8 @@ class DiscussionTimeline(Component):
         if field == 'url':
            url = context.href.discussion(*ids)
            if len(ids) == 3:
-               url = '%s#%s' % (url, ids[2])
+               url = context.href.discussion(*ids[0])
+               url = '%s#%s%s' % (url,ids[1], ids[2])
            return url
         elif field == 'title':
            return tag(title)
