@@ -1,5 +1,5 @@
 (function($) {
-  // event source であるラベル の  id と一致するチェックボックスの状態を反転する
+  // flip checkboxes named same as event source's id
   function flip(event) {
     field = this.id.slice(6)
     $('input[name="' + field + '"]').each(function() {
@@ -8,15 +8,16 @@
     })
   }
 
-  // event source であるチェックボックスと同名のチェックボックスをすべてクリアし、sourceだけをチェックする
+  // enable only clicked checkbox and clear others
   function selectone(event) {
     that = (this.tagName == 'LABEL' ) ? $('#' + $(this).attr('for'))[0] : this;
     $('input[name="' + that.name + '"]').attr('checked', false);
     $(that).attr('checked', 'checked');
   }
 
-  // ページ内にある検索条件のチェックボックスにselectoneを、それらを束ねるラベルに flip をバインドする。
-  // すでにflipがバインドされている可能性があるので、一度外してみてから再バインドする。
+  // bind "selectone" above to checkboxes in page,
+  // bind "flip" above to labels in page.
+  // note: clear-and-bind to avoid double-bind.
   function binder() {
     checkboxes = $("#filters input[type='checkbox']");
     for (i in checkboxes) {
@@ -35,5 +36,3 @@
     }, 1000);
   })
 })(jQuery);
-
-// orgonchange = $($("#filters select[name^=add_filter_]")[0]).data('events')['change'][0].handler;
