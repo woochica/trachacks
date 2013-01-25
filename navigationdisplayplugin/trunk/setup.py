@@ -17,7 +17,7 @@ from setuptools import find_packages, setup
 # use package name as entry_points
 setup(
     name='Navigation Plugin', 
-    version='0.1.0',
+    version='0.2.0',
     author = 'Franz Mayer, Gefasoft AG',
     author_email = 'franz.mayer@gefasoft.de', 
     description = 'Adds user option for displaying navigation menu as fixed menu or other navigation options.',

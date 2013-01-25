@@ -205,7 +205,7 @@ of browser window (under DEVELOPMENT!!),
         rows = self.env.db_query("""
                 SELECT id FROM report ORDER BY %s %s
                 """ % ('id', 'DESC'))
-        reports = [id[0] for id in rows]
+        reports = [rid[0] for rid in rows]
         return reports
     
     def get_session_keys(self):
@@ -230,28 +230,18 @@ of browser window (under DEVELOPMENT!!),
         if logo:
             height = logo['height']
 #            self.log.debug("Logo height: %s" % height)
-            if not height:
-                # TODO: get logo-src and finding how big it is 
-                return stream
-            height += 8
-            stream |= Transformer('.//div[@id="mainnav"]') \
-                .attr('style', 'top: %ipx' % height)
-            height += 25
-            stream |= Transformer('.//div[@id="ctxtnav"]') \
-                .attr('style', 'top: %ipx' % height)
-            height += 10
-            #===================================================================
-            # stream |= Transformer('.//div[@id="pagepath"]') \
-            #    .attr('style', 'top: %ipx' % height)
-            #===================================================================
-            stream |= Transformer('.//div[@id="warning"]') \
-                .attr('style', 'top: %ipx' % height)
-            stream |= Transformer('.//div[@id="content"]') \
-                .attr('style', 'top: %ipx' % height)
-            stream |= Transformer('.//div[@id="altlinks"]') \
-                .attr('style', 'top: %ipx' % height)
-            stream |= Transformer('.//div[@id="footer"]') \
-                .attr('style', 'top: %ipx' % height)
+            if height:
+                style_css = '';
+                height += 25
+                style_css += '#mainnav, #ctxtnav, #pagepath {top: %ipx;}' % height
+                height += 50
+                style_css += '#content, #notice, #warning, #altlinks, #altlinks, #footer {top: %ipx;}' % height
+                style_css = '@media screen { %s }' % style_css
+                style_tag = tag.style(style_css, type="text/css")
+                stream |= Transformer('.//head').append(style_tag)
+            
+            # TODO: get logo-src and finding how big it is
+
             return stream
         # TODO: what if there has not been any image specified?
     
