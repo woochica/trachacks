@@ -342,8 +342,8 @@ class DiscussionWiki(Component):
             context.cursor.execute(sql, values)
             for row in context.cursor:
                 row = dict(zip(columns, row))
-                return tag.a(label, href = '%s#%s' % \
-                  (formatter.href.discussion('message', id), id), title = (
+                return tag.a(label, href = '%s#message%s' % \
+                  (formatter.href.discussion('topic', row['topic']), id), title = (
                   '%s: %s' % (row['forum_subject'], row['subject'])).replace(
                   '"', ''))
             return tag.a(label, href = formatter.href.discussion('message', id),
