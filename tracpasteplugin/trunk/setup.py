@@ -10,7 +10,7 @@
 from setuptools import setup
 
 PACKAGE = 'TracPaste'
-VERSION = '0.2.2'
+VERSION = '0.2.3'
 
 setup(
     name=PACKAGE,
