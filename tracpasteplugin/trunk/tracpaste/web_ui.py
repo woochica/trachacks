@@ -13,9 +13,9 @@ from trac.core import *
 from trac.perm import IPermissionRequestor
 from trac.resource import Resource, IResourceManager
 from trac.config import BoolOption, IntOption, ListOption
+from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider, \
                             add_stylesheet, add_link, Chrome
-from trac.web.main import IRequestHandler
 from trac.wiki.api import IWikiSyntaxProvider
 from trac.timeline.api import ITimelineEventProvider
 from trac.util.datefmt import http_date
@@ -23,7 +23,7 @@ from trac.util.translation import _
 from trac.mimeview.pygments import get_all_lexers
 
 # import modules from this package
-from model import Paste, get_pastes
+from tracpaste.model import Paste, get_pastes
 
 
 class TracpastePlugin(Component):
@@ -291,3 +291,53 @@ class TracpastePlugin(Component):
             return False
         else:
             return True
+
+class BloodhoundPaste(Component):
+    """
+    Bootstrap UI suitable for integrating TracPastePlugin with 
+    Apache(TM) Bloodhound .
+
+    Note: It is possible to enable this component even if Bloodhound is not
+    installed. If that was the case you'll get a warning and nothing else 
+    will happen.
+    """
+    implements(IRequestFilter)
+
+    def __init__(self):
+        # Do not fail if Bloodhound is not installed
+        try:
+            import bhtheme.theme
+        except ImportError:
+            self.bhtheme = None
+        else:
+            # FIXME: Remove after closing bh:ticket:360
+            if not hasattr(bhtheme.theme.BloodhoundTheme, 'is_active_theme'):
+                def is_active_theme(self):
+                    """
+                    Determine whether target theme is active
+                    """
+                    from themeengine.api import ThemeEngineSystem
+
+                    is_active = False
+                    active_theme = ThemeEngineSystem(self.env).theme
+                    if active_theme is not None:
+                        this_theme_name = self.get_theme_names().next()
+                        is_active = active_theme['name'] == this_theme_name
+                    return is_active
+
+                bhtheme.theme.BloodhoundTheme.is_active_theme = is_active_theme
+
+            self.bhtheme = self.env[bhtheme.theme.BloodhoundTheme]
+
+    # IRequestFilter methods
+
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if self.bhtheme is not None and self.bhtheme.is_active_theme() and \
+                template == 'pastebin.html':
+            return 'bh_pastebin.html', data, content_type
+        else:
+            return template, data, content_type
+

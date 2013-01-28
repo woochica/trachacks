@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="layout.html" />
+  <xi:include href="macros.html" />
+  <head>
+    <title>Pastebin</title>
+  </head>
+  <body>
+    <div id="content" class="row pastebin">
+      <py:choose test="mode">
+        <py:when test="'new'">
+          <div class="${'span8' if recent else 'span12'}">
+            <py:choose test="replyto">
+                <h1 py:when="'0'">New Paste</h1>
+                <h1 py:otherwise="">Reply To Paste #${replyto}</h1>
+            </py:choose>
+          <py:choose test="'PASTEBIN_CREATE' in req.perm('pastebin')">
+            <form py:when="True" action="${href.pastebin()}" method="post">
+              <xi:include href="widget_alert.html" py:if="error" 
+                  py:with="msglabel = 'Bad request' ; msgbody = 'You have to supply some data for pasting.'" />
+              <div class="well">
+                <label>Title
+                  <input type="text" name="title" value="${title}" class="input-xxlarge" placeholder="Title"/>
+                </label>
+                <div class="form-horizontal">
+                  Highlighter
+                  <select name="mimetype" class="input-large">
+                    <option py:for="m, name in mimetypes" value="${m}" selected="${mimetype == m and 'selected' or None}">${name}</option>
+                  </select>
+                  <py:choose test="perm.username == 'anonymous'">
+                    <py:when test="True">
+                      Author
+                      <input type="text" name="author" value="${author}" class="input-medium" placeholder="username"/>
+                    </py:when>
+                    <py:otherwise>
+                      <input type="hidden" name="author" value="${perm.username}" />
+                    </py:otherwise>
+                  </py:choose>
+                  <input type="submit" value="Paste!" class="btn btn-primary pull-right" />
+                </div>
+              </div>
+              <textarea name="data" rows="12" cols="80" placeholder="Paste some text. Select target syntax for highlighting">${data}</textarea>
+              <div class="buttons">
+              </div>
+            </form>
+            <xi:include href="widget_alert.html" py:otherwise=""
+                py:with="msgtype = 'error' ; msglabel = 'Forbidden' ; msgbody = 'Sorry, you do not have permission to paste.' " />
+          </py:choose>
+          </div>
+          <div class="span4" py:if="recent">
+            <h3>Recent Pastes</h3>
+            <table>
+              <tr py:for="p in recent">
+                <td>
+                  <i class="icon-book"></i>
+                  <a href="${href.pastebin(p.id)}">${p.title}</a><br/>
+                  <small>by ${format_author(p.author)}, ${dateinfo(p.time)} ago</small>
+                </td>
+              </tr>
+            </table>
+          </div>
+        </py:when>
+        <py:when test="'show'">
+          <div class="span12">
+            <h1>${paste.title}</h1>
+            <dl class="information dl-horizontal">
+              <dt style="margin: 0px">Pasted by</dt>
+              <dd>
+                <em>${format_author(paste.author)}</em>, ${dateinfo(paste.time)} ago
+              </dd>
+              <dt style="margin: 0px">Content-Type:</dt>
+              <dd><em>${paste.mimetype}</em><br /></dd>
+              <dt style="margin: 0px">Highlighter:</dt>
+              <dd><em>${highlighter}</em></dd>
+            </dl>
+            <div class="buttons">
+              <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+                <input type="hidden" name="reply" value="${paste.id}" />
+                <button type="submit" class="btn btn-small" >
+                  <i class="icon-share-alt"></i> Reply to paste
+                </button>
+              </form>
+              <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+                <button type="submit" class="btn btn-small" >
+                  <i class="icon-plus"></i> New paste
+                </button>
+              </form>
+              <form py:if="'PASTEBIN_DELETE' in req.perm('pastebin')" action="${href.pastebin()}" method="get" onsubmit="return confirm('Do you really want to delete this paste?')">
+                <input type="hidden" name="delete" value="${paste.id}" />
+                <button type="submit" class="btn-link btn-small">
+                  <i class="icon-trash"></i> Delete
+                </button>
+              </form>
+            </div>
+            <br />
+            <div id="paste" class="searchable">
+              ${paste.render(req)}
+            </div>
+            <br />
+            <div class="buttons">
+              <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+                <input type="hidden" name="reply" value="${paste.id}" />
+                <button type="submit" class="btn btn-small" >
+                  <i class="icon-share-alt"></i> Reply to paste
+                </button>
+              </form>
+              <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+                <button type="submit" class="btn btn-small" >
+                  <i class="icon-plus"></i> New paste
+                </button>
+              </form>
+              <form py:if="'PASTEBIN_DELETE' in req.perm('pastebin')" action="${href.pastebin()}" method="get" onsubmit="return confirm('Do you really want to delete this paste?')">
+                <input type="hidden" name="delete" value="${paste.id}" />
+                <button type="submit" class="btn-link btn-small">
+                  <i class="icon-trash"></i> Delete
+                </button>
+              </form>
+            </div>
+          </div>
+        </py:when>
+        <py:when test="'delete'">
+          <div class="span12">
+            <h1>Paste Deleted</h1>
+            <xi:include href="widget_alert.html" 
+                py:with="msgtype = 'success' ; mslabel = 'Success' ;
+                msgbody = 'Paste #%s successfully deleted.' % (paste.id,)" />
+            <div class="buttons">
+              <form py:if="'PASTEBIN_CREATE' in req.perm('pastebin')" action="${href.pastebin()}" method="get">
+                <button type="submit" value="New Paste" class="btn btn-small">
+                  <i class="icon-plus"></i> New Paste
+                </button>
+              </form>
+            </div>
+          </div>
+        </py:when>
+      </py:choose>
+    </div>
+  </body>
+</html>
