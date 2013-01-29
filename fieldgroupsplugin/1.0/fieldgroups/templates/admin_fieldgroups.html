@@ -1,0 +1,135 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Field Groups</title>
+    <!--!
+    NOTE: the DataTables jQuery plugin used to display the ticket fields has
+          a quirk where form elements (such as checkboxes) within the table 
+          do not get their values sent if they are not being displayed. The
+          workaround used here is to use the fnGetHiddenNodes API plugin to
+          find the checkboxes that are selected but not displayed and place
+          them into a hidden div so that their value is passed to the server
+          on submit.
+    -->
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        var table = $("#fields").dataTable({
+          "iDisplayLength": 15,
+          "aLengthMenu": [[15, 25, 50, -1], [15, 25, 50, "All"]]
+        });
+        $('#modfieldgroup').submit(function() {
+          $(table.fnGetHiddenNodes()).find('input:checked').appendTo('#hidden_fields');
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <h2 i18n:msg="label_plural">Manage Field Groups</h2>
+
+    <py:choose test="view">
+      <form py:when="'detail'" class="mod" id="modfieldgroup" method="post" action="">
+        <fieldset width="50%">
+          <legend i18n:msg="label_singular">Modify Field Group</legend>
+          <div class="field">
+            <label>Label: <input type="text" name="label" value="${fieldgroup.label}" /></label>
+          </div>
+          <div>
+            <table id="fields" class="display">
+              <thead>
+                <tr>
+                  <th class="sel">&nbsp;</th>
+                  <th style="vertical-align:middle;text-align:left;white-space:nowrap;">Label</th>
+                  <th style="vertical-align:middle;white-space:nowrap;">Type</th>
+                  <th style="vertical-align:middle;white-space:nowrap;">Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr py:for="field in fields">
+                  <td><input type="checkbox" name="sel" value="${field.name}" 
+                             checked="${field.name in fieldgroup.fields or None}" /></td>
+                  <td style="vertical-align:middle;white-space:wrap;width:100%;">
+                    <a href="${req.href.admin('ticket', 'customfields', field.name)}">${field.label}</a>
+                  </td>
+                  <td style="vertical-align:middle;white-space:nowrap;">${field.type}</td>
+                  <td style="text-align:center;vertical-align:middle;white-space:nowrap;">${field.order}</td>
+                </tr>
+                <div id="hidden_fields" style="display:none;">
+                </div>
+              </tbody>
+            </table>
+          </div>
+          <br/>
+          <div class="buttons" style="float:left;">
+            <input type="submit" name="cancel" value="${_('Cancel')}"/>
+            <input type="submit" name="save" value="${_('Save')}"/>
+          </div>
+        </fieldset>
+      </form>
+
+      <py:otherwise>
+        <form class="addnew" id="addfieldgroup" method="post" action="">
+          <fieldset>
+            <legend i18n:msg="label_singular">Add Field Group</legend>
+            <div class="field">
+              <label>Label:<input type="text" name="label" id="label"/></label>
+            </div>
+            <div class="buttons">
+              <input type="submit" name="add" value="${_('Add')}"/>
+            </div>
+          </fieldset>
+        </form>
+
+        <py:choose>
+          <form py:when="fieldgroups" id="fieldgrouptable" method="post" action="">
+            <table class="listing" id="fieldgrouplist">
+              <thead>
+                <tr>
+                  <th class="sel">&nbsp;</th>
+                  <th style="white-space:nowrap;">Label</th>
+                  <th width="100%">Fields</th>
+                  <th>Order</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr py:for="fieldgroup in fieldgroups">
+                  <span py:with="alignment = len(fieldgroup.fields) > 1 and 'top' or 'middle'">
+                  <td style="vertical-align:${alignment};"><input type="checkbox" name="sel" value="${fieldgroup.name}" /></td>
+                  <td style="vertical-align:${alignment};white-space:nowrap;"><a href="${panel_href(fieldgroup.name)}">${fieldgroup.label}</a></td>
+                  <td style="vertical-align:${alignment};white-space:pre-wrap;">${'\n'.join([f['label'] for f in fieldgroup.fields])}</td>
+                  <td class="default" style="vertical-align:${alignment};">
+                    <select name="order_${fieldgroup.name}">
+                      <option py:for="idx in range(len(fieldgroups)+1)"
+                              selected="${idx==fieldgroup.order or None}">${idx}</option>
+                    </select>
+                  </td>
+                  </span>
+                </tr>
+              </tbody>
+            </table>
+            <div class="buttons">
+              <input type="submit" name="remove" value="${_('Remove selected items')}" />
+              <input type="submit" name="apply" value="${_('Apply changes')}" />
+            </div>
+            <p class="help">
+              You can remove all items from this list to completely hide this
+              field from the user interface.
+            </p>
+          </form>
+
+          <p py:otherwise="" class="help">
+            As long as you don't add any items to the list, this field
+            will remain completely hidden from the user interface.
+          </p>
+        </py:choose>
+      </py:otherwise>
+    </py:choose>
+  </body>
+
+</html>

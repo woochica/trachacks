@@ -1,0 +1,49 @@
+#ticketfields_ticket_box div.trac-resizable, #field-description { width: 100% }
+
+#ticket table.ticketfields_ticket_box {
+ clear: both;
+ border-top: 1px solid #dd9;
+ border-collapse: collapse;
+ table-layout: fixed;
+ width: 100%;
+}
+#ticket table.ticketfields_ticket_box tr { border-bottom: 1px dotted #eed }
+#ticket table.ticketfields_ticket_box td, #ticket table.ticketfields_ticket_box th {
+ font-size: 80%;
+ padding: .5em 1em;
+ vertical-align: middle;
+}
+#ticket table.ticketfields_ticket_box th {
+ color: #663;
+ font-weight: normal;
+ text-align: left;
+ width: 35%;
+ vertical-align: text-top;
+}
+#ticket table.ticketfields_ticket_box td { width: 65% }
+#ticket table.ticketfields_ticket_box td p:first-child { margin-top: 0 }
+#ticket table.ticketfields_ticket_box td p:last-child { margin-bottom: 0 }
+#ticket table.ticketfields_ticket_box .description { border-top: 1px solid #dd9 }
+
+#ticketfields_ticket_box { white-space: nowrap; line-height: 160%; padding: .5em }
+#ticketfields_ticket_box table { border-spacing: 0; width: 100%; padding: 0 .5em }
+#ticketfields_ticket_box table th {
+ padding: .4em;
+ text-align: right;
+ width: 35%;
+ vertical-align: middle;
+}
+#ticketfields_ticket_box table th.col2 { border-left: 1px dotted #d7d7d7 }
+#ticketfields_ticket_box table td { vertical-align: middle; width: 65% }
+#ticketfields_ticket_box table td.fullrow { vertical-align: middle; width: 65% }
+#ticket table.ticketfields_ticket_box th.wide { width: 65% }
+#ticket table.ticketfields_ticket_box td.align_right { text-align: right; vertical-align: middle }
+#ticket table.ticketfields_ticket_box td.align_left { text-align: left; vertical-align: middle }
+#ticket table.ticketfields_ticket_box caption {
+ /*border-bottom: 1px solid #dd9;*/
+ color: #663;
+ font-size: 100%;
+ font-weight: normal;
+ text-align: left;
+}
+

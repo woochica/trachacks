@@ -1,0 +1,120 @@
+<!--!
+Ticket Box (ticket fields along with description).
+
+Arguments:
+ - ticket: the ticket to be shown
+ - fields: ticket field metadata
+ - description_change: metadata about changes in the description
+ - can_append: True if the user is allowed to append to tickets
+ - preview_mode: if True, show the "draft" background
+ - reporter_link=None: rendered link for the reporter field
+ - owner_link=None: rendered link for the owner field
+-->
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xmlns:i18n="http://genshi.edgewall.org/i18n" class="ticket">
+  <py:for each="g in field_groups">
+    <fieldset id="${'f_'+g['name']}"
+              py:with="myfields = sorted(g['fields'], key=lambda f: f.order)">
+      <legend>${g['label']}</legend>
+      <table cols="4" style="border:0px none;">
+        <py:for each="field in myfields">
+          <py:choose test="field.type" py:if="field">
+            <py:when test="'textarea'">
+              <tr>
+                <th colspan="4" style="text-align:left;white-space:nowrap;" class="fullrow"> 
+                  <label for="field-${field.name}" py:if="field"
+                         py:strip="field.type == 'radio'" i18n:msg="field">${field.edit_label or field.label or field.name}:</label>
+                </th>
+              </tr>
+              <tr py:with="value = ticket.get_value_or_default(field.name)">
+                <th colspan="4" class="fullrow" style="text-align:left;padding:0;">
+                  <textarea id="field-${field.name}" name="field_${field.name}" 
+                            wrap="off" cols="999" rows="1" class=""
+                            style="resize:vertical;overflow:auto;width:99%;max-width:99%;margin:0;">
+${value}</textarea>
+                </th>
+              </tr>
+            </py:when>
+            <py:when test="'checkbox'">
+              <tr py:with="value = ticket.get_value_or_default(field.name)" style="vertical-align:middle;">
+                <th class="col1" colspan="1" style="text-align:left;" width="1%">
+                  <span>
+                    <input type="checkbox" id="field-${field.name}" name="field_${field.name}" class="${None}"
+                           checked="${value == '1' and 'checked' or None}" value="1" />
+                    <input type="hidden" name="field_checkbox_${field.name}" value="1" class="${None}" />
+                  </span>
+                </th>
+                <td class="col1" colspan="3" style="text-align:left;"> 
+                  ${field.edit_label or field.label or field.name}
+                </td>
+              </tr>
+            </py:when>
+            <py:when test="'radio'">
+              <!-- FIXME: rows are too close together, need a divider or padding -->
+              <tr py:with="value = ticket.get_value_or_default(field.name)">
+                <th class="fullrow" colspan="3" style="text-align:left;width:100%;"> 
+                  <label for="field-${field.name}"
+                         py:strip="field.type == 'radio'" i18n:msg="field">${field.edit_label or field.label or field.name}:</label>
+                </th>
+                <td class="fullrow" colspan="1" style="text-align:left;white-space:nowrap;"> 
+                    <label py:for="idx, option in enumerate(field.options)">
+                       <input type="radio" name="field_${field.name}" value="${option}"
+                              checked="${value == option or None}" class="${None}"/>
+                       ${option}<br/>
+                      </label>
+                </td>
+              </tr>
+            </py:when>
+            <py:otherwise>
+              <tr py:with="value = ticket.get_value_or_default(field.name);">
+                <th class="col1" colspan="1" style="text-align:left;white-space:nowrap;" py:if="field.type != 'checkbox'"> 
+                  <label for="field-${field.name}" py:if="field"
+                         py:strip="field.type == 'radio'" i18n:msg="field">${field.edit_label or field.label or field.name}:</label>
+                </th>
+                <td class="fullrow" colspan="3" style="text-align:left;width:100%;">
+                  <py:choose test="field.type" py:if="field">
+                    <select py:when="'select'" id="field-${field.name}" name="field_${field.name}" class="${None}">
+                      <option py:if="field.optional"></option>
+                      <option py:for="option in field.options"
+                              selected="${value == option or None}"
+                              value="$option" py:content="option"></option>
+                      <optgroup py:for="optgroup in field.optgroups"
+                                 py:if="optgroup.options"
+                                 label="${optgroup.label}">
+                         <option py:for="option in optgroup.options"
+                                 selected="${value == option or None}"
+                                 value="$option" py:content="option"></option>
+                      </optgroup>
+                    </select>
+                    <py:otherwise><!--! Text input fields -->
+                      <py:choose>
+                         <span py:when="field.cc_entry"><!--! Special case for Cc: field -->
+                           <em>${field.cc_entry}</em>
+                           <input type="checkbox" id="field-cc" name="cc_update"
+                             title="This checkbox allows you to add or remove yourself from the CC list."
+                             checked="${field.cc_update}" />
+                         </span>
+                         <!--! Cc: when TICKET_EDIT_CC is allowed -->
+                         <span py:when="field.name == 'cc'">
+                           <input  type="text" id="field-${field.name}"
+                             title="Space or comma delimited email addresses and usernames are accepted."
+                             name="field_${field.name}" value="${value}" />
+                         </span>
+                         <!--! All the other text input fields -->
+                         <input py:otherwise="" type="text" id="field-${field.name}"
+                           name="field_${field.name}" value="${value}" class="${'fullrow'}"/>
+                      </py:choose>
+                    </py:otherwise>
+                  </py:choose>
+                </td>
+
+              </tr>
+            </py:otherwise>
+          </py:choose>
+        </py:for>
+      </table>
+    </fieldset>
+  </py:for>
+</div>

@@ -1,0 +1,50 @@
+<!--!
+Ticket Box (ticket fields along with description).
+
+Arguments:
+ - ticket: the ticket to be shown
+ - fields: ticket field metadata
+ - description_change: metadata about changes in the description
+ - can_append: True if the user is allowed to append to tickets
+ - preview_mode: if True, show the "draft" background
+ - reporter_link=None: rendered link for the reporter field
+ - owner_link=None: rendered link for the owner field
+-->
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     class="${preview_mode and 'ticketdraft' or None}">
+  <div class="description">
+  <py:for each="g in field_groups">
+    <table py:with="ticket_fields = g['fields']"
+           class="ticketfields_ticket_box" style="margin-bottom:5px;">
+      <caption class="">${g['label']}</caption>
+      <tr py:for="row in group(ticket_fields, 1, lambda f: f.type != 'textarea')"
+        py:with="fullrow = len(row) == 1">
+        <py:for each="idx, field in enumerate(row)">
+          <th py:if="idx == 0 or not fullrow"
+              id="${field and 'h_' + field.name or None}" style="width:100%;">
+            <py:if test="field"><i18n:msg params="field">${field.label or field.name}:</i18n:msg></py:if>
+          </th>
+          <td py:if="idx == 0 or not fullrow"
+              headers="${field and 'h_' + field.name or None}"
+              class="${field and field.name in ('cc', 'keywords') and 'searchable' or 'align_right'}"
+              colspan="${fullrow and 3 or None}"
+              py:with="value = ticket.get_value_or_default(field.name)" style="white-space:nowrap;">
+            <py:if test="field">
+              <py:choose test="">
+                <py:when test="(field.type == 'checkbox') and (value == '1')"><span style="color:green;font-style:italic;">complete</span></py:when>
+                <py:when test="(field.type == 'checkbox')"><span style="color:red;font-style:italic;">incomplete</span></py:when>
+                <py:when test="'rendered' in field and field.format == 'wiki'">${field.rendered}</py:when>
+                <py:otherwise>${ticket[field.name]}</py:otherwise>
+              </py:choose>
+            </py:if>
+          </td>
+        </py:for>
+      </tr>
+    </table>
+    <br py:if="not ticket.description" style="clear: both" />
+  </py:for>
+  </div>
+</div>
