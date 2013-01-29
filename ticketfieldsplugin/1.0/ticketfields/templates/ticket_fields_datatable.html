@@ -1,0 +1,45 @@
+<!--!
+TicketFields Admin (select fields to be displayed).
+-->
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:xi="http://www.w3.org/2001/XInclude"
+     xmlns:i18n="http://genshi.edgewall.org/i18n" class="ticket">
+  <script xmlns:py="http://genshi.edgewall.org/" type="text/javascript">
+    jQuery(document).ready(function($) {
+      var table = $('#ticket_fields_datatable').dataTable({
+        "iDisplayLength": 10,
+        "aLengthMenu": [[10, 20, 50, -1], [10, 20, 50, "All"]],
+      });
+      $('#ticket_fields_datatable tbody tr').live('click', function() {
+          var selected_fields = $(table.fnGetCheckedNodes()).find('input:checked');
+          var ticket_fields = fnGetNodeValues(selected_fields);
+          $("#field-ticket_fields").val(ticket_fields);
+      });
+    });
+  </script>
+  <fieldset id="ticket_fields_admin">
+    <legend>Ticket Fields</legend>
+    <table id="ticket_fields_datatable" class="display">
+      <thead>
+        <tr>
+          <th class="sel">&nbsp;</th>
+          <th style="vertical-align:middle;text-align:left;white-space:nowrap;">Label</th>
+          <th style="vertical-align:middle;white-space:nowrap;">Type</th>
+          <th style="vertical-align:middle;white-space:nowrap;">Order</th>
+        </tr>
+      </thead>
+      <tbody py:with="allfields = [f for f in available_fields]">
+        <tr py:for="field in allfields">
+          <td><input type="checkbox" name="sel_ticket_fields" value="${field.name}" 
+                     checked="${field.name in ticket_fields or None}" /></td>
+          <td style="vertical-align:middle;white-space:wrap;width:100%;">
+            <a href="${req.href.admin('ticket', 'customfields', field.name)}">${field.label}</a>
+          </td>
+          <td style="vertical-align:middle;white-space:nowrap;">${field.type}</td>
+          <td style="text-align:center;vertical-align:middle;white-space:nowrap;">${field.order}</td>
+        </tr>
+      </tbody>
+    </table>
+  </fieldset>
+</div>
