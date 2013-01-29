@@ -8,6 +8,7 @@ from pkg_resources import ResourceManager
 from trac.cache import cached
 from trac.core import Component, implements
 from trac.mimeview import Context
+from trac.util.translation import get_negotiated_locale
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.wiki.api import IWikiChangeListener, WikiSystem
@@ -40,6 +41,11 @@ class FieldTooltip(Component):
                       'accept': '-',
                       'reopen': '-',
                       }
+    # for locale=ja
+    _default_pages.update({
+                      'reporter.ja': 'チケットの作成者',
+                      # TODO: add more translated description
+                      })
     # blocking, blockedby for MasterTicketsPlugin, TicketRelationsPlugin
     # position for QueuesPlugin
     # estimatedhours for EstimationToolsPlugin, TracHoursPlugin, SchedulingToolsPlugin
@@ -130,6 +136,10 @@ class FieldTooltipFilter(object):
     def __init__(self, parent, req):
         self.parent = parent
         self.context = Context.from_request(req)
+        preferred = self.context.req.session.get('language')
+        default = self.parent.env.config.get('trac', 'default_language', '')
+        self.negotiated = get_negotiated_locale([preferred, default] +
+                                           self.context.req.languages)
 
     def __call__(self, stream):
         after_stream = {}
@@ -158,15 +168,15 @@ class FieldTooltipFilter(object):
             add title and rel attribute to the element.
                        またそのとき、after_stream[depth] に DIV 要素を格納します。
         """
-        text = None
         element, attrs = data
         attr_value = attrs.get(attr_name)
         if element.localname == tagname and attr_value and attr_value.startswith(prefix):
             attr_value = attr_value[len(prefix):]
-            if attr_value in self.parent.pages:
-                text = self.parent.pages.get(attr_value)
-            elif attr_value in FieldTooltip._default_pages:
-                text = FieldTooltip._default_pages.get(attr_value)
+            attr_value_negotiated = "%s.%s" % (attr_value, self.negotiated)
+            text = self.parent.pages.get(attr_value_negotiated,
+                   self.parent.pages.get(attr_value,
+                   FieldTooltip._default_pages.get(attr_value_negotiated,
+                   FieldTooltip._default_pages.get(attr_value))))
             if text:
                 attrs |= [(QName('title'), attr_value + ' | ' + text)]
                 attrs |= [(QName('rel'), '#tooltip-' + attr_value)]

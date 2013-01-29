@@ -5,7 +5,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='FieldTooltip',
-    version='0.4',
+    version='0.5',
     license='Modified BSD',
     author='MATOBA Akihiro',
     author_email='matobaa+trac-hacks@gmail.com',
