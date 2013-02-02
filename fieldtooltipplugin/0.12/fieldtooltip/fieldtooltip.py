@@ -154,10 +154,7 @@ class FieldTooltipFilter(object):
     def __init__(self, parent, req):
         self.parent = parent
         self.context = Context.from_request(req)
-        preferred = self.context.req.session.get('language')
-        default = self.parent.env.config.get('trac', 'default_language', '')
-        self.negotiated = get_negotiated_locale([preferred, default] +
-                                           self.context.req.languages)
+        self.locale = self.context.req.locale
 
     def __call__(self, stream):
         after_stream = {}
@@ -190,10 +187,10 @@ class FieldTooltipFilter(object):
         attr_value = attrs.get(attr_name)
         if element.localname == tagname and attr_value and attr_value.startswith(prefix):
             attr_value = attr_value[len(prefix):]
-            attr_value_negotiated = "%s.%s" % (attr_value, self.negotiated)
-            text = self.parent.pages.get(attr_value_negotiated,
+            attr_value_locale = "%s.%s" % (attr_value, self.locale)
+            text = self.parent.pages.get(attr_value_locale,
                    self.parent.pages.get(attr_value,
-                   FieldTooltip._default_pages.get(attr_value_negotiated,
+                   FieldTooltip._default_pages.get(attr_value_locale,
                    FieldTooltip._default_pages.get(attr_value))))
             if text:
                 attrs |= [(QName('title'), attr_value + ' | ' + text)]
