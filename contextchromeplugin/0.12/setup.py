@@ -20,7 +20,8 @@ setup(
         'trac.plugins': [
             'ContextChrome = contextchrome.style',
             'DecayedWiki = decayed.wiki',
-            'z.LinkDecorator = contextchrome.linkdeco',
+            'ContextChrome.TicketValidator = contextchrome.ticketvalidator',
+            'ContextChrome.LinkDecorator = contextchrome.linkdeco',
         ]
     },
 )

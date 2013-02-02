@@ -118,7 +118,7 @@ class InternalStylesheet(Component):
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        add_stylesheet(req, "contextchrome/css/newicon.css")
+        add_stylesheet(req, "contextchrome/css/contextchrome.css")
         return handler
 
     def post_process_request(self, req, template, data, content_type):

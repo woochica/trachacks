@@ -1,0 +1,7 @@
+.wiki.new:after {
+	content: url("../new.png")
+}
+
+.tracvalidator {
+	background-color: #ffcccc;
+}
