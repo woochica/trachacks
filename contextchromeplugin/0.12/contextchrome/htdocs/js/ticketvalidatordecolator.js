@@ -25,7 +25,7 @@
 		newstate = workflow[action].newstate
 		currentstate = $(".trac-status a").get(0).innerText
 		for (field in rules) {
-			if (!(status in rules[field]) 
+			if (!('status' in rules[field]) 
 			|| rules[field].status == newstate 
 			|| newstate == '*' && rules[field].status == currentstate) {
 				$('#field-' + field).addClass('tracvalidator');
