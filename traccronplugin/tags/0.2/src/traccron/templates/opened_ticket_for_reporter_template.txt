@@ -1,0 +1,17 @@
+Hello,
+
+The milestone $milestone is near to be closed. Its due date is ${due_date}.
+
+You receive this mail because you are the reporter of some tickets which are still
+opened for the above mentioned milestone. These tickets will probably not be part of 
+this milestone. 
+
+These ticket are
+
+$tickets_list
+
+Best regard.
+
+--
+$project.name <${project.url or abs_href()}>
+$project.descr

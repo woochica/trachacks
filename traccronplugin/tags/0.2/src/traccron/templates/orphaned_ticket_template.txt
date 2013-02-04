@@ -1,0 +1,10 @@
+Hello,
+
+You have $ticket_count orphaned tickets.
+
+This mean that those tickets are new but nobody is assigned to them since more than $delay day(s)
+Most of the time it sound like nobody is working on your tickets.
+
+This is perhaps a normal situation but you should ask someone to deal with them.
+
+Best regard.

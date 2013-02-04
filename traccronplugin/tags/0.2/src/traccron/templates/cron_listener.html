@@ -1,0 +1,52 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head>
+
+
+<title>Trac Cron Scheduler</title>
+</head>
+
+<body>
+
+
+	<form id="traccron_admin" action="" method="post">
+    	<fieldset>
+      		<legend>Listener list</legend>
+			<table class="listing" width="100%"  border="1">
+    			<thead>
+    				<tr>    			
+	    				<th>id</th>
+    	 				<th>description</th>
+    	 				<th class="sel">active</th>    	 				
+    	 			</tr>
+    	 		</thead>
+    	 		<tbody>
+    	 			<tr py:for="listener in listener_list">
+    	 				<td>${listener['id']}</td>
+    	 				<td>${listener['description']}</td>
+    	 				<td>
+    	 					<py:choose test="listener['enabled']">    	   				 	
+		                 		<input py:when="True" type="checkbox" name="${listener['id']}.enabled" value="True" checked=""/>
+		                 		<py:otherwise>
+		                 			<input type="checkbox" name="${listener['id']}.enabled" value="True"/>
+		                 		</py:otherwise>
+		                 	</py:choose>
+    	 				
+    	 				</td>
+    	 			</tr>
+    	 		</tbody>
+    	 	</table>      		
+     	</fieldset>
+     	<input type="submit" name="save" value="save" accesskey="s" />
+	</form>
+
+</body>
+
+</html>

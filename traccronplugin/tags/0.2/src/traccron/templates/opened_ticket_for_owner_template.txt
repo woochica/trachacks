@@ -1,0 +1,18 @@
+Hello,
+
+The milestone $milestone is near to be closed. Its due date is ${due_date}.
+
+You receive this mail because you are the owner of some tickets which are still
+opened for the above mentioned milestone.
+
+Please consider to close them before the due date or postpone them to another milestone.
+
+These ticket are
+
+$tickets_list
+
+Best regard.
+
+--
+$project.name <${project.url or abs_href()}>
+$project.descr

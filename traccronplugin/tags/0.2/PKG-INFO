@@ -1,0 +1,12 @@
+Metadata-Version: 1.0
+Name: TracCronPlugin
+Version: 0.2
+Summary: Trac task scheduler  plugin for Trac.
+Home-page: http://trac-hacks.org/wiki/TracCronPlugin
+Author: Thierry Bressure
+Author-email: thierry@bressure.net
+License: BSD
+Description: UNKNOWN
+Keywords: trac cron scheduler plugin
+Platform: UNKNOWN
+Classifier: Framework :: Trac
