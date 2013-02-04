@@ -1,0 +1,103 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n">
+  <xi:include href="admin.html" />
+
+<head>
+
+
+<title>Trac Cron Scheduler</title>
+</head>
+
+<body>
+
+
+<form id="traccron_admin" action="" method="post">
+
+    <fieldset>
+    	<legend>ticker_enabled</legend>
+    	<input type="text" name="ticker_enabled" value="$ticker_enabled"/>    	
+    	<p class="hint">
+              Possible value are True, False, On, Off,1 or 0 
+        </p>    	
+    </fieldset>
+     <fieldset>
+    	<legend>ticker_interval</legend>
+    	<input type="text" name="ticker_interval" value="$ticker_interval"/>
+    	<p class="hint">
+              minute(s) between each ticker wake up 
+        </p>    	
+    </fieldset>
+    <fieldset>
+    	<legend>Task list</legend>
+    	<table class="listing" width="100%"  border="1">
+    		<thead>
+    			<tr>    			
+    				<th>id</th>
+    	 			<th>description</th>
+    	 			<th class="sel">active</th>
+    	 			<th>schedule</th>
+    	 		</tr>
+    	 	</thead>
+    	 	<tbody>
+    	 		<tr py:for="task in task_list">
+	    	   		<td>${task['id']}<a href="${href.traccron('runtask',[('task',task['id'])])}" title="Run now">&rarr;</a></td>
+    	   			<td>${task['description']}</td>
+    	   			<td>
+    	   				 <py:choose test="task['enabled']">    	   				 	
+		                 	<input py:when="True" type="checkbox" name="${task['id']}.enabled" value="True" checked=""/>
+		                 	<py:otherwise>
+		                 		<input type="checkbox" name="${task['id']}.enabled" value="True"/>
+		                 	</py:otherwise>
+		                 </py:choose>
+                	</td>
+    	   			<td>
+	    	   			<table class="listing" width="100%">
+	    	   				<thead>
+  		  						<tr>    			
+    								<th class="sel">Used</th>
+    								<th>type</th>
+    	 							<th>value</th>    	 							
+    	 							<th>arguments</th>
+    	 						</tr>
+    	 					</thead>
+    	   					<tbody>
+    	   						<tr py:for="type in task['schedule_list'].keys()">
+    	   						    <td>
+    	   						     	<py:choose test="task['schedule_list'][type]['enabled']">    	   						     		    	 
+		                 					<input py:when="True" type="checkbox" name="${task['id']}.${type}.enabled" value="True" checked=""/>
+		                 					<py:otherwise>
+		                 						<input type="checkbox" name="${task['id']}.${type}.enabled" value="True"/>
+		                 					</py:otherwise>
+		                 				</py:choose>
+                					</td>
+		    	   					<td align="right">$type</td>
+    	   							<td align="left">
+			    	   					<input type="text" id="${task['id']}.${type}" name="${task['id']}.${type}" value="${task['schedule_list'][type]['value']}"/>
+			    	   					<p class="hint">
+             								 ${task['schedule_list'][type]['hint']} 
+        								</p> 
+    	   							</td>
+    	   							<td>
+    	   								<input type="text" id="${task['id']}.${type}.arg" name="${task['id']}.${type}.arg" value="${task['schedule_list'][type]['arg']}"/>
+										<a href="${href.traccron('runtask',[('task',task['id']),('parameters',task['schedule_list'][type]['arg'])])}" title="Run now">&rarr;</a>    	   								    	   								    	   								
+    	   							</td>        	   								   						
+    	   						</tr>
+    	   					</tbody>
+    	   				</table>
+    	   			</td>
+    	 		</tr>
+    	 	</tbody>
+    	</table>
+    </fieldset>
+    <input type="submit" name="save" value="save" accesskey="s" />
+
+</form>
+
+</body>
+
+</html>
