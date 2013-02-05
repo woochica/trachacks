@@ -28,7 +28,11 @@
 			if (!('status' in rules[field]) 
 			|| rules[field].status == newstate 
 			|| newstate == '*' && rules[field].status == currentstate) {
-				$('#field-' + field).addClass('tracvalidator');
+				// $('#properties #field-' + field).addClass('tracvalidator');
+				// $('label[for=field-' + field + ']').addClass('tracvalidator');
+				// $('#properties #field-' + field).parentsUntil("tr","td").prev().addClass('tracvalidator');
+				$("#properties [name=field_" + field + "]").addClass('tracvalidator'); // take care for radio buttons
+				$("#properties [name=field_" + field + "]").parentsUntil("tr","td").prev().addClass('tracvalidator');
 			}
 		}
 	}

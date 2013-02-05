@@ -2,6 +2,17 @@
 	content: url("../new.png")
 }
 
-.tracvalidator {
+select.tracvalidator, input.tracvalidator, textarea.tracvalidator, input.tracvalidator {
 	background-color: #ffcccc;
 }
+
+th.tracvalidator {
+	font-weight: bold;
+}
+
+/*
+th.tracvalidator label:before {
+	content: url("../validator.png");
+}
+don't work in text for custom fields as radio button
+*/
