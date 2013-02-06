@@ -4,7 +4,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='tracticketweightPlugin',
-    version='0.1.2',
+    version='0.1.3',
     keywords='trac plugin ticket weight',
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',
