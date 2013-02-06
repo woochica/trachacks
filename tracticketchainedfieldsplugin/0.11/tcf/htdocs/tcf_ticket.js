@@ -127,7 +127,6 @@ $(document).ready(function() {
             } else {
                 $("#field-"+field).val(orig_value);
             }
-            break;
         }
         
         if ($("#ticket.ticketdraft").length) {
