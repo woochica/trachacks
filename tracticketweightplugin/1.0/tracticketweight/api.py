@@ -83,7 +83,7 @@ class TracTicketWeight(Component):
             cursor.execute("""select tc.value, t.owner from ticket_custom as tc 
                               join ticket as t on t.id = tc.ticket 
                               where t.status != 'closed' and tc.name = %s and tc.value != ''""",
-                              (cfield,))
+                              (self.cfield,))
             result = ','.join(rec[0] for rec in cursor.fetchall())
         if result:
             hours_min = 0
