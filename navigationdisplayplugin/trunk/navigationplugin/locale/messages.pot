@@ -51,3 +51,11 @@ msgstr ""
 
 msgid "Insert valid Wiki page or clear it to reset it to default"
 msgstr ""
+
+msgid "Report ID for menu \"View tickets\""
+msgstr ""
+
+msgid ""
+"Either enter a valid report number, \"report_list\" for report overiew list, " 
+"\"query\" for individual query or clear it to reset it to default"
+msgstr ""

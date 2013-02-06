@@ -29,24 +29,31 @@
 		  	<tr>
 		  		<td><label for="wiki.href">Page for Wiki menu</label>:</td>
 		  		<td>
-			  		<input type="text" id="wiki.href" name="wiki.href" value="${selected['wiki.href'] or ''}" 
-						title="Insert valid Wiki page or clear it to reset it to default" />
-		  		</td>
-			</tr>
-			<tr>
-		  		<td colspan="2"><b>System default</b>: <i>${system_defaults['wiki.href'] or '---'}</i></td>
-		  	</tr>
-		  	<tr>
-		  		<td><label for="tickets.href">Report ID for menu "View tickets"</label>:</td>
-		  		<td>
-			  		<input type="text" id="tickets.href" name="tickets.href" value="${selected['tickets.href'] or ''}" />
+			  		<input type="text" id="wiki.href" name="wiki.href" 
+			  			   title="Insert valid Wiki page or clear it to reset it to default"
+			  			   value="${selected['wiki.href'] or ''}" />
 		  		</td>
 			</tr>
 			<tr>
 		  		<td colspan="2">
 					<div>
-						<i>Either enter a valid report number, 'report_list' for report overiew list, 
-						'query' for individual query or clear it to reset it to default</i><br/>
+						<i>Insert valid Wiki page or clear it to reset it to default</i><br/>
+						<b>System default</b>: <i>${system_defaults['wiki.href'] or '---'}</i>
+					</div>
+				</td>
+		  	</tr>
+		  	<tr>
+		  		<td><label for="tickets.href">Report ID for menu &quot;View tickets&quot;</label>:</td>
+		  		<td>
+			  		<input type="text" id="tickets.href" name="tickets.href" 
+			  		       title="Either enter a valid report number, &quot;report_list&quot; for report overiew list, &quot;query&quot; for individual query or clear it to reset it to default"
+			  		       value="${selected['tickets.href'] or ''}" />
+		  		</td>
+			</tr>
+			<tr>
+		  		<td colspan="2">
+					<div>
+						<i>Either enter a valid report number, &quot;report_list&quot; for report overiew list, &quot;query&quot; for individual query or clear it to reset it to default</i><br/>
 						<b>System default</b>: <i>${system_defaults['tickets.href'] or '---'}</i>
 					</div>
 				</td>
