@@ -75,15 +75,16 @@ class TracTicketWeight(Component):
                                   where ticket = %s and name = 'weight_owner'""",
                                (owner, ticket.id))
         if self.cfield:  
-            self._owner_hours_set()
+            self._owner_hours_set(ticket)
         
-    def _owner_hours_set(self):
+    def _owner_hours_set(self, ticket):
         with self.env.db_transaction as db:
             cursor = db.cursor()
-            cursor.execute("""select tc.value, t.owner from ticket_custom as tc 
+            cursor.execute("""select tc.value from ticket_custom as tc 
                               join ticket as t on t.id = tc.ticket 
-                              where t.status != 'closed' and tc.name = %s and tc.value != ''""",
-                              (self.cfield,))
+                              where t.status != 'closed' and tc.name = %s 
+                              and tc.value != '' and t.owner = %s""",
+                              (self.cfield, ticket.values['owner']))
             result = ','.join(rec[0] for rec in cursor.fetchall())
         if result:
             hours_min = 0
@@ -95,15 +96,14 @@ class TracTicketWeight(Component):
                     x.append(x[0])
                 hours_min = hours_min + int(x[0])
                 hours_max = hours_max + int(x[1])
-        user = 'zack'
         with self.env.db_transaction as db:
             cursor = db.cursor()
             cursor.execute("""replace into session_attribute (sid,authenticated,name,value) 
                               values (%s,'0','weight_hours_min',%s)""",
-                              (user, hours_min))
+                              (ticket.values['owner'], hours_min))
             cursor.execute("""replace into session_attribute (sid,authenticated,name,value) 
                               values (%s,'0','weight_hours_max',%s)""",
-                              (user, hours_max))
+                              (ticket.values['owner'], hours_max))
         
     #===========================================================================
     # def _owner_hours_get(self):
