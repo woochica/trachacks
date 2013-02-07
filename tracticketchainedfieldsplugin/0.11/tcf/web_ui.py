@@ -171,6 +171,7 @@ class TracTicketChainedFieldsModule(Component):
             result["hide_empty_fields"] = hide_empty_fields
             
             trigger = req.args.get("trigger", "").lstrip("field-")
+            trigger_value = req.args.get("field-" + trigger, "")
             if not trigger:
                 result["status"] = "0"
                 
@@ -179,38 +180,26 @@ class TracTicketChainedFieldsModule(Component):
                 tcf_define_target = simplejson.loads(tcf_define)
             except:
                 pass
-            
-            target_field = ""
-            target_options = []
-            
-            while True:
-                if not tcf_define_target:
-                    break
-                elif trigger in tcf_define_target:
-                    trigger_value = req.args.get("field-" + trigger, "")
-                    
-                    if not tcf_define_target[trigger].get(trigger_value):
-                        try:
-                            target_field = tcf_define_target[trigger].values()[0].keys()[0]
-                        except:
-                            pass
-                        tcf_define_target = {}
-                    else:
-                        tcf_define_target = tcf_define_target[trigger].get(trigger_value)
-                        target_field = tcf_define_target.keys()[0]
-                    break
-                else:
-                    field = tcf_define_target.keys()[0]
+
+            def locate_trigger_values(root):
+                if trigger in root:
+                    return root[trigger].get(trigger_value)
+                for field, field_values in root.items():
                     field_value = req.args.get("field-" + field, "")
-                    
                     if not field_value:
-                        tcf_define_target = tcf_define_target.values()[0].values()[0]
-                    else:
-                        tcf_define_target = tcf_define_target.values()[0].get(field_value, {})
-                        
+                        # skip field not specified
+                        continue
+                    trigger_values = locate_trigger_values(field_values.get(field_value, {}))
+                    if trigger_values:
+                        # return when found
+                        return trigger_values
+
+            trigger_values = locate_trigger_values(tcf_define_target)
+
+            target_options = []
             targets = []
-            if tcf_define_target:
-                for k, v in tcf_define_target.items():
+            if trigger_values:
+                for k, v in trigger_values.items():
                     target_field = k
                     target_options = [target_option for target_option in v.keys() if target_option]
                     target_options.sort(cmp=lambda x,y: cmp(x.lower(), y.lower()))
@@ -219,7 +208,7 @@ class TracTicketChainedFieldsModule(Component):
                         "target_field": target_field, 
                         "target_options": target_options, 
                     })
-            
+
             result["targets"] = targets
             
             if req.args.has_key("warning"):
