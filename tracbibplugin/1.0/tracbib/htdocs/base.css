@@ -1,0 +1,43 @@
+
+/*General*/
+.references .author .last{
+    font-variant:small-caps;
+}
+.references .editor .last{
+    font-variant:small-caps;
+}
+.references .etal{
+    font-style:italic;
+}
+
+.references .booktitle{
+    font-style:italic;
+}
+
+.references > div {
+    margin-top:5px;
+    text-indent:-15px;
+    margin-left:30px;
+}
+
+.references .key {
+    min-width:15px;
+    display: inline-block;
+}
+
+/*Article*/
+.references .article .journal {
+    font-style:italic;
+}
+
+/*Book*/
+.references .book .title {
+    font-style:italic;
+}
+
+.references .inbook .title {
+    font-style:italic;
+}
+
+
+

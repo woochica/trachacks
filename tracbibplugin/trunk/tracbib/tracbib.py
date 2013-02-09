@@ -32,9 +32,9 @@ from trac.wiki.api import IWikiSyntaxProvider
 
 try:
     from genshi.builder import tag
-    version = ">0.10"
+    version = 0.11
 except ImportError:  # for trac 0.10:
-    version = "0.10"
+    version = 0.10
     from trac.util.html import html as tag
 
 try:
@@ -162,7 +162,7 @@ class TracBibRequestFilter(Component):
     def post_process_request_old(self, req, template, content_type):
         return (template, content_type)
 
-    if version == ">0.10":
+    if version > 0.10:
         post_process_request = post_process_request_new
     else:
         post_process_request = post_process_request_old

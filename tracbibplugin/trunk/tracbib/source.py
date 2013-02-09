@@ -32,7 +32,11 @@ from trac.core import implements, Component, TracError
 import bibtexparse
 from helper import def_strings
 import re
-
+try:
+    from trac.versioncontrol import RepositoryManager
+    version = 0.12
+except ImportError:
+    version = 0.10
 
 def _extract(text):
     # convert to utf8 and generate a dictionary
@@ -79,16 +83,20 @@ class BibtexSourceSource(Component):
         if len(arg) < 2:
             raise TracError('[[Usage: BibAdd(source:file[@rev])')
         elif len(arg) == 2:
-            revision = 'latest'
+            revision = None
         else:
             revision = arg[2]
 
         file = arg[1]
 
-        repos = self.env.get_repository()
+        if version < 0.12:
+            repos = self.env.get_repository()
+            path = file
+        else :
+            (reponame, repos, path) = RepositoryManager(self.env).get_repository_by_path(file)
 
         # load the file from the repository
-        bib = repos.get_node(file, revision)
+        bib = repos.get_node(path, revision)
         file = bib.get_content()
         text = file.read()
 
