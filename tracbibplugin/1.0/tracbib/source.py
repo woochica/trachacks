@@ -32,10 +32,11 @@ from trac.core import implements, Component, TracError
 import bibtexparse
 from helper import def_strings
 import re
-try:
-    from trac.versioncontrol import RepositoryManager
+from trac.versioncontrol import RepositoryManager
+version = 0.12
+if hasattr(RepositoryManager, 'get_repository_by_path') :
     version = 0.12
-except ImportError:
+else :
     version = 0.10
 
 def _extract(text):

@@ -32,9 +32,9 @@ from trac.wiki.api import IWikiSyntaxProvider
 
 try:
     from genshi.builder import tag
-    version = ">0.10"
+    version = 0.11
 except ImportError:  # for trac 0.10:
-    version = "0.10"
+    version = 0.10
     from trac.util.html import html as tag
 
 try:
@@ -97,7 +97,7 @@ from trac.wiki.model import WikiPage
 from trac.web.api import IRequestFilter
 
 
-def getLoaded(request):
+def _getLoaded(request):
     loaded = request.args.get("loaded", None)
     if not loaded:
         loaded = []
@@ -105,7 +105,7 @@ def getLoaded(request):
     return loaded
 
 
-def getCited(request):
+def _getCited(request):
     cite = request.args.get("cite", None)
     if not cite:
         cite = {}
@@ -113,25 +113,45 @@ def getCited(request):
     return cite
 
 
-def getAuto(request):
+def _getAuto(request):
     auto = request.args.get("auto", None)
     if not auto:
-        auto = {}
+        auto = []
         request.args["auto"] = auto
     return auto
 
 
+def _getSource(prefix, sources):
+    for source in sources:
+        if re.match(source.source_type(), prefix):
+            return source
+    raise TracError("Unknown container type: '" + type + "'")
+
+
 class TracBibRequestFilter(Component):
-    """ Loads entries from the special wikipage 'BibTeX'"""
+
+    """
+    Loads entries from the special wikipage 'BibTeX'
+    """
+
     implements(IRequestFilter)
+    sources = ExtensionPoint(IBibSourceProvider)
 
     def pre_process_request(self, req, handler):
         ''' load entries from the special wiki page 'BibTeX' '''
         match = re.match(r'(^/wiki$)|(^/wiki/*)|(^/$)', req.path_info)
         if match:
+            auto = _getAuto(req)
+            sources = self.config.get("bibtex", "auto") or ""
+            if sources:
+                sources = map(lambda uri: uri.strip(), sources.split(","))
+                for uri in sources:
+                    source = _getSource(uri.split(":")[0],self.sources)
+                    auto.append(source.source(req,uri))
+
             source = BibtexSourceWiki(self.env)
             if WikiPage(self.env, "BibTex").exists:
-                req.args["auto"] = source.source(req, "wiki:BibTex")
+                auto.append(source.source(req, "wiki:BibTex"))
         return handler
 
     # Trac >0.10
@@ -142,13 +162,14 @@ class TracBibRequestFilter(Component):
     def post_process_request_old(self, req, template, content_type):
         return (template, content_type)
 
-    if version == ">0.10":
+    if version > 0.10:
         post_process_request = post_process_request_new
     else:
         post_process_request = post_process_request_old
 
 
 class BibAddMacro(WikiMacroBase):
+
     """
     Loads the correspondig BibTeX source provider implementing
     IBibSourceProvider
@@ -170,19 +191,19 @@ class BibAddMacro(WikiMacroBase):
                             'BibAdd(attachment:file)]]')
 
         arg = re.compile(":").split(args[0])
-        type = arg[0]
+        prefix = arg[0]
 
-        loaded = getLoaded(formatter.req)
-
-        for source in self.sources:
-            if re.match(source.source_type(), type):
-                loaded.append(source.source(formatter.req, args[0]))
-                return
-        raise TracError("Unknown container type: '" + type + "'")
+        loaded = _getLoaded(formatter.req)
+        source = _getSource(prefix, self.sources)
+        loaded.append(source.source(formatter.req, args[0]))
 
 
 class BibCiteMacro(WikiMacroBase):
-    """Macro to cite BibTeX entries"""
+
+    """
+    Macro to cite BibTeX entries
+    """
+
     implements(IWikiMacroProvider)
     formatter = ExtensionPoint(IBibRefFormatter)
 
@@ -206,19 +227,23 @@ class BibCiteMacro(WikiMacroBase):
         if len(args) == 2:
             page = args[1]
 
-        cite = getCited(formatter.req)
-        auto = getAuto(formatter.req)
+        cite = _getCited(formatter.req)
+        auto = _getAuto(formatter.req)
 
         if key not in cite:
             found = False
-            for source in getLoaded(formatter.req):
+            for source in _getLoaded(formatter.req):
                 if key in source:
                     found = True
                     cite[key] = source[key]
                     break
-            if not found and key in auto:
-                cite[key] = auto[key]
-            elif not found:
+            if not found:
+                for a in auto:
+                    if key in a:
+                        cite[key] = a[key]
+                        found = True
+                        break
+            if not found:
                 raise TracError("Unknown key '" + key + "'")
 
         for format in self.formatter:
@@ -231,7 +256,11 @@ class BibCiteMacro(WikiMacroBase):
 
 
 class BibNoCiteMacro(WikiMacroBase):
-    """Macro to add BibTeX entries to the references, which are not cited"""
+
+    """
+    Macro to add BibTeX entries to the references, which are not cited
+    """
+
     implements(IWikiMacroProvider)
 
     # Trac 0.10
@@ -250,24 +279,29 @@ class BibNoCiteMacro(WikiMacroBase):
 
         key = args[0]
 
-        cite = getCited(formatter.req)
-        auto = getAuto(formatter.req)
+        cite = _getCited(formatter.req)
+        auto = _getAuto(formatter.req)
 
         if key not in cite:
             found = False
-            for source in getLoaded(formatter.req):
+            for source in _getLoaded(formatter.req):
                 if key in source:
                     found = True
                     cite[key] = source[key]
                     break
-            if not found and key in auto:
-                cite[key] = auto[key]
-            elif not found:
+            if not found:
+                for a in auto:
+                    if key in a:
+                        cite[key] = a[key]
+                        found = True
+                        break
+            if not found:
                 raise TracError("Unknown key '" + key + "'")
         return
 
 
 class BibRefMacro(WikiMacroBase):
+
     """
     Macro to show the plugin where to place the cited references on the
     page
@@ -282,15 +316,17 @@ class BibRefMacro(WikiMacroBase):
 
     # Trac 0.11
     def expand_macro(self, formatter, name, content):
-        cite = getCited(formatter.req)
+        cite = _getCited(formatter.req)
 
         for format in self.formatter:
-            div = format.format_ref(cite, 'References')
+            heading = self.config.get("bibtex","heading") or "References"
+            div = format.format_ref(cite, heading)
 
         return div
 
 
 class BibFullRefMacro(WikiMacroBase):
+
     """
     Macro to show the plugin where to place all loaded references on the
     page
@@ -316,24 +352,29 @@ class BibFullRefMacro(WikiMacroBase):
         if (showAuto != "false" and showAuto != "true"):
             raise TracError("Usage: [[BibFullRef(auto=true|false)]]")
 
-        cite = getCited(formatter.req)
-        auto = getAuto(formatter.req)
+        cite = _getCited(formatter.req)
+        auto = _getAuto(formatter.req)
 
-        for source in getLoaded(formatter.req):
+        for source in _getLoaded(formatter.req):
             for key, value in source.iteritems():
                 cite[key] = value
         if showAuto == "true":
-            for key, value in auto.iteritems():
-                cite[key] = value
+            for a in auto:
+                for key, value in a.iteritems():
+                    cite[key] = value
 
         for format in self.formatter:
-            div = format.format_fullref(cite, 'References')
+            heading = self.config.get("bibtex","heading") or "References"
+            div = format.format_fullref(cite, heading)
 
         return div
 
 
 class DboeTagWikiSyntaxProvider(Component):
-    """Provide cite:<key>[:<page>]"""
+
+    """
+    Provides cite:<key>[:<page>]
+    """
 
     implements(IWikiSyntaxProvider)
 
