@@ -1,3 +1,34 @@
+(function($){
+  $.fn.enableTicketGroupFolding = function(autofold, snap) {
+    var fragId = document.location.hash;
+    if (fragId && /^#ticketFieldGroup\d+$/.test(fragId))
+      fragId = parseInt(fragId.substr(17));
+    if (snap == undefined)
+      snap = false;
+
+    var count = 1;
+    return this.each(function() {
+      // Use first child <a> as a trigger, or generate a trigger from the text
+      var trigger = $(this).children("a").eq(0);
+      if (trigger.length == 0) {
+        trigger = $("<a" + (snap? " id='ticketFieldGroup" + count + "'": "")
+            + " href='#ticketFieldGroup" + count + "'></a>");
+        trigger.html($(this).html());
+        $(this).text("");
+        $(this).append(trigger);
+      }
+
+      trigger.click(function() {
+        var div = $(this.parentNode.parentNode).toggleClass("collapsed");
+        return snap && !div.hasClass("collapsed");
+      });
+      if (autofold && (count != fragId))
+        trigger.parents().eq(1).addClass("collapsed");
+      count++;
+    });
+  }
+})(jQuery);
+
 jQuery(document).ready(function($) {
     // reorder fieldsets
     if (field_groups_order) {
@@ -29,7 +60,7 @@ jQuery(document).ready(function($) {
 
         if (group['properties']) {
             if ($.inArray('foldable', group['properties']) != -1) {
-                $('legend', fieldset).enableFolding($.inArray('collapsed', group['properties']) != -1, true);
+                $('legend', fieldset).enableTicketGroupFolding($.inArray('collapsed', group['properties']) != -1, true);
             }
         }
         
