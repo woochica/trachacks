@@ -362,7 +362,7 @@ class AccountManager(Component):
         username = self.handle_username_casing(
             req.args.get('username').strip())
         name = req.args.get('name').strip()
-        email = req.args.get('email').strip()
+        email = req.args.get('email', '').strip()
         # Create the user in the configured (primary) password store.
         self.set_password(username, req.args.get('password'))
         # Output of a successful account creation request is a made-up

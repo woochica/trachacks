@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
-# Copyright (C) 2010-2012 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2010-2013 Steffen Hoffmann <hoff.st@web.de>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -140,10 +140,14 @@ class AccountModule(CommonTemplateProvider):
                 _("Forgot your password?"), href=req.href.reset_password())
 
     def _reset_password_enabled(self, log=False):
+        try:
+            self.store.hash_method
+        except AttributeError:
+            return False
         return is_enabled(self.env, self.__class__) and \
                self.reset_password and (self._write_check(log) != []) and \
                is_enabled(self.env, self.store.__class__) and \
-               self.store.hash_method
+               self.store.hash_method and True or False
 
     reset_password_enabled = property(_reset_password_enabled)
 
@@ -160,7 +164,7 @@ class AccountModule(CommonTemplateProvider):
         if req.method == 'POST':
             if action == 'save':
                 data.update(self._do_change_password(req))
-                if force_change_password:
+                if 'message' in data and force_change_password:
                     del(req.session['force_change_passwd'])
                     req.session.save()
                     chrome.add_notice(req, Markup(tag.span(tag_(
@@ -215,17 +219,18 @@ class AccountModule(CommonTemplateProvider):
         user = req.authname
 
         old_password = req.args.get('old_password')
-        if not old_password:
-            return {'save_error': _("Old Password cannot be empty.")}
         if not self.acctmgr.check_password(user, old_password):
-            return {'save_error': _("Old Password is incorrect.")}
+            if not old_password:
+                return {'save_error': _("Old password cannot be empty.")}
+            return {'save_error': _("Old password is incorrect.")}
 
         password = req.args.get('password')
         if not password:
             return {'save_error': _("Password cannot be empty.")}
-
         if password != req.args.get('password_confirm'):
             return {'save_error': _("The passwords must match.")}
+        if password == old_password:
+            return {'save_error': _("Password must not match old password.")}
 
         self.acctmgr.set_password(user, password, old_password)
         if req.session.get('password') is not None:
@@ -259,6 +264,31 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
     must be disabled to use this one.
     """
 
+    # Trac core options, replicated here to not make them disappear by
+    # disabling auth.LoginModule.
+    check_ip = BoolOption('trac', 'check_auth_ip', 'false',
+         """Whether the IP address of the user should be checked for
+         authentication (''since 0.9'').""")
+
+    ignore_case = BoolOption('trac', 'ignore_auth_case', 'false',
+        """Whether login names should be converted to lower case
+        (''since 0.9'').""")
+
+    auth_cookie_lifetime = IntOption('trac', 'auth_cookie_lifetime', 0,
+        """Lifetime of the authentication cookie, in seconds.
+        
+        This value determines how long the browser will cache
+        authentication information, and therefore, after how much
+        inactivity a user will have to log in again. The default value
+        of 0 makes the cookie expire at the end of the browsing
+        session. (''since 0.12'')""")
+
+    auth_cookie_path = Option('trac', 'auth_cookie_path', '',
+        """Path for the authentication cookie. Set this to the common
+        base path of several Trac instances if you want them to share
+        the cookie.  (''since 0.12'')""")
+
+    # Options dedicated to acct_mgr.web_ui.LoginModule. 
     login_opt_list = BoolOption(
         'account-manager', 'login_opt_list', False,
         """Set to True, to switch login page style showing alternative actions
@@ -295,7 +325,7 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
             self.env.log.info("trac.web.auth.LoginModule disabled, "
                               "giving preference to %s." % self.__class__)
 
-        self.cookie_lifetime = c.getint('trac', 'auth_cookie_lifetime', 0)
+        self.cookie_lifetime = self.auth_cookie_lifetime
         if not self.cookie_lifetime > 0:
             # Set the session to expire after some time and not
             #   when the browser is closed - what is Trac core default).
@@ -556,8 +586,7 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
                 env = open_environment(path, use_cache=True)
                 # Consider only Trac environments with equal, non-default
                 #   'auth_cookie_path', which enables cookies to be shared.
-                if self._get_cookie_path(req) == env.config.get('trac',
-                                                     'auth_cookie_path'):
+                if self._get_cookie_path(req) == self.auth_cookie_path:
                     db = env.get_db_cnx()
                     cursor = db.cursor()
                     # Authentication cookie values must be unique. Ensure,
@@ -582,12 +611,8 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
                     self.log.debug('Auth distribution skipped: ' + environ)
 
     def _get_cookie_path(self, req):
-        """Check request object for "path" cookie property.
-
-        There is even a configuration option (since Trac 0.12).
-        """
-        return self.env.config.get('trac', 'auth_cookie_path') or \
-                   req.base_path or '/'
+        """Determine "path" cookie property from setting or request object."""
+        return self.auth_cookie_path or req.base_path or '/'
 
     # overrides
     def _expire_cookie(self, req):
@@ -648,7 +673,7 @@ class LoginModule(auth.LoginModule, CommonTemplateProvider):
         user = req.args.get('user')
         self.env.log.debug("LoginModule._remote_user: Authentication attempted for '%s'" % user)
         password = req.args.get('password')
-        if not user or not password:
+        if not user:
             return None
         acctmgr = AccountManager(self.env)
         acctmod = AccountModule(self.env)
