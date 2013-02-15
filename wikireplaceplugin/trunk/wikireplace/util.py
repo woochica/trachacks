@@ -63,14 +63,14 @@ def wiki_text_replace(env, oldtext, newtext, wikipages, user, ip, debug=False, d
     debug("Searching all wiki pages containing text")
     
     for wikipage in wikipages:
-        sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.name GLOB %s AND w1.text LIKE %s'
+        sql = 'SELECT w1.version,w1.name,w1.text' + sqlbase + 'AND w1.name %s AND w1.text %s' % (db.like(), db.like())
         debug('Running query %r', sql)
 
-        cursor.execute(sql, (wikipage, '%'+oldtext+'%'))
+        cursor.execute(sql, (wikipage, '%' + db.like_escape(oldtext) + '%'))
 
         for row in list(cursor):
             debug("Found a page with searched text in it: %s (v%s)", row[1], row[0])
-            newcontent = re.sub(oldtext,newtext,row[2])
+            newcontent = row[2].replace(oldtext, newtext)
 
             # name, version, now, user, ip, newcontent, replace comment
             new_wiki_page = (row[1],row[0]+1,to_utimestamp(to_datetime(None, utc)),user,ip,newcontent,'Replaced "%s" with "%s".'%(oldtext,newtext),0)
