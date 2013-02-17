@@ -12,6 +12,7 @@ adminenumlistplugin 2.0 (Not yet released)
  new features
  * #10656: Prompt with a warning dialog when navigating away from a page
            with unsaved changes to an enum list.
+ * #10657: The 'Order' column can optionally be hidden.
  * #10690: Added a 'Revert changes' button.
  * #10694: Apply changes button is disabled until a change has been made.
  * #10695: Added a tri-state 'Select all' checkbox to the table header. The
