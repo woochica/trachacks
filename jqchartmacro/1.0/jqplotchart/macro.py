@@ -4,7 +4,7 @@
 #
 # jqplot based chart macro for trac.
 #
-# License: Apache 2.0
+# License: BSD
 
 import re
 import datetime
