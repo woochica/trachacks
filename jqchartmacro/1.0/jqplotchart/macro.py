@@ -36,6 +36,8 @@ class DecimalEncoder(json.JSONEncoder):
 class QueryRunner(object):
 
     """
+    current_user: the currently logged in user.
+
     base_url: the trac base url, used to generate links that point to different
     elements in trac, like reports and tickets.
 
@@ -48,8 +50,10 @@ class QueryRunner(object):
 
     series_column: the name of a column that specifies a series name.
     """
-    def __init__(self, env, base_url, report_id, query, series_column):
+    def __init__(self, env, current_user, base_url, report_id, query,
+            series_column):
         self.env = env
+        self.current_user = current_user
         self.query = query
         self.series_column = series_column
         self.base_url = base_url
@@ -62,6 +66,8 @@ class QueryRunner(object):
         result = [self.query, {}]
         if self.report_id is not None:
             result = self.get_query_from_report(self.report_id)
+
+        result[0] = result[0].replace('$USER', "'" + self.current_user + "'")
 
         return result
 
@@ -312,12 +318,10 @@ class JQChartMacro(WikiMacroBase):
 
         series_column = json_object.get("series_column", None)
 
-        query_report = Query(self.env, report = 1)
-        result = query_report.execute()
-
         base_url = formatter.req.href('')
-        query_runner = QueryRunner(self.env, base_url, report_id, query,
-                series_column)
+        current_user = formatter.req.authname
+        query_runner = QueryRunner(self.env, current_user, base_url, report_id,
+                query, series_column)
 
         chart = Chart(formatter.req, id_generator.get_id(), width, height)
         chart.render(self.env, chart_type, options, query_runner, buf)
