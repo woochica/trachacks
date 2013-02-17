@@ -338,21 +338,21 @@ class JQChartMacro(WikiMacroBase):
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
 
-        add_stylesheet (req, 'jqplotchart/jqplot/jquery.jqplot.css')
+        add_stylesheet (req, 'jqplotchart/jqplot/jquery.jqplot.min.css')
         add_stylesheet (req, 'jqplotchart/jqchart.css')
 
-        add_script (req, 'jqplotchart/jqplot/jquery.jqplot.js')
+        add_script (req, 'jqplotchart/jqplot/jquery.jqplot.min.js')
 
         plugin_base = 'jqplotchart/jqplot/plugins/jqplot.'
-        add_script (req, plugin_base + 'highlighter.js')
-        add_script (req, plugin_base + 'cursor.js')
-        add_script (req, plugin_base + 'dateAxisRenderer.js')
-        add_script (req, plugin_base + 'categoryAxisRenderer.js')
-        add_script (req, plugin_base + 'pointLabels.js')
-        add_script (req, plugin_base + 'pieRenderer.js')
-        add_script (req, plugin_base + 'donutRenderer.js')
-        add_script (req, plugin_base + 'barRenderer.js')
-        add_script (req, plugin_base + 'meterGaugeRenderer.js')
+        add_script (req, plugin_base + 'highlighter.min.js')
+        add_script (req, plugin_base + 'cursor.min.js')
+        add_script (req, plugin_base + 'dateAxisRenderer.min.js')
+        add_script (req, plugin_base + 'categoryAxisRenderer.min.js')
+        add_script (req, plugin_base + 'pointLabels.min.js')
+        add_script (req, plugin_base + 'pieRenderer.min.js')
+        add_script (req, plugin_base + 'donutRenderer.min.js')
+        add_script (req, plugin_base + 'barRenderer.min.js')
+        add_script (req, plugin_base + 'meterGaugeRenderer.min.js')
         add_script (req, 'jqplotchart/jqchart.js')
 
         return (template, data, content_type)
