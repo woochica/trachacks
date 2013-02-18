@@ -4,6 +4,7 @@ Created on Feb 4, 2013
 @author: Zack Shahan
 '''
 
+from __future__ import division
 from trac.core import Component, implements
 from trac.ticket.api import ITicketChangeListener
 import re
@@ -20,9 +21,11 @@ class TracTicketWeight(Component):
         self.cfields_owner = self._ticket_custom_config('owner')
         if self.config_owner_hours_cfield['owner_hours_cfield']:
             self.cfield = self.config_owner_hours_cfield['owner_hours_cfield']
+
     def ticket_created(self, ticket):
         owner = 0
         reporter = 0
+        reporter_avg = 0
         if self.config_owner:
             owner = self._weight_counter(ticket,
                                          self.config_owner,
@@ -31,20 +34,61 @@ class TracTicketWeight(Component):
             reporter = self._weight_counter(ticket,
                                             self.config_reporter,
                                             self.cfields_reporter)
+            reporter_avg = '{0:g}'.format(self._weight_counter(ticket,
+                                                               self.config_reporter,
+                                                               self.cfields_reporter)
+                                          / self.cfields_reporter.__len__())
         with self.env.db_transaction as db:
             cursor = db.cursor()
             if reporter != 0:
                 cursor.execute("""update ticket_custom set value = %s 
                                   where ticket = %s and name = 'weight_reporter'""",
                                (reporter, ticket.id))
+            if reporter_avg != 0:
+                cursor.execute("""update ticket_custom set value = %s 
+                                  where ticket = %s and name = 'weight_reporter_avg'""",
+                               (reporter_avg, ticket.id))
             if owner != 0:
                 cursor.execute("""update ticket_custom set value = %s 
                                   where ticket = %s and name = 'weight_owner'""",
                                (owner, ticket.id))
         
         if self.cfield:  
-            self._owner_hours_set()
+            self._owner_hours_set(ticket)
         
+    def ticket_changed(self, ticket, comment, author, old_values):
+        owner = 0
+        reporter = 0
+        reporter_avg = 0
+        if self.config_owner:
+            owner = self._weight_counter(ticket,
+                                         self.config_owner,
+                                         self.cfields_owner)
+        if self.config_reporter:
+            reporter = self._weight_counter(ticket,
+                                            self.config_reporter,
+                                            self.cfields_reporter)
+            reporter_avg = '{0:g}'.format(self._weight_counter(ticket,
+                                                               self.config_reporter,
+                                                               self.cfields_reporter)
+                                          / self.cfields_reporter.__len__())
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            if reporter != 0:
+                cursor.execute("""update ticket_custom set value = %s 
+                                  where ticket = %s and name = 'weight_reporter'""",
+                               (reporter, ticket.id))
+            if reporter_avg != 0:
+                cursor.execute("""update ticket_custom set value = %s 
+                                  where ticket = %s and name = 'weight_reporter_avg'""",
+                               (reporter_avg, ticket.id))
+            if owner != 0:
+                cursor.execute("""update ticket_custom set value = %s 
+                                  where ticket = %s and name = 'weight_owner'""",
+                               (owner, ticket.id))
+        if self.cfield:  
+            self._owner_hours_set(ticket)
+            
     def _weight_counter(self, ticket, type, cfields):
         weight_list = {}
         total_weight = 0
@@ -54,28 +98,6 @@ class TracTicketWeight(Component):
         for x in weight_list.values():
             total_weight = int(total_weight) + int(x)
         return total_weight
-
-    def ticket_changed(self, ticket, comment, author, old_values):
-        if self.config_owner:
-            owner = self._weight_counter(ticket,
-                                         self.config_owner,
-                                         self.cfields_owner)
-        if self.config_reporter:
-            reporter = self._weight_counter(ticket,
-                                            self.config_reporter,
-                                            self.cfields_reporter)
-        with self.env.db_transaction as db:
-            cursor = db.cursor()
-            if reporter != 0:
-                cursor.execute("""update ticket_custom set value = %s 
-                                  where ticket = %s and name = 'weight_reporter'""",
-                               (reporter, ticket.id))
-            if owner != 0:
-                cursor.execute("""update ticket_custom set value = %s 
-                                  where ticket = %s and name = 'weight_owner'""",
-                               (owner, ticket.id))
-        if self.cfield:  
-            self._owner_hours_set(ticket)
         
     def _owner_hours_set(self, ticket):
         with self.env.db_transaction as db:
