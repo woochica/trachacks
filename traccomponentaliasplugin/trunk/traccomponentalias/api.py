@@ -1,8 +1,9 @@
-'''
-Created on Jan 14, 2013
-
-@author: Zack Shahan
-'''
+# -*- coding: utf-8 -*-
+# Copyright (C) 2012 Zack Shahan
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 from trac.core import Component, implements
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
