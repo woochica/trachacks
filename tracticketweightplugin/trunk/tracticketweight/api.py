@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (C) 2012 Zack Shahan
+# Copyright (C) 2012 Zack Shahan <zshahan@dig-inc.net>
+#
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
