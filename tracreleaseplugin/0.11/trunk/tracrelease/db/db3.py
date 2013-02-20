@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# Copyright (C) 2008-2013 Joao Alexandre de Toledo <tracrelease@toledosp.com.br>
+#
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from trac.db import DatabaseManager
 
 def do_upgrade(env, cursor):

@@ -1,16 +1,10 @@
 # -*- coding: utf-8 -*-
-
+# Copyright (C) 2008-2013 Joao Alexandre de Toledo <tracrelease@toledosp.com.br>
 #
-# To start developing a new Trac Plugin I used those references (and copied some of their code, too):
+# All rights reserved.
 #
-#  http://trac.edgewall.org/wiki/TracDev
-#  Trac DiscussionPlugin source code: http://trac-hacks.org/wiki/DiscussionPlugin (author: http://trac-hacks.org/wiki/Blackhex)
-#  Trac TimingAndEstimation plugin source code: http://trac-hacks.org/wiki/TimingAndEstimationPlugin (author: http://trac-hacks.org/wiki/bobbysmith007)
-#  Trac source code
-#
-# As long as I could understand their licences would permit me to do this. If someone think I infringed something, please tell me and I will correct it immediatly.
-# Thank you! Trac rocks! Python rocks! OSS rocks!
-#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 import re
 import data
