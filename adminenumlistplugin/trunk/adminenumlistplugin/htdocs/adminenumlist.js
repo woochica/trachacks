@@ -1,7 +1,4 @@
-/* Based on drag-and-drop sample code by Luke Dingle
-
-http://www.lukedingle.com/javascript/sortable-table-rows-with-jquery-draggable-rows/
-
+/*
 (C) Stepan Riha, 2009; Ryan J Ollos, 2012; Jun Omae, 2012
 
 This software is licensed as described in the file COPYING, which
@@ -19,13 +16,7 @@ jQuery(document).ready(function ($) {
 
     if (window.hide_selects === undefined) hide_selects = false;
 
-    var mouseY = 0;
     var unsaved_changes = false;
-
-    // IE Doesn't stop selecting text when mousedown returns false we need to check
-    // that onselectstart exists and return false if it does
-    var supports_onselectstart = document.onselectstart !== undefined;
-
     var $remove_checkboxes = $('#enumtable tbody input:checkbox');
     var $remove_button = $('#enumtable input[name="remove"]');
     var $apply_button = $('#enumtable input[name="apply"]');
@@ -117,68 +108,29 @@ jQuery(document).ready(function ($) {
         }
     });
 
-    // This keeps track of current vertical coordinates
-    $('#enumlist tbody').mousemove(function(e) {
-        mouseY = e.pageY;
+    // Initialize items as sortable
+    $('#enumlist tbody').css('cursor', 'move').sortable({
+        axis: 'y',
+        start: function(event, ui) {
+            // Set the width of header to the dragging item for each column
+            // in order to fit the widths to the header columns
+            var cells = ui.item.children();
+            var header = $(this).parent().find('thead tr');
+            if (header.length === 0)
+                return;
+            $(header[0]).children().each(function(idx) {
+                if (idx < cells.length)
+                    $(cells[idx]).css('width', $(this).width() + 'px');
+            });
+        },
+        stop: function(event, ui) { updateValues(ui.item) }
     });
-
-    // Begin drag
-    $('#enumlist tbody tr').mousedown(function (e) {
-        // Suppress behavior on elements that should be cells
-        if (/^(?:a|input|select)$/i.test(e.target.tagName))
-            return;
-
-        // Remember starting mouseY
-        var lastY = mouseY;
-
-        var tr = $(this);
-
-        // This is just for flashiness. It fades the TR element out to an opacity of 0.2 while it is being moved.
-        tr.find('td:not(:has(select))').fadeTo('fast', 0.2);
-
-        // jQuery has a fantastic function called mouseenter() which fires when the mouse enters
-        // This code fires a function each time the mouse enters over any TR inside the tbody -- except $(this) one
-        $('tr', tr.parent() ).not(tr).bind('mouseenter', function(e){
-            // Move row based on direction
-            if (mouseY > lastY) {
-                $(this).after(tr);
-                // Store the current location of the mouse for next time a mouseenter event triggers
-                lastY = e.pageY + 1;
-            } else {
-                $(this).before(tr);
-                // Store the current location of the mouse for next time a mouseenter event triggers
-                lastY = e.pageY - 1;
-            }
-        });
-
-        // When mouse is released, unhook events and update values
-        $('body').mouseup(function () {
-            // Fade the TR element back to full opacity
-            tr.find('td:not(:has(select))').fadeTo('fast', 1);
-            // Remove the mouseenter events from the tbody so that the TR element stops being moved
-            $('tr', tr.parent()).unbind('mouseenter');
-            // Remove this mouseup function until next time
-            $('body').unbind('mouseup');
-
-            // Make text selectable for IE again with
-            // The workaround for IE based browers
-            if (supports_onselectstart)
-                $(document).unbind('selectstart');
-
-            updateValues(tr);
-        });
-
-        // Preventing the default action and returning false will Stop any text
-        // in the table from being highlighted (this can cause problems when dragging elements)
-        e.preventDefault();
-
-        // The workaround for IE browsers
-        if (supports_onselectstart) {
-            $(document).bind('selectstart', function () { return false; });
-        }
-
-        return false;
-    }).css('cursor', 'move');
+    // Prevents the event bubbling in order to be able to select the select
+    // widgets in `order` column on Firefox with jQuery UI 1.6
+    $('#enumlist tbody').find('input, select')
+                        .bind('mousedown click', function(event) {
+        event.stopPropagation();
+    });
 
     // When user changes a select value, reorder rows
     $('#enumlist select').change(function (e) {

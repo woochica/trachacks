@@ -11,6 +11,8 @@
 
 from genshi.builder import tag
 from genshi.filters import Transformer
+
+from trac import __version__ as trac_version
 from trac.config import BoolOption
 from trac.core import Component, implements
 from trac.util.compat import any
@@ -28,8 +30,20 @@ class AdminEnumListPlugin(Component):
     _panels = ('priority', 'resolution', 'severity', 'type')
     _has_add_jquery_ui = hasattr(Chrome, 'add_jquery_ui')
 
+    def __init__(self):
+        Component.__init__(self)
+
+        from pkg_resources import parse_version
+        version = parse_version(trac_version)
+        if version < parse_version('0.11.1'):
+            self._jquery_ui_filename = None
+        else:
+            self._jquery_ui_filename = \
+                'adminenumlistplugin/jqueryui-%s/jquery-ui.min.js' % \
+                ('1.8.24', '1.6')[version < parse_version('0.12')]
+
     ### methods for IRequestFilter
-    
+
     def pre_process_request(self, req, handler):
         return handler
 
@@ -37,11 +51,12 @@ class AdminEnumListPlugin(Component):
         path_info = req.path_info
         if any(path_info.startswith(panel, len('/admin/ticket/'))
                for panel in self._panels):
-            add_script(req, 'adminenumlistplugin/adminenumlist.js')
-            if not self._has_add_jquery_ui:
-                add_script(req, 'adminenumlistplugin/jquery-ui-custom.js')
-            else:
+            if self._has_add_jquery_ui:
                 Chrome(self.env).add_jquery_ui(req)
+                add_script(req, 'adminenumlistplugin/adminenumlist.js')
+            elif self._jquery_ui_filename:
+                add_script(req, self._jquery_ui_filename)
+                add_script(req, 'adminenumlistplugin/adminenumlist.js')
 
         return template, data, content_type
 
