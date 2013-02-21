@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2008 Martin Aspeli <optilude@gmail.com>
-# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# Copyright (C) 2012-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 #
 
-from pkg_resources import resource_filename
 from StringIO import StringIO
 
 from trac.core import implements
@@ -16,7 +15,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet
 from trac.wiki.formatter import system_message, format_to_html
 from trac.wiki.macros import WikiMacroBase
 from trac.util.html import Markup
-from trac.util.text import exception_to_unicode
+from trac.util.text import exception_to_unicode, to_unicode
 from trac.util.translation import _
 
 class SQLTable(WikiMacroBase):
@@ -39,6 +38,7 @@ class SQLTable(WikiMacroBase):
         return []
 
     def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
         return [('wikitable', resource_filename(__name__, 'htdocs'))]
 
     # IWikiMacroBase methods
@@ -64,6 +64,14 @@ class SQLTable(WikiMacroBase):
             css_class = (idx % 2 == 0) and 'odd' or 'even'
             print >> out, "  <tr class='%s'>" % css_class
             for col in row:
+                if col is None:
+                    col = "''(NULL)''"
+                elif col is True:
+                    col = 'TRUE'
+                elif col is False:
+                    col = 'FALSE'
+                elif not isinstance(col, basestring):
+                    col = to_unicode(col)
                 print >> out, "<td>%s</td>" % \
                     format_to_html(self.env, formatter.context, col)
             print >> out, "  </tr>"

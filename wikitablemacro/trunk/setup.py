@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2008 Martin Aspeli <optilude@gmail.com>
-# Copyright (C) 2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# Copyright (C) 2012-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -20,7 +20,7 @@ setup(
     description = 'Trac plugin for drawing a table from a SQL query in a wiki page',
     url = 'http://trac-hacks.org/wiki/WikiTableMacro', 
     version = '0.2',
-    license='3-Clause BSD',
+    license='BSD 3-Clause',
     packages=['wikitable'],
     package_data={'wikitable': ['htdocs/css/*.css',]},
     entry_points = {
