@@ -576,7 +576,9 @@ class ImportExportAdminPanel(Component):
             if tid == '' or tid == None:
                 ticket = Ticket(self.env)
                 for k in fieldsLabels.keys():
-                    ticket[k] = ticket.get_value_or_default(k)
+                    defaultValue = ticket.get_value_or_default(k)
+                    if defaultValue != None:
+                        ticket[k] = defaultValue
                 ticket['summary'] = summary
             else:
                 ticket = Ticket(self.env, tkt_id=tid)
