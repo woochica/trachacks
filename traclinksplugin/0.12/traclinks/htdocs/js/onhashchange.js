@@ -7,7 +7,7 @@ $(document).ready(function() {
 			if(location.hash.indexOf('#comment:') == 0) { // comment of ticket
 				traclinks = location.hash.slice(1) + ':ticket:' + ticketid;
 			} else if ($.isNumeric(ticketid)) {
-				traclinks = 'ticket:' + ticketid + location.hash;
+				traclinks = 'ticket:' + ticketid + location.search + location.hash;
 			} else {
 				// pass
 			}
