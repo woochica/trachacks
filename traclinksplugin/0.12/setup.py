@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-version = '0.4'
+version = '0.5'
 
 setup(
     name='TracLinks',
@@ -18,7 +18,8 @@ setup(
     package_data={'traclinks': ['htdocs/*/*']},
     entry_points={
         'trac.plugins': [
-            'TracLinks = traclinks.textbox',
+            'TracLinks.TextBox = traclinks.textbox',
+            'TracLinks.AnchorAnywhere = traclinks.anchoranywhere',
         ]
     },
 )

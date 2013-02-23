@@ -1,0 +1,13 @@
+p:hover .anchor, li:hover .anchor {
+ visibility: visible;
+}
+
+.trac-anchoranywhere-prepend {
+	position: absolute;
+}
+
+p:target, li:target {
+ background: #ffb;
+ box-shadow: .1em .1em .4em .1em #DDA;
+ border-radius: .2em;
+}
