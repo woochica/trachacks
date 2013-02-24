@@ -53,7 +53,7 @@ class Macro(Component):
         status_list = ['new', 'assigned', 'accepted', 'closed', '*']
         default_status = status_list.index('*')
         add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.js")
-#        add_script(formatter.req, "statushistorychart/js/jquery.flot.time.js")  # for flot 0.8dev or later
+#        add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.time.js")  # for flot 0.8dev or later
         add_script(formatter.req, "statushistorychart/js/enabler.js")
         if(content):
             # replace parameters
@@ -80,11 +80,12 @@ class Macro(Component):
         elif formatter.resource.realm == 'milestone':
             cond = "ticket.milestone='%s'" % formatter.resource.id
         elif('query_tickets' in formatter.req.session):  # You Feeling Lucky
-            tickets = formatter.req.session.get('query_tickets', '').split(' ')
+            query_tickets = formatter.req.session.get('query_tickets', '')
+            tickets = len(query_tickets) and query_tickets.split(' ') or ['-1']  # Sentinel for no result
             cond = "ticket.id in (%s)" % ', '.join(tickets)
         else:
             raise TracError("Currently %sMacro without content is not supported." % name)
-        changes = [row for row in formatter.env.db_query("""
+        changes = [row for row in formatter.env.get_read_db().execute("""
                 SELECT id, time, null, 'new'
                     FROM ticket
                     WHERE %s

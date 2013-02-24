@@ -15,7 +15,7 @@ setup(
     description='Draw chart of ticket\'s status change history. ',
     zip_safe=True,
     packages=find_packages(exclude=['*.tests']),
-    package_data={'statushistorychart': ['htdocs/*/*']},
+    package_data={'statushistorychart': ['htdocs/*/*.js', 'htdocs/*/*/*']},
     entry_points={
         'trac.plugins': [
             'StatusHistoryChart = statushistorychart.statushistorychart',
