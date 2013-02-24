@@ -13,9 +13,9 @@ setup(
     description='Add context-aware css attribute or style',
     zip_safe=True,
     packages=find_packages(exclude=['*.tests']),
-    #package_data={
-    #    'contextchrome': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css']
-    #    },
+    package_data={
+        'contextchrome': ['htdocs/*.png', 'htdocs/js/*.js', 'htdocs/css/*.css']
+        },
     entry_points={
         'trac.plugins': [
             'ContextChrome = contextchrome.style',
