@@ -16,7 +16,7 @@
   }
   
   $(document).ready(function() {
-    $("#ticket .properties p, #ticket .properties li").each(function() {
+    $("#ticket .properties td[headers] p, #ticket .properties td[headers] li").each(function() {
       context = $(this).parents('td[headers]');
       index = 1 + $("p,li", context).index(this);
       name = context.attr('headers').slice(2) + "\u00B6" + index;
