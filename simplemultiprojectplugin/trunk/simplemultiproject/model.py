@@ -69,9 +69,9 @@ class SmpModel(Component):
                    FROM
                         smp_project
                    WHERE
-                        name = '%s'""" % name
+                        name = %s"""
         
-        cursor.execute(query)
+        cursor.execute(query, [name])
         return  cursor.fetchone()
         
     def get_all_projects(self):
@@ -91,9 +91,9 @@ class SmpModel(Component):
                    FROM
                         smp_project
                    WHERE
-                        id_project=%s""" % str(project_id)
+                        id_project=%s"""
         
-        cursor.execute(query)
+        cursor.execute(query, [str(project_id)])
         result = cursor.fetchone()
 
         if result:
@@ -109,11 +109,11 @@ class SmpModel(Component):
         query    = """UPDATE
                         ticket_custom
                       SET
-                        value = '%s'
+                        value = %s
                       WHERE
-                        name = 'project' AND value = '%s'""" % (new_project_name, old_project_name)
+                        name = 'project' AND value = %s"""
 
-        cursor.execute(query)
+        cursor.execute(query, [new_project_name, old_project_name])
 
         self.__start_transacction()
         
@@ -122,16 +122,16 @@ class SmpModel(Component):
         cursor = self.__get_cursor()
         query    = """INSERT INTO
                         smp_project (name, summary, description)
-                      VALUES ('%s', '%s', '%s');""" % (name, summary, description)
+                      VALUES (%s, %s, %s);"""
 
-        cursor.execute(query)
+        cursor.execute(query, [name, summary, description])
         self.__start_transacction()
 
     def delete_project(self, ids_projects):
         cursor = self.__get_cursor()
         for id in ids_projects:
-            query = "DELETE FROM smp_project WHERE id_project='%s'" % id
-            cursor.execute(query)
+            query = """DELETE FROM smp_project WHERE id_project=%s"""
+            cursor.execute(query, [id])
             
         self.__start_transacction()
 
@@ -141,10 +141,10 @@ class SmpModel(Component):
         query    = """UPDATE
                         smp_project
                       SET
-                        name = '%s', summary = '%s', description = '%s'
+                        name = %s, summary = %s, description = %s
                       WHERE
-                        id_project = '%s'""" % (name, summary, description, id)
-        cursor.execute(query)
+                        id_project = %s"""
+        cursor.execute(query, [name, summary, description, id])
 
         self.__start_transacction()
 
@@ -156,8 +156,8 @@ class SmpModel(Component):
                       FROM
                         ticket_custom
                       WHERE
-                        name = 'project' AND ticket = %i""" % id
-        cursor.execute(query)
+                        name = 'project' AND ticket = %i"""
+        cursor.execute(query, [id])
         self.__start_transacction()
 
         return cursor.fetchone()
@@ -168,8 +168,8 @@ class SmpModel(Component):
         cursor = self.__get_cursor()
         query = """INSERT INTO
                         smp_milestone_project(milestone, id_project)
-                    VALUES ('%s', %s)""" % (milestone, str(id_project))
-        cursor.execute(query)
+                    VALUES (%s, %s)"""
+        cursor.execute(query, [milestone, str(id_project)])
         self.__start_transacction()
 
     def get_milestones_of_project(self,project):
@@ -180,10 +180,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_milestone_project AS m
                    WHERE
-                        p.name = '%s' AND
-                        p.id_project = m.id_project""" % (project)
+                        p.name = %s AND
+                        p.id_project = m.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [project])
         return cursor.fetchall()
 
     def get_milestones_for_projectid(self,projectid):
@@ -193,9 +193,9 @@ class SmpModel(Component):
                    FROM
                         smp_milestone_project
                    WHERE
-                        id_project = %i""" % (projectid)
+                        id_project = %i"""
 
-        cursor.execute(query)
+        cursor.execute(query, [projectid])
         return cursor.fetchall()
 
         
@@ -208,10 +208,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_milestone_project AS m
                    WHERE
-                        m.milestone='%s' and
-                        m.id_project = p.id_project""" % (milestone)
+                        m.milestone=%s and
+                        m.id_project = p.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [milestone])
         return cursor.fetchone()
 
     def get_id_project_milestone(self,milestone):
@@ -221,39 +221,39 @@ class SmpModel(Component):
                    FROM
                         smp_milestone_project
                    WHERE
-                        milestone='%s';""" % (milestone)
+                        milestone=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [milestone])
         return cursor.fetchone()
 
-    def delete_milestone_project(self,milestone):
+    def delete_milestone_project(self, milestone):
         cursor = self.__get_cursor()
         query = """DELETE FROM
                         smp_milestone_project
                    WHERE
-                        milestone='%s';""" % (milestone)
+                        milestone=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [milestone])
         self.__start_transacction()
 
     def update_milestone_project(self,milestone,project):
         cursor = self.__get_cursor()
-        query = '''UPDATE
+        query = """UPDATE
                         smp_milestone_project
                    SET
-                        id_project='%s' WHERE milestone='%s';''' % (str(project),milestone)
+                        id_project=%s WHERE milestone=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [str(project), milestone])
         self.__start_transacction()
 
     def rename_milestone_project(self,old_milestone,new_milestone):
         cursor = self.__get_cursor()
-        query = '''UPDATE
+        query = """UPDATE
                         smp_milestone_project
                    SET
-                        milestone='%s' WHERE milestone='%s';''' % (new_milestone,old_milestone)
+                        milestone=%s WHERE milestone=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [new_milestone, old_milestone])
         self.__start_transacction()
 
     # VersionProject Methods
@@ -261,8 +261,8 @@ class SmpModel(Component):
         cursor = self.__get_cursor()
         query = """INSERT INTO
                         smp_version_project(version, id_project)
-                    VALUES ('%s', %s)""" % (version, str(id_project))
-        cursor.execute(query)
+                    VALUES (%s, %s)"""
+        cursor.execute(query, [version, str(id_project)])
         self.__start_transacction()
 
     def get_versions_of_project(self,project):
@@ -273,10 +273,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_version_project AS m
                    WHERE
-                        p.name = '%s' AND
-                        p.id_project = m.id_project""" % (project)
+                        p.name = %s AND
+                        p.id_project = m.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [project])
         return cursor.fetchall()
 
     def get_versions_for_projectid(self,projectid):
@@ -286,9 +286,9 @@ class SmpModel(Component):
                    FROM
                         smp_version_project
                    WHERE
-                        id_project = %i""" % (projectid)
+                        id_project = %i"""
 
-        cursor.execute(query)
+        cursor.execute(query, [projectid])
         return cursor.fetchall()
 
         
@@ -301,10 +301,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_version_project AS m
                    WHERE
-                        m.version='%s' and
-                        m.id_project = p.id_project""" % (version)
+                        m.version=%s and
+                        m.id_project = p.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [version])
         return cursor.fetchone()
 
     def get_id_project_version(self,version):
@@ -314,9 +314,9 @@ class SmpModel(Component):
                    FROM
                         smp_version_project
                    WHERE
-                        version='%s';""" % (version)
+                        version=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [version])
         return cursor.fetchone()
 
     def delete_version_project(self,version):
@@ -324,29 +324,29 @@ class SmpModel(Component):
         query = """DELETE FROM
                         smp_version_project
                    WHERE
-                        version='%s';""" % (version)
+                        version=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [version])
         self.__start_transacction()
 
     def update_version_project(self,version,project):
         cursor = self.__get_cursor()
-        query = '''UPDATE
+        query = """UPDATE
                         smp_version_project
                    SET
-                        id_project='%s' WHERE version='%s';''' % (str(project),version)
+                        id_project=%s WHERE version=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [str(project), version])
         self.__start_transacction()
 
     def rename_version_project(self,old_version,new_version):
         cursor = self.__get_cursor()
-        query = '''UPDATE
+        query = """UPDATE
                         smp_version_project
                    SET
-                        version='%s' WHERE version='%s';''' % (new_version,old_version)
+                        version=%s WHERE version=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [new_version, old_version])
         self.__start_transacction()
 
     # ComponentProject Methods
@@ -357,8 +357,8 @@ class SmpModel(Component):
             id_projects = [id_projects]
 
         for id_project in id_projects:
-            query = "INSERT INTO smp_component_project(component, id_project) VALUES ('%s', %s)" % (component, id_project)
-            cursor.execute(query)
+            query = """INSERT INTO smp_component_project(component, id_project) VALUES (%s, %s)"""
+            cursor.execute(query, [component, id_project])
             
         self.__start_transacction()
 
@@ -370,10 +370,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_component_project AS m
                    WHERE
-                        p.name = '%s' AND
-                        p.id_project = m.id_project""" % (project)
+                        p.name = %s AND
+                        p.id_project = m.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [project])
         return cursor.fetchall()
 
     def get_components_for_projectid(self,projectid):
@@ -383,9 +383,9 @@ class SmpModel(Component):
                    FROM
                         smp_component_project
                    WHERE
-                        id_project = %i""" % (projectid)
+                        id_project = %i"""
 
-        cursor.execute(query)
+        cursor.execute(query, [projectid])
         return cursor.fetchall()
 
     def get_projects_component(self,component):
@@ -396,10 +396,10 @@ class SmpModel(Component):
                         smp_project AS p,
                         smp_component_project AS m
                    WHERE
-                        m.component='%s' and
-                        m.id_project = p.id_project""" % (component)
+                        m.component=%s and
+                        m.id_project = p.id_project"""
 
-        cursor.execute(query)
+        cursor.execute(query, [component])
         return cursor.fetchall()
 
     def get_id_projects_component(self,component):
@@ -409,9 +409,9 @@ class SmpModel(Component):
                    FROM
                         smp_component_project
                    WHERE
-                        component='%s';""" % (component)
+                        component=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [component])
         return cursor.fetchall()
 
     def delete_component_projects(self,component):
@@ -419,17 +419,17 @@ class SmpModel(Component):
         query = """DELETE FROM
                         smp_component_project
                    WHERE
-                        component='%s';""" % (component)
+                        component=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [component])
         self.__start_transacction()
 
     def rename_component_project(self,old_component,new_component):
         cursor = self.__get_cursor()
-        query = '''UPDATE
+        query = """UPDATE
                         smp_component_project
                    SET
-                        component='%s' WHERE component='%s';''' % (new_component,old_component)
+                        component=%s WHERE component=%s;"""
 
-        cursor.execute(query)
+        cursor.execute(query, [new_component, old_component])
         self.__start_transacction()
