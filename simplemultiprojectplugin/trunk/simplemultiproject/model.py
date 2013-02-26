@@ -156,7 +156,7 @@ class SmpModel(Component):
                       FROM
                         ticket_custom
                       WHERE
-                        name = 'project' AND ticket = %i"""
+                        name = 'project' AND ticket = %s"""
         cursor.execute(query, [id])
         self.__start_transacction()
 
@@ -193,7 +193,7 @@ class SmpModel(Component):
                    FROM
                         smp_milestone_project
                    WHERE
-                        id_project = %i"""
+                        id_project = %s"""
 
         cursor.execute(query, [projectid])
         return cursor.fetchall()
@@ -286,7 +286,7 @@ class SmpModel(Component):
                    FROM
                         smp_version_project
                    WHERE
-                        id_project = %i"""
+                        id_project = %s"""
 
         cursor.execute(query, [projectid])
         return cursor.fetchall()
@@ -383,7 +383,7 @@ class SmpModel(Component):
                    FROM
                         smp_component_project
                    WHERE
-                        id_project = %i"""
+                        id_project = %s"""
 
         cursor.execute(query, [projectid])
         return cursor.fetchall()
