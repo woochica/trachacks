@@ -19,7 +19,7 @@ class SumFieldsModule(Component):
         if (req.path_info.startswith('/query') or \
             req.path_info.startswith('/report')) \
           and req.perm.has_permission('REPORT_VIEW'):
-            add_script(req, '/sumfields/sumfields.js')
+            add_script(req, '/sumfields/sumfields.html')
         return template, data, content_type
         
     # IRequestHandler methods
