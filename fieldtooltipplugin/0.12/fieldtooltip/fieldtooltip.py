@@ -8,7 +8,6 @@ from pkg_resources import ResourceManager
 from trac.cache import cached
 from trac.core import Component, implements
 from trac.mimeview import Context
-from trac.util.translation import get_negotiated_locale
 from trac.web.api import ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_script, add_stylesheet
 from trac.wiki.api import IWikiChangeListener, WikiSystem
@@ -139,7 +138,20 @@ class FieldTooltip(Component):
 
 
 class FieldTooltipFilter(object):
-    """ stream の <label for="field-ZZZZZ"> および <th id="h_ZZZZZ"> に対して、
+    """ Add description in 'title' attribute as title="ZZZZZ | zzzzzz",
+        add 'rel' attribute as rel="#tooltip-ZZZZZ", 
+        add element as <div id="tooltip-ZZZZZ"> zzzzz </div>,
+        for <label for="field-ZZZZZ"> and <th id="h_ZZZZZ"> element in a stream.
+        The content in the div will be HTML-formatted, we can use bold, italic, link or so.
+
+        It occurs
+        pop up the title attribute by default,
+        pop up a div element pointed in rel, with jquery cluetip plugin and {local:true} style,
+        pop up a div element returned by bodyHandler, with jquery tooltip plugin,
+        pop up the next element (=div added by this plugin), with jquery tools tooltip.
+
+        (In Janapese/KANJI)
+        stream の <label for="field-ZZZZZ"> および <th id="h_ZZZZZ"> に対して、
         title="ZZZZZ | zzzzzz" という属性で説明を追加し、
         rel="#tooltip-ZZZZZ" という属性を追加し、
         <div id="tooltip-ZZZZZ"> zzzzz </div> という要素を追加します。
@@ -179,9 +191,16 @@ class FieldTooltipFilter(object):
                 yield kind, data, pos
 
     def _add_title(self, data, tagname, attr_name, prefix, after_stream, depth):
-        """ data で与えられた要素が、引数で指定された tagname であり、attr_name 属性の値が prefix で始まる場合、
-            add title and rel attribute to the element.
-                       またそのとき、after_stream[depth] に DIV 要素を格納します。
+        """ In case of
+            data parameter as element has same tagname attribute for the parameter and
+            attribute named the attr_name starts with the prefix,
+            add description in title attribute and rel attribute to the element
+            and store div element generated to after_stream[depth] for later use.
+
+            (In Japanese/KANJI)
+            data で与えられた要素が、引数で指定された tagname であり、attr_name 属性の値が prefix で始まる場合、
+                        説明文をtitle属性およびrel属性としてその要素に設定します。
+                        またそのとき、after_stream[depth] に DIV 要素を格納します。
         """
         element, attrs = data
         attr_value = attrs.get(attr_name)
