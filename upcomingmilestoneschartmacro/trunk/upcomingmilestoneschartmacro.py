@@ -1,3 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2013 F@lk Brettschneider aka falkb
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Originally based on MilestoneQueryMacro code of Nic Ferrier.
+#
+
 from genshi.core import Markup
 from trac.wiki.macros import WikiMacroBase
 from trac.wiki import Formatter
