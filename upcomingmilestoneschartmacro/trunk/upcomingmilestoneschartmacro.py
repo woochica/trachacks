@@ -15,6 +15,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.wiki import Formatter
 from trac.util.datefmt import format_datetime, format_date, from_utimestamp, utc
 from trac.util.text import to_unicode
+from trac import __version__ as VERSION
 from datetime import datetime, timedelta
 from StringIO import StringIO
 import babel
@@ -53,7 +54,13 @@ class UpcomingMilestonesChartMacro(WikiMacroBase):
                     wikitext += """ * [milestone:\"%(milestonename)s\" %(milestonename)s]""" % {
                         "milestonename": m
                         }
-                    date = "(%s)" % format_date(milestone_dues[cur_idx], tzinfo=formatter.req.tz, locale=formatter.req.locale)
+                    
+                    date = ''
+                    if VERSION < '1.0':
+                        date = "(%s)" % format_date(milestone_dues[cur_idx])
+                    else:
+                        date = "(%s)" % format_date(milestone_dues[cur_idx], tzinfo=formatter.req.tz, locale=formatter.req.locale)
+
                     if overdue_color and datetime.now(utc) > from_utimestamp(milestone_dues[cur_idx]):
                         wikitext += ' [[span(style=background-color: ' + overdue_color + ',' + date + ')]]'
                     else:
