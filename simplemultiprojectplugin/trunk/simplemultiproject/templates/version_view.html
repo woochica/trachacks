@@ -21,7 +21,7 @@
   <body>
     <div id="content" class="milestone">
       <h1>Version ${version.name}</h1>
-      <div class="info">
+      <div class="${infodivclass}">
         <py:choose>
           <p py:when="version.time" class="date">
             <i18n:msg params="duration, date">
@@ -35,7 +35,7 @@
         <xi:include href="progress_bar.html" py:if="stats.count"/>
       </div>
 
-      <form py:if="available_groups and stats.count" id="stats" action="">
+      <form py:if="available_groups and stats.count" id="stats" class="trac-groupprogress" action="">
         <fieldset>
           <legend>
             <label for="by" i18n:msg="stat_title">${stats.title.capitalize()} by</label>

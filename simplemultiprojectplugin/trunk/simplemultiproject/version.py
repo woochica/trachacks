@@ -16,6 +16,7 @@ from trac.ticket.roadmap import apply_ticket_permissions, get_ticket_stats, ITic
 from trac.ticket.query import QueryModule
 from trac.mimeview import Context
 from trac.timeline.api import ITimelineEventProvider
+from trac import __version__ as VERSION
 
 from trac.util.translation import _, tag_
 from trac.util.datefmt import parse_date, utc, to_utimestamp, \
@@ -352,13 +353,21 @@ class SmpVersionProject(Component):
         stat = get_ticket_stats(self.stats_provider, tickets)
 
         context = Context.from_request(req)
+
+        infodivclass = ''
+        if VERSION <= '0.12':
+            infodivclass = 'info'
+        else:
+            infodivclass = 'info trac-progress'
+
         data = {
             'context': context,
             'version': version,
             'attachments': AttachmentModule(self.env).attachment_data(context),
             'available_groups': available_groups, 
             'grouped_by': by,
-            'groups': version_groups
+            'groups': version_groups,
+            'infodivclass': infodivclass
             }
         data.update(any_stats_data(self.env, req, stat, 'version', version.name))
 
