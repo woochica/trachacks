@@ -9,6 +9,7 @@ from trac.core import *
 from trac.db import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import Table, Column, DatabaseManager
+from trac.util.text import printout
 
 
 # Database schema variables
@@ -74,12 +75,14 @@ class smpEnvironmentSetupParticipant(Component):
         except:
             # No version currently, inserting new one.
             db_installed_version = 0
-            
-        print "SimpleMultiProject database schema version: %s initialized." % db_version
-        print "SimpleMultiProject database schema version: %s installed." % db_installed_version
+
+        self.log.debug("SimpleMultiProject database schema version: %s (should be %s)",
+                       db_installed_version, db_version)
         # return boolean for if we need to update or not
         needsUpgrade = (db_installed_version < db_version)
-        print "SimpleMultiProject database schema is out of date: %s" % needsUpgrade
+        if needsUpgrade:
+            self.log.info("SimpleMultiProject database schema version is %s, should be %s",
+                          db_installed_version, db_version)
         return needsUpgrade
 
 
@@ -89,17 +92,17 @@ class smpEnvironmentSetupParticipant(Component):
     transactions. This is done implicitly after all participants have
     performed the upgrades they need without an error being raised."""
     def upgrade_environment(self, db):
-        print "Upgrading SimpleMultiProject database schema"
+        printout("Upgrading SimpleMultiProject database schema")
         cursor = db.cursor()
 
         db_installed_version = 0
-        try:
-            sqlGetInstalledVersion = "SELECT value FROM system WHERE name = '%s'" % db_version_key
-            cursor.execute(sqlGetInstalledVersion)
-            db_installed_version = int(cursor.fetchone()[0])
-        except:
-            print "Upgrading SimpleMultiProject database schema"
-            
+        sqlGetInstalledVersion = "SELECT value FROM system WHERE name = '%s'" % db_version_key
+        cursor.execute(sqlGetInstalledVersion)
+        for row in cursor:
+            db_installed_version = int(row[0])
+        printout("SimpleMultiProject database schema version is %s, should be %s" %
+                 (db_installed_version, db_version))
+
         db_connector, _ = DatabaseManager(self.env)._get_connector()
 
         if db_installed_version < 1:
