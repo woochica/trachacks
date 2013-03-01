@@ -7,7 +7,7 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
     name='TracComponentAliasPlugin',
@@ -16,10 +16,11 @@ setup(
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',
     url='http://trac-hacks.org/wiki/TracComponentAliasPlugin',
-    description='Trac Component Alias Plugin',
+    description='Map components to friendly name.',
     long_description="""
-This plugin for Trac 1.0 provides a way to map components to a friendly name in the ticket form.
-""",
+    This plugin for Trac 1.0 and later provides a way to map
+    components to a friendly name in the ticket form.
+    """,
     license='BSD 3-Clause',
 
     install_requires=['Trac >= 0.13dev'],

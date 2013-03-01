@@ -7,12 +7,11 @@
 # you should have received as part of this distribution.
 
 from trac.core import Component, implements
-from trac.ticket.api import ITicketChangeListener, ITicketManipulator
+from trac.ticket.api import ITicketChangeListener
 import re
 
 class TracComponentAlias(Component):
-    implements(ITicketChangeListener,
-               ITicketManipulator)
+    implements(ITicketChangeListener)
 
     def __init__(self):
         self.defin_patt = re.compile(r'(\w+)\.(\w+)')
@@ -46,9 +45,9 @@ class TracComponentAlias(Component):
             and 'status' in ticket.values \
             and ticket.values['status'] != 'closed':
                 self._update_component(ticket, calias)
-        
-    def validate_ticket(self, req, ticket):
-        return []
+
+    def ticket_deleted(self, ticket):
+        pass
         
     def _get_calias_config(self):
         config = self.config['component_alias']
