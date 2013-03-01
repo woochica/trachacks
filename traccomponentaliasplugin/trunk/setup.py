@@ -11,7 +11,7 @@ from setuptools import setup
 
 setup(
     name='TracComponentAliasPlugin',
-    version='0.1.2',
+    version='0.1.3',
     keywords='trac plugin ticket component alias',
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',
