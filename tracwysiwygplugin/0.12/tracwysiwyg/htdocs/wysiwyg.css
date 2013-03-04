@@ -135,6 +135,5 @@ iframe.wysiwyg:focus {
 .wysiwyg-menu a:hover, .wysiwyg-menu .selected a:hover {
     border: 1px solid #fb2;
 }
-.wysiwyg-menu .menu {
-    font-size: 85%;
-}
+.wysiwyg-menu ul { font-size: 85% }
+.wysiwyg-menu ul ul { font-size: 100% }

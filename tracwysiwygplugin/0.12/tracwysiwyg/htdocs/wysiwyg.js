@@ -395,7 +395,7 @@ TracWysiwyg.prototype.createStyleMenu = function(d) {
 
 TracWysiwyg.prototype.createDecorationMenu = function(d) {
     var html = [
-        '<ul class="menu">',
+        '<ul>',
         '<li><a id="wt-strike" href="#">Strike through</a></li>',
         '<li><a id="wt-sup" href="#">Superscript</a></li>',
         '<li><a id="wt-sub" href="#">Subscript</a></li>',
@@ -409,7 +409,7 @@ TracWysiwyg.prototype.createDecorationMenu = function(d) {
 
 TracWysiwyg.prototype.createTableMenu = function(d) {
     var html = [
-        '<ul class="menu">',
+        '<ul>',
         '<li><a id="wt-insert-row-before" href="#">Insert row before</a></li>',
         '<li><a id="wt-insert-row-after" href="#">Insert row after</a></li>',
         '<li><a id="wt-insert-col-before" href="#">Insert column before</a></li>',
