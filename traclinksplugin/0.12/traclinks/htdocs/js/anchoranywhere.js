@@ -19,19 +19,19 @@
     $("#ticket .properties td[headers] p, #ticket .properties td[headers] li").each(function() {
       context = $(this).parents('td[headers]');
       index = 1 + $("p,li", context).index(this);
-      name = context.attr('headers').slice(2) + "\u00B6" + index;
+      name = context.attr('headers').slice(2) + "|" + index;
       addAnchor(this, name);
     });
     $("#ticket .description p, #ticket .description li").each(function() {
       context = $(this).parents('div.searchable');
       index = 1 + $("p, li", context).index(this);
-      name = "description\u00B6" + index;
+      name = "description|" + index;
       addAnchor(this, name);
     });
     $("#changelog p, #changelog li").each(function() {
       context = $(this).parents('div.change');
       index = 1 + $("p,li", context).index(this);
-      name = $('.cnum', context).attr('id') + "\u00B6" + index;
+      name = $('.cnum', context).attr('id') + "|" + index;
       addAnchor(this, name);
     });
   
@@ -43,13 +43,13 @@
         while (true) {
           context = last.prevAll("h1,h2,h3,h4,h5,h6[id]").first();
           if (context.length != 0) { // found headings
-            name = (context.attr('id') || "") + "\u00B6"
+            name = (context.attr('id') || "") + "|"
                 + (1 + context.nextAll().index(last)) + name;
             break;
           } else if (last[0].id == 'wikipage' ||
                      last.index() == -1 ||
                      name.length > 100) {  // Sentinel
-            name = (context.attr('id') || "") + "\u00B6" + name.slice(1);
+            name = (context.attr('id') || "") + "|" + name.slice(1);
             break;
           }
           name = "." + (1 + last.index()) + name;
