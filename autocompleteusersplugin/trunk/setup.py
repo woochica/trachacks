@@ -10,25 +10,25 @@
 
 from setuptools import find_packages, setup
 
-version='0.4.2'
+version = '0.4.2'
 
 setup(name='AutocompleteUsers',
       version=version,
       description="complete the known trac users, AJAX style",
       author='Jeff Hammel',
       author_email='jhammel@openplans.org',
-      maintainer = 'Ryan J Ollos',
-      maintainer_email = 'ryano@physiosonics.com',
+      maintainer='Ryan J Ollos',
+      maintainer_email='ryan.j.ollos@gmail.com',
       url='http://trac-hacks.org/wiki/AutocompleteUsersPlugin',
       keywords='trac plugin',
-      license='3-Clause BSD',
-      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),      
+      license='BSD 3-Clause',
+      packages=find_packages(exclude=['ez_setup', 'examples', 'tests*']),
       include_package_data=True,
       package_data={'autocompleteusers': ['htdocs/css/*.css', 'htdocs/css/*.gif', 'htdocs/js/*.js']},
       zip_safe=False,
-      entry_points = """
+      entry_points="""
       [trac.plugins]
       autocompleteusers = autocompleteusers.autocompleteusers
       """,
-      )
+)
 

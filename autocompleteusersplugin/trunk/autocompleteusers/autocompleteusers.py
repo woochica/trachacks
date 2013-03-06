@@ -12,14 +12,16 @@ from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import (
     Chrome, ITemplateProvider, ITemplateStreamFilter, add_script,
     add_stylesheet
-)
+    )
 
 import fnmatch
 
-USER=0; NAME=1; EMAIL=2 # indices
+USER = 0;
+NAME = 1;
+EMAIL = 2 # indices
+
 
 class AutocompleteUsers(Component):
-
     implements(IRequestFilter, IRequestHandler,
                ITemplateProvider, ITemplateStreamFilter)
 
@@ -52,6 +54,7 @@ class AutocompleteUsers(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
+
         return [('autocomplete', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
@@ -81,22 +84,22 @@ class AutocompleteUsers(Component):
                 add_script(req, 'autocomplete/js/autocomplete_perms.js')
             elif template == 'query.html':
                 add_script(req, 'autocomplete/js/autocomplete_query.js')
-            
+
         return template, data, content_type
 
     # ITemplateStreamFilter methods
 
     def filter_stream(self, req, method, filename, stream, data):
         if filename == 'ticket.html':
-            fields = [field['name'] for field in data['ticket'].fields 
+            fields = [field['name'] for field in data['ticket'].fields
                       if field['type'] == 'select']
             fields = set(sum([fnmatch.filter(fields, pattern)
                               for pattern in self.selectfields], []))
-            
+
         return stream
-    
+
     # Private methods
-    
+
     def _get_groups(self, req):
         # Returns a list of groups by filtering users with session data
         # from the list of all subjects. This has the caveat of also
@@ -108,7 +111,7 @@ class AutocompleteUsers(Component):
         cursor.execute("""SELECT DISTINCT username FROM permission""")
         usernames = [user[0] for user in self.env.get_known_users()]
         return sorted([row[0] for row in cursor if not row[0] in usernames
-                       and row[0].lower().startswith(query)]) 
+                       and row[0].lower().startswith(query)])
 
     def _get_users(self, req):
         # instead of known_users, could be
@@ -128,12 +131,12 @@ class AutocompleteUsers(Component):
                 value = user_data[field].lower()
 
                 if value.startswith(query):
-                    users.append((2-index, user_data)) # 2-index is the sort key
+                    users.append((2 - index, user_data)) # 2-index is the sort key
                     break
                 if field == NAME:
                     lastnames = value.split()[1:]
                     if sum(name.startswith(query) for name in lastnames):
-                        users.append((2-index, user_data)) # 2-index is the sort key
+                        users.append((2 - index, user_data)) # 2-index is the sort key
                         break
 
         return sorted(users)

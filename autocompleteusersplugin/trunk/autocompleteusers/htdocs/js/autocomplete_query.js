@@ -1,9 +1,8 @@
-$(document).ready(function($) {
+$(document).ready(function ($) {
   function addAutocompleteBehavior() {
     var filters = $('#filters');
     var contains = $.contains // jQuery 1.4+
-      || function(container, contained)
-    {
+      || function (container, contained) {
       while (contained !== null) {
         if (container === contained)
           return true;
@@ -11,19 +10,18 @@ $(document).ready(function($) {
       }
       return false;
     };
-    var listener = function(event) {
+    var listener = function (event) {
       var target = event.target || event.srcElement;
-      filters.each(function() {
+      filters.each(function () {
         if (contains(this, target)) {
-          var input = $(this).find('input:text').filter(function() {
+          var input = $(this).find('input:text').filter(function () {
             return target === this;
           });
           var name = input.attr('name');
           if (input.attr('autocomplete') !== 'off' &&
-              /^(?:[0-9]+_)?(?:owner|reporter|cc)$/.test(name))
-          {
+            /^(?:[0-9]+_)?(?:owner|reporter|cc)$/.test(name)) {
             input.autocomplete('subjects', {formatItem: formatItem,
-                                            multiple: /cc$/.test(name)});
+              multiple: /cc$/.test(name)});
             input.focus(); // XXX Workaround for Trac 0.12.2 and jQuery 1.4.2
           }
         }
@@ -39,13 +37,13 @@ $(document).ready(function($) {
     }
     else if (window.addEventListener) {
       // use capture=true cause focus event doesn't bubble in the default
-      filters.each(function() {
+      filters.each(function () {
         this.addEventListener('focus', listener, true);
       });
     }
     else {
       // focusin event bubbles, the event is avialable for IE only
-      filters.each(function() {
+      filters.each(function () {
         this.attachEvent('onfocusin', listener);
       });
     }
