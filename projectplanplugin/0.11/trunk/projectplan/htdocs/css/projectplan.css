@@ -60,6 +60,11 @@ a.in_QA:hover span.ticketnr:after {
         background-color:transparent;
 }
 
+
+.ppnowrap {
+ white-space: nowrap;
+}
+
 #ppconnect {
         background-color:#FFFF00;
         position:fixed;

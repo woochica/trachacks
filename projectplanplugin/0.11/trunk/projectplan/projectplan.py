@@ -6,6 +6,7 @@ import os.path
 import stat
 import shutil
 import datetime
+import time
 
 from genshi.builder import tag
 
@@ -81,7 +82,10 @@ class PPConfigAdminPanel(Component):
         #add_stylesheet( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
         confdict = self.__getconfdict( req, macroenv.conf, page )
         iconset = {}
-        iconset['icons'] = sorted(PPImages.selectable('none' , self.env).keys())
+        defaultvalue='none' # TODO: move to constants
+        iconset['icons'] = sorted(PPImages.selectable(defaultvalue, self.env).keys()) # icons to be selected
+        iconset['iconsviewable'] = iconset['icons'] 
+        iconset['iconsviewable'].remove(defaultvalue) # icons to be displayed as image
         #iconset['icons'].sort()
         iconset['chromebase'] = req.href.chrome( 'projectplan', PPConstant.RelDocPath )
         data = { 'confdict': confdict,
@@ -310,6 +314,15 @@ class ProjectPlanMacro(WikiMacroBase):
     def get_htdocs_dirs( self ):
       return [ ( 'projectplan', resource_filename( __name__, 'htdocs' ) ) ]
 
+    def get_time( self, starttime, macroenv ):
+      '''
+        computes the computing time of the macro
+        returned as HTML construct to be embeeded in HTML output
+      '''
+      duration = (datetime.now()-starttime).microseconds/1000;
+      macroenv.tracenv.log.debug('macro computation time: %s ms: %s ' % (duration,macroenv.macrokw) )
+      return(tag.span('It took %s ms to generate this visualization. ' % (duration,), class_ = 'ppstat' ))
+
     def expand_macro( self, formatter, name, content ):
         '''
           Wiki Macro Method which generates a Genshi Markup Stream
@@ -341,14 +354,12 @@ class ProjectPlanMacro(WikiMacroBase):
           moretitle = renderer.getHeadline() # get the pre-defined headline
           
         
-	  
-        
         return tag.div(
                  tag.h5( tag.a( name=macroenv.macroid )( '%s' % (moretitle,)  ) ),
                  renderer.render( ts ),
                  tag.div(  
                          tag.div( 
-			    tag.span('It took '+str((datetime.now()-macrostart).microseconds/1000)+'ms to generate this visualization. ' , class_ = 'ppstat' ),
+			    self.get_time(macrostart, macroenv),
 			    noteForceReload,
 			    tag.span(tag.a('Force recreation of the visualization.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
 			    )

@@ -61,8 +61,17 @@
                 </py:choose>
               </py:for>
             </select>
-            current: 
-            <img style="background-color:#A0A0A0" src="${confdata['chromebase']}/${confdata['val']}" alt="${confdata['val']} "/>
+	    <span style="white-space: nowrap;">
+              <py:choose>
+                <py:when test="confdata['val']!='none'">
+                  current: 
+                  <img style="background-color:#A0A0A0" src="${confdata['chromebase']}/${confdata['val']}" alt="${confdata['val']} "/>
+                </py:when>
+                <py:otherwise>
+                  none selected
+                </py:otherwise>
+              </py:choose>
+            </span>
           </py:if>
           <py:if test="confdata['opttype']=='text'">
             <input type="text" name="${confdata['id']}" value="${confdata['val']}"/>
@@ -101,7 +110,7 @@
   <div id="ppiconsetoverview">
   <h2>Icon set preview</h2>
         <table class="listing">
-                 <py:for each=" i,imgname in enumerate(iconset['icons'])">
+                 <py:for each=" i,imgname in enumerate(iconset['iconsviewable'])">
                    <tr>
                      <td>
                        <img src="${iconset['chromebase']}/${imgname}"/> 

@@ -40,10 +40,9 @@ class PPImages( ):
   @classmethod
   def collectimages(cls, dir, files):
     '''
-      recursive search for images
+      recursive search for images (exclude txt files)
     '''
-    #dir = os.path.abspath(dir)
-    for file in [file for file in os.listdir(dir) if not file in [".",".."]]:
+    for file in [ file for file in os.listdir(dir) if not file in [".",".."] and not list(os.path.splitext(file)).pop() in ['.txt'] ]:
       nfile = os.path.join(dir,file)
       if os.access(nfile,os.R_OK):
         if os.path.isdir(nfile):
@@ -953,6 +952,17 @@ class PPEnv():
     # replace generic values    
     for k in kw.keys():
       kw[k] = kw[k].replace('$user', req.authname)
+      kw[k] = kw[k].replace('$USER', req.authname)
+    
+    # replace ticket id placeholder with current ticket id (if available)
+    try:
+      ticket_id = re.search(r"/ticket/([0-9]+)",req.path_info).group(1)
+      for k in kw.keys():
+        kw[k] = kw[k].replace('$ticket', ticket_id)
+        kw[k] = kw[k].replace('$TICKET', ticket_id)
+    except:
+      pass
+      
     self.macrokw = kw
     
     # set constants
