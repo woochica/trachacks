@@ -66,7 +66,7 @@ class RemovePendingPlugin(Component):
 
                     #trigger notification since we've changed the ticket
                     tn = TicketNotifyEmail(self.env)
-                    tn.notify(ticket, newticket=False, modtime=now)
+                    tn.notify(ticket, newticket=False, modtime=attachment.date)
 
     def attachment_deleted(self, attachment):
         pass
