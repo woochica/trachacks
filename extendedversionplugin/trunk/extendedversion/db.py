@@ -13,14 +13,14 @@ from trac.env import IEnvironmentSetupParticipant
 db_version = 1
 upgrades = [
     [], # zero-indexing
-    [ # First revision
-        #-- Add the milestone_version table for mapping milestones to versions
-        """CREATE TABLE milestone_version (
-            milestone    text PRIMARY KEY,
-            version      text
-        );""",
-        """INSERT INTO system (name, value) VALUES ('extended_version_plugin', 1)""",
-    ],
+        [# First revision
+         #-- Add the milestone_version table for mapping milestones to versions
+         """CREATE TABLE milestone_version (
+             milestone    text PRIMARY KEY,
+             version      text
+         );""",
+         """INSERT INTO system (name, value) VALUES ('extended_version_plugin', 1)""",
+        ],
 ]
 
 

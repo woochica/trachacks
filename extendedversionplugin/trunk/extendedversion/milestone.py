@@ -7,8 +7,6 @@
 # you should have received as part of this distribution.
 #
 
-from datetime import datetime
-
 from genshi.builder import tag
 from genshi.filters.transform import StreamBuffer, Transformer
 from genshi.template.markup import MarkupTemplate
@@ -25,7 +23,7 @@ from trac.wiki.formatter import wiki_to_oneliner
 class MilestoneVersion(Component):
     """Add a 'Version' attribute to milestones.
     """
-       
+
     implements(INavigationContributor, IRequestFilter, ITemplateStreamFilter)
 
     # INavigationContributor methods
@@ -42,8 +40,8 @@ class MilestoneVersion(Component):
     def pre_process_request(self, req, handler):
         action = req.args.get('action', 'view')
         if req.path_info.startswith('/milestone') \
-                and req.method == 'POST' \
-                and action == 'edit' or action == 'delete':
+            and req.method == 'POST' \
+            and action == 'edit' or action == 'delete':
 
             old_name = req.args.get('id')
             new_name = req.args.get('name')
@@ -96,10 +94,12 @@ class MilestoneVersion(Component):
 
     def _milestone_versions(self, stream, req):
         buffer = StreamBuffer()
+
         def apply_version():
             return self._version_display(req, buffer.events[1][1])
+
         filter = Transformer('//li[@class="milestone"]/div/h2/a/em').copy(buffer).end() \
-                     .select('//li[@class="milestone"]//p[@class="date"]').append(apply_version)
+            .select('//li[@class="milestone"]//p[@class="date"]').append(apply_version)
         return stream | filter
 
     def _version_display(self, req, milestone):
@@ -110,8 +110,8 @@ class MilestoneVersion(Component):
 
         if row:
             return tag.span(
-                    "; ",
-                    wiki_to_oneliner("For version:'%s'" % (row[0],), self.env, req=req),
+                "; ",
+                wiki_to_oneliner("For version:'%s'" % (row[0],), self.env, req=req),
                 class_="date")
         else:
             return []
@@ -126,15 +126,15 @@ class MilestoneVersion(Component):
 
         cursor.execute("SELECT name FROM version WHERE time IS NULL OR time = 0 OR time>%s "
                        "OR name = %s ORDER BY name",
-                                (to_timestamp(None), value))
+                       (to_timestamp(None), value))
 
         return tag.div(
-                tag.label(
-                    'Version:',
-                    tag.br(),
-                    tag.select(
-                        tag.option(),
-                        [tag.option(row[0], selected=(value == row[0] or None)) for row in cursor],
-                        name="version")),
+            tag.label(
+                'Version:',
+                tag.br(),
+                tag.select(
+                    tag.option(),
+                    [tag.option(row[0], selected=(value == row[0] or None)) for row in cursor],
+                    name="version")),
             class_="field")
 

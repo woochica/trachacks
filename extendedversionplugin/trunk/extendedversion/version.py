@@ -20,7 +20,7 @@ from trac.resource import Resource, ResourceNotFound
 from trac.ticket import Milestone, Version
 from trac.ticket.query import QueryModule
 from trac.ticket.roadmap import apply_ticket_permissions, \
-            get_tickets_for_milestone, get_ticket_stats
+    get_tickets_for_milestone, get_ticket_stats
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
 from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
@@ -37,12 +37,14 @@ from trac.wiki import IWikiSyntaxProvider
 def milestone_stats_data(env, req, stat, name, grouped_by='component',
                          group=None):
     has_query = env[QueryModule] is not None
+
     def query_href(extra_args):
         if not has_query:
             return None
         args = {'milestone': name, grouped_by: group, 'group': 'status'}
         args.update(extra_args)
         return req.href.query(args)
+
     return {'stats': stat,
             'stats_href': query_href(stat.qry_args),
             'interval_hrefs': [query_href(interval['qry_args'])
@@ -51,12 +53,14 @@ def milestone_stats_data(env, req, stat, name, grouped_by='component',
 
 def version_interval_hrefs(env, req, stat, milestones):
     has_query = env[QueryModule] is not None
+
     def query_href(extra_args):
         if not has_query:
             return None
         args = {'milestone': milestones, 'group': 'milestone'}
         args.update(extra_args)
         return req.href.query(args)
+
     return [query_href(interval['qry_args']) for interval in stat.intervals]
 
 
@@ -65,20 +69,20 @@ class VisibleVersion(Component):
                IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
 
     navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
-        """The main navigation item to highlight when displaying versions.""")
+                             """The main navigation item to highlight when displaying versions.""")
     show_milestone_description = BoolOption('extended_version', 'show_milestone_description', False,
-        """whether to display milestone descriptions on version page.""")
+                                            """whether to display milestone descriptions on version page.""")
     version_stats_provider = ExtensionOption('extended_version', 'version_stats_provider',
-                                     ITicketGroupStatsProvider,
-                                     'DefaultTicketGroupStatsProvider',
-        """Name of the component implementing `ITicketGroupStatsProvider`,
-        which is used to collect statistics on all version tickets.""")
+                                             ITicketGroupStatsProvider,
+                                             'DefaultTicketGroupStatsProvider',
+                                             """Name of the component implementing `ITicketGroupStatsProvider`,
+                                             which is used to collect statistics on all version tickets.""")
     milestone_stats_provider = ExtensionOption('extended_version', 'milestone_stats_provider',
-                                     ITicketGroupStatsProvider,
-                                     'DefaultTicketGroupStatsProvider',
-        """Name of the component implementing `ITicketGroupStatsProvider`,
-        which is used to collect statistics on per milestone tickets in
-        the version view.""")
+                                               ITicketGroupStatsProvider,
+                                               'DefaultTicketGroupStatsProvider',
+                                               """Name of the component implementing `ITicketGroupStatsProvider`,
+                                               which is used to collect statistics on per milestone tickets in
+                                               the version view.""")
 
     # ILegacyAttachmentPolicyDelegate methods
 
@@ -96,7 +100,7 @@ class VisibleVersion(Component):
         decision = action in perm(resource.parent)
         if not decision:
             self.env.log.debug('ExtendedVersionTracPlugin denied %s '
-                               'access to %s. User needs %s' % 
+                               'access to %s. User needs %s' %
                                (username, resource, action))
         return decision
 
@@ -121,7 +125,7 @@ class VisibleVersion(Component):
     def process_request(self, req):
         version_id = req.args.get('id')
         req.perm('version', version_id).require('VERSION_VIEW')
-        
+
         db = self.env.get_db_cnx()
         version = Version(self.env, version_id, db)
         action = req.args.get('action', 'view')
@@ -151,10 +155,12 @@ class VisibleVersion(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
+
         return [('extendedversion', resource_filename('extendedversion', 'htdocs'))]
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
+
         return [resource_filename('extendedversion', 'templates')]
 
 
@@ -191,7 +197,7 @@ class VisibleVersion(Component):
 
         old_name = version.name
         new_name = req.args.get('name')
-        
+
         version.name = new_name
         version.description = req.args.get('description', '')
 
@@ -200,6 +206,7 @@ class VisibleVersion(Component):
         # Instead of raising one single error, check all the constraints and
         # let the user fix them by going back to edit mode showing the warnings
         warnings = []
+
         def warn(msg):
             add_warning(req, msg)
             warnings.append(msg)
@@ -229,7 +236,7 @@ class VisibleVersion(Component):
 
         if warnings:
             return self._render_editor(req, db, version)
-        
+
         # -- actually save changes
         if version.exists:
             if version.name != version._old_name:
@@ -295,7 +302,7 @@ class VisibleVersion(Component):
             return tag.a(label, class_='missing version', href=href + extra,
                          rel='nofollow')
         return tag.a(label, class_='missing version')
-        
+
     def _render_view(self, req, db, version):
 
         db = self.env.get_db_cnx()
@@ -316,7 +323,7 @@ class VisibleVersion(Component):
             milestones.append(milestone)
 
             mtickets = get_tickets_for_milestone(self.env, db, milestone.name,
-                                                'owner')
+                                                 'owner')
             mtickets = apply_ticket_permissions(self.env, req, mtickets)
             tickets += mtickets
             stat = get_ticket_stats(self.milestone_stats_provider, mtickets)
@@ -324,7 +331,7 @@ class VisibleVersion(Component):
 
         stats = get_ticket_stats(self.version_stats_provider, tickets)
         interval_hrefs = version_interval_hrefs(self.env, req, stats,
-            [milestone.name for milestone in milestones])
+                                                [milestone.name for milestone in milestones])
 
         resource = Resource('version', version.name)
         context = Context.from_request(req, resource)
@@ -341,7 +348,7 @@ class VisibleVersion(Component):
             'milestones': milestones,
             'milestone_stats': milestone_stats,
             'show_milestone_description': self.show_milestone_description,
-            }
+        }
 
         return 'version_view.html', data, None
 
