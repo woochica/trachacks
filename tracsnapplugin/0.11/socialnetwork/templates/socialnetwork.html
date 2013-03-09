@@ -1,84 +1,88 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:py="http://genshi.edgewall.org/"
-	xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude">
 
-	<xi:include href="layout.html" />
+<xi:include href="layout.html"/>
 
-	<head>
-		<title>Social Network</title>
+<head>
+  <title>Social Network</title>
 
-		<style type="text/css">
-			h2 {
-				background: #aaaaaa;
-				color: #ffffff;
-				border-bottom: 1px solid #888888;
-				margin: 0;
-				padding: 5px;
-			}
-			#sidebar{
-				margin: 5px;
-				width: 250px;	
-				float: left;				
-			}
-			#tracSnap{
-				margin: 0px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#menu{
-				margin: 0;						
-				margin-top: 6px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#suggested_contact{
-				margin: 5px;
-				width: 350px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}		
-			#recent_files{
-				margin: 5px;
-				width: 300px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
+  <style type="text/css">
+    h2 {
+      background: #aaaaaa;
+      color: #ffffff;
+      border-bottom: 1px solid #888888;
+      margin: 0;
+      padding: 5px;
+    }
 
-		</style>
-	</head>
+    #sidebar {
+      margin: 5px;
+      width: 250px;
+      float: left;
+    }
 
-	<body>	
+    #tracSnap {
+      margin: 0px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		<div id="sidebar">
-			<div id="tracSnap">
-				<h2>TracSNAP</h2>
-			</div>
+    #menu {
+      margin: 0;
+      margin-top: 6px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-			<div id="menu">
-				<h2>Menu</h2>
-				<ul>
-					<li><a href="socialnetwork">Social Network Home</a></li>
-					<li><a href="sn_my_files">My Files</a></li>
-					<li><a href="sn_overall_files">Overall Files</a></li>
-					<li><a href="sn_my_social">My Social Network</a></li>
-					<li><a href="sn_overall_social">Overall Social Network</a></li>
-				</ul>				
-			</div>
-		</div>
+    #suggested_contact {
+      margin: 5px;
+      width: 350px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		<div id="suggested_contact">
-		</div>
+    #recent_files {
+      margin: 5px;
+      width: 300px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		<div id="recent_files">
-			<h2>Your Recent Files</h2>
-		</div>
+  </style>
+</head>
 
-	</body>
+<body>
+
+<div id="sidebar">
+  <div id="tracSnap">
+    <h2>TracSNAP</h2>
+  </div>
+
+  <div id="menu">
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="socialnetwork">Social Network Home</a></li>
+      <li><a href="sn_my_files">My Files</a></li>
+      <li><a href="sn_overall_files">Overall Files</a></li>
+      <li><a href="sn_my_social">My Social Network</a></li>
+      <li><a href="sn_overall_social">Overall Social Network</a></li>
+    </ul>
+  </div>
+</div>
+
+<div id="suggested_contact">
+</div>
+
+<div id="recent_files">
+  <h2>Your Recent Files</h2>
+</div>
+
+</body>
 
 </html>

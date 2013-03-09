@@ -1,135 +1,142 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:py="http://genshi.edgewall.org/"
-	xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude">
 
-	<xi:include href="layout.html" />
+<xi:include href="layout.html"/>
 
-	<head>
-		<title>Social Network</title>
+<head>
+  <title>Social Network</title>
 
-		<style type="text/css">
-			h2 {
-				background: #aaaaaa;
-				color: #ffffff;
-				border-bottom: 1px solid #888888;
-				margin: 0;
-				padding: 5px;
-			}	
-			#menu{
-				margin: 5px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#sidebar{
-				margin: 5px;
-				width: 250px;	
-				float: left;				
-			}
-			#tracSnap{
-				margin: 0px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#menu{
-				margin: 0;						
-				margin-top: 6px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#corrections {				
-				margin-top: 6px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#graph_title{
-				margin: 5px;
-				margin-bottom:20px;
-				width: 650px;
-				height: 100%;
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
+  <style type="text/css">
+    h2 {
+      background: #aaaaaa;
+      color: #ffffff;
+      border-bottom: 1px solid #888888;
+      margin: 0;
+      padding: 5px;
+    }
 
-		</style>
-		
-	</head>
+    #menu {
+      margin: 5px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-	<body>
+    #sidebar {
+      margin: 5px;
+      width: 250px;
+      float: left;
+    }
 
-		<div id="sidebar">
+    #tracSnap {
+      margin: 0px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-			<div id="tracSnap">
-				<h2>TracSNAP</h2>
-			</div>
+    #menu {
+      margin: 0;
+      margin-top: 6px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-			<div id="menu">
-				<h2>Menu</h2>
-				<ul>
-					<li><a href="socialnetwork">Social Network Home</a></li>
-					<li><a href="sn_my_files">My Files</a></li>
-					<li><a href="sn_overall_files">Overall Files</a></li>
-					<li><a href="sn_my_social">My Social Network</a></li>
-					<li><a href="sn_overall_social">Overall Social Network</a></li>
-				</ul>
-			</div>
+    #corrections {
+      margin-top: 6px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-			<div id="corrections">
-				<h2>Corrections</h2>
-				<div style="margin:10px">
-					Is there someone you talk to who isn't listed?<br /><br />
-					<form method="GET" action="sn_my_social">
-						<label for="person">Their Name: </label><br />
-						<select name="person">
+    #graph_title {
+      margin: 5px;
+      margin-bottom: 20px;
+      width: 650px;
+      height: 100%;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-						</select><br /><br />
-						<label for="strength">How often do you talk to them?: </label><br />
-						<input type="radio" name="strength" value="1" /> A little <br />
-						<input type="radio" name="strength" value="5" /> A lot <br /><br />
-						<input type="submit" value="Submit" />
-					</form>
-				</div>
-			</div>	
-		
-		</div>
+  </style>
 
-		<div id="graph_title">		
+</head>
 
-			<center>
+<body>
 
-			<br />
+<div id="sidebar">
 
-			<div>
-			<form method="GET" action="sn_my_social">
-				<label for="depth">Depth: </label>
-				<input type="text" name="depth" size="3" maxlength="2" />
-				<input type="submit" value="Submit" />
-			</form>
-			</div>
-			
-			<br />
+  <div id="tracSnap">
+    <h2>TracSNAP</h2>
+  </div>
 
-			<div id="graph">
-			</div>
-			
-			<br />	
+  <div id="menu">
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="socialnetwork">Social Network Home</a></li>
+      <li><a href="sn_my_files">My Files</a></li>
+      <li><a href="sn_overall_files">Overall Files</a></li>
+      <li><a href="sn_my_social">My Social Network</a></li>
+      <li><a href="sn_overall_social">Overall Social Network</a></li>
+    </ul>
+  </div>
 
-			<div id="fs_link">
-			</div>
-	
-			<br />
-		
-			</center>
-		</div>
-	
-	</body>
+  <div id="corrections">
+    <h2>Corrections</h2>
+
+    <div style="margin:10px">
+      Is there someone you talk to who isn't listed?<br/><br/>
+
+      <form method="GET" action="sn_my_social">
+        <label for="person">Their Name: </label><br/>
+        <select name="person">
+
+        </select><br/><br/>
+        <label for="strength">How often do you talk to them?: </label><br/>
+        <input type="radio" name="strength" value="1"/> A little <br/>
+        <input type="radio" name="strength" value="5"/> A lot <br/><br/>
+        <input type="submit" value="Submit"/>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<div id="graph_title">
+
+  <center>
+
+    <br/>
+
+    <div>
+      <form method="GET" action="sn_my_social">
+        <label for="depth">Depth: </label>
+        <input type="text" name="depth" size="3" maxlength="2"/>
+        <input type="submit" value="Submit"/>
+      </form>
+    </div>
+
+    <br/>
+
+    <div id="graph">
+    </div>
+
+    <br/>
+
+    <div id="fs_link">
+    </div>
+
+    <br/>
+
+  </center>
+</div>
+
+</body>
 
 </html>

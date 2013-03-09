@@ -1,103 +1,107 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:py="http://genshi.edgewall.org/"
-	xmlns:xi="http://www.w3.org/2001/XInclude">
+      xmlns:xi="http://www.w3.org/2001/XInclude">
 
-	<xi:include href="layout.html" />
+<xi:include href="layout.html"/>
 
-	<head>
-		<title>Social Network</title>
+<head>
+  <title>Social Network</title>
 
-		<style type="text/css">
-			h2 {
-				background: #aaaaaa;
-				color: #ffffff;
-				border-bottom: 1px solid #888888;
-				margin: 0;
-				padding: 5px;
-			}	
-			#menu{
-				margin: 5px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#graph_title{
-				margin: 5px;
-				margin-bottom:20px;
-				width: 650px;
-				height: 100%;
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#sidebar{
-				margin: 5px;
-				width: 250px;	
-				float: left;				
-			}
-			#tracSnap{
-				margin: 0px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
-			#menu{
-				margin: 0;						
-				margin-top: 6px;
-				width: 250px;	
-				float: left;
-				background: #dddddd;
-				border: 1px solid #888888;
-			}
+  <style type="text/css">
+    h2 {
+      background: #aaaaaa;
+      color: #ffffff;
+      border-bottom: 1px solid #888888;
+      margin: 0;
+      padding: 5px;
+    }
 
-		</style>	
-	</head>
+    #menu {
+      margin: 5px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-	<body>	
+    #graph_title {
+      margin: 5px;
+      margin-bottom: 20px;
+      width: 650px;
+      height: 100%;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		<div id="sidebar">
-			
-			<div id="tracSnap">
-				<h2>TracSNAP</h2>
-			</div>
+    #sidebar {
+      margin: 5px;
+      width: 250px;
+      float: left;
+    }
 
-			<div id="menu">
-				<h2>Menu</h2>
-				<ul>
-					<li><a href="socialnetwork">Social Network Home</a></li>
-					<li><a href="sn_my_files">My Files</a></li>
-					<li><a href="sn_overall_files">Overall Files</a></li>
-					<li><a href="sn_my_social">My Social Network</a></li>
-					<li><a href="sn_overall_social">Overall Social Network</a></li>					
-				</ul>					
-			</div>
+    #tracSnap {
+      margin: 0px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		</div>
+    #menu {
+      margin: 0;
+      margin-top: 6px;
+      width: 250px;
+      float: left;
+      background: #dddddd;
+      border: 1px solid #888888;
+    }
 
-		<div id="graph_title">
+  </style>
+</head>
 
-			<center>
+<body>
 
-			<br />
+<div id="sidebar">
 
-			<div id="dir_list"></div>	
-					
-			<br />	
-			
-			<div id="graph"></div>
-			
-			<br />
-			
-			<div id="fs_link"></div>
+  <div id="tracSnap">
+    <h2>TracSNAP</h2>
+  </div>
 
-			<br />
+  <div id="menu">
+    <h2>Menu</h2>
+    <ul>
+      <li><a href="socialnetwork">Social Network Home</a></li>
+      <li><a href="sn_my_files">My Files</a></li>
+      <li><a href="sn_overall_files">Overall Files</a></li>
+      <li><a href="sn_my_social">My Social Network</a></li>
+      <li><a href="sn_overall_social">Overall Social Network</a></li>
+    </ul>
+  </div>
 
-			</center>
-						
-		</div>
+</div>
 
-	</body>
+<div id="graph_title">
+
+  <center>
+
+    <br/>
+
+    <div id="dir_list"></div>
+
+    <br/>
+
+    <div id="graph"></div>
+
+    <br/>
+
+    <div id="fs_link"></div>
+
+    <br/>
+
+  </center>
+
+</div>
+
+</body>
 
 </html>
