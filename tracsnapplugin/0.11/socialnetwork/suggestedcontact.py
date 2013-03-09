@@ -88,7 +88,7 @@ def get_suggested_contact(self, username):
     return suggested_contact
 
 
-class Author():
+class Author:
     def __init__(self, name, username):
         self.compared_to = username
         self.name = name
