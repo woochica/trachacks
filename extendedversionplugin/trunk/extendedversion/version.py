@@ -306,7 +306,7 @@ class VisibleVersion(Component):
     def _render_view(self, req, db, version):
 
         db = self.env.get_db_cnx()
-        sql = "SELECT name,due,completed,description FROM milestone " \
+        sql = "SELECT name FROM milestone " \
               "INNER JOIN milestone_version ON (name = milestone) " \
               "WHERE version = %s " \
               "ORDER BY due"
@@ -318,8 +318,7 @@ class VisibleVersion(Component):
         milestone_stats = []
 
         for row in cursor:
-            milestone = Milestone(self.env)
-            milestone._from_database(row)
+            milestone = Milestone(self.env, row[0])
             milestones.append(milestone)
 
             mtickets = get_tickets_for_milestone(self.env, db, milestone.name,
