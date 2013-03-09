@@ -12,8 +12,6 @@ from genshi.filters.transform import StreamBuffer, Transformer
 from genshi.template.markup import MarkupTemplate
 
 from trac.core import *
-from trac.resource import ResourceNotFound
-from trac.ticket import Version
 from trac.util.datefmt import to_timestamp
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import INavigationContributor

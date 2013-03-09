@@ -12,25 +12,24 @@ import re
 from datetime import date
 from genshi.builder import tag
 
-from trac.attachment import AttachmentModule
+from trac.attachment import AttachmentModule, ILegacyAttachmentPolicyDelegate
 from trac.config import BoolOption, ExtensionOption, Option
 from trac.core import *
 from trac.mimeview.api import Context
+from trac.perm import IPermissionRequestor
 from trac.resource import Resource, ResourceNotFound
 from trac.ticket import Milestone, Version
 from trac.ticket.query import QueryModule
-from trac.ticket.roadmap import apply_ticket_permissions, \
+from trac.ticket.roadmap import (
+    ITicketGroupStatsProvider, apply_ticket_permissions,
     get_tickets_for_milestone, get_ticket_stats
+)
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
-from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
-
-### interfaces:  
-from trac.attachment import ILegacyAttachmentPolicyDelegate
-from trac.perm import IPermissionPolicy, IPermissionRequestor
-#from trac.search import ISearchSource
-from trac.ticket.roadmap import ITicketGroupStatsProvider
-from trac.web.chrome import IRequestHandler, ITemplateProvider
+from trac.web.chrome import (
+    IRequestHandler, ITemplateProvider, add_notice,
+    add_stylesheet, add_warning
+)
 from trac.wiki import IWikiSyntaxProvider
 
 
@@ -69,20 +68,23 @@ class VisibleVersion(Component):
                IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
 
     navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
-                             """The main navigation item to highlight when displaying versions.""")
-    show_milestone_description = BoolOption('extended_version', 'show_milestone_description', False,
-                                            """whether to display milestone descriptions on version page.""")
+        """The main navigation item to highlight when displaying versions.""")
+
+    show_milestone_description = BoolOption('extended_version',
+        'show_milestone_description', False,
+        """whether to display milestone descriptions on version page.""")
+
     version_stats_provider = ExtensionOption('extended_version', 'version_stats_provider',
-                                             ITicketGroupStatsProvider,
-                                             'DefaultTicketGroupStatsProvider',
-                                             """Name of the component implementing `ITicketGroupStatsProvider`,
-                                             which is used to collect statistics on all version tickets.""")
-    milestone_stats_provider = ExtensionOption('extended_version', 'milestone_stats_provider',
-                                               ITicketGroupStatsProvider,
-                                               'DefaultTicketGroupStatsProvider',
-                                               """Name of the component implementing `ITicketGroupStatsProvider`,
-                                               which is used to collect statistics on per milestone tickets in
-                                               the version view.""")
+        ITicketGroupStatsProvider, 'DefaultTicketGroupStatsProvider',
+        """Name of the component implementing `ITicketGroupStatsProvider`,
+           which is used to collect statistics on all version tickets.""")
+
+    milestone_stats_provider = ExtensionOption('extended_version',
+        'milestone_stats_provider', ITicketGroupStatsProvider,
+        'DefaultTicketGroupStatsProvider',
+        """Name of the component implementing `ITicketGroupStatsProvider`,
+           which is used to collect statistics on per milestone tickets in
+           the version view.""")
 
     # ILegacyAttachmentPolicyDelegate methods
 
@@ -155,12 +157,10 @@ class VisibleVersion(Component):
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-
         return [('extendedversion', resource_filename('extendedversion', 'htdocs'))]
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
-
         return [resource_filename('extendedversion', 'templates')]
 
 
