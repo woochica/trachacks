@@ -2,13 +2,12 @@
 # August 2009
 
 from trac.core import *
-from trac.web import parse_query_string
-from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.env import IEnvironmentSetupParticipant
-from trac.web.main import IRequestHandler
+from trac.ticket.query import Query
+from trac.util import Markup
 from trac.web.api import ITemplateStreamFilter
-from trac.util import escape, Markup
-from pkg_resources import resource_filename
+from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.web.main import IRequestHandler
 
 from getdata import *
 from dbanalysis import *
@@ -38,9 +37,11 @@ class SocialNetworkPlugin(Component):
     # ######################### ITemplateProvider #############################
     # ############ Tell trac where the templates and scripts are ##############
     def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
         return [('socialnetwork', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
+        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     # ################### IEnvironmentSetupParticipant ########################
@@ -81,9 +82,9 @@ class SocialNetworkPlugin(Component):
         # Create the tables required for tracSNAP
             cursor = db.cursor()
             cursor.execute('CREATE TABLE IF NOT EXISTS code_relations ('
-                           'file1      TEXT,'
-                           'file2      TEXT,'
-                           'strength   INTEGER'
+                           'file1     TEXT,'
+                           'file2     TEXT,'
+                           'strength  INTEGER'
                            ')')
             cursor.execute('CREATE TABLE IF NOT EXISTS expertise ('
                            'path      TEXT,'
@@ -95,9 +96,9 @@ class SocialNetworkPlugin(Component):
                            'value     INTEGER'
                            ')')
             cursor.execute('CREATE TABLE IF NOT EXISTS social_relations ('
-                           'person1	TEXT,'
-                           'person2	TEXT,'
-                           'strength	INTEGER'
+                           'person1   TEXT,'
+                           'person2   TEXT,'
+                           'strength  INTEGER'
                            ')')
             cursor.execute('DELETE FROM socialnetworkdb_data')
             cursor.execute('INSERT INTO socialnetworkdb_data \
@@ -112,11 +113,12 @@ class SocialNetworkPlugin(Component):
                             AND n.node_type != "D"  \
                             GROUP BY r.rev')
             db.commit()
-            db.close()
 
         except Exception, e:
             self.log.error("SocialNetworkPlugin Exception: %s" % (e,));
             db.rollback()
+
+        db.close()
 
 
     # ######################### IRequestHandler ###############################
@@ -186,13 +188,13 @@ class SocialNetworkPlugin(Component):
             repo = self.env.get_repository(req.authname)
 
             # Clear the tables of data we've analyzed (should be commented out)
-            #			clear_tables(self)
+            #     clear_tables(self)
 
             # Analyze the repository!
             determine_relations(self, repo)
 
             # Make a social recommendation
-            rec = make_recommendation_box(self, req.authname, req.basepath)
+            rec = make_recommendation_box(self, req.authname, req.base_path)
 
             # Get the files recently edited by this user
             recent = get_recent_files(self, req.authname, req.base_path)
@@ -209,7 +211,7 @@ class SocialNetworkPlugin(Component):
             # ############################################################### #
 
             # Check if depth was specified
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             depth = int(query_args.getfirst("depth", 1))
 
             # HTML to be inserted into the template
@@ -243,7 +245,7 @@ class SocialNetworkPlugin(Component):
             # ############################################################### #
 
             # Check if subdirectories were specified
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             subdirs = query_args.getlist("subdirs")
             subdir_vars = '&subdirs='
             if subdirs != []: # Show specified sub-directories
@@ -294,7 +296,7 @@ class SocialNetworkPlugin(Component):
             # ############################################################### #
 
             # Check query args to see if there is a graph correction to be made
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             new_person = query_args.getfirst("person", None)
             if new_person != None:
                 strength = query_args.getfirst("strength", 1)
@@ -363,7 +365,7 @@ class SocialNetworkPlugin(Component):
             # ############################################################### #
 
             # Get the person who we are finding the connection to
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             them = query_args.getfirst("linkto", "")
 
             # HTML to be inserted into the template
@@ -392,7 +394,7 @@ class SocialNetworkPlugin(Component):
             # ---------------------- Data: My Files ---------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             depth = int(query_args.getfirst("depth", 1))
 
             data = get_my_files_data(self, req.authname, depth)
@@ -407,7 +409,7 @@ class SocialNetworkPlugin(Component):
             # ------------------- Data: Overall Files -------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             subdirs = query_args.getlist("subdirs")
 
             if subdirs[0] == "":
@@ -427,7 +429,7 @@ class SocialNetworkPlugin(Component):
             # ---------------------- Data: My Social --------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             depth = int(query_args.getfirst("depth", 1))
 
             data = get_my_social_data(self, req.authname, depth)
@@ -452,7 +454,7 @@ class SocialNetworkPlugin(Component):
             # ---------------------- Data: Linkto -----------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             them = query_args.getfirst("linkto", "")
 
             data = get_my_linkto(self, req.authname, them)
@@ -466,7 +468,7 @@ class SocialNetworkPlugin(Component):
             # ----------------------- FS My Files -----------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             depth = int(query_args.getfirst("depth", 1))
 
             swf = HTML('<object width="800" height="800">\
@@ -490,7 +492,7 @@ class SocialNetworkPlugin(Component):
             # ------------------- FS Overall Files ----------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             subdirs = query_args.getlist("subdirs")
             subdir_vars = '&subdirs='
 
@@ -518,7 +520,7 @@ class SocialNetworkPlugin(Component):
             # ----------------------- FS My Social ----------------------------
             # -----------------------------------------------------------------
 
-            query_args = parse_query_string(req.query_string)
+            query_args = Query.from_string(self.env, req.query_string)
             depth = int(query_args.getfirst("depth", 1))
 
             swf = HTML('<object width="800" height="800">\

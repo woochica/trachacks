@@ -180,7 +180,7 @@ def determine_relations(self, repo):
     # Store current rev, so that we know where to update from next time
     cursor.execute('SELECT max(rev)	FROM revision')
     row = cursor.fetchone()
-    last_rev = int(row[0])
+    last_rev = int(row and row[0] or 0)
     cursor.execute('UPDATE socialnetworkdb_data \
                     SET value = %s \
                     WHERE name = "lastRev"',
