@@ -7,11 +7,11 @@
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
     name='tracticketweightPlugin',
-    version='0.1.3',
+    version='0.1.4',
     keywords='trac plugin ticket weight',
     author='Zack Shahan',
     author_email='zshahan@dig-inc.net',

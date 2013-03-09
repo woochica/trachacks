@@ -55,8 +55,9 @@ class TracTicketWeight(Component):
                                   where ticket = %s and name = 'weight_owner'""",
                                (owner, ticket.id))
         
-        if self.cfield:  
-            self._owner_hours_set(ticket)
+        if self.cfield:
+            if self.cfield in ticket.values and ticket.values[self.cfield] != '':   
+                self._owner_hours_set(ticket)
         
     def ticket_changed(self, ticket, comment, author, old_values):
         owner = 0
