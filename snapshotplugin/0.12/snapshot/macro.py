@@ -1,5 +1,12 @@
-#!/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2012-2013 MATOBA Akihiro <matobaa+trac-hacks@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from genshi.builder import tag
 from trac.core import Component, implements
 from trac.ticket.api import TicketSystem

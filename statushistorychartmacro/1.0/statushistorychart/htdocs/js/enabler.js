@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2013 MATOBA Akihiro <matobaa+trac-hacks@gmail.com>
+ * All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.
+ */
+
 (function($) {
 	$(document).ready(function() {
 		base = document.location.href.slice(0, 

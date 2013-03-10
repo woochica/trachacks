@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+#
+# Copyright (C) 2013 MATOBA Akihiro <matobaa+trac-hacks@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 
 from trac.core import implements, Component
 from trac.ticket.default_workflow import get_workflow_config

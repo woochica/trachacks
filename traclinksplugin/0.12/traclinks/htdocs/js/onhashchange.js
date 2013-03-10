@@ -1,3 +1,11 @@
+/*
+ * Copyright (C) 2013 MATOBA Akihiro <matobaa+trac-hacks@gmail.com>
+ * All rights reserved.
+ * 
+ * This software is licensed as described in the file COPYING, which
+ * you should have received as part of this distribution.
+ */
+
 $(document).ready(function() {
   jQuery(window).hashchange(function(event) {
     traclinks = $("#proj-search").attr('value');
