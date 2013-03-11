@@ -594,16 +594,20 @@ class Chart(object):
         if chart_type == 'MeterGauge':
             default_width = 150
             default_height = 120
+            gauge_width = 150
+            gauge_height = 100
 
         if self.width is None:
             width = default_width 
         else:
             width = self.width 
+            gauge_width = width
 
         if self.height is None:
             height = default_height 
         else:
             height = self.height 
+            gauge_height = height
 
         options_str = json.dumps(jqplot_options, cls = DecimalEncoder)
         datasets_str = json.dumps(datasets, cls = DecimalEncoder)
@@ -623,9 +627,20 @@ class Chart(object):
             + "});\n")
         buf.write("</script>\n")
 
-        buf.write("<div style='display: inline-block;'>")
+        # This is a hack: the jqplot gauge looks too big, so we just wrap with
+        # hidden overflow.
+        if chart_type == 'MeterGauge':
+            buf.write("<a class='gauge-link' style='display: inline-block; "
+                + "width:" + str(gauge_width) + "px; height:"
+                + str(gauge_height) + "px; overflow: hidden '>")
+        else:
+            buf.write("<div style='display: inline-block;' >")
         buf.write("<div id='" + self.chart_id
             + "' style='height:" + str(height) + "px; width:"
             + str(width) + "px;'></div>")
-        buf.write("</div>")
+
+        if chart_type == 'MeterGauge':
+            buf.write("</a>")
+        else:
+            buf.write("</div>")
 

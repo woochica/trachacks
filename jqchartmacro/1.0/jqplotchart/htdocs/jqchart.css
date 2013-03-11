@@ -2,3 +2,12 @@
   z-index : 3;
 }
 
+a.gauge-link {
+  border-bottom: 0px;
+}
+
+a.gauge-link:visited:hover,
+a.gauge-link:hover {
+  background-color: #ffffff;
+}
+

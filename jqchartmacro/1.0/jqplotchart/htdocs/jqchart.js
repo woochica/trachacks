@@ -111,12 +111,13 @@ var renderChart = function (containerId, type, data, additionalInfo, useDate,
   jQuery.extend(true, options, baseOptions);
 
   var plot = jQuery.jqplot(containerId, seriesData, options);
-  jQuery('#' + containerId).bind('jqplotDataClick',
-      bindClickHandler(additionalInfo));
+  var container = jQuery('#' + containerId);
+  container.bind('jqplotDataClick', bindClickHandler(additionalInfo));
   if (type == 'MeterGauge' && baseOptions.gaugeClickLocation) {
-    jQuery('#' + containerId + ' .jqplot-event-canvas').click(function () {
-      window.location = baseOptions.baseUrl + baseOptions.gaugeClickLocation;
-    });
+    var gauge = jQuery('#' + containerId + ' .jqplot-event-canvas');
+    container.css('cursor', 'pointer');
+    container.parent().attr("href",
+        baseOptions.baseUrl + baseOptions.gaugeClickLocation);
   }
 }
 
