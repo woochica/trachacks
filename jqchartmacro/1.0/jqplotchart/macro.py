@@ -43,7 +43,7 @@ class QueryRunner(object):
 
     report_id: the id of an existing report. If none, the runner will use
     the query parameter.
-    
+
     query: a string with the sql query to execute, only used if report_id is
     none. It may contain {number}, where number is a report id. In that case,
     {number} is replaced with the content of the report with id number.
@@ -67,9 +67,17 @@ class QueryRunner(object):
         if self.report_id is not None:
             result = self.get_query_from_report(self.report_id)
 
-        result[0] = result[0].replace('$USER', "'" + self.current_user + "'")
+        query = result[0].replace('$USER', "'" + self.current_user + "'")
+        parameters = result[1];
 
-        return result
+        groups = re.match('^(.*)({(\\d)})(.*)$', query)
+        if groups:
+            result = self.get_query_from_report(groups.group(3))
+            query = ''.join([groups.group(1), result[0], groups.group(4)])
+
+        query = query.replace('$USER', "'" + self.current_user + "'")
+        self.env.log.info(query)
+        return [query, parameters]
 
     """ Returns the sql query string and parameters from a report.
     """
@@ -84,18 +92,17 @@ class QueryRunner(object):
         if query_string[0] == '?' or query_string.startswith('query:'):
             # This is a TracQuery, not sql.
             query_string = ''.join([line.strip()
-                for line in query_string.splitlines()]) 
+                for line in query_string.splitlines()])
             if query_string.startswith('query:'):
                 query_string = query_string[6:]
             if query_string[0] == '?':
                 query_string = query_string[1:]
 
-            query = Query.from_string(self.env, query_string) 
+            query = Query.from_string(self.env, query_string)
             result = query.get_sql()
         else:
             result = [query_string, {}]
 
-        self.env.log.info(result)
         return result
 
     """
@@ -148,7 +155,13 @@ class QueryRunner(object):
                 column_name = cursor.description[column_number][0]
                 column_type = self.determine_type(column_name)
 
+                if column_name.startswith('_'):
+                    continue
+
                 value = self.format_cell(column_name, cell)
+
+                if column_type == 'ticket_id':
+                    ticket_id = value
 
                 if number_of_columns == 1:
                     # Just one column in the query, just add values in one
@@ -158,12 +171,11 @@ class QueryRunner(object):
                 elif self.series_column == column_name:
                     series_name = value
 
-                elif xvalue is None:
+                elif xvalue is None and column_type != 'ticket_id':
                     # The x axis.
                     if column_type == 'time':
                         data_set.use_date_axis()
                     xvalue = value
-                    pass
 
                 else:
                     if column_type == 'ticket_id':
@@ -176,13 +188,15 @@ class QueryRunner(object):
                         tooltip = series_name
                         if column_type != 'ticket_id':
                             yvalue = value
-                    else:
+
+                    elif column_type != 'ticket_id':
                         data_set.add_point(series_name, xvalue, value, tooltip,
-                                link)
+                                link, ticket_id)
                         series_name += 1
 
             if self.series_column is not None:
-                data_set.add_point(series_name, xvalue, yvalue, tooltip, link)
+                data_set.add_point(series_name, xvalue, yvalue, tooltip, link,
+                        ticket_id)
 
         return data_set
 
@@ -236,6 +250,7 @@ class QueryRunner(object):
     Any other column name is treated as string.
     """
     def determine_type(self, name):
+
         if name == 'ticket' or name == 'id':
             return 'ticket_id'
         if name == 'created' or name == 'modified' or name == 'date':
@@ -304,17 +319,8 @@ class JQChartMacro(WikiMacroBase):
         options = json_object.get("options", None)
         chart_type = json_object.get("type", "Line")
 
-        default_width = 500
-        default_height = 300
-        if chart_type == 'MeterGauge':
-            default_width = 150
-            default_height = 120
-
-        width = json_object.get("width", default_width)
-        height = json_object.get("height", default_height)
-
-        self.env.log.info(width)
-        self.env.log.info(height)
+        width = json_object.get("width", None)
+        height = json_object.get("height", None)
 
         series_column = json_object.get("series_column", None)
 
@@ -330,7 +336,7 @@ class JQChartMacro(WikiMacroBase):
     # ITemplateProvider methods
     def get_templates_dirs(self):
         return []
-    
+
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('jqplotchart', resource_filename(__name__, 'htdocs'))]
@@ -366,7 +372,7 @@ Generates a unique id for the dom element that contains the chart.
 
 """
 class ChartIdGenerator(object):
-    
+
     """
     context: the trac request context, used to store the current id.
     """
@@ -430,7 +436,7 @@ class DataSet(object):
 
     click_url: the url to go if the user clicks on a point.
     """
-    def add_point(self, series_name, x, y, tooltip, click_url):
+    def add_point(self, series_name, x, y, tooltip, click_url, ticket_id):
 
         if series_name not in self.name_to_index:
             self.name_to_index[series_name] = len(self.name_to_index)
@@ -441,7 +447,7 @@ class DataSet(object):
             self.datasets.append([])
             self.additional_info.append([])
         self.datasets[series].append([x, y])
-        self.additional_info[series].append([tooltip, click_url])
+        self.additional_info[series].append([tooltip, click_url, ticket_id])
 
     """
     """
@@ -478,91 +484,6 @@ class Chart(object):
         self.req = req
         self.chart_id = chart_id
 
-    """ Executes the query and returns the dataset, an instance of DataSet.
-
-    data.datasets
-    data.use_date_axis
-    data.additional_options
-
-    data.datasets: contains the list of series. Each series is a sequece of
-    'points' of the form [x, y, tooltip, link].
-    """
-    def run_query_TRAC_QUERY(self, env, query, series_column):
-
-        use_date_axis = 'false';
-
-        data = query.execute()
-        column_names = query.get_columns()
-        number_of_columns = len(column_names);
-
-        data_set = DataSet()
-
-        series_name = 0
-
-        number_of_series = 0;
-
-        for column_name in column_names:
-            column_type = self.determine_type(column_name)
-
-            if series_column != column_name and column_type != "ticket_id":
-                number_of_series += 1
-
-        if number_of_series == 0:
-            number_of_series = len(column_names)
-
-        for row_number, row in enumerate(data):
-            datapoint = []
-            series_name = 0
-            xvalue = None
-            yvalue = None
-            ticket_id = None
-            tooltip = ""
-            link = ''
-
-            for column_index, column_name in enumerate(column_names):
-
-                column_type = self.determine_type(column_name)
-                cell = data[row_number][column_name]
-                value = self.format_cell(column_name, cell)
-
-                if number_of_columns == 1:
-                    # Just one column in the query, just add values in one
-                    # series.
-                    data_set.add_value(0, value)
-
-                elif series_column == column_name:
-                    series_name = value
-
-                elif xvalue is None:
-                    # The x axis.
-                    if column_type == 'time':
-                        data_set.use_date_axis()
-                    xvalue = value
-                    pass
-
-                else:
-                    if column_type == 'ticket_id':
-                        ticket_id = value
-
-                    if ticket_id is not None:
-                        link = self.req.href('ticket/' + str(ticket_id))
-
-                    if series_column is not None:
-                        tooltip = series_name
-
-                    if series_column is None:
-                        data_set.add_point(series_name, xvalue, value, tooltip,
-                                link)
-                        series_name += 1
-
-                    elif column_type != 'ticket_id':
-                        yvalue = value
-
-            if series_column is not None:
-                data_set.add_point(series_name, xvalue, yvalue, tooltip, link)
-
-        return data_set
-
     """
     Renders the output.
 
@@ -594,15 +515,97 @@ class Chart(object):
         additional_info = data.get_additional_info()
         use_date_axis = data.get_use_date_axis()
 
-
         if options is not None:
             jqplot_options.update(options)
 
         dataset_options = data.get_options()
         if dataset_options is not None:
            jqplot_options.update(dataset_options)
-        options_str = json.dumps(jqplot_options, cls = DecimalEncoder)
 
+        if chart_type == 'Table':
+            self.draw_table(datasets, use_date_axis, additional_info,
+                    jqplot_options, buf)
+        else:
+            self.draw_chart(chart_type, datasets, use_date_axis,
+                    additional_info, jqplot_options, buf)
+
+    def draw_table(self, datasets, use_date_axis, additional_info,
+            jqplot_options, buf):
+
+        buf.write("<div style='display: inline-block; overflow: auto;")
+        if self.height is not None:
+            buf.write(" height:" + str(self.height) + "px;")
+        if self.width is not None:
+            buf.write(" width:" + str(self.width) + "px;'>\n")
+        buf.write("<table id='" + self.chart_id
+            + "' style='display: inline-block;'>\n")
+        buf.write("  <tr>\n")
+        buf.write("    <th style='font-size:14px;")
+        buf.write(      " border-bottom:1px dotted grey' align='center'")
+        buf.write(     " colspan='%s'>\n" % (2 + len(datasets)))
+
+        buf.write("      %s\n" % jqplot_options['title'])
+
+        buf.write("    </th>\n")
+        buf.write("  </tr>\n")
+
+        if len(datasets) == 0:
+            buf.write("  <tr>\n")
+            buf.write("    <td colspan='%s'>\n" % (2 + len(datasets)))
+
+            buf.write("      %s\n" % 'No data found')
+
+            buf.write("    </td>\n")
+            buf.write("  </tr>\n")
+
+        else:
+
+            first_series = datasets[0]
+
+            for point_number, point in enumerate(first_series):
+                buf.write("  <tr>\n")
+                for series_number, series in enumerate(datasets):
+                    if series_number == 0:
+                        buf.write("  <td valign='top'>\n")
+                        buf.write("    <a style='font-weight:bold'")
+                        buf.write(       " href='%s'>#%s</a>\n" %
+                                (additional_info[series_number][point_number][1],
+                                additional_info[series_number][point_number][2]))
+                        buf.write("  </td>\n")
+                        buf.write("  <td valign='top'>\n")
+                        buf.write("    %s\n" %
+                                datasets[series_number][point_number][0])
+                        buf.write("  </td>\n")
+
+                    buf.write("  <td valign='top'>\n")
+                    buf.write("    %s\n" %
+                            datasets[series_number][point_number][1])
+                    buf.write("  </td>\n")
+                buf.write("  </tr>\n")
+
+        buf.write("</table>\n")
+        buf.write("</div>\n")
+
+    def draw_chart(self, chart_type, datasets, use_date_axis, additional_info,
+            jqplot_options, buf):
+
+        default_width = 500
+        default_height = 300
+        if chart_type == 'MeterGauge':
+            default_width = 150
+            default_height = 120
+
+        if self.width is None:
+            width = default_width 
+        else:
+            width = self.width 
+
+        if self.height is None:
+            height = default_height 
+        else:
+            height = self.height 
+
+        options_str = json.dumps(jqplot_options, cls = DecimalEncoder)
         datasets_str = json.dumps(datasets, cls = DecimalEncoder)
         additional_info_str = json.dumps(additional_info, cls = DecimalEncoder)
 
@@ -622,7 +625,7 @@ class Chart(object):
 
         buf.write("<div style='display: inline-block;'>")
         buf.write("<div id='" + self.chart_id
-            + "' style='height:" + str(self.height) + "px; width:"
-            + str(self.width) + "px;'></div>")
+            + "' style='height:" + str(height) + "px; width:"
+            + str(width) + "px;'></div>")
         buf.write("</div>")
 
