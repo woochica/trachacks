@@ -208,7 +208,7 @@ class TicketSubmitPolicyPlugin(Component):
 
             if onsubmit:
                 javascript.append(self.onsubmit(onsubmit))
-                stream |= Transformer("//form[@id='propertyform']").attr('onsubmit', 'return onsubmit')
+                stream |= Transformer("//form[@id='propertyform']").attr('onsubmit', 'validate()')
 
             # insert head javascript
             if javascript:
@@ -241,7 +241,7 @@ errors[errors.length] = message;
         messages = '\n'.join([(message % item) for item in items])
 
         return """
-function onsubmit()
+function validate()
 {
 
 var errors = new Array();
