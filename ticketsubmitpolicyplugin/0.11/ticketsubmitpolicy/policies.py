@@ -4,7 +4,7 @@ import simplejson
 
 from genshi.filters import Transformer
 from interface import ITicketSubmitPolicy
-from trac.core import *
+from trac.core import Component, implements
 
 class TicketRequires(Component):
     """bits for requiring a field"""

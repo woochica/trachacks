@@ -14,7 +14,7 @@ from interface import ITicketSubmitPolicy
 from pkg_resources import resource_filename
 
 from trac.admin.api import IAdminPanelProvider
-from trac.core import *
+from trac.core import Component, ExtensionPoint, implements
 from trac.ticket import Ticket
 from trac.web import ITemplateStreamFilter
 from trac.web.chrome import add_script

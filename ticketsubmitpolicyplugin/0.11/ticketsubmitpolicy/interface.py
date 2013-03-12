@@ -1,4 +1,4 @@
-from trac.core import *
+from trac.core import Interface
 
 class ITicketSubmitPolicy(Interface):
     """interface for ticket submission policy enforcers"""

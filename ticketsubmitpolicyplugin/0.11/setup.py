@@ -24,7 +24,8 @@ function according to the value of other ticket fields.
       install_requires=['Trac', 'simplejson'],
       entry_points = """
       [trac.plugins]
-      ticketsubmitpolicy = ticketsubmitpolicy
+      ticketsubmitpolicy.policies = ticketsubmitpolicy.policies
+      ticketsubmitpolicy.ticketsubmitpolicy = ticketsubmitpolicy.ticketsubmitpolicy
       """,
       )
 
