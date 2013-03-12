@@ -21,91 +21,91 @@
       <input type="hidden" name="policy" value="${name}"/>
 
       <div>
-	<h3>Condition</h3>
-	
-	  <table>
-	    <tr py:for="index, condition in enumerate(policies[name]['condition'])">
-	      
-	      <!-- field -->
-	      <td class="field">
-		<select name="condition_field_${index}_${name}">
-		  <py:for each="field in fields">
-		    <option py:attrs="{'selected': condition['field']
-				      == field['name'] or None}">
-		      ${field['name']}
-		    </option>
-		  </py:for>
-		</select>
-	      </td>
-	      
-	      <!-- comparitor -->
-	      <td class="comparitor">
-		<select name="condition_comparitor_${index}_${name}">
-		  <py:for each="comparitor in comparitors">
-		     <option py:attrs="{'selected':
-				       condition['comparitor'] ==
-				       comparitor or None}">
-		       ${comparitor}
-		     </option>
-		  </py:for>
-		</select>
-	      </td>
-	      
-	      <!-- value(s) for comparison -->
-	      <td>
-		<input type="text"
-		       name="condition_value_${index}_${name}" 
-		       value="${isinstance(condition['value'], list) and ', '.join(condition['value']) or condition['value']}"/>
-	      </td>
+  <h3>Condition</h3>
 
-	      <td class="actions">
-		<input type="submit" name="rm_condition_${index}_${name}" value="-"/>
-	      </td>
-	    </tr>
-	  </table>
-	  <input type="submit" name="add_condition_${name}" value="+"/>
+    <table>
+      <tr py:for="index, condition in enumerate(policies[name]['condition'])">
+
+        <!-- field -->
+        <td class="field">
+    <select name="condition_field_${index}_${name}">
+      <py:for each="field in fields">
+        <option py:attrs="{'selected': condition['field']
+              == field['name'] or None}">
+          ${field['name']}
+        </option>
+      </py:for>
+    </select>
+        </td>
+
+        <!-- comparitor -->
+        <td class="comparitor">
+    <select name="condition_comparitor_${index}_${name}">
+      <py:for each="comparitor in comparitors">
+         <option py:attrs="{'selected':
+               condition['comparitor'] ==
+               comparitor or None}">
+           ${comparitor}
+         </option>
+      </py:for>
+    </select>
+        </td>
+
+        <!-- value(s) for comparison -->
+        <td>
+    <input type="text"
+           name="condition_value_${index}_${name}"
+           value="${isinstance(condition['value'], list) and ', '.join(condition['value']) or condition['value']}"/>
+        </td>
+
+        <td class="actions">
+    <input type="submit" name="rm_condition_${index}_${name}" value="-"/>
+        </td>
+      </tr>
+    </table>
+    <input type="submit" name="add_condition_${name}" value="+"/>
       </div>
 
       <div>
-	<h3>Policy</h3>
-	
-	<table>
-	<tr py:for="action in policies[name]['actions']">
-	  <td>
-	    <b>${action['name']}</b>
-	  </td>
-	  <td>
-	    <py:for each="field in fields">
-	      <input type="checkbox"
-		     name="action_${action['name']}_${name}"
-		     value="${field['name']}"
-		     py:attrs="{'checked': field['name'] in
-		     action['args'] or None}"
-		     />
-	      <label for="action_${action['name']}_${name}">${field['name']}</label>
-	    </py:for>
-	  </td>
-	  <td class="actions">
-	    <input type="submit" name="rm_action_${action['name']}_${name}" value="-"/>
-	  </td>
-	</tr>
-	</table>
-	
-	<!-- new policy checkbox -->
-	<py:if test="len(policies[name]['actions']) !=
-		     len(self_actions)">
-	  Add action: 
-	  <select name="add_action_${name}">
-	    <option></option>
-	    <py:for each="action in [ i.name() for i in self_actions
-	  if i.name() not in [ j['name'] for j in policies[name]['actions']]]">
-	      <option>${action}</option>
-	    </py:for>	      	      
-	  </select>
+  <h3>Policy</h3>
 
-	  <!-- dummy submit button for action adding -->
-	  <input type="submit" name="actionbutton_${name}" value="+"/>
-	</py:if>
+  <table>
+  <tr py:for="action in policies[name]['actions']">
+    <td>
+      <b>${action['name']}</b>
+    </td>
+    <td>
+      <py:for each="field in fields">
+        <input type="checkbox"
+         name="action_${action['name']}_${name}"
+         value="${field['name']}"
+         py:attrs="{'checked': field['name'] in
+         action['args'] or None}"
+         />
+        <label for="action_${action['name']}_${name}">${field['name']}</label>
+      </py:for>
+    </td>
+    <td class="actions">
+      <input type="submit" name="rm_action_${action['name']}_${name}" value="-"/>
+    </td>
+  </tr>
+  </table>
+
+  <!-- new policy checkbox -->
+  <py:if test="len(policies[name]['actions']) !=
+         len(self_actions)">
+    Add action:
+    <select name="add_action_${name}">
+      <option></option>
+      <py:for each="action in [ i.name() for i in self_actions
+    if i.name() not in [ j['name'] for j in policies[name]['actions']]]">
+        <option>${action}</option>
+      </py:for>
+    </select>
+
+    <!-- dummy submit button for action adding -->
+    <input type="submit" name="actionbutton_${name}" value="+"/>
+  </py:if>
 
       </div>
 
@@ -128,7 +128,7 @@
       <legend>Current Policy</legend>
       <pre>${current_policy}</pre>
     </fieldset>
-    
-    
+
+
   </body>
 </html>
