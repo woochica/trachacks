@@ -6,30 +6,24 @@
       xmlns:py="http://genshi.edgewall.org/">
 <xi:include href="layout.html" />
 
-<head>
-  <title>$title</title>
-</head>	
+  <head>
+    <title>$title</title>
+  </head>
 
-<body>
-  <div id="ctxtnav" class="nav"></div>
+  <body>
 
-  <div id="content" class="tractab">
-  height:
-  <select onchange="document.getElementById('thisIframe').style.height = this.options[this.selectedIndex].value;">
-    <option value="100px">100</option>
-    <option value="200px">200</option>
-    <option value="300px">300</option>
-    <option value="400px">400</option>
-    <option value="500px" selected="true">500</option>
-    <option value="600px">600</option>
-    <option value="700px">700</option>
-    <option value="800px">800</option>
-    <option></option>
-  </select>
-  <iframe id="thisIframe" style="width:100%;height:500px;overflow:auto;" 
-      src="$url" ></iframe>
-  </div>
+    <div id="content" class="tractab">
+      <label for="height">height:
+        <select id="height" onchange="document.getElementById('thisIframe').style.height = this.options[this.selectedIndex].value;">
+          <py:for each="px in range(100,900,100)">
+            <option value="${'%spx' % px}" selected="${'true' if px == 500 else None}">$px</option>
+          </py:for>
+          <option></option>
+        </select>
+      </label>
+      <iframe id="thisIframe" style="width:100%; height:500px; overflow:auto;" src="$url" ></iframe>
+    </div>
 
-</body>
+  </body>
 
 </html>
