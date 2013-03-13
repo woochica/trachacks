@@ -276,7 +276,7 @@ class ADAuthStore(Component):
             self._ldap.simple_bind_s(self.dir_binddn, self.dir_bindpw)
         except ldap.LDAPError, e:
             self.log.info('bind_ad: binding failed. %s ' % (e))
-            raise TracError('cannot bind to %s: %s' % (self.dir_uri , en))
+            raise TracError('cannot bind to %s: %s' % (self.dir_uri , e))
         
         self.log.info('Bound to %s correctly.' % self.dir_uri)
           
