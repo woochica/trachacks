@@ -14,8 +14,9 @@ from trac.perm import IPermissionRequestor
 from trac.util.translation import _
 from trac.web import IRequestHandler
 from trac.web.chrome import add_stylesheet, INavigationContributor, \
-                            ITemplateProvider
+    ITemplateProvider
 from trac.web.href import Href
+
 
 class TracTab(Component):
     implements(INavigationContributor, IRequestHandler, ITemplateProvider)
@@ -29,14 +30,13 @@ class TracTab(Component):
     tab_perm_options = ListOption('tractab', 'perms', '',
         doc='List of permissions required to view tabs')
 
-
     def init_config(self):
         names = self.config.getlist('tractab', 'names', 'None')
         urls = self.config.getlist('tractab', 'urls', 'None')
-        perms = self.config.getlist('tractab', 'perms', 'None')       
- 
+        perms = self.config.getlist('tractab', 'perms', 'None')
+
         #TODO: add some checks that names and urls are same length
-        
+
         urlhash = {}
         for i in range(len(names)):
             urlhash[names[i]] = urls[i]
@@ -46,7 +46,7 @@ class TracTab(Component):
         self.urls = urls
         self.perms = perms
         self.urlhash = urlhash
-    
+
     def __init__(self):
         self.init_config();
 
@@ -56,34 +56,34 @@ class TracTab(Component):
             s += str(i);
         return s
 
-    def check_perms(self, req, idx) :
+    def check_perms(self, req, idx):
         perm = None
-        
+
         #if we don't specify permissions, the tabs are only for TRAC_ADMIN
         if self.perms:
             if len(self.perms) > idx:
                 perm = self.perms[idx]
-                
+
         if not perm:
             perm = 'TRAC_ADMIN'
 
         return req.perm.has_permission(perm)
-    
+
     # INavigationContributor methods
-    
+
     def get_active_navigation_item(self, req):
         match = re.match(self.PATH_REGEX, req.path_info)
         if match:
             return match.group(1)
 
-    def get_navigation_items(self, req):        
+    def get_navigation_items(self, req):
         for idx in range(len(self.names)):
             if self.names[idx] is not 'None' and self.check_perms(req, idx):
                 name = self.names[idx]
                 yield 'mainnav', name, tag.a(_(name), href=req.href.tractab(name))
 
     # IRequestHandler methods
-    
+
     def match_request(self, req):
         match = re.match(self.PATH_REGEX, req.path_info)
         if match:
@@ -91,7 +91,7 @@ class TracTab(Component):
             return True
 
     def process_request(self, req):
-        if(self.last_config_time < self.config._lastmtime):
+        if self.last_config_time < self.config._lastmtime:
             self.init_config()
         match = re.match(self.PATH_REGEX, req.path_info)
         data = {'url': "", 'title': ""}
@@ -105,9 +105,9 @@ class TracTab(Component):
             except ValueError:
                 idx = None
         return 'tractab.html', data, 'text/html'
-        
+
     # ITemplateProvider methods
-    
+
     def get_htdocs_dirs(self):
         return []
 
