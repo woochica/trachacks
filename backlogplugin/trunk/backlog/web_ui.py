@@ -105,7 +105,8 @@ class BacklogModule(Component):
             req.redirect(req.href.backlog(backlog_id))
 
         # TODO: use jQuery UI in Trac 1.0
-        if trac_version > 0.12:
+        from pkg_resources import parse_version
+        if parse_version(trac_version) >= parse_version('0.12'):
             add_script(req, 'backlog/js/jquery-ui-1.8.23.custom.min.js')
         else:
             add_script(req, 'backlog/js/jquery-ui-1.6.custom.min.js')
