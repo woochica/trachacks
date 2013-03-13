@@ -6,15 +6,15 @@
 # you should have received as part of this distribution.
 
 import re
-from pkg_resources import resource_filename
 from genshi.builder import tag
 from trac.config import ListOption
-from trac.core import *
+from trac.core import Component, implements
 from trac.perm import IPermissionRequestor
 from trac.util.translation import _
-from trac.web import IRequestHandler
-from trac.web.chrome import add_stylesheet, INavigationContributor, \
-    ITemplateProvider
+from trac.web.api import IRequestHandler
+from trac.web.chrome import (
+    add_stylesheet, INavigationContributor, ITemplateProvider
+)
 from trac.web.href import Href
 
 
@@ -48,13 +48,7 @@ class TracTab(Component):
         self.urlhash = urlhash
 
     def __init__(self):
-        self.init_config();
-
-    def join_list(self, list):
-        s = ''
-        for i in list:
-            s += str(i);
-        return s
+        self.init_config()
 
     def check_perms(self, req, idx):
         perm = None
@@ -112,4 +106,5 @@ class TracTab(Component):
         return []
 
     def get_templates_dirs(self):
+        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
