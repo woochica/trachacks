@@ -14,7 +14,7 @@ from trac.env import IEnvironmentSetupParticipant
 __all__ = ['ActiveDirectoryAuthPluginSetup']
 
 # Database version identifier for upgrades.
-db_version = 1
+db_version = 2
 
 # Database schema
 schema = [
@@ -46,10 +46,22 @@ def create_tables(env, db):
 
 # Upgrades
 
-upgrade_map = { }
+upgrade_map = {
+  2: 'upgrade_data_to_blob' 
+  }
+
+def upgrade_data_to_blob(env, db):
+  """move the binary column to a blob column to be comptible with mysql"""
+  cursor = db.cursor()
+  cursor.execute("DROP TABLE ad_cache");
+  newtable = Table('ad_cache', key=('id'))[
+        Column('id', type='varcahar(32)'),
+        Column('lut', type='int'),
+        Column('data', type='blob'),
+        Index(['id'])]
+  cursor.execute(to_sql(env, newtable))
 
 # Component that deals with database setup
-
 class ActiveDirectoryAuthPluginSetup(Component):
     """Component that deals with database setup and upgrades."""
     
@@ -71,8 +83,8 @@ class ActiveDirectoryAuthPluginSetup(Component):
         if current_ver == 0:
             create_tables(self.env, db)
         else:
-            while current_ver+1 <= db_version:
-                upgrade_map[current_ver+1](self.env, db)
+            while current_ver + 1 <= db_version:
+                upgrade_map[current_ver + 1](self.env, db)
                 current_ver += 1
             cursor = db.cursor()
             cursor.execute("UPDATE system SET value=%s WHERE name='adauthplugin_version'",
