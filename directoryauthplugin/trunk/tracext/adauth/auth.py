@@ -113,7 +113,7 @@ class ADAuthStore(Component):
                 else:
                   self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
               else:
-                self.log.debug('Unable to find user %s listed in group: %s' % str(m), group_dn)
+                self.log.debug('Unable to find user %s listed in group: %s' % str(m), unicode(group_dn,'utf8'))
                 self.log.debug('This is very strange and you should probably check '
                                  'the consistency of your LDAP directory.' % str(m))
           
@@ -122,7 +122,7 @@ class ADAuthStore(Component):
         self._cache_set(group_dn, users)
         return users
       else:
-          self.log.debug('Unable to find any members of the group %s' % group_dn)
+          self.log.debug('Unable to find any members of the group %s' % unicode(group_dn,'utf8')))
           self._cache_set(group_dn, [])
           return []
 
@@ -227,7 +227,7 @@ class ADAuthStore(Component):
             if groups:
                 self.env.log.debug('%s has LDAP groups: %s' % (username, ','.join(groups)))
             else:
-                self.env.log.debug('username %s (%s) has no LDAP groups', username, dn)
+                self.env.log.debug('username %s (%s) has no LDAP groups', unicode(username,'utf8)', dn)
                 
             self._cache_set('groups:%s' % username, groups)
             return groups
@@ -252,7 +252,7 @@ class ADAuthStore(Component):
             # ldap.ReconnectLDAPObject(uri [, trace_level=0 [, trace_file=sys.stdout [, trace_stack_limit=5] [, retry_max=1 [, retry_delay=60.0]]]])
             user_ldap = ldap.ldapobject.ReconnectLDAPObject(self.dir_uri, 0, '', 0, 2, 1)
         
-            self.log.debug('_bind_dir: attempting specific bind to %s as %s' % (self.dir_uri, user_dn))
+            self.log.debug('_bind_dir: attempting specific bind to %s as %s' % (self.dir_uri, unicode(user_dn, 'utf8')))
             try:
                 user_ldap.simple_bind_s(user_dn, passwd)
             except Exception, e:
