@@ -54,25 +54,25 @@ class ADAuthStore(Component):
     cache_memsize_warn = Option('account-manager', 'cache_memsize_warn', 300, 'warning message for cache pruning in seconds')
     
     def __init__(self, ldap=None):
-        #-- cache my ldap handle
+        # -- cache my ldap handle
         self._ldap = ldap
-        #-- have a memory cache
+        # -- have a memory cache
         self._cache = {}
         
     # IPasswordStore
     def config_key(self):
         """Deprecated"""
 
-    #-- this is changed to use logged in users from the session table,
+    # -- this is changed to use logged in users from the session table,
     #   because an ldap search would be untenable.
     def get_users(self, populate_session=True):
       """Grab a list of users from the session store"""
-      #-- check memcache
+      # -- check memcache
       userlist = self._cache_get('allusers')
       if userlist:
         return userlist
       
-      #-- cache miss.. goto session table
+      # -- cache miss.. goto session table
       userlist = []
       userinfo = self.env.get_known_users()
       for user in userinfo:
@@ -84,15 +84,15 @@ class ADAuthStore(Component):
       self._cache_set('allusers', userlist)
       return userlist
 
-    #-- this will be expensive on large groups.  
+    # -- this will be expensive on large groups.  
     def expand_group_users(self, group_dn):
       """Given a group name, enumerate all members"""
-      #-- check memcache
+      # -- check memcache
       users = self._cache_get(group_dn)
       if users:
-         return users
+        return users
        
-      #-- where to look
+      # -- where to look
       basedn = self.group_basedn or self.dir_basedn
               
       users = []
@@ -106,18 +106,18 @@ class ADAuthStore(Component):
               m_filter = '(%s)' % (m.split(',')[0])
               e = self._dir_search(basedn, self.dir_scope, m_filter)
               if e:
-                 if 'person' in e[0][1]['objectClass']:
-                   users.append(self._get_userinfo(e[0][1]))
-                 elif 'group' in e[0][1]['objectClass']:
-                   users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
-                 else:
-                   self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
+                if 'person' in e[0][1]['objectClass']:
+                  users.append(self._get_userinfo(e[0][1]))
+                elif 'group' in e[0][1]['objectClass']:
+                  users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
+                else:
+                  self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
               else:
-                self.log.debug('Unable to find user %s listed in group: %s' % str(m))
+                self.log.debug('Unable to find user %s listed in group: %s' % str(m), group_dn)
                 self.log.debug('This is very strange and you should probably check '
                                  'the consistency of your LDAP directory.' % str(m))
           
-        #-- dedupe and sort list
+        # -- dedupe and sort list
         users = sorted(list(set(users)))
         self._cache_set(group_dn, users)
         return users
@@ -137,7 +137,7 @@ class ADAuthStore(Component):
       self._cache_set('hasuser: %s' % user, hasuser)
       return hasuser
     
-    #-- we do several things with this step to clear the caches and update session attributes
+    # -- we do several things with this step to clear the caches and update session attributes
     def check_password(self, user, password):
         """Checks the password against LDAP"""
         
@@ -158,7 +158,7 @@ class ADAuthStore(Component):
             self.log.info(msg)
             return success
           
-        #-- check the group_validusers if used
+        # -- check the group_validusers if used
         if self.group_validusers:
           valid_users = [u[0] for u in self.expand_group_users(self.group_validusers)]
           if not user in valid_users:
@@ -166,7 +166,7 @@ class ADAuthStore(Component):
             self.log.info(msg)
             return False
              
-        #-- update the session data at each login, 
+        # -- update the session data at each login, 
         #   note the use of NoCache to force the update(s)
         attrs = [ self.user_attr, 'mail', 'proxyAddress', 'displayName']
         filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
@@ -175,11 +175,11 @@ class ADAuthStore(Component):
         if not users:
             raise TracError('Weird! authenticated, but didnt find the user with filter : %s (%s)' % (filter, users))
         
-        #-- this is where we update the session table to make this a valid user.
+        # -- this is where we update the session table to make this a valid user.
         userinfo = self._get_userinfo(users[0][1])
         self._populate_user_session(userinfo)
         
-        #-- update the users and groups by doing a search w/o cache
+        # -- update the users and groups by doing a search w/o cache
         groups = self.get_permission_groups(user, NOCACHE)
         users = self.get_users(NOCACHE)
         
@@ -239,14 +239,14 @@ class ADAuthStore(Component):
     # Internal methods
     def _bind_dir(self, user_dn=None, passwd=None):
       
-        #-- what do we connect to
+        # -- what do we connect to
         if not self.dir_uri:
             raise TracError('The dir_uri ini option must be set')
           
         if not self.dir_uri.lower().startswith('ldap'):
             raise TracError('The dir_uri URI must be start with ldaps?://')
           
-        #-- if user auth .. only return success
+        # -- if user auth .. only return success
         if user_dn and passwd: 
             # setup the ldap connection.. init does NOT attempt a connection, but search does.
             # ldap.ReconnectLDAPObject(uri [, trace_level=0 [, trace_file=sys.stdout [, trace_stack_limit=5] [, retry_max=1 [, retry_delay=60.0]]]])
@@ -260,7 +260,7 @@ class ADAuthStore(Component):
                 return None
             return 1
             
-        #-- return cached handle for default use
+        # -- return cached handle for default use
         if self._ldap:
             return self._ldap
             
@@ -280,13 +280,13 @@ class ADAuthStore(Component):
         
         self.log.info('Bound to %s correctly.' % self.dir_uri)
           
-        #-- allow restarting
+        # -- allow restarting
         self._ldap.set_option(ldap.OPT_RESTART, 1)
         self._ldap.set_option(ldap.OPT_TIMEOUT, int(self.dir_timeout))
         
         return self._ldap
    
-   ### searches
+   # ## searches
     def _get_user_dn(self, user, cache=1):
         """ Get users dn """
           
@@ -367,7 +367,7 @@ class ADAuthStore(Component):
         except:
             self.log.debug('session for %s exists.' % uname)
             
-        #-- assume enabled if we get this far
+        # -- assume enabled if we get this far
         #   self.env.get_known_users() needs this.. 
         # TODO need to have it updated by the get_dn stuff long term so the db matches the auth source.
         cur = db.cursor()
@@ -377,7 +377,7 @@ class ADAuthStore(Component):
             self.log.debug('session for %s exists.' % uname)
         
             
-        #-- we want to update these regardless.
+        # -- we want to update these regardless.
         if email:
             cur = db.cursor()
             cur.execute("INSERT OR REPLACE INTO session_attribute (sid, authenticated, name, value) "
@@ -412,14 +412,14 @@ class ADAuthStore(Component):
     def _cache_set(self, key=None, data=None, cache_time=None):
       if not self.cache_memsize:
         return None
-      #-- figure out time
+      # -- figure out time
       now = time.time()
       if not cache_time:
         cache_time = now
          
-      #-- prune if we need to 
+      # -- prune if we need to 
       if len(self._cache) > int(self.cache_memsize):
-        #-- warn if too frequent
+        # -- warn if too frequent
         if 'last_prune' in self._cache:
           last_prune, data = self._cache['last_prune']
           if last_prune + self.cache_memsize_warn > now:
@@ -447,33 +447,33 @@ class ADAuthStore(Component):
       return newlist        
     
     def _dir_search(self, basedn=None, scope=1, filter=None, attrs=[], check_cache=1):
-      #self.env.log.debug('searching for: %s' % filter)
-      #-- get current time for cache
+      # self.env.log.debug('searching for: %s' % filter)
+      # -- get current time for cache
       current_time = time.time()
       
       attrs = self._decode_list(attrs)
       
-      #-- sanity
+      # -- sanity
       if not basedn:
         raise TracError('basedn not defined!')
       if not filter:
         raise TracError('filter not defined!')
       
-      #-- create unique key from the filter and the
+      # -- create unique key from the filter and the
       keystr = ",".join([ basedn, str(scope), filter, ":".join(attrs) ])
       key = hashlib.md5(keystr).hexdigest()
       self.log.debug('_dir_search: searching %s for %s(%s)' % (basedn, filter, key))
       
       db = self.env.get_db_cnx()
       
-      #-- check memcache
+      # -- check memcache
       #   we do this to reduce network usage.
       if check_cache: 
           ret = self._cache_get(key)
           if ret:
              return ret
       
-          #--  Check database
+          # --  Check database
           cur = db.cursor()
           cur.execute("""SELECT lut,data FROM ad_cache WHERE id=%s""", [key])
           row = cur.fetchone()
@@ -486,14 +486,14 @@ class ADAuthStore(Component):
                 self._cache_set(key, ret, lut)
                 return ret
              else: 
-               #-- old data, delete it and anything else that's old.
+               # -- old data, delete it and anything else that's old.
                lut = str(current_time - int(self.cache_ttl)) 
                cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", [lut])
                db.commit()
       else:
         self.log.debug('_dir_search: skipping cache.')
       
-      #-- check Directory
+      # -- check Directory
       dir = self._bind_dir()
       self.log.debug('_dir_search: starting LDAP search of %s %s using %s for %s ' % (self.dir_uri, basedn, filter, attrs))
       
@@ -502,17 +502,17 @@ class ADAuthStore(Component):
       except ldap.LDAPError, e:
         self.log.error('Error searching : %s', e)
         
-      #-- did we get a result?
+      # -- did we get a result?
       if res:
         self.log.debug('_dir_search: AD hit, %d entries.', len(res))
       else:
         self.log.debug('_dir_search: AD miss.')
         
-      #-- return if not caching
+      # -- return if not caching
       if not check_cache:
         return res
         
-      #-- set the data in the db cache for the next search, even empty results
+      # -- set the data in the db cache for the next search, even empty results
       res_str = cPickle.dumps(res, 0)
       try:
           cur = db.cursor()
@@ -524,7 +524,7 @@ class ADAuthStore(Component):
         db.rollback()
         self.log.warn('_dir_search: db cache update failed. %s' % e)
       
-      #-- set the data in the memcache 
+      # -- set the data in the memcache 
       self._cache_set(key, res)
             
       return res
