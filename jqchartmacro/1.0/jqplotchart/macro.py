@@ -540,8 +540,7 @@ class Chart(object):
             buf.write(" height:" + str(self.height) + "px;")
         if self.width is not None:
             buf.write(" width:" + str(self.width) + "px;'>\n")
-        buf.write("<table id='" + self.chart_id
-            + "' style='display: inline-block;'>\n")
+        buf.write("<table id='" + self.chart_id + "' width='100%'>\n")
         buf.write("  <tr>\n")
         buf.write("    <th style='font-size:14px;")
         buf.write(      " border-bottom:1px dotted grey' align='center'")
