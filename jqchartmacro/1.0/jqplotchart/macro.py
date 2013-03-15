@@ -570,10 +570,12 @@ class Chart(object):
                 for series_number, series in enumerate(datasets):
                     if series_number == 0:
                         buf.write("  <td valign='top'>\n")
-                        buf.write("    <a style='font-weight:bold'")
-                        buf.write(       " href='%s'>#%s</a>\n" %
-                                (additional_info[series_number][point_number][1],
-                                additional_info[series_number][point_number][2]))
+                        tid = additional_info[series_number][point_number][2]
+                        link = additional_info[series_number][point_number][1]
+                        if tid is not None:
+                            buf.write("    <a style='font-weight:bold'")
+                            buf.write(       " href='%s'>#%s</a>\n" %
+                                    (link, tid))
                         buf.write("  </td>\n")
                         buf.write("  <td valign='top'>\n")
                         buf.write("    %s\n" %
