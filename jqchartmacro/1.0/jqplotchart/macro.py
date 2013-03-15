@@ -534,7 +534,8 @@ class Chart(object):
     def draw_table(self, datasets, use_date_axis, additional_info,
             jqplot_options, buf):
 
-        buf.write("<div style='display: inline-block; overflow: auto;")
+        buf.write("<div style='vertical-align: top; display: inline-block;"
+                + " overflow: auto;")
         if self.height is not None:
             buf.write(" height:" + str(self.height) + "px;")
         if self.width is not None:
