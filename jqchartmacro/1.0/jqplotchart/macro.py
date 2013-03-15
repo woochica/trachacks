@@ -155,7 +155,7 @@ class QueryRunner(object):
                 column_name = cursor.description[column_number][0]
                 column_type = self.determine_type(column_name)
 
-                if column_name.startswith('_'):
+                if column_name.startswith('_') and column_name != '__group__':
                     continue
 
                 value = self.format_cell(column_name, cell)
