@@ -225,8 +225,10 @@ class QueryRunner(object):
             return to_datetime(value).strftime('%Y-%m-%d')
         if value_type == 'date':
             return str(to_datetime(value));
-        if type(value) == StringType or type(value) == UnicodeType:
+        if type(value) == StringType:
             return str(value)
+        if type(value) == UnicodeType:
+            return value.encode('ascii', 'xmlcharrefreplace')
         else:
             return value
 
