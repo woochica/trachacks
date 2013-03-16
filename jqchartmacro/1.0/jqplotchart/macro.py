@@ -291,7 +291,8 @@ class JQChartMacro(WikiMacroBase):
     must have two additional columns for the x and y values respectively. You
     can add one more column for the tooltip.
 
-    data : (not implemented yet)
+    link_to : where the chart links to. Where (and if) the link goes depends on
+    the specific chart.
 
     options : jqplot additional options. See jqplot documentation. For example:
        { title : 'some chart title' }
@@ -326,13 +327,17 @@ class JQChartMacro(WikiMacroBase):
 
         series_column = json_object.get("series_column", None)
 
+        link_to = json_object.get("link_to", None)
+        if link_to is not None:
+            link_to = formatter.req.href(link_to)
+
         base_url = formatter.req.href('')
         current_user = formatter.req.authname
         query_runner = QueryRunner(self.env, current_user, base_url, report_id,
                 query, series_column)
 
         chart = Chart(formatter.req, id_generator.get_id(), width, height)
-        chart.render(self.env, chart_type, options, query_runner, buf)
+        chart.render(self.env, chart_type, options, link_to, query_runner, buf)
         return buf.getvalue()
 
     # ITemplateProvider methods
@@ -495,12 +500,15 @@ class Chart(object):
 
     options: the chart options. See jqplot for the elements.
 
+    link_to : where the chart links to. Where (and if) the link goes depends on
+    the specific chart.
+
     query {string}: the sql query to execute.
 
     buf {StringIO}: the place to write the output.
 
     """
-    def render(self, env, chart_type, options, query_runner, buf):
+    def render(self, env, chart_type, options, link_to, query_runner, buf):
 
         jqplot_options = {"baseUrl": self.req.href()}
 
@@ -526,13 +534,13 @@ class Chart(object):
 
         if chart_type == 'Table':
             self.draw_table(datasets, use_date_axis, additional_info,
-                    jqplot_options, buf)
+                    link_to, jqplot_options, buf)
         else:
             self.draw_chart(chart_type, datasets, use_date_axis,
                     additional_info, jqplot_options, buf)
 
     def draw_table(self, datasets, use_date_axis, additional_info,
-            jqplot_options, buf):
+            link_to, jqplot_options, buf):
 
         buf.write("<div style='vertical-align: top; display: inline-block;"
                 + " overflow: auto;")
@@ -546,7 +554,13 @@ class Chart(object):
         buf.write(      " border-bottom:1px dotted grey' align='center'")
         buf.write(     " colspan='%s'>\n" % (2 + len(datasets)))
 
+        if link_to is not None:
+            buf.write("    <a href='%s'>" % link_to)
+
         buf.write("      %s\n" % jqplot_options['title'])
+
+        if link_to is not None:
+            buf.write("</a>")
 
         buf.write("    </th>\n")
         buf.write("  </tr>\n")
