@@ -328,7 +328,10 @@ class JQChartMacro(WikiMacroBase):
         series_column = json_object.get("series_column", None)
 
         link_to = json_object.get("link_to", None)
-        if link_to is not None:
+
+        if link_to is None and report_id is not None:
+            link_to = formatter.req.href('report/' + str(report_id))
+        elif link_to is not None:
             link_to = formatter.req.href(link_to)
 
         base_url = formatter.req.href('')
