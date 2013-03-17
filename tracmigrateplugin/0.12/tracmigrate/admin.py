@@ -38,6 +38,7 @@ class TracMigrationCommand(Component):
         tables = set(self._get_tables(dburl, cursor))
         tables = sorted(tables & src_tables)
         sequences = set(self._get_sequences(dburl, cursor, tables))
+        directories = self._get_directories(src_db)
 
         printout('Copying tables:')
         for table in tables:
@@ -67,11 +68,14 @@ class TracMigrationCommand(Component):
                 db.update_sequence(cursor, table)
 
         printout('Copying directories:')
-        for name in ('attachments', 'htdocs', 'templates', 'plugins'):
+        for name in directories:
             printout('  %s directory... ' % name, newline=False)
+            src = os.path.join(self.env.path, name)
             dst = os.path.join(env.path, name)
-            shutil.rmtree(dst)
-            shutil.copytree(os.path.join(self.env.path, name), dst)
+            if os.path.isdir(dst):
+                shutil.rmtree(dst)
+            if os.path.isdir(src):
+                shutil.copytree(src, dst)
             printout('done.')
 
     def _complete_migrate(self, args):
@@ -101,3 +105,8 @@ class TracMigrationCommand(Component):
             seqs = [name[:-len('_id_seq')] for name, in cursor]
             return sorted(name for name in seqs if name in tables)
         return []
+
+    def _get_directories(self, db):
+        version = self.env.get_version(db=db)
+        path = ('attachments', 'files')[version >= 28]
+        return (path, 'htdocs', 'templates', 'plugins')
