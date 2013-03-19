@@ -118,20 +118,20 @@ class Macro(Component):
 #            pass
         # generate data
         data = []
-        # lines
-        for no, tid in enumerate(sorted(tickets)):
-            data.append({'color': no, 'label': tid,
-                         'data': [[time / 1000, state not in status_list and default_status or status_list.index(state)]
-                                  for void, time, void, state in tickets[tid]]})  # @UnusedVariable
         # points
         too_many_tickets = len(tickets) > 200
         for no, tid in enumerate(sorted(tickets)):
-            if not too_many_tickets or state != 'closed':
+            if not too_many_tickets or tickets[tid][-1][3] != 'closed':
                 void, time, void, state = tickets[tid][-1]  # @UnusedVariable
                 index = state not in status_list and default_status or status_list.index(state)
                 data.append({'points': {'show': True, 'radius': 8, 'color': no},
                              'label': tid,
                              'data': [[time / 1000, index]]})
+        # lines
+        for no, tid in enumerate(sorted(tickets)):
+            data.append({'color': no, 'label': tid,
+                         'data': [[time / 1000, state not in status_list and default_status or status_list.index(state)]
+                                  for void, time, void, state in tickets[tid]]})  # @UnusedVariable
         # render
         add_script_data(formatter.req, {'statushistorychart_yaxis': status_list})
         add_script_data(formatter.req, {'statushistorychart_data': data})
