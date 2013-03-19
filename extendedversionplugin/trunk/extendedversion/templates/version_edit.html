@@ -10,9 +10,13 @@
       <title py:when="True">Edit Version ${version.name}</title>
       <title py:otherwise="">New Version</title>
     </py:choose>
-    <link rel="stylesheet" type="text/css"
-          href="${chrome.htdocs_location}css/roadmap.css" />
-    <script type="text/javascript" src="${chrome.htdocs_location}js/wikitoolbar.js"></script>
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        $("#name").focus();
+        if ($.isFunction($.fn.datetimepicker))
+          $("#time").datetimepicker();
+      });
+    </script>
   </head>
 
   <body>

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# Copyright (C) 2012-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -10,15 +11,11 @@
 from datetime import date
 from genshi.builder import tag
 
-from trac.core import *
-from trac.config import BoolOption, Option
+from trac.config import BoolOption
+from trac.core import Component, implements
 from trac.resource import Resource
 from trac.ticket import Version
-from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
-#from trac.web.chrome import add_link, add_notice, add_stylesheet, add_warning
-
-### interfaces:  
 from trac.web.api import IRequestHandler, IRequestFilter
 from trac.web.chrome import INavigationContributor
 

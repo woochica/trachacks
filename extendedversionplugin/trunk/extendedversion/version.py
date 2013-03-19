@@ -1,7 +1,7 @@
-
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
+# Copyright (C) 2012-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -11,14 +11,16 @@
 import re
 
 from datetime import date
-from genshi.builder import tag
+from pkg_resources import parse_version
 
+from genshi.builder import tag
+from trac import __version__ as trac_version
 from trac.attachment import AttachmentModule, ILegacyAttachmentPolicyDelegate
 from trac.config import BoolOption, ExtensionOption, Option
 from trac.core import *
 from trac.mimeview.api import Context
 from trac.perm import IPermissionRequestor
-from trac.resource import Resource, ResourceNotFound
+from trac.resource import IResourceManager, Resource, ResourceNotFound
 from trac.ticket import Milestone, Version
 from trac.ticket.query import QueryModule
 from trac.ticket.roadmap import (
@@ -28,8 +30,8 @@ from trac.ticket.roadmap import (
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
 from trac.web.chrome import (
-    IRequestHandler, ITemplateProvider, add_notice,
-    add_stylesheet, add_warning
+    Chrome, IRequestHandler, ITemplateProvider, add_notice,
+    add_script, add_stylesheet, add_warning
 )
 from trac.wiki import IWikiSyntaxProvider
 
@@ -72,7 +74,8 @@ def version_interval_hrefs(env, req, stat, milestones):
 
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, IPermissionRequestor,
-               IRequestHandler, ITemplateProvider, IWikiSyntaxProvider)
+               IRequestHandler, IResourceManager, ITemplateProvider,
+               IWikiSyntaxProvider)
 
     navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
         """The main navigation item to highlight when displaying versions.""")
@@ -159,6 +162,33 @@ class VisibleVersion(Component):
 
         add_stylesheet(req, 'common/css/roadmap.css')
         return self._render_view(req, db, version)
+
+
+    # IResourceManager methods
+
+    # TODO: not sure this is implemented right just yet,
+    # and do we need to implement get_resource_url?
+
+    def get_resource_realms(self):
+        yield 'version'
+
+    def get_resource_description(self, resource, format=None, context=None,
+                                 **kwargs):
+        desc = resource.id
+        if format != 'compact':
+            desc = _('Version %(name)s', name=resource.id)
+        if context:
+            return tag.a('Version %(name)s', name=resource.id,
+                         href=context.href.version(resource.id))
+        else:
+            return desc
+
+    def resource_exists(self, resource):
+        try:
+            Version(self.env, resource.id)
+            return Version.exists
+        except ResourceNotFound:
+            return False
 
 
     # ITemplateProvider methods
@@ -291,6 +321,9 @@ class VisibleVersion(Component):
         else:
             req.perm(resource).require('VERSION_CREATE')
 
+        if parse_version(trac_version) >= parse_version('1.0'):
+            Chrome(self.env).add_jquery_ui(req)
+        Chrome(self.env).add_wiki_toolbars(req)
         return 'version_edit.html', data, None
 
     def _render_link(self, context, name, label, extra=''):
@@ -357,5 +390,6 @@ class VisibleVersion(Component):
         }
 
         add_stylesheet(req, 'extendedversion/css/version.css')
+        add_script(req, 'common/js/folding.js')
         return 'version_view.html', data, None
 
