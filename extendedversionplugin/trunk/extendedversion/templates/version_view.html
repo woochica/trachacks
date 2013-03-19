@@ -3,103 +3,113 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
       xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
-  <xi:include href="macros.html" />
   <head>
-    <title>Version ${version.name}</title>
+    <title i18n:msg="name">Version ${version.name}</title>
     <script type="text/javascript">
       jQuery(document).ready(function($) {
         $("#content").find("h1,h2,h3,h4,h5,h6").addAnchor("Link to this section");
+        $(".foldable").enableFolding(true, true);
       });
     </script>
-    <link rel="stylesheet" type="text/css"
-          href="${chrome.htdocs_location}css/roadmap.css" />
   </head>
 
   <body>
-    <!--div id="content" class="version"!-->
-    <div id="content" class="version">
-      <h1>Version ${version.name}</h1>
-      <div class="info">
+    <div id="content" class="milestone version">
+      <h1 i18n:msg="name">Version ${version.name}</h1>
+      <div class="info trac-progress">
         <py:choose>
-          <p py:when="is_released" class="date">
-            Released ${dateinfo(version.time)} ago
-            (${format_datetime(version.time)})
+          <p py:when="version.is_released" class="date">
+            <i18n:msg params="duration, date">
+              Released ${dateinfo(version.time)} ago (${format_datetime(version.time)})
+            </i18n:msg>
           </p>
           <p py:when="version.time" class="date">
-            Due in ${dateinfo(version.time)}
-            (${format_date(version.time)})
+            <i18n:msg params="duration, date">
+              Due in ${dateinfo(version.time)} (${format_datetime(version.time)})
+            </i18n:msg>
           </p>
           <p py:otherwise="" class="date">
             No date set
           </p>
         </py:choose>
-        <py:if test="stats.count">${progress_bar(stats, interval_hrefs)}</py:if>
+        <xi:include href="progress_bar.html" py:if="version.stats.count"
+                    py:with="stats = version.stats;
+                             interval_hrefs = version.interval_hrefs;
+                             stats_href = version.stats_href"/>
       </div>
 
-      <div class="description" xml:space="preserve">
+      <div py:if="version.description" class="description trac-content" xml:space="preserve">
         ${wiki_to_html(context, version.description)}
       </div>
 
-      <div py:if="milestones">
+      <div py:if="milestones" class="milestones">
         <h2>Milestones</h2>
-        <table class="milestones" style="width: 100%">
-        <py:for each="idx, milestone in enumerate(milestones)">
-          <tr class="milestone">
-            <td class="info">
-              <h2><a href="${href.milestone(milestone.name)}">
-                <em>${milestone.name}</em>
-              </a></h2>
-              <py:choose>
-                <p py:when="milestone.completed" class="date">
-                  Completed ${dateinfo(milestone.completed)} ago
-                  (${format_date(milestone.completed)})
-                </p>
-                <p py:when="milestone.is_late" class="date">
-                  <strong>${dateinfo(milestone.due)} late</strong>
-                  (${format_date(milestone.due)})
-                </p>
-                <p py:when="milestone.due" class="date">
-                  Due in ${dateinfo(milestone.due)}
-                  (${format_date(milestone.due)})
-                </p>
-                <p py:otherwise="" class="date">
-                  No date set
-                </p>
-              </py:choose>
-            </td>
-            <td py:with="mstats = milestone_stats[idx]" class="info">
-              <py:if test="mstats.stats.count">${progress_bar(mstats.stats, mstats.interval_hrefs, stats_href=mstats.stats_href)}</py:if>
-            </td>
-          </tr> 
-          <tr py:if="show_milestone_description"> 
-            <td class="description" colspan="2" xml:space="preserve"> 
-              ${wiki_to_html(context(milestone.resource), milestone.description)} 
-            </td> 
-          </tr>
-        </py:for>
-        </table>
-      </div>
-      ${list_of_attachments(attachments, compact=True)}
+        <div py:for="idx, milestone in enumerate(milestones)" class="milestone">
+          <div class="info trac-progress" py:with="mstats = milestone_stats[idx]">
+            <h3><a href="${href.milestone(milestone.name)}">
+              Milestone: <em>${milestone.name}</em>
+            </a></h3>
+            <py:choose>
+              <p py:when="milestone.completed" class="date">
+                <i18n:msg params="duration, date">
+                  Completed ${dateinfo(milestone.completed)} ago (${format_datetime(milestone.completed)})
+                </i18n:msg>
+              </p>
+              <p py:when="milestone.is_late" class="date">
+                <i18n:msg params="duration, date">
+                  <strong>${dateinfo(milestone.due)} late</strong> (${format_datetime(milestone.due)})
+                </i18n:msg>
+              </p>
+              <p py:when="milestone.due" class="date">
+                <i18n:msg params="duration, date">
+                  Due in ${dateinfo(milestone.due)} (${format_datetime(milestone.due)})
+                </i18n:msg>
+              </p>
+              <p py:otherwise="" class="date">
+                No date set
+              </p>
+            </py:choose>
+            <xi:include href="progress_bar.html" py:if="mstats.stats.count"
+                        py:with="stats = mstats.stats;
+                                 interval_hrefs = mstats.interval_hrefs;
+                                 stats_href = mstats.stats_href;"/>
+          </div>
 
-      <div py:if="'VERSION_MODIFY' in perm(resource) or
-                  'VERSION_DELETE' in perm(resource) or
+          <div class="description" xml:space="preserve">
+            ${wiki_to_html(context, milestone.description)}
+          </div>
+
+          </div>
+        </div>
+
+      <xi:include href="list_of_attachments.html"
+                  py:with="alist = attachments; compact = True; foldable = True"/>
+
+      <div py:if="'VERSION_MODIFY' in perm(version.resource) or
+                  'VERSION_DELETE' in perm(version.resource) or
                   attachments.can_create"
            class="buttons">
-        <form py:if="'VERSION_MODIFY' in perm(resource)" method="get" action="" id="editversion">
+        <form py:if="'VERSION_MODIFY' in perm(version.resource)" method="get" action="" id="editversion">
           <div>
             <input type="hidden" name="action" value="edit" />
-            <input type="submit" value="Edit version" />
+            <input type="submit" value="${_('Edit version')}" />
           </div>
         </form>
-        <form py:if="'VERSION_DELETE' in perm(resource)" method="get" action="" id="deleteversion">
+        <form py:if="'VERSION_DELETE' in perm(version.resource)" method="get" action="" id="deleteversion">
           <div>
             <input type="hidden" name="action" value="delete" />
-            <input type="submit" value="Delete version" />
+            <input type="submit" value="${_('Delete version')}" />
           </div>
         </form>
-        ${attach_file_form(attachments)}
+        <xi:include href="attach_file_form.html" py:with="alist = attachments"/>
+      </div>
+
+      <div id="help" i18n:msg=""><strong>Note:</strong> See
+        <a href="${href.wiki('TracTickets')}">TracTickets</a> for help on using
+        versions.
       </div>
 
     </div>

@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010-2011 Malcolm Studd <mestudd@gmail.com>
@@ -62,6 +63,12 @@ def version_interval_hrefs(env, req, stat, milestones):
 
     return [query_href(interval['qry_args']) for interval in stat.intervals]
 
+
+# TODO: rename this to VersionModule, but beware that on upgrade, if the user
+# hasn't used a wilcard to specify the components to be enabled, they will
+# need to modify the components section of trac.ini:
+#   extendedversion.version.visibleversion = enabled ->
+#   extendedversion.version.versionmodule = enabled
 
 class VisibleVersion(Component):
     implements(ILegacyAttachmentPolicyDelegate, IPermissionRequestor,
@@ -150,6 +157,7 @@ class VisibleVersion(Component):
         if not version.name:
             req.redirect(req.href.versions())
 
+        add_stylesheet(req, 'common/css/roadmap.css')
         return self._render_view(req, db, version)
 
 
@@ -332,22 +340,22 @@ class VisibleVersion(Component):
         interval_hrefs = version_interval_hrefs(self.env, req, stats,
                                                 [milestone.name for milestone in milestones])
 
-        resource = Resource('version', version.name)
-        context = Context.from_request(req, resource)
-        add_stylesheet(req, 'extendedversion/css/extendedversion.css')
+        version.resource = Resource('version', version.name)
+        context = Context.from_request(req, version.resource)
 
+        version.is_released = version.time and version.time.date() < date.today()
+        version.stats = stats
+        version.interval_hrefs = interval_hrefs
+        version.stats_href = [] # Not implemented yet, see th:#10349
         data = {
             'context': context,
-            'resource': resource,
             'version': version,
-            'is_released': version.time and version.time.date() < date.today(),
-            'stats': stats,
-            'interval_hrefs': interval_hrefs,
             'attachments': AttachmentModule(self.env).attachment_data(context),
             'milestones': milestones,
             'milestone_stats': milestone_stats,
-            'show_milestone_description': self.show_milestone_description,
+            'show_milestone_description': self.show_milestone_description # Not implemented yet
         }
 
+        add_stylesheet(req, 'extendedversion/css/version.css')
         return 'version_view.html', data, None
 

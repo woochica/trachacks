@@ -1,0 +1,17 @@
+.milestone .info h3 {
+ background: #f7f7f7;
+ border-bottom: 1px solid #d7d7d7;
+ margin: .5em 0;
+ box-shadow: 1px 1px .5em 0 #ccc;
+ border-radius: .1em;
+}
+.milestone .info h3 :link, .milestone .info h3 :visited {
+ color: #000;
+ display: block;
+ border-bottom: none;
+ padding: .2em .4em;
+}
+.milestone .info h3 :link:hover, .milestone .info h3 :visited:hover {
+ color: #000;
+}
+.milestone .info h3 em { color: #b00; font-style: normal }
