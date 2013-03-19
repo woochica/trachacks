@@ -148,7 +148,7 @@ ORDER BY author,  _ord ASC, time
     """
     },#END Hours Per Developer
 ]
-th_version =16
+th_version =17
 ticket_hours_reports = [
 {
     "uuid":"8d785cdb-dcf5-43c9-b2a6-216997b0011a",
@@ -174,7 +174,7 @@ FROM (
     ,0 as _ord
 
     FROM ticket as t
-    JOIN enum as p ON p.name=t.priority AND p.type='priority'
+    LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
   LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
         AND EstimatedHours.Ticket = t.Id
@@ -212,7 +212,7 @@ FROM (
          NULL AS _reporter
          ,1 as _ord
     FROM ticket as t
-    JOIN enum as p ON p.name=t.priority AND p.type='priority'
+    LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
   LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
         AND EstimatedHours.Ticket = t.Id
@@ -262,7 +262,7 @@ SELECT p.value AS __color__,
        ,0 as _ord
 
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -300,7 +300,7 @@ SELECT '1' AS __color__,
        NULL AS _reporter
        ,1 as _ord
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -348,7 +348,7 @@ SELECT p.value AS __color__,
        ,0 as _ord
 
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -388,7 +388,7 @@ SELECT '1' AS __color__,
        NULL AS _reporter
        ,1 as _ord
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -435,7 +435,7 @@ SELECT p.value AS __color__,
        ,0 as _ord
 
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -474,7 +474,7 @@ SELECT '1' AS __color__,
        NULL AS _reporter
        ,1 as _ord
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -521,7 +521,7 @@ SELECT p.value AS __color__,
        reporter AS _reporter, 0 as _ord
 
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -560,7 +560,7 @@ SELECT '1' AS __color__,
        NULL AS _reporter
        ,1 as _ord
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -608,7 +608,7 @@ SELECT p.value AS __color__,
        ,0 as _ord
 
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
@@ -646,7 +646,7 @@ SELECT '1' AS __color__,
        NULL AS _changetime,
        NULL AS _reporter, 1 as _ord
   FROM ticket as t
-  JOIN enum as p ON p.name=t.priority AND p.type='priority'
+  LEFT JOIN enum as p ON p.name=t.priority AND p.type='priority'
 
 LEFT JOIN ticket_custom as EstimatedHours ON EstimatedHours.name='estimatedhours'
       AND EstimatedHours.Ticket = t.Id
