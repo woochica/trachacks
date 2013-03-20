@@ -4,13 +4,12 @@ import math
 import copy
 from datetime import timedelta, datetime
 
-from trac.util.datefmt import format_date, utc
+from trac.util.datefmt import format_date, to_utimestamp, localtz, to_datetime
 from trac.ticket import ITicketChangeListener, Ticket
 from trac.ticket.query import Query
 
 from trac.config import IntOption, Option, ExtensionOption
 from trac.core import implements, Component, TracError, Interface, ExtensionPoint
-
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 
@@ -62,6 +61,10 @@ import db_default
 # pseudo-ticket for a Trac milestone has a status of "closed" if the
 # milestone has a completed date or a configurable open status if not
 # yet completed.
+#
+# The tickets required for a goal are scheduled if the goal has a status
+# in a configurable list of active goal statuses (or if the list is
+# empty).
 
 
 class TracPM(Component):
@@ -166,6 +169,8 @@ class TracPM(Component):
            """Ticket type for milestone-like tickets""")
     Option(cfgSection, 'incomplete_milestone_goal_status', 'active', 
            """Status to give goal-type tickets representing incomplete Trac milestones""")
+    Option(cfgSection, 'active_goal_statuses', 'active', 
+           """List of statuses for goal-type tickets that are active""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
                                 ITaskScheduler, 'ResourceScheduler')
@@ -247,6 +252,11 @@ class TracPM(Component):
             self.env.log.info('The milestone_type setting is deprecated.'
                               ' Use goal_ticket_type.')
         
+        # Goal-type tickets with these statuses will be considered active.
+        # (An empty list bypasses the test for active.)
+        self.activeGoalStatuses = self.config.getlist(self.cfgSection,
+                                                      'active_goal_statuses')
+
         # An open goal-type pseudo-ticket representing a Trac
         # milestone has this status. (Closed milestones will have
         # status of "closed".)
@@ -312,7 +322,8 @@ class TracPM(Component):
         else:
             d = datetime(*time.strptime(dateString, 
                                         self.dbDateFormat)[0:7])
-            d = d.replace(hour=0, minute=0, second=0, microsecond=0)
+            d = d.replace(hour=0, minute=0, second=0, microsecond=0, 
+                          tzinfo=localtz)
         return d
 
     # Parse the start field and return a datetime
@@ -356,7 +367,8 @@ class TracPM(Component):
     # non-zero microseconds.
     def isStartOfDay(self, d):
         # Subtract d from midnight that day
-        delta = d - d.replace(hour=0, minute=0, second=0, microsecond=0)
+        delta = d - d.replace(hour=0, minute=0, second=0, microsecond=0,
+                              tzinfo=localtz)
 
         # If within 5 seconds of midnight, it's midnight.
         #
@@ -429,13 +441,23 @@ class TracPM(Component):
         else:
             return value
 
-    # Return computed start for ticket as a Python datetime object
+    # Return start for ticket as a Python datetime object
     def start(self, ticket):
-        return ticket['_calc_start'][0]
+        if ticket.get('_calc_start'):
+            return ticket['_calc_start'][0]
+        elif ticket.get('_sched_start'):
+            return to_datetime(ticket.get('_sched_start'))
+        else:
+            return None
 
-    # Return computed start for ticket as a Python datetime object
+    # Return finish for ticket as a Python datetime object
     def finish(self, ticket):
-        return ticket['_calc_finish'][0]
+        if ticket.get('_calc_finish'):
+            return ticket['_calc_finish'][0]
+        elif ticket.get('_sched_finish'):
+            return to_datetime(ticket.get('_sched_finish'))
+        else:
+            return None
 
     # Return a set of custom fields that PM needs to work.  The
     # caller can add this to the list of fields in a query so that
@@ -831,7 +853,6 @@ class TracPM(Component):
                 elif self.isCfg('start'):
                     milestoneTicket[self.fields['start']] = ''
 
-
                 # Any ticket with this as a milestone and no
                 # successors has the milestone as a successor
                 if self.isCfg(['pred', 'succ']):
@@ -869,6 +890,8 @@ class TracPM(Component):
     # is configured for PM, then 'children' is the (possibly empty)
     # list of children.  if there is no 'parent' field, then
     # 'children' is set to None.
+    #
+    # Schedule information comes from the TracPM private table schedule.
     #
     # Any "dangling references" are cleaned up.  That is, if A is a
     # parent of B but A is not in tickets then the returned set shows
@@ -1010,6 +1033,21 @@ class TracPM(Component):
                 else:
                     t[f2] = []
 
+        # Get schedule
+        ticketsByID = {}
+        for t in tickets:
+            ticketsByID[t['id']] = t
+        ids = ticketsByID.keys()
+        inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+        cursor.execute("SELECT ticket, start, finish" + \
+                           " FROM schedule WHERE ticket " + \
+                           inClause,
+                       ids)
+        for row in cursor:
+            tid, start, finish = row
+            ticketsByID[tid]['_sched_start'] = start
+            ticketsByID[tid]['_sched_finish'] = finish
+        
         # Add pseudo-tickets for Trac milestones
         self._add_milestones(options, tickets)
 
@@ -1084,6 +1122,31 @@ class TracPM(Component):
         for t in tickets:
             for field in [ '_calc_start', '_calc_finish']:
                 t[field] = ticketsByID[t['id']][field]
+
+    # Recompute schedule 
+    #
+    # Compute schedule, like computeSchedule(), but on return each
+    # ticket has a "_rescheduled" field if its schedule changed.  
+    def recomputeSchedule(self, options, tickets):
+        # Call computeSchedule
+        self.computeSchedule(options, tickets)
+
+        # Test each returned ticket to see if the start or finish changed
+        for t in tickets:
+            dbStart = t.get('_sched_start')
+            dbFinish = t.get('_sched_finish')
+            if not dbStart:
+                rescheduled = True
+            elif dbStart != to_utimestamp(self.start(t)):
+                rescheduled = True
+            elif not dbFinish:
+                rescheduled = True
+            elif dbFinish != to_utimestamp(self.finish(t)):
+                rescheduled = True
+            else:
+                rescheduled = False
+            
+            t['_rescheduled'] = rescheduled
 
 
     # Augment tickets by propagating dependencies from parents to
@@ -1614,7 +1677,8 @@ class ResourceScheduler(Component):
                         finish = datetime.today().replace(hour=0, 
                                                           minute=0, 
                                                           second=0, 
-                                                          microsecond=0)
+                                                          microsecond=0,
+                                                          tzinfo=localtz)
                         # Move ahead to beginning of next day so fixup
                         # below will handle work week.
                         finish += timedelta(days=1)
@@ -1762,7 +1826,8 @@ class ResourceScheduler(Component):
                             start = datetime.today().replace(hour=0, 
                                                              minute=0, 
                                                              second=0, 
-                                                             microsecond=0)
+                                                             microsecond=0,
+                                                             tzinfo=localtz)
 
                         # Move back to end of previous day so fixup
                         # below will handle work week.
@@ -1970,6 +2035,7 @@ class TicketRescheduler(Component):
 
     pm = None
     scheduleFields = None
+    options = {}
 
     def __init__(self):
         self.pm = TracPM(self.env)
@@ -1990,6 +2056,13 @@ class TicketRescheduler(Component):
         self.scheduleFields.append('parents')
         self.scheduleFields.append('blocking')
         self.scheduleFields.append('blockedby')
+
+        self.options['schedule'] = \
+            self.config.get('TracPM', 'option.schedule', 'asap')
+        self.options['hoursPerDay'] = \
+            float(self.config.get('TracPM', 'option.hoursPerDay', '6.0'))
+        self.options['doResourceLeveling'] = \
+            self.config.get('TracPM', 'option.doResourceLeveling', '1')
         
 
     # Do any of the fields that changed affect scheduling?  For
@@ -2009,12 +2082,22 @@ class TicketRescheduler(Component):
             if f in self.scheduleFields:
                 return True
 
-        # If the status changed and the value was or is closed,
-        # reschedule
-        if 'status' in old_values and \
-                (old_values['status'] == 'closed' or \
-                     ticket['status'] == 'closed'):
-            return True
+        # If the status changed, check for closing or reopening
+        # tickets and making goals active or inactive.
+        if 'status' in old_values:
+            # If the ticket changed status in or out of closed, reschedule
+            if (old_values['status'] == 'closed' \
+                    or ticket['status'] == 'closed'):
+                return True
+
+            # If the ticket is a goal and changes status in or out of
+            # active, reschedule
+            if ticket['type'] == self.pm.goalTicketType:
+                wasActive = old_values['status'] in self.pm.activeGoalStatuses
+                isActive = ticket['status'] in self.pm.activeGoalStatuses
+                if (wasActive and not isActive) \
+                        or (isActive and not wasActive):
+                    return True
 
         return False
 
@@ -2164,19 +2247,485 @@ class TicketRescheduler(Component):
 
         return list(explored)
 
-    # FIXME - call the scheduler.  For now, we just want to see
-    # how many tickets are affected and how long it takes to find
-    # them.
+    # Remove tickets that are not required for any goal with one of
+    # the configured active statuses.
+    #
+    #  1. mark all tickets inactive 
+    #  2. for each active goal
+    #    2.1 follow predecessor links to mark tickets active 
+    #  3. Delete all inactive tickets (and fix up dependencies)
+    # 
+    # @param tickets a list of tickets
+    #
+    # @return the list with inactive tickets removed
+    def _pruneInactive(self, tickets):
+        # If no configured active statuses, don't prune.
+        if not self.pm.activeGoalStatuses:
+            return tickets
+
+        # Make a lookup for faster processing
+        ticketsByID = {}
+        for t in tickets:
+            ticketsByID[t['id']] = t
+
+        # Copy dependencies from parents to children
+        self.pm.augmentTickets(ticketsByID)
+
+        # Mark all tickets inactive.
+        for t in tickets:
+            t['_active'] = False
+
+        # Helper to traverse dependencies recursively
+        def markActive(ticket):
+            # If this ticket hasn't been processed yet
+            if not ticket['_active']:
+                # Mark it active
+                ticket['_active'] = True
+                # And propagate to predecessors
+                for pid in self.pm.predecessors(ticket):
+                    markActive(ticketsByID[pid])
+
+        # All predecessors of active goals are active
+        for t in tickets:
+            # FIXME - encapsulate this test in "self.pm.activeGoal()"?
+            if t['type'] == self.pm.goalTicketType \
+                    and t['status'] in self.pm.activeGoalStatuses:
+                markActive(t)
+
+        # Remove inactive tickets
+        tickets = [t for t in tickets if t['_active']]
+        # Refresh the lookup table
+        ticketsByID = {}
+        for t in tickets:
+            ticketsByID[t['id']] = t
+
+        
+        # Fairly often tickets is empty after pruning but setting up
+        # the link field names is cheap and traversing an empty list
+        # is basically free.
+
+        # Clean up links to removed tickets
+        #
+        # FIXME - this is a really gross and fragile way to do it but
+        # it'll due for now.
+        linkFieldNames = {}
+        for linkField in [ 'parent', 'pred', 'succ']:
+            if not self.pm.isCfg(linkField):
+                linkFieldNames[linkField] = None
+            elif self.pm.isField(linkField):
+                linkFieldNames[linkField] = \
+                    self.pm.fields[self.pm.sources[linkField]]
+            else:
+                linkFieldNames[linkField] = linkField
+
+        for t in tickets:
+            # Remove link to parent
+            pid = self.pm.parent(t)
+            if pid and pid not in ticketsByID:
+                t[linkFieldNames['parent']] = None
+
+            # Remove links to children
+            # (Include only children still in the set)
+            t['children'] = [cid for cid in t['children'] 
+                             if cid in ticketsByID]
+                
+            # Predecessors and successors
+            for linkField in ['pred', 'succ']:
+                  t[linkFieldNames[linkField]] = \
+                        [tid for tid in t[linkFieldNames[linkField]] 
+                         if tid in ticketsByID]
+
+        return tickets
+            
+
+    # Query ticket table (and linked custom fields) for fields needed
+    # to reschedule
+    #
+    # @param ids list of ticket IDs to get data for
+    #
+    # @return list of hashes for tickets
+    def queryTickets(self, ids):
+        options = {}
+        options['max'] = 0
+        options['id'] = "|".join(ids)
+
+        return self.pm.query(options, set())
+    
+    ##
+    # Update in-memory relationships because other plugins' ticket
+    # change listeners may not have run yet so the database may be
+    # stale.
+    #
+    # @param tickets list of tickets to examine
+    # @param ticket ticket that changed
+    # @param old_values previous values for fields in ticket which changed
+    #
+    # Note: ticket and old_values are passed to ITicketChangeListener
+    # methods.
+    # 
+    # FIXME - this is very specific to Subtickets and MasterTickets
+    # and accesses fields directly instead of using accessor
+    # functions.  Let's make it work *then* make it pretty.
+    #
+    # MasterTickets and Subtickets both maintain relationships in
+    # private tables but maintain custom fields which summarize or
+    # preview the relationships when viewing tickets.  Most of TracPM
+    # abstracts access to the private tables but since this is called
+    # from a ticket change listener, we have only the custom fields to
+    # work with.
+    def spliceGraph(self, tickets, ticket, old_values):
+        # See if any of the changed values are for custom relationship
+        # fields.
+        relationshipChanged = False
+        for f in old_values:
+            # FIXME - these are the custom field names for Subtickets
+            # and MasterTickets.  Should be configurable or flexible
+            # somehow.
+            if f in [ 'parents', 'blockedby', 'blocking' ]:
+                relationshipChanged = True
+
+        # If a relationship changed, process it.
+        if relationshipChanged:
+            # Relationships can be configured to be access via fields
+            # or via a relation.  This bit -- copied from
+            # _pruneInactive -- builds a lookup encapsulating that
+            # configuration and simplifying the update logic which
+            # follows.
+            #
+            # 'parent', 'pred', and 'succ' are the names of the
+            # relationships.  This code determines which field holds
+            # the data for that relationship.
+            linkFieldNames = {}
+            for linkField in [ 'parent', 'pred', 'succ']:
+                if not self.pm.isCfg(linkField):
+                    linkFieldNames[linkField] = None
+                elif self.pm.isField(linkField):
+                    linkFieldNames[linkField] = \
+                        self.pm.fields[self.pm.sources[linkField]]
+                else:
+                    linkFieldNames[linkField] = linkField
+
+            # Table indexed by ticket ID for faster updates
+            ticketsByID = {}
+            for t in tickets:
+                ticketsByID[t['id']] = t
+
+
+            # Fix up parent
+            #
+            # Note: the 'children' field is *always* internal to
+            # TracPM.  It does not correspond to a custom field; no
+            # known plugin for parent/child relationships has a custom
+            # field for children.
+            if linkFieldNames['parent'] in old_values:
+                # Remove ticket from children of old parent
+                parent = ticketsByID[old_values[[linkFieldsName['parent']]]]
+                parent['children'] = \
+                    [cid for cid in parent['children'] if cid != ticket.id]
+                # Add ticket to children of new parent
+                parent = ticketsByID[ticket[linkFieldsNames['parent']]]
+                if ticket.id not in parent['children']:
+                    parent['children'].append(ticket.id)
+
+            # The custom fields which allow previewing predecessors
+            # and successors.
+            #
+            # FIXME - these are the custom field names for
+            # MasterTickets.  Should be configurable or flexible
+            # somehow.
+            previewFields = {}
+            previewFields['pred'] = 'blockedby'
+            previewFields['succ'] = 'blocking'
+
+            # Fix up predecessors, successors
+            for linkField in ['pred', 'succ']:
+                # We need to figure up the forward and reverse
+                # relationships below.
+                fwd = linkField
+                if fwd == 'pred':
+                    rev = 'succ'
+                else:
+                    rev = 'pred'
+
+                fwdField = linkFieldNames[fwd]
+                revField = linkFieldNames[rev]
+
+                # If the custom field summarizing this relationship
+                # changed, we need to splice the graph.
+                #
+                # This code depends on the structure of the
+                # relationship data in the graph (which TracPM
+                # controls) and *not* on the name of any fields so it
+                # should be correct regardless of what plugins are
+                # being used.
+                if previewFields[fwdField] in old_values:
+                    # Get the set of old and new dependants
+                    if len(old_values[previewFields[fwd]]) == 0:
+                        oldDependants = set()
+                    else:
+                        ids = old_values[previewFields[fwd]].split(',')
+                        oldDependants = set([int(tid) for tid in ids])
+
+                    if len(ticket[previewFields[fwd]]) == 0:
+                        newDependants = set()
+                    else:
+                        ids = ticket[previewFields[fwd]].split(',')
+                        newDependants = set([int(tid) for tid in ids])
+
+                    # Set difference tells us what is in old and not
+                    # new and vice versa.
+                    removed = oldDependants - newDependants
+                    added = newDependants - oldDependants
+
+                    # Remove from both ends, if needed
+                    for tid in removed:
+                        ticketsByID[ticket.id][fwdField] = \
+                            [did for did in 
+                             ticketsByID[ticket.id][fwdField]
+                             if did != tid]
+                        ticketsByID[tid][revField] = \
+                            [did for did in 
+                             ticketsByID[tid][revField]
+                             if did != ticket.id]
+
+                    # Link on both ends, if needed
+                    for tid in added:
+                        if tid not in ticketsByID[ticket.id][fwdField]:
+                            ticketsByID[ticket.id][fwdField].append(tid)
+                            ticketsByID[tid][revField].append(ticket.id)
+            
+
+    # Reschedule based on a ticket changing.  
+    #
+    # Arguments as for TicketChangeListener.
+    #
+    # No return.  The calculated start and finish dates in the ticket
+    # database may be updated.
     def rescheduleTickets(self, ticket, old_values):
+        # All the history records need the same timestamp.
+        dbTime = datetime.now().replace(tzinfo=localtz)
+
         # Each step (e.g., finding, querying, pruning) has an entry
         # Each entry is [ step, ticketcount, time ]
         profile = []
 
+        # If this ticket is a goal and it is going inactive, the
+        # tickets required for it will be idle unless they are
+        # required for another still-active goal.
+        potentiallyIdle = set()
+        if self.pm.activeGoalStatuses \
+                and ticket['type'] == self.pm.goalTicketType \
+                and 'status' in old_values:
+            wasActive = old_values['status'] in self.pm.activeGoalStatuses
+            isActive = ticket['status'] in self.pm.activeGoalStatuses
+            if wasActive and not isActive:
+                start = datetime.now()
+                potentiallyIdle |= self.pm.preQuery({'goal': str(ticket.id)})
+                # All the rest of the ticket sets in this function are
+                # the result of direct queries and have integer ticket
+                # IDs.  preQuery() returns a set of strings so we
+                # convert here to make later processing clearer.
+                potentiallyIdle = set([int(t) for t in potentiallyIdle])
+                # pretty_timedelta is ugly. :-/  Doesn't show fractional seconds
+                end = datetime.now()
+                profile.append([ 'remembering', 
+                                 len(potentiallyIdle), 
+                                 end - start ])
+
+        # This ticket may go idle if it moves to another goal.
+        potentiallyIdle.add(ticket.id)
+
         # What tickets are affected by this ticket changing?
         start = datetime.now()
+        # Here ids is a list of strings.  Necessary for queryTickets()
         ids = self._findAffected(ticket, old_values)
         end = datetime.now()
         profile.append(['finding', len(ids), end - start ])
+
+        # Get Details for the affected tickets.
+        #
+        # Note that the schedule information *is* stale.  Trac updated
+        # 'ticket' and 'ticket_custom' but the code which follows
+        # updates 'schedule' so it is still in the old state.
+        #
+        # Also, dependency information in 'mastertickets' *may* (or
+        # may not) be stale depending on what order that plugin's
+        # ticket change listener and this one are invoked in (which is
+        # indeterminate and uncontrollable).
+        start = datetime.now()
+        tickets = self.queryTickets(ids)
+        end = datetime.now()
+        profile.append(['querying', len(tickets), end - start ])
+
+        # Splice in-memory graph based on changes
+        start = datetime.now()
+        self.spliceGraph(tickets, ticket, old_values)
+        end = datetime.now()
+        profile.append([ 'splicing', len(tickets), end - start ])
+
+        # Prune tickets to only those in active projects.
+        start = datetime.now()
+        activeIDs = [t['id'] for t in self._pruneInactive(tickets) \
+                         if not self.pm.isTracMilestone(t)]
+        end = datetime.now()
+        profile.append([ 'pruning', len(activeIDs), end - start ])
+
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        # The newly-idle tickets are the ones that might have been
+        # idled by the goal status transition and are not still
+        # active.
+        idle = potentiallyIdle - set(activeIDs)
+        if len(idle) != 0:
+            start = datetime.now()
+            # Remove idle tickets from schedule
+            inClause = "IN (%s)" % ','.join(('%s',) * len(idle))
+            cursor.execute("DELETE FROM schedule WHERE ticket " + \
+                               inClause,
+                           list(idle))
+
+            # And note idling in schedule history
+            valuesClause = ','.join(('(%s,%s,%s,%s)',) * len(idle))
+            values = []
+            for t in tickets:
+                if t['id'] in idle:
+                    values.append(t['id'])
+                    values.append(to_utimestamp(dbTime))
+                    values.append(to_utimestamp(self.pm.start(t)))
+                    values.append(to_utimestamp(self.pm.finish(t)))
+
+            # New start and finish are null
+            cursor.execute('INSERT INTO schedule_change' + \
+                               ' (ticket, time,' + \
+                               ' oldstart, oldfinish)' + \
+                               ' VALUES %s' % valuesClause,
+                           values)
+            end = datetime.now()
+            profile.append([ 'idling', len(idle), end - start ])
+
+
+        # Reschedule only if there are real tickets left after pruning
+        # and that list includes the changed ticket.
+        if len(activeIDs) > 0 and ticket.id in activeIDs:
+            # Limit to the active tickets.
+            tickets = [t for t in tickets if t['id'] in activeIDs]
+
+            # Compute schedule with configured options 
+            schedule = timedelta()
+            self.env.log.info('Recomputing schedule with options:%s' % 
+                              self.options)
+            start = datetime.now()
+            self.pm.recomputeSchedule(self.options, tickets)
+            end = datetime.now()
+            profile.append(['rescheduling', len(tickets), end - start ])
+
+            # Reduce list of interesting IDs to only those tickets
+            # that were rescheduled.
+            ids = [t['id'] for t in tickets if t.get('_rescheduled')]
+            self.env.log.info('%s tickets rescheduled' % len(ids))
+
+            # Update the database for any rescheduled tickets
+            if len(ids) != 0:
+                # Some "rescheduled" tickets had their schedule created
+                # for the first time, some had it changed.  We have to be
+                # able to choose between UPDATE (for those that changed)
+                # and INSERT (for the others).
+                #
+                # First, find which are already there.
+                # (Query and save old start, finish values at the same time.)
+                inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+                cursor.execute("SELECT ticket, start, finish" + \
+                                   " FROM schedule WHERE ticket " + \
+                                   inClause,
+                               ids)
+                toUpdate = set()
+                historyValues = {}
+                for row in cursor:
+                    tid = row[0]
+                    oldStart = row[1]
+                    oldFinish = row[2]
+
+                    historyValues[tid] = [ oldStart, oldFinish ]
+
+                    toUpdate.add(tid)
+
+
+                # Second, update the tickets that are there.
+                # (Build before/after values as we go to update history next.)
+                start = datetime.now()
+                values = []
+                for t in tickets:
+                    if t['id'] in toUpdate:
+                        # Index history by ticket ID and time
+                        values.append(t['id'])
+                        values.append(to_utimestamp(dbTime))
+                        # Old start and finish
+                        values.append(historyValues[t['id']][0])
+                        values.append(historyValues[t['id']][1])
+                        # New start and finish
+                        values.append(to_utimestamp(self.pm.start(t)))
+                        values.append(to_utimestamp(self.pm.finish(t)))
+
+                        cursor.execute('UPDATE schedule'
+                                       ' SET start=%s, finish=%s'
+                                       ' WHERE ticket=%s',
+                                       (to_utimestamp(self.pm.start(t)),
+                                        to_utimestamp(self.pm.finish(t)),
+                                        t['id']))
+
+
+                # Third, insert the history for the updated tickets.
+                if len(toUpdate) != 0:
+                    valuesClause = ','.join(('(%s,%s,%s,%s,%s,%s)',) 
+                                            * len(toUpdate))
+                    cursor.execute('INSERT INTO schedule_change' + \
+                                       ' (ticket, time,' + \
+                                       ' oldstart, oldfinish,' + \
+                                       ' newstart, newfinish)' + \
+                                       ' VALUES %s' % valuesClause,
+                                   values)
+                
+                end = datetime.now()
+                profile.append([ 'updating', len(toUpdate), end - start ])
+
+
+                # Fourth, insert tickets that aren't already in the schedule
+                toInsert = set(ids) - toUpdate
+                start = datetime.now()
+                if len(toInsert) != 0:
+                    valuesClause = ','.join(('(%s,%s,%s)',) * len(toInsert))
+                    values = []
+                    for t in tickets:
+                        if t['id'] in toInsert:
+                            values.append(t['id']) 
+                            values.append(to_utimestamp(self.pm.start(t)))
+                            values.append(to_utimestamp(self.pm.finish(t)))
+                    cursor.execute('INSERT INTO schedule' + \
+                                       ' (ticket, start, finish)' + \
+                                       ' VALUES %s' % valuesClause,
+                                   values)
+
+
+                    # Finally, add history records to schedule_change
+                    # for newly scheduled tickets.
+                    valuesClause = ','.join(('(%s,%s,%s,%s)',) * len(toInsert))
+                    values = []
+                    for t in tickets:
+                        if t['id'] in toInsert:
+                            values.append(t['id'])
+                            values.append(to_utimestamp(dbTime))
+                            # Old start and finish are null
+                            values.append(to_utimestamp(self.pm.start(t)))
+                            values.append(to_utimestamp(self.pm.finish(t)))
+                    cursor.execute('INSERT INTO schedule_change' + \
+                                       ' (ticket, time,' + \
+                                       ' newstart, newfinish)' + \
+                                       ' VALUES %s' % valuesClause,
+                                   values)
+
+                end = datetime.now()
+                profile.append([ 'inserting', len(toInsert), end - start ])
 
         for step in profile:
             self.env.log.info('%s %s tickets took %s' % 
@@ -2193,6 +2742,8 @@ class TicketRescheduler(Component):
 
     def ticket_changed(self, ticket, comment, author, old_values):
         if self._affectsSchedule(ticket, old_values):
+            self.env.log.info('Changes to %s affect schedule.  Rescheduling.' %
+                              ticket.id)
             self.rescheduleTickets(ticket, old_values)
 
         
