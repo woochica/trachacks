@@ -10,8 +10,12 @@ from trac.ticket.query import Query
 from trac.config import IntOption, Option, ExtensionOption
 from trac.core import implements, Component, TracError, Interface, ExtensionPoint
 
+from trac.env import IEnvironmentSetupParticipant
+from trac.db import DatabaseManager
+
 from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 
+import db_default
 
 # TracPM masks implementation details of how various plugins implement
 # dates and ticket relationships and business rules about what the
@@ -60,7 +64,56 @@ from pmapi import IResourceCalendar, ITaskScheduler, ITaskSorter
 
 
 class TracPM(Component):
+    implements(IEnvironmentSetupParticipant)
+
     cfgSection = 'TracPM'
+
+
+    # IEnvironmentSetupParticipant methods
+
+    def environment_created(self):
+        self.log.info('Creating environment for TracPM.')
+        self.found_db_version = 0
+        self.upgrade_environment(self.env.get_db_ctx())
+
+
+    def environment_needs_upgrade(self, db):
+        cursor = db.cursor()
+        cursor.execute('SELECT value FROM system WHERE name=%s',
+                       (db_default.name, ))
+        value = cursor.fetchone()
+        try:
+            self.found_db_version = int(value[0])
+            if self.found_db_version < db_default.version:
+                self.log.info('TracPM environment out of date.')
+                return True
+        except:
+            self.log.info('TracPM environement missing.')
+            self.found_db_version = 0
+            return True
+
+        # Environment version is current
+        return False
+
+
+    def upgrade_environment(self, db):
+        self.log.info('Upgrading environment for TracPM.')
+        db_manager, _ = DatabaseManager(self.env)._get_connector()
+        cursor = db.cursor()
+
+        # Add or update TracPM version in system table
+        if not self.found_db_version:
+            cursor.execute("INSERT INTO system (name, value) VALUES (%s, %s)",
+                           (db_default.name, db_default.version))
+        else:
+            cursor.execute("UPDATE system SET value=%s WHERE name=%s",
+                           (db_default.version, db_default.name))
+
+        # Create tables
+        for table in db_default.tables:
+            for sql in db_manager.to_sql(table):
+                cursor.execute(sql)
+
 
     # Configurable data sources
     fields = None
