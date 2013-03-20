@@ -171,6 +171,8 @@ class TracPM(Component):
            """Status to give goal-type tickets representing incomplete Trac milestones""")
     Option(cfgSection, 'active_goal_statuses', 'active', 
            """List of statuses for goal-type tickets that are active""")
+    Option(cfgSection, 'useActuals', '0',
+           """Use actual start, finish date for tickets""")
  
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
                                 ITaskScheduler, 'ResourceScheduler')
@@ -285,6 +287,8 @@ class TracPM(Component):
         # This is the format of start and finish in the Trac database
         self.dbDateFormat = str(self.config.get(self.cfgSection, 'date_format'))
 
+        # Use actual start, finish time for tickets
+        self.useActuals = int(self.config.get(self.cfgSection, 'useActuals'))
 
     # Return True if all of the listed PM data items ('pred',
     # 'parent', etc.) have sources configured, False otherwise
@@ -880,6 +884,86 @@ class TracPM(Component):
                 
                 tickets.append(milestoneTicket)
 
+    # Get ticket dates from the database.
+    #
+    # On exit:
+    #  * Tickets with a precomputed schedule have _sched_start and
+    #    _sched_finish populated from the database.
+    #
+    #  * Active tickets (in a state other than "new") have
+    #    _actual_start set to the time of the first transition out of
+    #    "new"
+    #
+    #  * Closed tickets (those in the "closed" state) have
+    #    _actual_finish set from the last transition into "closed".
+    def getTicketDates(self, tickets):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        # Table indexed by ticket ID for faster updates
+        ticketsByID = {}
+        for t in tickets:
+            ticketsByID[t['id']] = t
+
+        # All the tickets we care about.
+        ids = ticketsByID.keys()
+
+        # Get dates from precomputed schedule, if any.
+        inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+        cursor.execute("SELECT ticket, start, finish" +
+                       " FROM schedule WHERE ticket " +
+                       inClause,
+                       ids)
+        for row in cursor:
+            tid, start, finish = row
+            ticketsByID[tid]['_sched_start'] = start
+            ticketsByID[tid]['_sched_finish'] = finish
+
+        # Get actual start for active tickets. (Don't do this for
+        # milestones.)
+        taskIDs = [t['id'] for t in tickets if not self.isMilestone(t)]
+        if len(taskIDs) > 0:
+            inClause = "IN (%s)" % ','.join(('%s',) * len(taskIDs))
+            cursor.execute("SELECT id, x.time AS begunTime" +
+                           " FROM ticket" + 
+                           " INNER JOIN ticket_change AS x" + 
+                           "     ON (x.ticket = ticket.id AND x.field = %s)" + 
+                           " WHERE x.time = (SELECT MIN(time)" + 
+                           "                 FROM ticket_change AS y" + 
+                           "                 WHERE y.ticket = ticket.id " + 
+                           "                     AND y.field = %s" + 
+                           "                 GROUP BY y.ticket)" + 
+                           "     AND x.oldvalue = %s " + 
+                           "     AND ticket.id " + 
+                           inClause,
+                           ['status', 'status', 'new'] + taskIDs)
+            for row in cursor:
+                (tid, begunTime) = row
+                ticketsByID[tid]['_actual_start'] = begunTime
+
+
+        # Get actual finish for closed tickets.
+        # FIXME - omit milestone as above?
+        closedIDs = [t['id'] for t in tickets if t['status'] == 'closed']
+        if len(closedIDs) > 0:
+            inClause = "IN (%s)" % ','.join(('%s',) * len(closedIDs))
+            cursor.execute("SELECT id, x.time AS closedTime" + 
+                           " FROM ticket" + 
+                           " INNER JOIN ticket_change AS x" + 
+                           "     ON (x.ticket = ticket.id AND x.field = %s)" + 
+                           " WHERE x.time = (SELECT MAX(time)" + 
+                           "                 FROM ticket_change AS y" + 
+                           "                 WHERE y.ticket = ticket.id " + 
+                           "                     AND y.field = %s" + 
+                           "                 GROUP BY y.ticket)" + 
+                           "     AND x.newvalue = %s " + 
+                           "     AND ticket.id " + 
+                           inClause,
+                           ['status', 'status', 'closed'] + closedIDs)
+            for row in cursor:
+                (tid, closedTime) = row
+                ticketsByID[tid]['_actual_finish'] = closedTime
+
 
     # Process the tickets to normalize formats, etc. to simplify
     # access functions.
@@ -1034,19 +1118,7 @@ class TracPM(Component):
                     t[f2] = []
 
         # Get schedule
-        ticketsByID = {}
-        for t in tickets:
-            ticketsByID[t['id']] = t
-        ids = ticketsByID.keys()
-        inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
-        cursor.execute("SELECT ticket, start, finish" + \
-                           " FROM schedule WHERE ticket " + \
-                           inClause,
-                       ids)
-        for row in cursor:
-            tid, start, finish = row
-            ticketsByID[tid]['_sched_start'] = start
-            ticketsByID[tid]['_sched_finish'] = finish
+        self.getTicketDates(tickets)
         
         # Add pseudo-tickets for Trac milestones
         self._add_milestones(options, tickets)
@@ -1068,7 +1140,7 @@ class TracPM(Component):
         for key in options.keys():
             # FIXME - This test is a kludge.  Need a way to exclude
             # those handled by preQuery() in a data-driven way.
-            if key not in [ 'goal', 'root', 'start', 'finish' ]:
+            if key not in [ 'goal', 'root', 'start', 'finish', 'useActuals' ]:
                 query_args[str(key)] = options[key]
         
         # Expand (or set) list of IDs to include those specified by PM
@@ -1114,6 +1186,18 @@ class TracPM(Component):
             ticketsByID[t['id']] = {}
             for field in t:
                 ticketsByID[t['id']][field] = copy.copy(t[field])
+
+        # Normalize useActuals from a wiki macro '1' vs. '0' (or
+        # absent) to a Boolean
+        if options.get('useActuals'):
+            if options['useActuals'] == '1':
+                options['useActuals'] = True
+            else:
+                options['useActuals'] = False
+        elif self.useActuals == 1:
+            options['useActuals'] = True
+        else:
+            options['useActuals'] = False
 
         # Schedule the tickets
         self.scheduler.scheduleTasks(options, ticketsByID)
@@ -1654,8 +1738,15 @@ class ResourceScheduler(Component):
 
             # If we haven't scheduled this yet, do it now.
             if t.get('_calc_finish') == None:
-                # If there is a finish set, use it
-                if self.pm.isSet(t, 'finish'):
+                # If this ticket is closed, the finish is the actual finish.
+                if t.get('_actual_finish') and options.get('useActuals'):
+                    finish = [ to_datetime(t['_actual_finish']), True ]
+                # If there is a precomputed finish in the database,
+                # use it unless we're forcing a schedule calculation.
+                elif t.get('_sched_finish') and not options.get('force'):
+                    finish = [ to_datetime(t['_sched_finish']), True ]
+                # If there is a user-supplied finish (due date) set, use it
+                elif self.pm.isSet(t, 'finish'):
                     # Don't adjust for work week; use the explicit date.
                     finish = self.pm.parseFinish(t)
                     finish += timedelta(hours=options['hoursPerDay'])
@@ -1689,10 +1780,13 @@ class ResourceScheduler(Component):
 
                 # Check resource availability.  Can't start later than
                 # earliest available time.
-                # NOTE: Milestones don't require any work so they
-                # don't need to be resource leveled.
+                #
+                # NOTE: Milestones don't require any work and closed
+                # tickets don't require any (more) work so they don't
+                # need to be resource leveled.
                 if options.get('doResourceLeveling') == '1' and \
-                        t['type'] != self.pm.goalTicketType:
+                        t['type'] != self.pm.goalTicketType and \
+                        t['status'] != 'closed':
                     limit = self.limits.get(t['owner'])
                     if limit and limit < finish[0]:
                         finish = [limit, True]
@@ -1717,16 +1811,19 @@ class ResourceScheduler(Component):
                 t['_calc_finish'] = finish
 
             if t.get('_calc_start') == None:
-                if self.pm.isSet(t, 'start'):
+                # If work has begun, the start is the actual start.
+                if t.get('_actual_start') and options.get('useActuals'):
+                    start = [ to_datetime(t['_actual_start']), True ]
+                # If there is a precomputed start in the database,
+                # use it unless we're forcing a schedule calculation.
+                elif t.get('_sched_start') and not options.get('force'):
+                    start = [ to_datetime(t['_sched_start']), True ]
+                # If there is an explicit start date, use it.
+                elif self.pm.isSet(t, 'start'):
                     start = self.pm.parseStart(t)
                     start = [start, True]
-                    # Adjust implicit finish for explicit start
-                    if _betterDate(start, finish):
-                        hours = self.pm.workHours(t)
-                        finish[0] = start[0] + _calendarOffset(t,
-                                                               hours,
-                                                               start[0])
-                        t['_calc_finish'] = finish
+                # Otherwise, the start is based on the finish and the
+                # work to be done before then.
                 else:
                     hours = self.pm.workHours(t)
                     start = t['_calc_finish'][0] + \
@@ -1737,10 +1834,20 @@ class ResourceScheduler(Component):
 
                 t['_calc_start'] = start
 
-            # Remember the limit
-            limit = self.limits.get(t['owner'])
-            if not limit or limit > t['_calc_start'][0]:
-                self.limits[t['owner']] = t['_calc_start'][0]
+                # Adjust implicit finish for explicit start
+                if _betterDate(start, finish):
+                    hours = self.pm.workHours(t)
+                    finish[0] = start[0] + _calendarOffset(t,
+                                                           hours,
+                                                           start[0])
+                    t['_calc_finish'] = finish
+
+
+            # Remember the limit for open tickets
+            if t['status'] != 'closed':
+                limit = self.limits.get(t['owner'])
+                if not limit or limit > t['_calc_start'][0]:
+                    self.limits[t['owner']] = t['_calc_start'][0]
 
             self.taskStack.pop()
             
@@ -1803,6 +1910,13 @@ class ResourceScheduler(Component):
 
             # If we haven't scheduled this yet, do it now.
             if t.get('_calc_start') == None:
+                # If work has begun, the start is the actual start.
+                if t.get('_actual_start') and options.get('useActuals'):
+                    start = [ to_datetime(t['_actual_start']), True ]
+                # If there is a precomputed start in the database,
+                # use it unless we're forcing a schedule calculation.
+                elif t.get('_sched_start') and not options.get('force'):
+                    start = [ to_datetime(t['_sched_start']), True ]
                 # If there is a start set, use it
                 if self.pm.isSet(t, 'start'):
                     # Don't adjust for work week; use the explicit date.
@@ -1837,7 +1951,13 @@ class ResourceScheduler(Component):
 
                 # Check resource availability.  Can't finish earlier than
                 # latest available time.
-                if options.get('doResourceLeveling') == '1':
+                #
+                # NOTE: Milestones don't require any work and closed
+                # tickets don't require any (more) work so they don't
+                # need to be resource leveled.
+                if options.get('doResourceLeveling') == '1' and \
+                        t['type'] != self.pm.goalTicketType and \
+                        t['status'] != 'closed':
                     limit = self.limits.get(t['owner'])
                     if limit and limit > start[0]:
                         start = [limit, True]
@@ -1860,18 +1980,20 @@ class ResourceScheduler(Component):
                 t['_calc_start'] = start
                 
             if t.get('_calc_finish') == None:
-                if self.pm.isSet(t, 'finish'):
+                # If this ticket is closed, the finish is the actual finish.
+                if t.get('_actual_finish') and options.get('useActuals'):
+                    finish = [ to_datetime(t['_actual_finish']), True ]
+                # If there is a precomputed finish in the database,
+                # use it unless we're forcing a schedule calculation.
+                elif t.get('_sched_finish') and not options.get('force'):
+                    finish = [ to_datetime(t['_sched_finish']), True ]
+                elif self.pm.isSet(t, 'finish'):
                     # Don't adjust for work week; use the explicit date.
                     finish = self.pm.parseFinish(t)
                     finish += timedelta(hours=options['hoursPerDay'])
                     finish = [finish, True]
-                    # Adjust implicit start for explicit finish
-                    if _betterDate(finish, start):
-                        hours = self.pm.workHours(t)
-                        start[0] = finish[0] + _calendarOffset(t, 
-                                                               -1*hours, 
-                                                               finish[0])
-                        t['_calc_start'] = start
+                # Otherwise, the start is based on the finish and the
+                # work to be done before then.
                 else:
                     hours = self.pm.workHours(t)
                     finish = t['_calc_start'][0] + \
@@ -1879,12 +2001,22 @@ class ResourceScheduler(Component):
                                         +1*hours,
                                         t['_calc_start'][0])
                     finish = [finish, start[1]]
+
                 t['_calc_finish'] = finish
 
-            # Remember the limit
-            limit = self.limits.get(t['owner'])
-            if not limit or limit < t['_calc_finish'][0]:
-                self.limits[t['owner']] = t['_calc_finish'][0]
+                # Adjust implicit start for explicit finish
+                if _betterDate(finish, start):
+                    hours = self.pm.workHours(t)
+                    start[0] = finish[0] + _calendarOffset(t, 
+                                                           -1*hours, 
+                                                           finish[0])
+                    t['_calc_start'] = start
+
+            # Remember the limit for open tickets
+            if t['status'] != 'closed':
+                limit = self.limits.get(t['owner'])
+                if not limit or limit < t['_calc_finish'][0]:
+                    self.limits[t['owner']] = t['_calc_finish'][0]
 
             self.taskStack.pop()
 
