@@ -1032,6 +1032,93 @@ class TracPM(Component):
                 t[field] = ticketsByID[t['id']][field]
 
 
+    # Augment tickets by propagating dependencies from parents to
+    # children
+    #
+    # We don't copy every dependency to every child because several
+    # children may form a sequence and thus be affected by the
+    # dependency indirectly.  The first child in the sequence gets the
+    # parent's predecessors and the last child gets the parent's
+    # successors.  Then because of the children's dependence on each
+    # other, the parent dependencies affect all the children in the
+    # sequence.
+
+    # FIXME - I don't like this name.  It really just propagates
+    # dependencies but that's the name of the private helper defined
+    # inside this function.  What can I call the helper?
+    def augmentTickets(self, ticketsByID):
+        # Indexed by ticket ID, lists ticket's descendants
+        desc = {}
+        # Build descendant look up recursively.
+        def buildDesc(tid):
+            # A ticket is in its own "family" tree.
+            desc[tid] = [ tid ]
+            # For each child, add its subtree.
+            for cid in self.children(ticketsByID[tid]):
+                desc[tid] += buildDesc(cid)
+            return desc[tid]
+
+        # Propagate dependencies from parent to descendants (first
+        # children, then recurse).
+        # 
+        def propagateDependencies(pid):
+            parent = ticketsByID[pid]
+            # Process predecessors and successors
+            for fieldFunc in [ self.predecessors, 
+                               self.successors ]:
+                # Set functions to add dependency and its reverse
+                # between two tickets.
+                fwd = fieldFunc
+                if fwd == self.predecessors:
+                    rev = self.successors
+                else:
+                    rev = self.predecessors
+
+                # For each child, if any
+                for cid in self.children(parent):
+                    # If the child is in the list we're
+                    # working on
+                    if cid in ticketsByID:
+                        # Does child depend on any "cousins"
+                        # (other descendants)?
+                        child = ticketsByID[cid]
+                        cousins = [did for did in fieldFunc(child) \
+                                       if did in desc[pid]]
+                        # If not, this is the end of the
+                        # line and we have to copy the
+                        # parent's dependencies down.
+                        if cousins == []:
+                            # For each related ticket, if any
+                            for tid in fwd(parent):
+                                # If the other ticket is in the list we're
+                                # working on
+                                if tid in ticketsByID:
+                                    # And not already linked
+                                    if tid not in fwd(ticketsByID[cid]):
+                                        # Add parent's dependency to this
+                                        # child
+                                        fwd(ticketsByID[cid]).append(tid)
+                                        rev(ticketsByID[tid]).append(cid)
+
+                        # Recurse to lower-level descendants
+                        propagateDependencies(cid)
+
+
+        roots = self.roots(ticketsByID)
+        if self.isCfg('parent'):
+            # Build the descendant tree for each root (and its descendants)
+            for tid in roots:
+                buildDesc(tid)
+
+        # For each ticket
+        for tid in ticketsByID:
+            ticket = ticketsByID[tid]
+            # If it is the root of a tree
+            if tid in roots:
+                # Propagate depedencies down to its children
+                # (which recurses to update other descendants)
+                propagateDependencies(tid)
+
 # ========================================================================
 # Really simple calendar
 #
@@ -1689,84 +1776,13 @@ class ResourceScheduler(Component):
         #
         # If a parent task has a dependency, copy it to its children.
         def _augmentTickets(ticketsByID):
-            # Indexed by ticket ID, lists ticket's descendants
-            desc = {}
-            # Build descendant look up recursively.
-            def buildDesc(tid):
-                # A ticket is in its own "family" tree.
-                desc[tid] = [ tid ]
-                # For each child, add its subtree.
-                for cid in self.pm.children(ticketsByID[tid]):
-                    desc[tid] += buildDesc(cid)
-                return desc[tid]
-            
-            # Propagate dependencies from parent to descendants (first
-            # children, then recurse).
-            # 
-            # We don't copy every dependency to every child because
-            # several children may form a sequence and thus be
-            # affected by the dependency indirectly.  The first child
-            # in the sequence gets the parent's predecessors and the
-            # last child gets the parent's successors.  Then because
-            # of the children's dependence on each other, the parent
-            # dependencies affect all the children in the sequence.
-            def propagateDependencies(pid):
-                parent = ticketsByID[pid]
-                # Process predecessors and successors
-                for fieldFunc in [ self.pm.predecessors, 
-                                   self.pm.successors ]:
-                    # Set functions to add dependency and its reverse
-                    # between two tickets.
-                    fwd = fieldFunc
-                    if fwd == self.pm.predecessors:
-                        rev = self.pm.successors
-                    else:
-                        rev = self.pm.predecessors
 
-                    # For each child, if any
-                    for cid in self.pm.children(parent):
-                        # If the child is in the list we're
-                        # working on
-                        if cid in ticketsByID:
-                            # Does child depend on any "cousins"
-                            # (other descendants)?
-                            child = ticketsByID[cid]
-                            cousins = [did for did in fieldFunc(child) \
-                                           if did in desc[pid]]
-                            # If not, this is the end of the
-                            # line and we have to copy the
-                            # parent's dependencies down.
-                            if cousins == []:
-                                # For each related ticket, if any
-                                for tid in fwd(parent):
-                                    # If the other ticket is in the list we're
-                                    # working on
-                                    if tid in ticketsByID:
-                                        # And not already linked
-                                        if tid not in fwd(ticketsByID[cid]):
-                                            # Add parent's dependency to this
-                                            # child
-                                            fwd(ticketsByID[cid]).append(tid)
-                                            rev(ticketsByID[tid]).append(cid)
+            # Propagate dependencies.
+            self.pm.augmentTickets(ticketsByID)
 
-                            # Recurse to lower-level descendants
-                            propagateDependencies(cid)
-
-
-            roots = self.pm.roots(ticketsByID)
-            if self.pm.isCfg('parent'):
-                # Build the descendant tree for each root (and its descendants)
-                for tid in roots:
-                    buildDesc(tid)
-                
             # For each ticket to schedule
             for tid in ticketsByID:
                 ticket = ticketsByID[tid]
-                # If it is the root of a tree
-                if tid in roots:
-                    # Propagate depedencies down to its children
-                    # (which recurses to update other descendants)
-                    propagateDependencies(tid)
 
                 # Count predecessors and successors in tickets being
                 # scheduled.
