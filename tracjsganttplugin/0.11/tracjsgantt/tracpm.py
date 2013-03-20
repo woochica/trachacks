@@ -5,6 +5,7 @@ import copy
 from datetime import timedelta, datetime
 
 from trac.util.datefmt import format_date, utc
+from trac.ticket import ITicketChangeListener, Ticket
 from trac.ticket.query import Query
 
 from trac.config import IntOption, Option, ExtensionOption
@@ -1961,3 +1962,239 @@ class ResourceScheduler(Component):
             # Update successors after scheduling a task
             serialSGS(_schedule_task_asap, 'npred', 0, self.pm.successors)
 
+# FIXME - need to react to milestone changes, too (for dates).  0.11.6
+# doesn't have a milestone change listener.  I belive a later version
+# does.
+class TicketRescheduler(Component):
+    implements(ITicketChangeListener)
+
+    pm = None
+    scheduleFields = None
+
+    def __init__(self):
+        self.pm = TracPM(self.env)
+
+        self.scheduleFields = []
+        
+        # Built-in fields that can affect scheduling
+        self.scheduleFields = ['owner', 'priority', 'milestone']
+
+        # Configurable fields from plugins that can affect scheduling
+        for f in ['estimate', 'start', 'finish', 'pred', 'succ', 'parent']:
+            # If the user configured this field
+            if f in self.pm.fields:
+                # Get the name of the configured field
+                self.scheduleFields.append(self.pm.fields[f])
+
+        # FIXME - Make this configurable
+        self.scheduleFields.append('parents')
+        self.scheduleFields.append('blocking')
+        self.scheduleFields.append('blockedby')
+        
+
+    # Do any of the fields that changed affect scheduling?  For
+    # example, component would not but owner, and dependencies would.
+    # Some of the ones that affect scheduling are built-in (e.g.,
+    # owner) some are not (e.g., blockedby).
+    #
+    # @param ticket ticket object as passed to ticket change listener
+    # @param old_values old ticket values as passed to change listener
+    #
+    # @return True if changes in old_values affect schedule
+    # 
+    # FIXME - Should this be in the TracPM class?
+    def _affectsSchedule(self, ticket, old_values):
+        # If any of the changed values are schedule related
+        for f in old_values:
+            if f in self.scheduleFields:
+                return True
+
+        # If the status changed and the value was or is closed,
+        # reschedule
+        if 'status' in old_values and \
+                (old_values['status'] == 'closed' or \
+                     ticket['status'] == 'closed'):
+            return True
+
+        return False
+
+    # Find tickets related to this one (before and after changes).
+    #
+    # Find IDs of all tickets affected by changing this ticket's
+    # schedule:
+    #  Same owner
+    #  Any successors, predecessors
+    #  Any ancestors, descendants
+    # @param ticket ticket object passed to change listener
+    # @param old_values list of old values passed to change listener
+    #
+    # @return a list of ticket ID strings
+    def _findAffected(self, ticket, old_values):
+        # Helper to find owners of tickets
+        # @param ids set of tickets ID strings
+        # @return set of owner strings
+        def ownersOf(ids):
+            db = self.env.get_db_cnx()
+            inClause = "IN (%s)" % ','.join(('%s',) * len(ids))
+            cursor = db.cursor()
+            cursor.execute(("SELECT DISTINCT owner FROM ticket "
+                            "WHERE id " + 
+                           inClause),
+                           list(ids))
+            owners = [row[0] for row in cursor]
+            return set(owners)
+            
+        # Helper to find open tickets by owners
+        # @param owners set of owner strings from tickets
+        # @return a set of ticket ID strings for tickets owned by owners
+        def openByOwner(owners):
+            # FIXME - this may fix a bug I don't have any more.
+            if len(owners) == 0:
+                return set()
+            db = self.env.get_db_cnx()
+            inClause = "IN (%s)" % ','.join(('%s',) * len(owners))
+            cursor = db.cursor()
+            cursor.execute(("SELECT id FROM ticket "
+                            "WHERE status!=%s AND owner " + 
+                           inClause),
+                           ['closed'] + list(owners))
+            ids = ['%s' % row[0] for row in cursor]
+            return set(ids)
+
+
+        # Find all the tickets affected by the old values.  For
+        # example if processing ticket A which used to be a
+        # prerequisite for B but isn't any longer, B will be in
+        # old_values['blocking'] and may be able to start earlier now.
+        #
+        # @param old_values as passed to TicketChangeListener
+        #
+        # @return set of ticket ID strings
+        #
+        # FIXME - need better tests here; this assumes Master Tickets
+        # and Subtickets plugins.
+        def affectedByOld(old_values):
+            affected = set()
+
+            if 'parents' in old_values.keys() \
+                    and len(old_values['parents']) != 0:
+                affected.add(str(old_values['parents']))
+            if 'blockedby' in old_values.keys() \
+                    and len(old_values['blockedby']) != 0:
+                affected |= \
+                    set([x.strip() 
+                         for x in old_values['blockedby'].split(',')])
+            if 'blocking' in old_values.keys() \
+                    and len(old_values['blocking']) != 0:
+                affected |= \
+                    set([x.strip() 
+                         for x in old_values['blocking'].split(',')])
+
+            # If owner changed, get tickets by old owner.  (New owner is
+            # handled by more())
+            if 'owner' in old_values.keys():
+                owners = set()
+                owners.add(old_values['owner'])
+                affected |= openByOwner(owners)
+
+            return affected
+
+
+        # Used by more(), below, to optimize queries. (I'd like a
+        # better scope but Python doesn't do closures the way I
+        # expected.)
+        self.knownOwners = set()
+
+        # Helper to expand set of tickets by one generation
+        #
+        # FIXME - passing 1 as depth to _reachable() misses some
+        # closed but reachable tickets.  In my test data, I don't get
+        # 150, a child of 149.  Other children of 149 show up.
+        #
+        # @param ids set of ticket ID strings to find more tickets from
+        # @return set of IDs for tickets related to ids
+        def more(ids):
+            n = set(self.pm._reachable(list(ids)))
+
+            # Get owners for these tickets
+            newOwners = ownersOf(n)
+
+            # Remove owners we already know
+            newOwners -= self.knownOwners
+
+            # If we don't already have all these owners, process the new ones
+            if len(newOwners) != 0:
+                # Add new owners to known owners
+                self.knownOwners |= newOwners
+
+                # Get tickets for the new owners
+                x = openByOwner(newOwners)
+
+                # Remove known tickets
+                x -= ids
+
+                # Add new tickets to set
+                n |= x
+
+            return n
+
+        # The set of tickets that may be affected by this change.
+        affected = set()
+        # The changed ticket is affected
+        affected.add(str(ticket.id))
+
+        # Tickets referenced in old values
+        affected |= affectedByOld(old_values)
+
+        # Find all tickets reachable from the list we've built so far
+        #
+        # NOTE: The last loop finds all the tickets in explored that
+        # are adjacent to the border and pruning gives an empty set.
+        # You'd think I could stop one iteration earlier but I don't
+        # know how.
+        explored = set()
+        toExplore = affected
+        # FIXME - elsewhere I use "toExplore != set()".  Which is more
+        # efficient?  Or clearer?
+        while len(toExplore) != 0:
+            border = toExplore
+            toExplore = more(border)
+            toExplore -= explored
+            explored |= border
+
+        return list(explored)
+
+    # FIXME - call the scheduler.  For now, we just want to see
+    # how many tickets are affected and how long it takes to find
+    # them.
+    def rescheduleTickets(self, ticket, old_values):
+        # Each step (e.g., finding, querying, pruning) has an entry
+        # Each entry is [ step, ticketcount, time ]
+        profile = []
+
+        # What tickets are affected by this ticket changing?
+        start = datetime.now()
+        ids = self._findAffected(ticket, old_values)
+        end = datetime.now()
+        profile.append(['finding', len(ids), end - start ])
+
+        for step in profile:
+            self.env.log.info('%s %s tickets took %s' % 
+                              (step[0], step[1], step[2]))
+
+    # ITicketChangeListener methods
+    #
+    # The change listener methods get called after all changes have
+    # been saved to the database.
+
+    def ticket_created(self, ticket):
+        self.rescheduleTickets(ticket, {})
+
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        if self._affectsSchedule(ticket, old_values):
+            self.rescheduleTickets(ticket, old_values)
+
+        
+    def ticket_deleted(self, ticket):
+        self.rescheduleTickets(ticket, {})
