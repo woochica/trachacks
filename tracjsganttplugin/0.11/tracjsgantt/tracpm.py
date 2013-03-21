@@ -2155,19 +2155,21 @@ class ResourceScheduler(Component):
         # Make sure sorting (compareTasks, below) works.
         self.sorter.prepareTasks(ticketsByID)
 
-        if options['schedule'] == 'alap':
-            # Schedule ALAP.
-            # Eligible tasks are those with nsucc==0.
-            # The best eligible task is last (-1) after sorting.
-            # Update predecessors after scheduling a task
-            serialSGS(_schedule_task_alap, 'nsucc', -1, self.pm.predecessors)
-        # ASAP (FIXME - should I allow for no scheduling?)
-        else:
+        # If schedule option is present and 'asap', do that.
+        # Otherwise, fall through to default to ALAP.
+        if options.get('schedule') == 'asap':
             # Schedule ASAP.
             # Eligible tasks are those with npred==0.
             # The best eligible task is first (0) after sorting.
             # Update successors after scheduling a task
             serialSGS(_schedule_task_asap, 'npred', 0, self.pm.successors)
+        # ALAP (FIXME - should I allow for no scheduling?)
+        else:
+            # Schedule ALAP.
+            # Eligible tasks are those with nsucc==0.
+            # The best eligible task is last (-1) after sorting.
+            # Update predecessors after scheduling a task
+            serialSGS(_schedule_task_alap, 'nsucc', -1, self.pm.predecessors)
 
 # FIXME - need to react to milestone changes, too (for dates).  0.11.6
 # doesn't have a milestone change listener.  I belive a later version
