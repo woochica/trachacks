@@ -852,6 +852,10 @@ class TracPM(Component):
                 if self.isCfg('finish'):
                     ts = msDueDate
                     if ts:
+                        # The scheduled start and finish, from the database
+                        milestoneTicket['_sched_start'] = ts
+                        milestoneTicket['_sched_finish'] = ts
+
                         milestoneTicket[self.fields['finish']] = \
                             format_date(ts, self.dbDateFormat)
                     else:
@@ -1103,7 +1107,9 @@ class TracPM(Component):
             fwd = {}
             rev = {}
             for row in cursor:
+                # FIXME - this masks src, dst field names above.
                 (src, dst) = row
+
                 if dst in fwd:
                     fwd[dst].append(src)
                 else:
@@ -1185,9 +1191,16 @@ class TracPM(Component):
 
         return tickets
 
-    # tickets is an unordered list of tickets.  Each ticket contains
-    # at least the fields returned by queryFields() and the whole list
-    # was processed by postQuery().  
+    # tickets is an unordered list of tickets as returned by TracPM.query().
+    #
+    # TracPM.query() preloads schedule data from the database, if present.
+    # 
+    # If options['force'] is True, the precomputed schedule values are
+    # ignored and every ticket is rescheduled.
+    #
+    # If options['force'] is False or missing, the precomputed
+    # schedule values are preserved and tickets without precomputed
+    # schedule values are scheduled around those times.
     def computeSchedule(self, options, tickets):
         # Convert list to dictionary, making copies so schedule can
         # mess with the tickets.
@@ -1215,7 +1228,8 @@ class TracPM(Component):
         # Copy back the schedule results
         for t in tickets:
             for field in [ '_calc_start', '_calc_finish']:
-                t[field] = ticketsByID[t['id']][field]
+                if field in ticketsByID[t['id']]:
+                    t[field] = ticketsByID[t['id']][field]
 
     # Recompute schedule 
     #
@@ -1928,7 +1942,7 @@ class ResourceScheduler(Component):
                 elif t.get('_sched_start') and not options.get('force'):
                     start = [ to_datetime(t['_sched_start']), True ]
                 # If there is a start set, use it
-                if self.pm.isSet(t, 'start'):
+                elif self.pm.isSet(t, 'start'):
                     # Don't adjust for work week; use the explicit date.
                     start = self.pm.parseStart(t)
                     start = [start, True]
@@ -2163,13 +2177,40 @@ class ResourceScheduler(Component):
             # The best eligible task is first (0) after sorting.
             # Update successors after scheduling a task
             serialSGS(_schedule_task_asap, 'npred', 0, self.pm.successors)
-        # ALAP (FIXME - should I allow for no scheduling?)
-        else:
+        elif options.get('schedule') == 'alap':
             # Schedule ALAP.
             # Eligible tasks are those with nsucc==0.
             # The best eligible task is last (-1) after sorting.
             # Update predecessors after scheduling a task
             serialSGS(_schedule_task_alap, 'nsucc', -1, self.pm.predecessors)
+        else:
+            # Don't schedule.  But some milestones may not have due dates.
+            # Set them from the latest ticket in the milestone.
+
+            # Get IDs of milestone pseudotickets.
+            milestoneIDs = [tid for tid in ticketsByID.keys() \
+                              if self.pm.isTracMilestone(ticketsByID[tid]) \
+                                and not self.pm.finish(ticketsByID[tid])]
+
+            # Get IDs of all other tickets.
+            ticketIDs = [tid for tid in ticketsByID.keys() \
+                             if tid not in milestoneIDs]
+
+            # Process each milestone, setting the start and finish
+            # from the latest ticket in the milestone.
+            for mid in milestoneIDs:
+                ms = ticketsByID[mid]
+                # Find the latest ticket in the milestone
+                msDue = None
+                for tid in ticketIDs:
+                    t = ticketsByID[tid]
+                    if t['milestone'] == ms['milestone'] \
+                            and (not msDue or msDue < self.pm.finish(t)):
+                        msDue = self.pm.finish(t)
+
+                # A milestone has no duration (start == finish)
+                ms['_calc_start'] = [msDue, True]
+                ms['_calc_finish'] = [msDue, True]
 
 # FIXME - need to react to milestone changes, too (for dates).  0.11.6
 # doesn't have a milestone change listener.  I belive a later version
@@ -2208,6 +2249,10 @@ class TicketRescheduler(Component):
         self.options['doResourceLeveling'] = \
             self.config.get('TracPM', 'option.doResourceLeveling', '1')
         
+        # When recomputing the schedule, we have to ignore the
+        # database and compute all start/finish times so we can then
+        # compare to the database and store changes.
+        self.options['force'] = True
 
     # Do any of the fields that changed affect scheduling?  For
     # example, component would not but owner, and dependencies would.
