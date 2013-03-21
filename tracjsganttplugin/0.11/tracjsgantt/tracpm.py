@@ -701,6 +701,14 @@ class TracPM(Component):
     def preQuery(self, options, this_ticket = None):
         ids = set()
 
+        if options.get('scheduled'):
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            cursor.execute("SELECT ticket FROM schedule")
+            for row in cursor:
+                tid = row[0]
+                ids.add(str(tid))
+
         if options.get('root'):
             if not self.isCfg('parent'):
                 self.env.log.info('Cannot get tickets under root ' +
@@ -1140,7 +1148,9 @@ class TracPM(Component):
         for key in options.keys():
             # FIXME - This test is a kludge.  Need a way to exclude
             # those handled by preQuery() in a data-driven way.
-            if key not in [ 'goal', 'root', 'start', 'finish', 'useActuals' ]:
+            if key not in [ 'goal', 'root', 
+                            'start', 'finish', 
+                            'useActuals', 'scheduled' ]:
                 query_args[str(key)] = options[key]
         
         # Expand (or set) list of IDs to include those specified by PM
