@@ -30,8 +30,8 @@ from trac.ticket.roadmap import (
 from trac.util.datefmt import get_datetime_format_hint, parse_date
 from trac.util.translation import _
 from trac.web.chrome import (
-    Chrome, IRequestHandler, ITemplateProvider, add_notice,
-    add_script, add_stylesheet, add_warning
+    Chrome, INavigationContributor, IRequestHandler, ITemplateProvider,
+    add_ctxtnav, add_notice, add_script, add_stylesheet, add_warning
 )
 from trac.wiki import IWikiSyntaxProvider
 
@@ -73,9 +73,9 @@ def version_interval_hrefs(env, req, stat, milestones):
 #   extendedversion.version.versionmodule = enabled
 
 class VisibleVersion(Component):
-    implements(ILegacyAttachmentPolicyDelegate, IPermissionRequestor,
-               IRequestHandler, IResourceManager, ITemplateProvider,
-               IWikiSyntaxProvider)
+    implements(ILegacyAttachmentPolicyDelegate, INavigationContributor,
+               IPermissionRequestor, IRequestHandler, IResourceManager,
+               ITemplateProvider, IWikiSyntaxProvider)
 
     navigation_item = Option('extended_version', 'navigation_item', 'roadmap',
         """The main navigation item to highlight when displaying versions.""")
@@ -115,6 +115,15 @@ class VisibleVersion(Component):
                                'access to %s. User needs %s' %
                                (username, resource, action))
         return decision
+
+
+    # INavigationContributor methods
+
+    def get_active_navigation_item(self, req):
+        return 'versions'
+
+    def get_navigation_items(self, req):
+        return []
 
 
     # IPermissionRequestor methods
@@ -391,5 +400,6 @@ class VisibleVersion(Component):
 
         add_stylesheet(req, 'extendedversion/css/version.css')
         add_script(req, 'common/js/folding.js')
+        add_ctxtnav(req, _("Back to Versions"), req.href.versions())
         return 'version_view.html', data, None
 
