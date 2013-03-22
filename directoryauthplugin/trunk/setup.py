@@ -13,7 +13,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracDirectoryAuth'
-VERSION = '0.5'
+VERSION = '1.0'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',
@@ -24,14 +24,14 @@ setup(  name=PACKAGE, version=VERSION,
         url = 'http://trac-hacks.org/wiki/DirectoryAuthPlugin',
         license='BSD',
         zip_safe = True,
-        packages = ['tracext', 'tracext.adauth'],
+        packages = ['tracext', 'tracext.dirauth'],
         entry_points = {
             'trac.plugins': [
-                'adauth.db = tracext.adauth.db',
-                'adauth = tracext.adauth',
-                'adauth.permissionstore = tracext.adauth.api:UserExtensiblePermissionStore',
+                'dirauth.db = tracext.dirauth.db',
+                'dirauth = tracext.dirauth',
+                'dirauth.permissionstore = tracext.dirauth.api:UserExtensiblePermissionStore',
             ],
         },
         namespace_packages=['tracext'],
-        install_requires = ['Trac >=0.11', 'TracAccountManager', 'python-ldap'],
+        install_requires = ['Trac >=1.0', 'TracAccountManager', 'python-ldap'],
 )

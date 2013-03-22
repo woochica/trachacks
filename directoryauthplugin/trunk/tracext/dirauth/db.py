@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-ActiveDirectoryAuthPlugin :: database management part.
+DirectoryAuthPlugin :: database management part.
 
 License: BSD
 
@@ -11,7 +11,7 @@ from trac.core import *
 from trac.db.schema import Table, Column, Index
 from trac.env import IEnvironmentSetupParticipant
 
-__all__ = ['ActiveDirectoryAuthPluginSetup']
+__all__ = ['DirectoryAuthPluginSetup']
 
 # Database version identifier for upgrades.
 db_version = 2
@@ -47,7 +47,7 @@ def create_tables(env, db):
 # Upgrades
 
 upgrade_map = {
-  2: 'upgrade_data_to_blob' 
+  2: upgrade_data_to_blob 
   }
 
 def upgrade_data_to_blob(env, db):
@@ -62,7 +62,7 @@ def upgrade_data_to_blob(env, db):
   cursor.execute(to_sql(env, newtable))
 
 # Component that deals with database setup
-class ActiveDirectoryAuthPluginSetup(Component):
+class DirectoryAuthPluginSetup(Component):
     """Component that deals with database setup and upgrades."""
     
     implements(IEnvironmentSetupParticipant)

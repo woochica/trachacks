@@ -24,10 +24,10 @@ from tracext.adauth.api import IPermissionUserProvider
 GROUP_PREFIX = '@'
 NOCACHE = 0
 
-__all__ = ['ADAuthStore']
+__all__ = ['DirAuthStore']
 
-class ADAuthStore(Component):
-    """AD Password Store for Account Manager """
+class DirAuthStore(Component):
+    """Directory Password Store for Account Manager """
 
     implements(IPasswordStore, IPermissionUserProvider, IPermissionGroupProvider)
 
@@ -43,11 +43,10 @@ class ADAuthStore(Component):
     email_attr = Option('account-manager', 'email_attr', 'mail', 'attribute of the users email in the directory')
     group_basedn = Option('account-manager', 'group_basedn', None, 'Base DN used for group searches')
     group_attr = Option('account-manager', 'group_attr', 'cn', 'Attribute of the name of the group')
-    group_validusers = Option('account-manager', 'group_validusers', None, 'DN of group containing valid users. If None, any AD user is valid')
-    group_tracadmin = Option('account-manager', 'group_tracadmin', None, 'DN of group containing TRAC_ADMIN users (can also assign TRAC_ADMIN to an LDAP group.)')
+    group_validusers = Option('account-manager', 'group_validusers', None, 'CN of group containing valid users. If None, any AD user is valid')
+    group_tracadmin = Option('account-manager', 'group_tracadmin', None, 'CN of group containing TRAC_ADMIN users (can also assign TRAC_ADMIN to an LDAP group.)')
     group_expand = Option('account-manager', 'group_expand', 1, 'binary: expand ldap_groups into trac groups.')
     group_member_attr = Option('account-manager', 'group_member_attr', 'member', 'which group attribute to check for members')
-    group_member_value = Option('account-manager', 'group_member_value', 'dn', 'what to look for in the member_attr')
     cache_ttl = Option('account-manager', 'cache_timeout', 60, 'cache timeout in seconds')
     cache_memsize = Option('account-manager', 'cache_memsize', 400, 'size of memcache in entries, zero to disable')
     cache_memprune = Option('account-manager', 'cache_memprune', 5, 'percent of entries to prune')
@@ -59,12 +58,11 @@ class ADAuthStore(Component):
         # -- have a memory cache
         self._cache = {}
         
-    # IPasswordStore
+
+    ##### IPassword Store
     def config_key(self):
         """Deprecated"""
-
-    # -- this is changed to use logged in users from the session table,
-    #   because an ldap search would be untenable.
+        
     def get_users(self, populate_session=True):
       """Grab a list of users from the session store"""
       # -- check memcache
@@ -82,71 +80,24 @@ class ADAuthStore(Component):
           self.log.debug('userlist: %s ' % ",".join(userlist))
       
       self._cache_set('allusers', userlist)
-      return userlist
-
-    # -- this will be expensive on large groups.  
-    def expand_group_users(self, group_dn):
-      """Given a group name, enumerate all members"""
-      # -- check memcache
-      users = self._cache_get(group_dn)
-      if users:
-        return users
-       
-      # -- where to look
-      basedn = self.group_basedn or self.dir_basedn
-              
-      users = []
-      if self.group_expand:
-        group_member_attr = self.group_member_attr.decode('ascii')
-        groupfilter = '(%s)' % (group_dn.split(',')[0])
-        g = self._dir_search(basedn, self.dir_scope, groupfilter, [group_member_attr])
-        if g and g[0][1].has_key(group_member_attr):
-            users = []
-            for m in g[0][1][group_member_attr]:
-              m_filter = '(%s)' % (m.split(',')[0])
-              e = self._dir_search(basedn, self.dir_scope, m_filter)
-              if e:
-                if 'person' in e[0][1]['objectClass']:
-                  users.append(self._get_userinfo(e[0][1]))
-                elif 'group' in e[0][1]['objectClass']:
-                  users.extend(self.expand_group_users(e[0][0].decode(self.dir_charset)))
-                else:
-                  self.log.debug('The group member (%s) is neither a group nor a person' % e[0][0])
-              else:
-                self.log.debug('Unable to find user %s listed in group: %s' % str(m), unicode(group_dn,'utf8'))
-                self.log.debug('This is very strange and you should probably check '
-                                 'the consistency of your LDAP directory.' % str(m))
-          
-        # -- dedupe and sort list
-        users = sorted(list(set(users)))
-        self._cache_set(group_dn, users)
-        return users
-      else:
-          self.log.debug('Unable to find any members of the group %s' % unicode(group_dn,'utf8')))
-          self._cache_set(group_dn, [])
-          return []
-
-    def has_user(self, user):
-      hasuser = self._cache_get('hasuser: %s' % user)
-       
-      if hasuser:
-          return hasuser
-       
-      users = self.get_users()
-      hasuser = user.lower() in users
-      self._cache_set('hasuser: %s' % user, hasuser)
-      return hasuser
+      return sorted(userlist)
     
-    # -- we do several things with this step to clear the caches and update session attributes
+    def has_user(self,user):
+      users = self.get_users(user)
+      if user in users:
+        return True
+      else: 
+        return False
+    
     def check_password(self, user, password):
         """Checks the password against LDAP"""
         
         success = None
         msg = "User Login: %s" % str(user)
         
-        dn = self._get_user_dn(user, NOCACHE)
-        if dn:
-            success = self._bind_dir(dn, password) or False
+        user_dn = self._get_user_dn(user, NOCACHE)
+        if user_dn:
+            success = self._bind_dir(user_dn, password) or False
             if success:
               msg += " Password Verified"
               success = True
@@ -158,10 +109,11 @@ class ADAuthStore(Component):
             self.log.info(msg)
             return success
           
-        # -- check the group_validusers if used
+        # -- check the user is part of the right group, we don't use the cache
+        #    here as this is part of 'authentication' vs 'authorization'
         if self.group_validusers:
-          valid_users = [u[0] for u in self.expand_group_users(self.group_validusers)]
-          if not user in valid_users:
+          usergroups = self._expand_user_groups(user, NOCACHE)
+          if not self.group_validusers in usergroups:
             msg += " but user is not in %s" % self.group_validusers
             self.log.info(msg)
             return False
@@ -169,8 +121,8 @@ class ADAuthStore(Component):
         # -- update the session data at each login, 
         #   note the use of NoCache to force the update(s)
         attrs = [ self.user_attr, 'mail', 'proxyAddress', 'displayName']
-        filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
-        users = self._dir_search(self.dir_basedn, self.dir_scope, filter, attrs, NOCACHE)
+        lfilter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
+        users = self._dir_search(self.dir_basedn, self.dir_scope, lfilter, attrs, NOCACHE)
         
         if not users:
             raise TracError('Weird! authenticated, but didnt find the user with filter : %s (%s)' % (filter, users))
@@ -179,62 +131,41 @@ class ADAuthStore(Component):
         userinfo = self._get_userinfo(users[0][1])
         self._populate_user_session(userinfo)
         
-        # -- update the users and groups by doing a search w/o cache
-        groups = self.get_permission_groups(user, NOCACHE)
+        # -- update the users by doing a search w/o cache
         users = self.get_users(NOCACHE)
         
         return success
 
     def delete_user(self, user):
         """Can't delete from LDAP"""
-        self.log.debug("Can not delete users from Active Directory")
+        self.log.debug("Can not delete users from the Directory")
         return False
 
-    # IPermissionUserProvider
-    def get_permission_action(self, username):
+    # IPermissionUserProvider (api.py)
+    def get_permission_action(self, user):
         """ Return TRAC_ADMIN if user is in the self.group_tracadmin """
-
+        
+        self.log.debug("perm: testing for to see if %s is in %", [user,self.group_tracadmin])
+        
         if self.group_tracadmin:
-            users = [u[0] for u in self.expand_group_users(self.group_tracadmin)]
-            if username in users:
-                self.log.debug("User is in %", self.group_tracadmin)
+            usergroups = self._expand_user_groups(user)
+            if self.group_tracadmin in usergroups:
+                self.log.debug("perm: % is in %, granting TRAC_ADMIN", [user, self.group_tracadmin])
                 return ['TRAC_ADMIN']
         return []
       
-    # IPermissionGroupProvider
-    def get_permission_groups(self, username, use_cache=1):
+    # IPermissionUserProvider
+    def get_user_groups(self, user):
+      '''Returns all groups for a user'''
+      return self._expand_user_groups(user)
+    
+    # IPermissionGroupProvider.. used in IPermissionUserProvider
+    def get_permission_groups(self, username):
         """Return a list of names of the groups that the user with the 
         specified name is a member of."""
         
-        if use_cache:
-            groups = self._cache_get('groups:%s' % username)
-            if groups:
-              return groups
-        
-        # get dn
-        dn = self._get_user_dn(username)
-        if not self.group_member_attr or self.group_member_attr == 'dn': 
-       
-           filter = "(&(%s=%s)(objectClass=person))" % (self.user_attr, user)
-           users = self._dir_search(self.dir_basedn, self.dir_scope, filter, [self.group_member_dn.encode('ascii')], NOCACHE)
-           group_value = users[0][1][self.user_attr.encode('ascii')]
-        else: 
-           group_value = dn
-        
-        if group_value: 
-            # retrieves the user groups from LDAP
-            groups = self._get_user_groups(self.group_member_attr, group_value)
-            if groups:
-                self.env.log.debug('%s has LDAP groups: %s' % (username, ','.join(groups)))
-            else:
-                self.env.log.debug('username %s (%s) has no LDAP groups', unicode(username,'utf8)', dn)
-                
-            self._cache_set('groups:%s' % username, groups)
-            return groups
-                
-        else:
-            self.log.debug("username: %s has no dn." % username)
-            return []
+        #-- this caches on it's own .. no sense doing it again
+        return self._expand_user_groups(username)
       
     # Internal methods
     def _bind_dir(self, user_dn=None, passwd=None):
@@ -286,7 +217,7 @@ class ADAuthStore(Component):
         
         return self._ldap
    
-   # ## searches
+    # ## searches
     def _get_user_dn(self, user, cache=1):
         """ Get users dn """
           
@@ -299,43 +230,65 @@ class ADAuthStore(Component):
                                 [self.user_attr], cache)
 
         if not u:
-           self.log.debug('user not found: %s' % user)
-           dn = None
+          self.log.debug('user not found: %s' % user)
+          dn = None
         else:
-           dn = u[0][0]
-           self._cache_set('dn: %s' % user, dn)
-           self.log.debug('user %s has dn: %s' % (user, dn))
+          dn = u[0][0]
+          self._cache_set('dn: %s' % user, dn)
+          self.log.debug('user %s has dn: %s' % (user, dn))
         return dn
       
-    def _get_user_groups(self, attr, value):
-        """Returns a list of all groups a user belongs to"""
-        
-        basedn = self.group_basedn or self.dir_basedn
-        groups = self._cache_get('groups: %s' % value)
+    #-- expand_usergroups
+    #   instead of depending on MemberOf overlay, we'll recurse upward all groups this user 
+    #   belongs to to make sure we catch subgroups.
+    '''get a list of all groups this user belongs to.  This recurses up to make sure we get them all'''
+    def _expand_user_groups(self, user, use_cache=1):
+      
+      if use_cache:
+        groups = self._cache_get('usergroups:%s' % user)
         if groups:
           return groups
-        
-        groups = []
-        group_name_attr = self.group_attr.encode('ascii') or self.user_attr.encode('ascii')
-        dir_groups = self._dir_search(basedn, self.dir_scope,
-                                     '(&(%s=%s)(objectClass=group))' % (attr, value),
-                                     [group_name_attr])
-        
-        # TODO - write this to handle memberOf as well
-        # append 
-        if dir_groups: 
-          for group in dir_groups:
-            tgroup = GROUP_PREFIX + group[1][group_name_attr][0].lower().replace(' ', '_')
-            if tgroup not in groups:
-              groups.append(tgroup)
-                               
-        groups.sort()
-        
-        self.log.debug('user:%s groups: %s' % (value, ",".join(groups)))
-        self._cache_set('groups: %s' % value, groups)
-        return groups
-              
-
+      
+      groups = []
+      user_dn = self._get_user_dn(user)
+      
+      if not user_dn:
+        self.log.debug("username: %s has no dn." % user)
+        return []
+      
+      basedn = self.group_basedn or self.dir_basedn
+      groupfilter = '(&(objectClass=group)(member=%s))' % user_dn
+      usergroups = self._dir_search(basedn, self.dir_scope, groupfilter, ['cn'])
+      for entry in usergroups:
+        groupdn = entry[0]
+        group = entry[1]['cn'][0]
+        group = group.replace(' ','_').lower()
+        groups.append(group) # dn
+        if not group in groups:
+          groups.append(self._get_parent_groups(groups, groupdn)) # dn
+                                                             
+      self._cache_set('usergroups:%s'%user, groups)
+      if groups:
+          self.env.log.debug('username %s has groups %s', user, ', '.join(groups))
+          return sorted(groups)
+      else:
+          self.log.info("username: %s has no groups." % user)
+          return []
+      
+    def _get_parent_groups(self, groups, group_dn):
+      groupfilter = '(&(objectClass=group)(member=%s)' % group_dn 
+      basedn = self.group_basedn or self.dir_basedn
+      ldapgroups = self._dir_search(basedn, self.dir_scope, groupfilter, ['cn'])
+      if ldapgroups: 
+        for entry in ldapgroups:
+          groupdn = entry[0]
+          group = entry[1]['cn'][0]
+          group = group.replace(' ','_').lower()
+          if not group in groups:
+            groups.append(group)
+            groups.append(self._get_parent_groups(groups,groupdn) )
+      return groups
+    
     def _get_userinfo(self, attrs):
         """ Extract the userinfo tuple from the LDAP search result """
         
@@ -406,7 +359,7 @@ class ADAuthStore(Component):
               self.env.log.debug('memcache hit for %s' % key)
               return data
             else: 
-             del self._cache[key] 
+              del self._cache[key] 
         return None
     
     def _cache_set(self, key=None, data=None, cache_time=None):
@@ -432,21 +385,21 @@ class ADAuthStore(Component):
         # discards the 10% oldest
         old_keys = cache_keys[:(int(self.cache_memprune) * int(self.cache_memsize)) / 100]
         for k in old_keys:
-           del self._cache[k]
+          del self._cache[k]
         self._cache['last_prune'] = [ now, []]
             
       self._cache[key] = [ cache_time, data ]
       return data
     
-    def _decode_list(self, list=None):
+    def _decode_list(self, l=None):
       newlist = []
-      if not list:
-        return list
-      for val in list:
+      if not l:
+        return l
+      for val in l:
           newlist.append(val.encode('ascii', 'ignore'))
       return newlist        
     
-    def _dir_search(self, basedn=None, scope=1, filter=None, attrs=[], check_cache=1):
+    def _dir_search(self, basedn=None, scope=1, lfilter=None, attrs=[], check_cache=1):
       # self.env.log.debug('searching for: %s' % filter)
       # -- get current time for cache
       current_time = time.time()
@@ -456,57 +409,58 @@ class ADAuthStore(Component):
       # -- sanity
       if not basedn:
         raise TracError('basedn not defined!')
-      if not filter:
+      if not lfilter:
         raise TracError('filter not defined!')
       
       # -- create unique key from the filter and the
-      keystr = ",".join([ basedn, str(scope), filter, ":".join(attrs) ])
+      keystr = ",".join([ basedn, str(scope), lfilter, ":".join(attrs) ])
       key = hashlib.md5(keystr).hexdigest()
-      self.log.debug('_dir_search: searching %s for %s(%s)' % (basedn, filter, key))
+      self.log.debug('_dir_search: searching %s for %s(%s)' % (basedn, lfilter, key))
       
       db = self.env.get_db_cnx()
       
       # -- check memcache
       #   we do this to reduce network usage.
       if check_cache: 
-          ret = self._cache_get(key)
-          if ret:
-             return ret
+        ret = self._cache_get(key)
+        if ret:
+          return ret
       
           # --  Check database
           cur = db.cursor()
           cur.execute("""SELECT lut,data FROM ad_cache WHERE id=%s""", [key])
           row = cur.fetchone()
           if row:      
-             lut, data = row
+            lut, data = row
          
-             if current_time < lut + int(self.cache_ttl):
-                self.env.log.debug('dbcache hit for %s' % filter)
-                ret = cPickle.loads(str(data))
-                self._cache_set(key, ret, lut)
-                return ret
-             else: 
-               # -- old data, delete it and anything else that's old.
-               lut = str(current_time - int(self.cache_ttl)) 
-               cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", [lut])
-               db.commit()
+            if current_time < lut + int(self.cache_ttl):
+              self.env.log.debug('dbcache hit for %s' % lfilter)
+              ret = cPickle.loads(str(data))
+              self._cache_set(key, ret, lut)
+              return ret
+            else: 
+              # -- old data, delete it and anything else that's old.
+              lut = str(current_time - int(self.cache_ttl)) 
+              cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", [lut])
+              db.commit()
       else:
         self.log.debug('_dir_search: skipping cache.')
       
       # -- check Directory
-      dir = self._bind_dir()
-      self.log.debug('_dir_search: starting LDAP search of %s %s using %s for %s ' % (self.dir_uri, basedn, filter, attrs))
+      d = self._bind_dir()
+      self.log.debug('_dir_search: starting LDAP search of %s %s using %s for %s ' % (self.dir_uri, basedn, lfilter, attrs))
       
+      res = []
       try:
-        res = dir.search_s(basedn.encode(self.dir_charset), scope, filter, attrs)
+        res = d.search_s(basedn.encode(self.dir_charset), scope, lfilter, attrs)
       except ldap.LDAPError, e:
-        self.log.error('Error searching : %s', e)
+        self.log.error('Error searching %s using %s: %s', [basedn, lfilter, e])
         
       # -- did we get a result?
       if res:
-        self.log.debug('_dir_search: AD hit, %d entries.', len(res))
+        self.log.debug('_dir_search: dir hit, %d entries.', len(res))
       else:
-        self.log.debug('_dir_search: AD miss.')
+        self.log.debug('_dir_search: dir miss.')
         
       # -- return if not caching
       if not check_cache:
