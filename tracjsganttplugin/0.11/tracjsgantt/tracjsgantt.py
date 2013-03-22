@@ -535,48 +535,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         task += self.GanttID+'.AddTaskItem(t);\n'
         return task
 
-
-    # Sort tickets by options['order'].  For example,
-    # order=milestone|wbs sorts by wbs within milestone.
-    #
-    # http://wiki.python.org/moin/HowTo/Sorting (at
-    # #Sort_Stability_and_Complex_Sorts) notes that Python list
-    # sorting is stable so you can sort by increasing priority of keys
-    # (tertiary, then secondary, then primary) to get a multi-key
-    # sort.  
-    #
-    # FIXME - this sorts enums by text, not value.
-    def _sortTickets(self, tickets, options):
-        # Force milestones to the end
-        def msSorter(t1, t2):
-            # If t1 is a not milestone and t2 is, t1 comes first
-            if not self.pm.isMilestone(t1) and self.pm.isMilestone(t2):
-                result = -1
-            elif self.pm.isMilestone(t1) and not self.pm.isMilestone(t2):
-                result = 1
-            else:
-                result = 0
-            return result
-
-        # Get all the sort fields
-        sortFields = options['order'].split('|')
-
-        # If sorting by milestone, force milestone type tickets to the
-        # end before any other sort.  The stability of the other sorts
-        # will keep them at the end of the milestone group (unless
-        # overridden by other fields listed in `order`).
-        if 'milestone' in sortFields:
-            tickets.sort(msSorter)
-
-        # Reverse sort fields so lowest priority is first
-        sortFields.reverse()
-
-        # Do the sort by each field
-        for field in sortFields:
-            tickets.sort(key=itemgetter(field))
-
-        return tickets
-
     def _filter_tickets(self, options, tickets):
         # Build the list of display filters from the configured value
         if not options.get('display') or options['display'] == '':
@@ -643,6 +601,48 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         
         return filteredTickets
+
+    # Sort tickets by options['order'].  For example,
+    # order=milestone|wbs sorts by wbs within milestone.
+    #
+    # http://wiki.python.org/moin/HowTo/Sorting (at
+    # #Sort_Stability_and_Complex_Sorts) notes that Python list
+    # sorting is stable so you can sort by increasing priority of keys
+    # (tertiary, then secondary, then primary) to get a multi-key
+    # sort.  
+    #
+    # FIXME - this sorts enums by text, not value.
+    def _sortTickets(self, tickets, options):
+        # Force milestones to the end
+        def msSorter(t1, t2):
+            # If t1 is a not milestone and t2 is, t1 comes first
+            if not self.pm.isMilestone(t1) and self.pm.isMilestone(t2):
+                result = -1
+            elif self.pm.isMilestone(t1) and not self.pm.isMilestone(t2):
+                result = 1
+            else:
+                result = 0
+            return result
+
+        # Get all the sort fields
+        sortFields = options['order'].split('|')
+
+        # If sorting by milestone, force milestone type tickets to the
+        # end before any other sort.  The stability of the other sorts
+        # will keep them at the end of the milestone group (unless
+        # overridden by other fields listed in `order`).
+        if 'milestone' in sortFields:
+            tickets.sort(msSorter)
+
+        # Reverse sort fields so lowest priority is first
+        sortFields.reverse()
+
+        # Do the sort by each field
+        for field in sortFields:
+            tickets.sort(key=itemgetter(field))
+
+        return tickets
+
 
     def _add_tasks(self, options):
         if options.get('sample') and int(options['sample']) != 0:
