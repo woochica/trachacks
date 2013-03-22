@@ -614,7 +614,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                     displayFilter[field] = [ value ]
 
         # If present and 1, true, otherwise false.
-        if options.get('omitMilestones') == 1:
+        if options.get('omitMilestones') \
+                and int(options['omitMilestones']) == 1:
             omitMilestones = True
         else:
             omitMilestones = False
