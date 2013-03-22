@@ -1137,9 +1137,9 @@ class TracPM(Component):
                 else:
                     t[f2] = []
 
-        # Get schedule
+        # Get precomputed schedule, close dates, etc.
         self.getTicketDates(tickets)
-        
+
         # Add pseudo-tickets for Trac milestones
         self._add_milestones(options, tickets)
 
