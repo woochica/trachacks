@@ -17,7 +17,9 @@ from trac.resource import Resource
 from trac.ticket import Version
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, IRequestFilter
-from trac.web.chrome import INavigationContributor
+from trac.web.chrome import(
+    INavigationContributor, add_stylesheet
+)
 
 
 class ReleasesModule(Component):
@@ -81,6 +83,7 @@ class ReleasesModule(Component):
             'is_released': is_released,
             'showall': showall,
         }
+        add_stylesheet(req, 'common/css/roadmap.css')
         return 'versions.html', data, None
 
     def _remove_item(self, req, name):

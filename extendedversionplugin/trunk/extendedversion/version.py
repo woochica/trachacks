@@ -310,6 +310,8 @@ class VisibleVersion(Component):
         data = {
             'version': version,
         }
+
+        add_stylesheet(req, 'common/css/roadmap.css')
         return 'version_delete.html', data, None
 
     def _render_editor(self, req, db, version):
