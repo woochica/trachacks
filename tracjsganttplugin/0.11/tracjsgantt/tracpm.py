@@ -698,8 +698,14 @@ class TracPM(Component):
     # Returns (possibily empty) set of ID strings of tickets
     # meeting PM constraints.
     # FIXME - dumb name
-    def preQuery(self, options, this_ticket = None):
+    def preQuery(self, options, req = None):
         ids = set()
+
+        this_ticket = None
+        if req:
+            matches = re.match('/ticket/(\d+)', req.path_info)
+            if matches:
+                this_ticket = matches.group(1)
 
         if options.get('scheduled'):
             db = self.env.get_db_cnx()
@@ -1148,7 +1154,7 @@ class TracPM(Component):
     # @return a list of ticket results, each item is a hash of ticket
     #   fields including those named in fields and those required for PM
     #
-    def query(self, req, options, fields, ticket=None):
+    def query(self, options, fields, req=None):
         query_args = {}
         # Copy query args from caller (e.g., q_a['owner'] = 'monty|phred')
         for key in options.keys():
@@ -1161,7 +1167,7 @@ class TracPM(Component):
         
         # Expand (or set) list of IDs to include those specified by PM
         # query meta-options (e.g., root)
-        pm_ids = self.preQuery(options, ticket)
+        pm_ids = self.preQuery(options, req)
         if len(pm_ids) != 0:
             if 'id' in query_args:
                 query_args['id'] += '|' + '|'.join(pm_ids)

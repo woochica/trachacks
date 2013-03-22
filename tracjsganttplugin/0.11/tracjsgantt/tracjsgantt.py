@@ -305,10 +305,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         if 'colorBy' in options:
             fields.add(str(options['colorBy']))
 
-        rawtickets = self.pm.query(self.req, 
-                                   query_options, 
-                                   fields, 
-                                   self._this_ticket())
+        rawtickets = self.pm.query(query_options, fields, self.req)
 
  	# Do permissions check on tickets 
  	tickets = [t for t in rawtickets  
@@ -708,12 +705,6 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         return options
  
-    def _this_ticket(self):
-        matches = re.match('/ticket/(\d+)', self.req.path_info)
-        if not matches:
-            return None
-        return matches.group(1)
-
     def expand_macro(self, formatter, name, content):
         self.req = formatter.req
 
