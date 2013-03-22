@@ -26,7 +26,7 @@ class TracIniAdminPanel(Component):
       these if you have plugins that use some strange section or option names.
       """)
   
-  valid_option_name_chars = Option('ini-editor', 'valid-option-name-chars', '^[a-zA-Z0-9\\-_\\:]+$',
+  valid_option_name_chars = Option('ini-editor', 'valid-option-name-chars', '^[a-zA-Z0-9\\-_\\:.]+$',
       doc="""Defines the valid characters for a section name or option name in 
       `trac.ini`. Must be a valid regular expression. You only need to change 
       these if you have plugins that use some strange section or option names.
