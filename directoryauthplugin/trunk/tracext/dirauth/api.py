@@ -9,7 +9,7 @@
 # Author: John Hampton <pacopablo@pacopablo.com>
 
 from trac.core import implements, ExtensionPoint, Component, Interface
-from trac.perm import IPermissionStore
+from trac.perm import IPermissionStore, IPermissionPolicy
 
 __all__ = ['IPermissionUserProvider', 'UserExtensiblePermissionStore']
 
@@ -19,11 +19,20 @@ class IPermissionUserProvider(Interface):
     def get_permission_action(username):
         """ Return a list of the actions for the given username """
 
-
-class UserExtensiblePermissionStore(IPermissionStore):
+class UserExtensiblePermissionStore(Component):
     """ Default Permission Store extended user permission providers """
-
+    implements(IPermissionStore, IPermissionPolicy)
     user_providers = ExtensionPoint(IPermissionUserProvider)
+    
+    def check_permission(self, action, username, resource, perm):
+      self.log.debug("perm: checking user perms for %s to have %s on %s" % [username, action, resource])
+      subjects = []
+      for provider in self.group_providers:
+          subjects.update(provider.get_permission_groups(username))
+      if action in subjects:
+        return True
+      else:
+        return False
 
     def get_user_permissions(self, username):
         """Retrieve the permissions for the given user and return them in a
@@ -40,7 +49,6 @@ class UserExtensiblePermissionStore(IPermissionStore):
         """        
         self.log.debug("perm: getting user perms")
         
-
         subjects = set([username])
         for provider in self.group_providers:
             subjects.update(provider.get_permission_groups(username))

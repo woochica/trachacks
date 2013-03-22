@@ -14,15 +14,15 @@ from trac.env import IEnvironmentSetupParticipant
 __all__ = ['DirectoryAuthPluginSetup']
 
 # Database version identifier for upgrades.
-db_version = 2
+db_version = 1
 
 # Database schema
 schema = [
     # Blog posts
-    Table('ad_cache', key=('id'))[
+    Table('dir_cache', key=('id'))[
         Column('id', type='varcahar(32)'),
         Column('lut', type='int'),
-        Column('data', type='binary'),
+        Column('data', type='blob'),
         Index(['id'])],
 ]
 
@@ -41,25 +41,12 @@ def create_tables(env, db):
     for table in schema:
         for stmt in to_sql(env, table):
             cursor.execute(stmt)
-    cursor.execute("INSERT into system values ('adauthplugin_version', %s)",
+    cursor.execute("INSERT into system values ('dirauthplugin_version', %s)",
                         str(db_version))
 
 # Upgrades
 
-upgrade_map = {
-  2: upgrade_data_to_blob 
-  }
-
-def upgrade_data_to_blob(env, db):
-  """move the binary column to a blob column to be comptible with mysql"""
-  cursor = db.cursor()
-  cursor.execute("DROP TABLE ad_cache");
-  newtable = Table('ad_cache', key=('id'))[
-        Column('id', type='varcahar(32)'),
-        Column('lut', type='int'),
-        Column('data', type='blob'),
-        Index(['id'])]
-  cursor.execute(to_sql(env, newtable))
+upgrade_map = { }
 
 # Component that deals with database setup
 class DirectoryAuthPluginSetup(Component):
@@ -87,13 +74,13 @@ class DirectoryAuthPluginSetup(Component):
                 upgrade_map[current_ver + 1](self.env, db)
                 current_ver += 1
             cursor = db.cursor()
-            cursor.execute("UPDATE system SET value=%s WHERE name='adauthplugin_version'",
+            cursor.execute("UPDATE system SET value=%s WHERE name='dirauthplugin_version'",
                                 str(db_version))
 
     def _get_version(self, db):
         cursor = db.cursor()
         try:
-            sql = "SELECT value FROM system WHERE name='adauthplugin_version'"
+            sql = "SELECT value FROM system WHERE name='dirauthplugin_version'"
             self.log.debug(sql)
             cursor.execute(sql)
             for row in cursor:
