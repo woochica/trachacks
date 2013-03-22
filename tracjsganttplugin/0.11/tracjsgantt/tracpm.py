@@ -2760,8 +2760,7 @@ class TicketRescheduler(Component):
 
         # Prune tickets to only those in active projects.
         start = datetime.now()
-        activeIDs = [t['id'] for t in self._pruneInactive(tickets) \
-                         if not self.pm.isTracMilestone(t)]
+        activeIDs = [t['id'] for t in self._pruneInactive(tickets)]
         end = datetime.now()
         profile.append([ 'pruning', len(activeIDs), end - start ])
 
@@ -2800,8 +2799,8 @@ class TicketRescheduler(Component):
             profile.append([ 'idling', len(idle), end - start ])
 
 
-        # Reschedule only if there are real tickets left after pruning
-        # and that list includes the changed ticket.
+        # Reschedule only if there are tickets left after pruning and
+        # that list includes the changed ticket.
         if len(activeIDs) > 0 and ticket.id in activeIDs:
             # Limit to the active tickets.
             tickets = [t for t in tickets if t['id'] in activeIDs]
@@ -2815,13 +2814,20 @@ class TicketRescheduler(Component):
             end = datetime.now()
             profile.append(['rescheduling', len(tickets), end - start ])
 
-            # Reduce list of interesting IDs to only those tickets
-            # that were rescheduled.
-            ids = [t['id'] for t in tickets if t.get('_rescheduled')]
-            self.env.log.info('%s tickets rescheduled' % len(ids))
+            # Reduce list to only those tickets that were rescheduled.
+            tickets = [t for t in tickets if t.get('_rescheduled')]
+            self.env.log.info('%s tickets rescheduled' % len(tickets))
+
+            # Remove milestone pseudo-tickets because we don't save
+            # their data.  The "id" of those tickets is not guaranteed
+            # to be the same between two runs so the key to the
+            # schedule tables would be meaningless.
+            tickets = [t for t in tickets if not self.pm.isTracMilestone(t)]
 
             # Update the database for any rescheduled tickets
-            if len(ids) != 0:
+            if len(tickets) != 0:
+                ids = [t['id'] for t in tickets]
+
                 # Some "rescheduled" tickets had their schedule created
                 # for the first time, some had it changed.  We have to be
                 # able to choose between UPDATE (for those that changed)
