@@ -450,7 +450,7 @@ class TracPM(Component):
         if ticket.get('_calc_start'):
             return ticket['_calc_start'][0]
         elif ticket.get('_sched_start'):
-            return to_datetime(ticket.get('_sched_start'))
+            return to_datetime(ticket['_sched_start'])
         else:
             return None
 
@@ -459,7 +459,7 @@ class TracPM(Component):
         if ticket.get('_calc_finish'):
             return ticket['_calc_finish'][0]
         elif ticket.get('_sched_finish'):
-            return to_datetime(ticket.get('_sched_finish'))
+            return to_datetime(ticket['_sched_finish'])
         else:
             return None
 
