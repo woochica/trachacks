@@ -2254,7 +2254,7 @@ class TicketRescheduler(Component):
             float(self.config.get('TracPM', 'option.hoursPerDay', '6.0'))
         self.options['doResourceLeveling'] = \
             self.config.get('TracPM', 'option.doResourceLeveling', '1')
-        
+
         # When recomputing the schedule, we have to ignore the
         # database and compute all start/finish times so we can then
         # compare to the database and store changes.
