@@ -1795,11 +1795,12 @@ class ResourceScheduler(Component):
                         # Finish at user-supplied finish for schedule.
                         finish = self.pm.parseDbDate(options.get('finish'))
                         # If none, finish at midnight today
-                        finish = datetime.today().replace(hour=0, 
-                                                          minute=0, 
-                                                          second=0, 
-                                                          microsecond=0,
-                                                          tzinfo=localtz)
+                        if finish == None:
+                            finish = datetime.today().replace(hour=0, 
+                                                              minute=0, 
+                                                              second=0, 
+                                                              microsecond=0,
+                                                              tzinfo=localtz)
                         # Move ahead to beginning of next day so fixup
                         # below will handle work week.
                         finish += timedelta(days=1)
