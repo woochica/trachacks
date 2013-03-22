@@ -1,0 +1,200 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      xmlns:py="http://genshi.edgewall.org/">
+  <xi:include href="admin.html" />
+  <head>
+    <title>Edit Trac Settings (trac.ini)</title>
+    <script type="text/javascript">
+    /* <![CDATA[ */
+      ${javascript}
+    /* ]]> */
+    </script>
+  </head>
+
+  <body>
+    <h2>Edit Trac Settings (trac.ini)</h2>
+
+    <p class="help">
+      Allows you to edit the trac.ini file.<br/><i>Note:</i> To "delete" an option from the trac.ini file, just set it to its default value.
+    </p>
+    
+    <div id="select_section_form">
+      <form method="post" action="">
+        <fieldset>
+          <legend>Change Section</legend>
+          <label>Section name: 
+            <select id="change-section-name" name="change-section" size="1">
+              <option value="" selected="${len(sections) == 0 or None}">select section</option>
+              <option value="_all_sections" selected="${len(sections) > 1 or None}">all sections</option>
+              <option py:for="section_name in all_section_names" value="${section_name}" selected="${len(sections) == 1 and sections.keys()[0] == section_name or None}">${section_name}</option>
+            </select>
+          </label>
+          <input type="submit" value="${_('Show Section')}"/>
+          <p class="help">Warning: Changing the section discards all unsaved changes.</p>
+        </fieldset>
+      </form>
+    </div>
+    
+    <div id="new_section_form">
+      <form method="post" action="">
+        <fieldset>
+          <legend>Add New Section</legend>
+          <label>Section name:<input type="text" name="new-section-name"/></label>
+          <input type="submit" value="${_('Add Section')}"/>
+          <p class="help">Warning: Adding a new section discards all unsaved changes.</p>
+        </fieldset>
+      </form>
+    </div>
+    
+    <div id="settings_table" py:if="len(sections) != 0">
+    <form method="post" action="">
+      <!--! This field is used to enable auto detection which submit button
+            was meant to be used. Works only with JavaScript enabled. -->
+      <input type="hidden" name="inieditor_cur_focused_field" value=""/>
+      <table class="listing" id="ini_settings_list">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Default</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <py:for each="section_name, section in sorted([(key, value) for key, value in sections.items()], key=lambda section: section[0])">
+            <tr>
+              <td colspan="3" class="section-title" id="section-title-${section_name}">
+                <span py:if="len([option for option in section.values() if (option.value != option.default_value or option.option_info is not None)]) == 0" class="editor-note">
+                  <b>Note:</b> This section is essentially <b>empty and won't persist</b> unless a not-default value is 
+                  specified for at least one option in this section.
+                </span>
+                <span class="section-name">[${section_name}]</span>
+                <span class="section-info">Options count: ${len(section)}</span>
+                <!--! Add dummy field so that empty section won't get lost. -->
+                <input type="hidden" name="inieditor_value##${section_name}##dummy" value="dummy"/>
+              </td>
+            </tr>
+            <py:for each="access_level, access_level_options in (('modifiable', modifiable_options[section_name]), ('readonly', readonly_options[section_name]))">
+              <tr py:if="len(access_level_options) != 0" class="collapsible-${section_name}">
+                <td colspan="3" class="subsection-title">
+                  ${access_level == 'modifiable' and 'Modifiable Options' or 'Read-only Options'}
+                </td>
+              </tr>
+              <py:for each="option_name, option in sorted([(key, value) for key, value in access_level_options.items()], key=lambda option: option[0])">
+                <tr class="collapsible-${section_name}">
+                  <td width="1" class="${option.access != 'modifiable' and 'disabled' or None}">
+                    <nobr>${option_name} <span class="modification-indicator">(*)</span></nobr>
+                  </td>
+                  <td class="default">
+                    <input type="checkbox" name="inieditor_default" value="${section_name}##${option_name}" 
+                           checked="${(option.value == option.default_value) or None}"
+                           disabled="${option.access != 'modifiable' or None}"/>
+                  </td>
+                  <td>
+                    <py:choose test="option.type">
+                      <span py:when="'bool'">
+                        <label>
+                          <input type="radio" name="inieditor_value##${section_name}##${option_name}" value="true" 
+                                 checked="${option.value == 'true' or None}" disabled="${option.access != 'modifiable' or None}"/> 
+                          true
+                        </label>
+                        <label>
+                          <input type="radio" name="inieditor_value##${section_name}##${option_name}" value="false" 
+                                 checked="${option.value != 'true' or None}" disabled="${option.access != 'modifiable' or None}"/> 
+                          false
+                        </label>
+                      </span>
+                      <select py:when="'choice'" name="inieditor_value##${section_name}##${option_name}">
+                        <py:choose test="option.access">
+                          <py:for py:when="'modifiable'" each="choice in option.option_info.choices">
+                            <option value="${choice}" selected="${(option.value == choice) or None}">${choice}</option>
+                          </py:for>
+                          <option py:otherwise="" value="${option.value}" selected="true">${option.value}</option>
+                        </py:choose>
+                      </select>
+                      <!--! NOTE: The value for password fields is intentionally empty so that passwords can't be found in the HTML code. -->
+                      <input py:when="'password'" name="inieditor_value##${section_name}##${option_name}" type="password" value="" 
+                             class="option-value-field" disabled="${option.access != 'modifiable' or None}"/>
+                      <input py:otherwise="" name="inieditor_value##${section_name}##${option_name}" value="${option.value}" 
+                             class="option-value-field" disabled="${option.access != 'modifiable' or None}"/>
+                    </py:choose>
+                  </td>
+                </tr>
+                <tr py:if="option.type == 'password'" class="collapsible-${section_name} editor-note">
+                  <td colspan="3">
+                    <b>Note:</b> This option represents <b>a password</b>. Therefore the value of this field is intentionally empty.
+                    To change the password, simply enter it. To keep the current password keep this field empty.
+                  </td>
+                </tr>
+                <tr py:if="option.option_info is None" class="collapsible-${section_name} editor-note">
+                  <td colspan="3">
+                    <b>Note:</b> This option is a <b>custom option</b>. It will be <b>completely deleted</b> if it's set to its default value. 
+                    To keep it you need to assign a (non-empty) value to it.
+                  </td>
+                </tr>
+                <tr class="collapsible-${section_name} option-info">
+                  <td colspan="3">
+                    <span class="option-description"><b>Description:</b> ${option.desc or 'None available'}</span>
+                    <span class="value-info">
+                      <b>Type:</b> 
+                      <py:choose test="option.type">
+                        <py:when test="'list'">list (separated by '${option.option_info.sep}')</py:when>
+                        <py:when test="'path'">file system path</py:when>
+                        <py:when test="'envrelativepath'">file system path relative to the Trac env</py:when>
+                        <py:when test="'extension'">one component implementing '${option.option_info.xtnpt.interface.__name__}'</py:when>
+                        <py:when test="'orderedextensions'">ordered list of components implementing '${option.option_info.xtnpt.interface.__name__}' (comma separated)</py:when>
+                        <py:otherwise>${option.type}</py:otherwise>
+                      </py:choose>
+                      | <b>Access:</b> ${option.access}
+                      <py:choose test="option.type">
+                        <py:when test="'password'">
+                          | <b>Default value:</b> ${option.default_value and '&lt;hidden&gt;' or '&lt;none&gt;'} 
+                          | <b>Currently stored value:</b> ${option.stored_value and '&lt;hidden&gt;' or '&lt;default value&gt;'}
+                        </py:when>
+                        <py:otherwise>
+                          | <b>Default value:</b> ${option.default_value or '&lt;none&gt;'} 
+                          | <b>Currently stored value:</b> ${(option.stored_value and option.stored_value != option.default_value and (len(unicode(option.stored_value)) &lt; 100 and option.stored_value or (option.stored_value[:100] + '...'))) or '&lt;default value&gt;'} 
+                        </py:otherwise>
+                      </py:choose>
+                    </span>
+                  </td>
+                </tr>
+              </py:for>
+            </py:for>
+            <py:if test="len(hidden_options[section_name]) > 0">
+              <tr class="collapsible-${section_name}">
+                <td colspan="3" class="subsection-title">Hidden Options</td>
+              </tr>
+              <tr class="collapsible-${section_name}">
+                <td colspan="3">
+                  <py:choose test="len(hidden_options[section_name])">
+                    <py:when test="1">Due to security restrictions there is one option marked as hidden in this section.</py:when>
+                    <py:otherwise>Due to security restrictions there are ${hidden_options} options marked as hidden in this section.</py:otherwise>
+                  </py:choose>
+                </td>
+              </tr>
+            </py:if>
+            <tr class="collapsible-${section_name}">
+              <td colspan="3">
+                <input type="submit" name="inieditor-submit-apply-${section_name}" value="${_('Apply changes')}" title="Applies the changes from this section."/>
+                <input type="submit" name="inieditor-submit-discard-${section_name}" value="${_('Discard changes')}" title="Discards the changes from this section. Also removes custom options, if they still have their default value."/>
+                <span class="option-modify-section">
+                  <input name="new-options-${section_name}" size="70" title="Options to be added to this section; comma-separated"/>
+                  <input type="submit" name="inieditor-submit-addnewoptions-${section_name}" value="Add options" title="Adds the specified options to this section"/>
+                </span>
+              </td>
+            </tr>
+          </py:for>
+        </tbody>
+      </table>
+      <div class="buttons" py:if="len(sections) > 1">
+        <input type="submit" name="inieditor-submit-apply" value="${_('Apply changes')}" />
+      </div>
+    </form>
+    </div>
+  </body>
+
+</html>

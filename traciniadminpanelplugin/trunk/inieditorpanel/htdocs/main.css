@@ -1,0 +1,118 @@
+#select_section_form  {
+  width: 50%;
+  float: left;
+  margin-right: 1em;
+}
+
+#ini_settings_list {
+  clear: both;
+}
+
+#ini_settings_list span.editor-note, #ini_settings_list tr.editor-note td {
+  background-color: #DBFFD2;
+  font-weight: normal;
+  font-size: 80%;
+  color: #888;
+  padding: 0.2em;
+}
+
+  #ini_settings_list tr.editor-note td {
+    padding-left: 2em !important;
+  }
+
+   #ini_settings_list span.editor-note {
+    display: block;
+    margin: -0.7em -0.7em 0.3em -0.7em;
+    border-bottom: 1px solid #9BD48C;
+  }
+
+#ini_settings_list td.section-title {
+  font-weight: bold; 
+  padding: 0.5em;
+  border-top:1px solid #999;
+  background: #F7F7F0 5px center no-repeat;
+}
+
+  #ini_settings_list td.section-title:hover {
+    background-color: #FFEEE2;
+  }
+  
+  #ini_settings_list td.header-expanded {
+    background-image: url(expander_open.png);
+    cursor: pointer;
+    padding-left: 30px;
+  }
+
+    #ini_settings_list td.header-expanded:hover {
+      background-image: url(expander_open_hover.png);
+    }
+  
+  #ini_settings_list td.header-collapsed {
+    background-image: url(expander_normal.png);
+    cursor: pointer;
+    padding-left: 30px;
+  }
+
+    #ini_settings_list td.header-collapsed:hover {
+      background-image: url(expander_normal_hover.png);
+    }
+    
+  #ini_settings_list td.section-title .section-info {
+    color: #888;
+    font-size: 80%;
+    display: block;
+  }
+  
+#ini_settings_list td.subsection-title {
+  font-weight: bold; 
+  color: #555;
+  padding: 0.5em;
+  border-top:1px solid #CCC;
+  background-color: #F7F7F0;
+}
+
+  #ini_settings_list td.subsection-title:hover {
+    background-color: #F7F7F0 !important;
+  }
+  
+#ini_settings_list td.disabled {
+  color: #888;
+}
+  
+#ini_settings_list input.option-value-field {
+  width: 97%;
+}
+    
+#ini_settings_list td {
+  vertical-align: baseline;
+}
+
+#ini_settings_list tr.modified-field {
+  background-color: #F8D2B8;
+}
+
+  #ini_settings_list tr.modified-field:hover {
+    background-color: #FBBB8D !important;
+  }
+
+  #ini_settings_list tr span.modification-indicator  { visibility: hidden; }
+
+  #ini_settings_list tr.modified-field span.modification-indicator  { visibility: visible !important; }
+
+  #ini_settings_list tr.option-info, #ini_settings_list tr.editor-note {
+    border-top-style: dotted;
+  }
+  
+  #ini_settings_list tr.option-info td {
+    font-size: 80%;
+    color: #888;
+    padding-left: 2em;
+  }
+
+  #ini_settings_list tr.option-info .value-info {
+    display: block;
+  }
+
+#ini_settings_list span.option-modify-section {
+  float: right;
+}
