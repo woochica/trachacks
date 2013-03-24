@@ -295,3 +295,6 @@ input[type="Submit"], input[type="Submit"]:hover {
   text-transform: lowercase;
 }
 
+.milestone .info h2 em {
+ color: #234764;
+}
