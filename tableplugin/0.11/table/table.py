@@ -26,9 +26,9 @@ from genshi.builder import tag
 ATTRIBUTE_REGEX = re.compile('^@([^@\s\:]+)\s*(?:([^\s\(\)\:]+))?\s*(?:\(([^\s\:]+)\))?(?:\:\s*(.*))?', re.I)
 
 
-class TablePlugin(Component):
+class CustomTablePlugin(Component):
 
-    CONFIG_KEY = 'table'
+    CONFIG_KEY = 'customtable'
     DESC_KEY   = '.description'
 
     implements(IWikiMacroProvider)
