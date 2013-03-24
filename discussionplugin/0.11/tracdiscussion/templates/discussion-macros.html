@@ -54,10 +54,10 @@
           <py:if test="'DISCUSSION_APPEND' in perm">
             <a style="${'display: none;' if 'locked' in discussion.topic.status
               else ''}" class="reply"
-              href="${href}?discussion_action=add;#topic">Reply</a>
+              href="${href}?discussion_action=add;#reply">Reply</a>
             <a style="${'display: none;' if 'locked' in discussion.topic.status
               else ''}" class="quote"
-              href="${href}?discussion_action=quote;#topic">Quote</a>
+              href="${href}?discussion_action=quote;#reply">Quote</a>
             <a py:if="discussion.moderator or ((discussion.authname ==
               discussion.topic.author) and (not 'locked' in
               discussion.topic.status) and (discussion.authname != 'anonymous'))"
@@ -257,6 +257,7 @@
   </py:def>
 
   <py:def function="display_form(href, title, Class, action)">
+    <a name="reply" ></a>
     <form class="${Class}" method="post" action="${href}#${discussion.message.id
       and ('message' + unicode(discussion.message.id)) or 'topic'}">
       <fieldset>
