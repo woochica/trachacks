@@ -160,6 +160,8 @@ h4 {
 }
 
 #main {
+  min-height: 20em;
+  height: auto;
   font-family: Arial, Verdana, Geneva, "Bitstream Vera Sans", Helvetica, sans-serif;
   font-size: 85%;
   line-height: 1.2em;
