@@ -1488,7 +1488,8 @@ class DiscussionApi(Component):
         shown_pages = paginator.get_shown_pages(21)
         for shown_page in shown_pages:
             page_data.append([context.req.href(context.req.path_info,
-              discussion_page = shown_page) + anchor, None, to_unicode(shown_page),
+              discussion_page = shown_page, order = context.req.args.get('order'),
+              desc = context.req.args.get('desc')) + anchor, None, to_unicode(shown_page),
               'page %s' % (shown_page,)])
         fields = ['href', 'class', 'string', 'title']
         paginator.shown_pages = [dict(zip(fields, p)) for p in page_data]
@@ -1499,12 +1500,14 @@ class DiscussionApi(Component):
         # Prepare links to next or previous page.
         if paginator.has_next_page:
             add_link(context.req, 'next', context.req.href(
-              context.req.path_info, discussion_page = paginator.page + 2) +
-              anchor, 'Next Page')
+              context.req.path_info, discussion_page = paginator.page + 2, 
+              order = context.req.args.get('order'), desc = context.req.args.get('desc')) 
+                     + anchor, 'Next Page')
         if paginator.has_previous_page:
             add_link(context.req, 'prev', context.req.href(
-              context.req.path_info, discussion_page = paginator.page) + anchor,
-              'Previous Page')
+              context.req.path_info, discussion_page = paginator.page,
+                        order = context.req.args.get('order'), desc = context.req.args.get('desc')) 
+                     + anchor, 'Previous Page')
 
         return paginator
 
