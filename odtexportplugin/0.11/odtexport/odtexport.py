@@ -21,7 +21,11 @@ import datetime
 from pkg_resources import resource_filename
 from lxml import etree
 import tidy
-from PIL import Image
+
+try:
+    from PIL import Image
+except ImportError:
+    import Image
 
 #from trac.core import *
 from trac.core import Component, implements
