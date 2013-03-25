@@ -91,12 +91,12 @@ class ProgressTicketGroupStatsProvider(Component):
                 resolution_count[resolution] = count
 
             for key, value in resolution_count.iteritems():
-                if key in ('fixed', 'completed'): # default ticket type 'defect'        
-                    stat.add_interval(
-                        {'resolution': key}, 'value', True)
+                if key in ('fixed', 'completed'):  # default ticket type 'defect'
+                    stat.add_interval(key, value, {'resolution': key},
+                                      'value', True)
                 else:
-                    stat.add_interval(key, value,
-                        {'resolution': key}, 'waste', False)
+                    stat.add_interval(key, value, {'resolution': key},
+                                      'waste', False)
 
         stat.refresh_calcs()
         return stat
