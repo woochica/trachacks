@@ -109,7 +109,7 @@ class BacklogModule(Component):
         if parse_version(trac_version) >= parse_version('0.12'):
             add_script(req, 'backlog/js/jquery-ui-1.8.23.custom.min.js')
         else:
-            add_script(req, 'backlog/js/jquery-ui-1.6.custom.min.js')
+            add_script(req, 'backlog/js/jquery-ui-1.6.min.js')
         add_stylesheet(req, 'backlog/css/jquery-ui.custom.css')
         add_stylesheet(req, 'backlog/css/backlog.css')
 
