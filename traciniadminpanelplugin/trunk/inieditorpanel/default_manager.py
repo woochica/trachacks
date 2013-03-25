@@ -64,7 +64,7 @@ class IniEditorBasicSecurityManager(Component):
   default_access = ChoiceOption('ini-editor-restrictions', 'default-access', 
       [ ACCESS_READONLY, ACCESS_HIDDEN, ACCESS_MODIFIABLE ],
       doc="""Defines the default access level for options that don't have an
-      explicit access level defined. Defaults to readonly.""")
+      explicit access level defined. Defaults to readonly.""", doc_domain="iniadminpanel")
   
   def __init__(self):
     restrictions = self.config.options('ini-editor-restrictions')

@@ -1,30 +1,54 @@
-from setuptools import setup
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Edgewall Software
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution. The terms
+# are also available at http://trac.edgewall.com/license.html.
+#
+# This software consists of voluntary contributions made by many
+# individuals. For the exact contribution history, see the revision
+# history and logs, available at http://projects.edgewall.com/trac/.
 
-# IMPORTANT: If this plugin has been deployed for development(using
-#   "python setup.py develop -md ...") and this file has changed, the plugin 
-#   will have to be redeployed (using the previously mentioned command). See:
-#   https://svn.mayastudios.de/mtpp/wiki/TracSandbox#Deployingaself-developedplugin
+from setuptools import setup, find_packages
 
-# Name of the python package
+NAME = 'TracIniAdminPanel'
 PACKAGE = 'inieditorpanel'
+VERSION = '0.90'
+
+extra = {}
+try:
+    from trac.util.dist import get_l10n_cmdclass
+    cmdclass = get_l10n_cmdclass()
+    if cmdclass:
+        extra['cmdclass'] = cmdclass
+        extractors = [
+            ('**.py',                'trac.dist:extract_python', None),
+            ('**/templates/**.html', 'genshi', None)
+        ]
+        extra['message_extractors'] = {
+            PACKAGE: extractors,
+        }
+except ImportError:
+    pass
 
 setup(
-    name = 'TracIniAdminPanel',
-    version = '0.81beta',
+    name = NAME,
+    version = VERSION,
     
-    author = "Sebastian Krysmanski",
-    author_email = None,
-    url = "https://svn.mayastudios.de/mtpp",
-    
+    author = "Sebastian Krysmanski, Dirk Stöcker",
+    author_email = 'trac@dstoecker.de',
+    url = "http://trac-hacks.org/wiki/TracIniAdminPanelPlugin",
     description = "An admin panel for editing trac.ini",
-    keywords = "trac plugins",
-    
+    keywords = "trac plugin",
     license = "BSD",
-    
-    install_requires = [
-        'Trac>=0.12',
+    classifiers=[
+        'Framework :: Trac',
+        'License :: OSI Approved :: BSD License', 
     ],
-    
+    install_requires = ['Trac>=0.12'],
     packages = [ PACKAGE ],
     package_data = { PACKAGE: [ 'templates/*', 'htdocs/*' ] },
                                      
@@ -33,4 +57,5 @@ setup(
         '%s.default_manager = %s.default_manager' % (PACKAGE, PACKAGE),
         # Add additional components here
       ] },
+    **extra
 )

@@ -1,0 +1,127 @@
+# Translations template for TracIniAdminPanel.
+# Copyright (C) 2013 ORGANIZATION
+# This file is distributed under the same license as the
+# TracIniAdminPanel project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: TracIniAdminPanel 1.0\n"
+"Report-Msgid-Bugs-To: trac@dstoecker.de\n"
+"POT-Creation-Date: 2013-03-25 21:55+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 0.9.6\n"
+
+#: inieditorpanel/web_ui.py:29 inieditorpanel/web_ui.py:35
+msgid ""
+"Defines the valid characters for a section name or option name in \n"
+"      `trac.ini`. Must be a valid regular expression. You only need "
+"to change \n"
+"      these if you have plugins that use some strange section or "
+"option names.\n"
+"      "
+msgstr ""
+
+#: inieditorpanel/web_ui.py:41
+msgid ""
+"Defines the security manager that specifies whether the user has \n"
+"      access to certain options.\n"
+"      "
+msgstr ""
+
+#: inieditorpanel/web_ui.py:74
+msgid "General"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:74
+msgid "trac.ini Editor"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:93 inieditorpanel/web_ui.py:146
+msgid "The section \"component\" can't be edited with the ini editor."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:97 inieditorpanel/web_ui.py:149
+#, python-format
+msgid "The section name %s is invalid."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:119
+#, python-format
+msgid "Security manager could not be initated. %s"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:143
+msgid "The section name was empty."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:153
+#, python-format
+msgid ""
+"Section %s has been created. Note that you need to add at least one "
+"option to store it permanently."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:155
+msgid "The section already exists."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:273
+#, python-format
+msgid "Changes for section %s have been applied."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:276 inieditorpanel/web_ui.py:288
+msgid "No changes have been applied."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:285
+msgid "Changes have been applied."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:295
+#, python-format
+msgid "Your changes for section %s have been discarded."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:300
+msgid "All changes have been discarded."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:315
+#, python-format
+msgid "The option name %s is invalid."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:320
+#, python-format
+msgid "The new option %s could not be added due to security restrictions."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:327
+#, python-format
+msgid "The new fields have been added to section %s."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:329
+msgid "No new fields have been added."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:560
+#, python-format
+msgid ""
+"The default value for option \"%s\" in section \"%s\" is invalid. "
+"Reason: %s"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:589
+#, python-format
+msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
+msgstr ""
+
