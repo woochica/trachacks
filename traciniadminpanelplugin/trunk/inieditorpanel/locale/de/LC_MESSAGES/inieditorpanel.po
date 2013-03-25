@@ -3,12 +3,11 @@
 # This file is distributed under the same license as the PROJECT project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-25 21:55+0100\n"
+"POT-Creation-Date: 2013-03-25 22:00+0100\n"
 "PO-Revision-Date: 2013-03-25 21:41+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -21,18 +20,23 @@ msgstr ""
 #: inieditorpanel/web_ui.py:29 inieditorpanel/web_ui.py:35
 msgid ""
 "Defines the valid characters for a section name or option name in \n"
-"      `trac.ini`. Must be a valid regular expression. You only need to "
-"change \n"
-"      these if you have plugins that use some strange section or option "
-"names.\n"
-"      "
+"`trac.ini`. Must be a valid regular expression. You only need to change \n"
+"these if you have plugins that use some strange section or option names."
 msgstr ""
 
 #: inieditorpanel/web_ui.py:41
 msgid ""
 "Defines the security manager that specifies whether the user has \n"
-"      access to certain options.\n"
-"      "
+"access to certain options."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:48
+msgid ""
+"Defines option fields (as `section-name|option-name`) that \n"
+"represent passwords. Password input fields are used for these fields.\n"
+"Note the fields specified here are taken additionally to some predefined"
+" \n"
+"fields provided by the ini editor."
 msgstr ""
 
 #: inieditorpanel/web_ui.py:74
@@ -124,4 +128,247 @@ msgstr ""
 #, python-format
 msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
 msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:11
+#: inieditorpanel/templates/admin_tracini.html:20
+msgid "Edit Trac Settings (trac.ini)"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:22
+msgid "Allows you to edit the trac.ini file."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:23
+#: inieditorpanel/templates/admin_tracini.html:72
+#: inieditorpanel/templates/admin_tracini.html:129
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid "Note:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:23
+msgid ""
+"To \"delete\" an option from the trac.ini file, just set it to its "
+"default value."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:29
+msgid "Change Section"
+msgstr "Abschnitt ändern"
+
+#: inieditorpanel/templates/admin_tracini.html:30
+#: inieditorpanel/templates/admin_tracini.html:47
+msgid "Section name:"
+msgstr "Abschnittsname:"
+
+#: inieditorpanel/templates/admin_tracini.html:32
+msgid "select section"
+msgstr "Abschnitt wählen"
+
+#: inieditorpanel/templates/admin_tracini.html:33
+msgid "all sections"
+msgstr "Alle Abschnitte"
+
+#: inieditorpanel/templates/admin_tracini.html:37
+msgid "Show Section"
+msgstr "Abschnitt zeigen"
+
+#: inieditorpanel/templates/admin_tracini.html:38
+msgid "Warning: Changing the section discards all unsaved changes."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:46
+msgid "Add New Section"
+msgstr "Neuen Abschnitt hinzufügen"
+
+#: inieditorpanel/templates/admin_tracini.html:48
+msgid "Add Section"
+msgstr "Abschnitt hinzufügen"
+
+#: inieditorpanel/templates/admin_tracini.html:49
+msgid "Warning: Adding a new section discards all unsaved changes."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:62
+msgid "Name"
+msgstr "Name"
+
+#: inieditorpanel/templates/admin_tracini.html:63
+msgid "Default"
+msgstr "Standard"
+
+#: inieditorpanel/templates/admin_tracini.html:64
+msgid "Value"
+msgstr "Wert"
+
+#: inieditorpanel/templates/admin_tracini.html:72
+msgid "This section is essentially"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:72
+msgid "empty and won't persist"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:72
+msgid ""
+"unless a not-default value is \n"
+"                  specified for at least one option in this section."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:76
+msgid "Options count:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:102
+msgid "true"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:107
+msgid "false"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:129
+msgid "This option represents"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:129
+msgid "a password"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:129
+msgid ""
+". Therefore the value of this field is intentionally empty.\n"
+"                    To change the password, simply enter it. To keep the "
+"current password keep this field empty."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid "This option is a"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid "custom option"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid ". It will be"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid "completely deleted"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:135
+msgid ""
+"if it's set to its default value. \n"
+"                    To keep it you need to assign a (non-empty) value to "
+"it."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:141
+msgid "Description:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:143
+msgid "Type:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:145
+msgid "list (separated by '"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:146
+msgid "file system path"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:147
+msgid "file system path relative to the Trac env"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:148
+msgid "one component implementing '"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:149
+msgid "ordered list of components implementing '"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:149
+msgid "' (comma separated)"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:152
+msgid "Access:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:155
+#: inieditorpanel/templates/admin_tracini.html:159
+msgid "Default value:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:156
+#: inieditorpanel/templates/admin_tracini.html:160
+msgid "Currently stored value:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:170
+msgid "Hidden Options"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:175
+msgid ""
+"Due to security restrictions there is one option marked as hidden in this"
+" section."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:176
+msgid "Due to security restrictions there are"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:176
+msgid "options marked as hidden in this section."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:183
+#: inieditorpanel/templates/admin_tracini.html:195
+msgid "Apply changes"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:183
+msgid "Applies the changes from this section."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:184
+msgid "Discard changes"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:184
+msgid ""
+"Discards the changes from this section. Also removes custom options, if "
+"they still have their default value."
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:186
+msgid "Options to be added to this section; comma-separated"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:187
+msgid "Adds the specified options to this section"
+msgstr ""
+
+#~ msgid ""
+#~ "Defines the valid characters for a section name or option name in \n"
+#~ "      `trac.ini`. Must be a valid "
+#~ "regular expression. You only need to "
+#~ "change \n"
+#~ "      these if you have plugins "
+#~ "that use some strange section or "
+#~ "option names.\n"
+#~ "      "
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Defines the security manager that specifies whether the user has \n"
+#~ "      access to certain options.\n"
+#~ "      "
+#~ msgstr ""
 

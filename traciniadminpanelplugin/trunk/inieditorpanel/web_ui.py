@@ -1,6 +1,8 @@
 import re
 import copy
 
+from pkg_resources import resource_filename
+
 from trac.core import *
 from trac.config import Option, ListOption, ExtensionOption, _TRUE_VALUES
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, add_notice, add_warning
@@ -17,7 +19,7 @@ from inieditorpanel.api import *
 from trac.util.translation  import domain_functions
 
 _, tag_, N_, add_domain, gettext = domain_functions(
-    'iniadminpanel', 
+    'inieditorpanel', 
     ('_', 'tag_', 'N_', 'add_domain', 'gettext'))
 
 
@@ -30,19 +32,19 @@ class TracIniAdminPanel(Component):
       doc="""Defines the valid characters for a section name or option name in 
       `trac.ini`. Must be a valid regular expression. You only need to change 
       these if you have plugins that use some strange section or option names.
-      """, doc_domain="iniadminpanel")
+      """, doc_domain="inieditorpanel")
   
   valid_option_name_chars = Option('ini-editor', 'valid-option-name-chars', '^[a-zA-Z0-9\\-_\\:.]+$',
       doc="""Defines the valid characters for a section name or option name in 
       `trac.ini`. Must be a valid regular expression. You only need to change 
       these if you have plugins that use some strange section or option names.
-      """, doc_domain="iniadminpanel")
+      """, doc_domain="inieditorpanel")
       
   security_manager = ExtensionOption('ini-editor', 'security-manager', 
       IOptionSecurityManager, 'IniEditorEmptySecurityManager',
       doc="""Defines the security manager that specifies whether the user has 
       access to certain options.
-      """, doc_domain="iniadminpanel")
+      """, doc_domain="inieditorpanel")
   
   # See "IniEditorBasicSecurityManager" for why we use a pipe char here.
   password_options = ListOption('ini-editor', 'password-options',
@@ -50,13 +52,17 @@ class TracIniAdminPanel(Component):
       represent passwords. Password input fields are used for these fields.
       Note the fields specified here are taken additionally to some predefined 
       fields provided by the ini editor.
-      """, doc_domain="iniadminpanel")
+      """, doc_domain="inieditorpanel")
       
   DEFAULT_PASSWORD_OPTIONS = {
       'notification|smtp_password': True
     }
   
   def __init__(self):
+    """Set up translation domain"""
+    locale_dir = resource_filename(__name__, 'locale')
+    add_domain(self.env.path, locale_dir)
+
     self.valid_section_name_chars_regexp = re.compile(self.valid_section_name_chars)
     self.valid_option_name_chars_regexp = re.compile(self.valid_option_name_chars)
     
@@ -75,7 +81,12 @@ class TracIniAdminPanel(Component):
 
   def render_admin_panel(self, req, cat, page, path_info):  
     req.perm.require('TRAC_ADMIN')
-    
+
+    if path_info == None:
+      ext = ""
+    else:
+      ext = '/' + path_info
+
     #
     # Gather section names for section drop down field
     #
@@ -90,7 +101,7 @@ class TracIniAdminPanel(Component):
     if (path_info is not None) and (path_info not in ('', '/', '_all_sections')) \
        and (path_info not in all_section_names):
       if path_info == 'components':
-        add_warning(req, _('The section "component" can\'t be edited with the ini editor.'))
+        add_warning(req, _('The section "components" can\'t be edited with the ini editor.'))
         req.redirect(req.href.admin(cat, page))
         return None
       elif self.valid_section_name_chars_regexp.match(path_info) is None:
@@ -123,7 +134,7 @@ class TracIniAdminPanel(Component):
       # Security manager is not available
       #
       if req.method == 'POST':
-        req.redirect(req.href.admin(cat, page) + '/' + path_info)
+        req.redirect(req.href.admin(cat, page) + ext)
         return None
 
     elif req.method == 'POST' and 'change-section' in req.args:
@@ -141,13 +152,13 @@ class TracIniAdminPanel(Component):
       
       if section_name == '':
         add_warning(req, _('The section name was empty.'))
-        req.redirect(req.href.admin(cat, page) + '/' + path_info)
+        req.redirect(req.href.admin(cat, page) + ext)
       elif section_name == 'components':
         add_warning(req, _('The section "component" can\'t be edited with the ini editor.'))
         req.redirect(req.href.admin(cat, page))
       elif self.valid_section_name_chars_regexp.match(section_name) is None:
         add_warning(req, _('The section name %s is invalid.') % section_name)
-        req.redirect(req.href.admin(cat, page) + '/' + path_info)
+        req.redirect(req.href.admin(cat, page) + ext)
       else:
         if section_name not in all_section_names:
           add_notice(req, _('Section %s has been created. Note that you need to add at least one option to store it permanently.') % section_name)
@@ -328,7 +339,7 @@ class TracIniAdminPanel(Component):
           else:
             add_warning(req, _('No new fields have been added.'))
         
-        req.redirect(req.href.admin(cat, page) + '/' + path_info)
+        req.redirect(req.href.admin(cat, page) + ext)
         return None
     
     # Split sections dict for faster template rendering
@@ -368,6 +379,7 @@ class TracIniAdminPanel(Component):
     
     add_stylesheet(req, 'inieditorpanel/main.css')
     add_script(req, 'inieditorpanel/editor.js')
+    data['_'] = _
     return 'admin_tracini.html', data
     
   def _get_session_value(self, req, section_name, option_name):

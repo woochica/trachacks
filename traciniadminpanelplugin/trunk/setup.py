@@ -50,8 +50,8 @@ setup(
     ],
     install_requires = ['Trac>=0.12'],
     packages = [ PACKAGE ],
-    package_data = { PACKAGE: [ 'templates/*', 'htdocs/*' ] },
-                                     
+    package_data = { PACKAGE: [ 'templates/*', 'htdocs/*', 'locale/*/LC_MESSAGES/*.mo' ] },
+                                         
     entry_points = { 'trac.plugins': [ 
         '%s.web_ui = %s.web_ui' % (PACKAGE, PACKAGE),
         '%s.default_manager = %s.default_manager' % (PACKAGE, PACKAGE),
