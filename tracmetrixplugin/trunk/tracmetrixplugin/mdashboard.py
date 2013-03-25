@@ -14,7 +14,6 @@
 # Author: Bhuricha Sethanandha <khundeen@gmail.com>
 
 import re
-import os
 
 from bisect import bisect
 from datetime import timedelta
