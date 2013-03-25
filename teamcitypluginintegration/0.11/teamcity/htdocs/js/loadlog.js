@@ -14,7 +14,7 @@ $(document).ready(function() {
 				error: function() {
 					div.innerHTML = '<p>Ooops. Loading failed</p>'
 					$(div).show();
-				},
+				}
 			})
 		},
 		function(event) {

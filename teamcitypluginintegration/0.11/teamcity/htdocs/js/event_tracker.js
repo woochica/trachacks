@@ -9,7 +9,7 @@ function build_selected(event) {
 		var checkbox = this
 		var bt_id = $(this).val();
 		$.ajax({
-			url: base_url + "proxy/action.html?agentId=allEnabledCompatible&add2Queue="+bt_id,
+			url: base_url + "proxy/action.html?add2Queue="+bt_id,
 			success: function() {
 				// remove "checked" from checkbox
 				$(checkbox).removeAttr("checked");
@@ -17,7 +17,7 @@ function build_selected(event) {
 				$(checkbox).hide();
 
 			},
-			error: show_error,
+			error: show_error
 		});
 	});
 }
@@ -30,7 +30,7 @@ function get_running_builds() {
 			update_builds_status(response)
 			$("div#info_ajax_error").hide();
 		},
-		error: show_error,
+		error: show_error
 	});
 }
 
@@ -104,7 +104,7 @@ function show_error(xhr,t_status,err) {
 function cancel_build(build_id) {
 	$.ajax({
 		url: base_url + "proxy/ajax.html?comment=TracCancel&submit=Stop&kill&buildId="+build_id,
-		error: show_error,
+		error: show_error
 	});
 }
 
