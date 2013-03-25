@@ -23,7 +23,7 @@ class ThemeNotFound(TracError):
     
     def __init__(self, name):
         self.theme_name = name
-        super(TracError, self).__init__('Unknown theme %s'%self.theme_name)
+        TracError.__init__(self, 'Unknown theme %s' % name)
 
 class IThemeProvider(Interface):
     """An interface to provide style information."""
