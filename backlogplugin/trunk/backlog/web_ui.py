@@ -17,6 +17,7 @@ from trac.util.translation import _
 from trac.web import IRequestHandler
 from trac.web.chrome import (
     INavigationContributor, ITemplateProvider, add_stylesheet, add_script,
+    Chrome,
 )
 
 from db import create_ordering_table
@@ -104,19 +105,25 @@ class BacklogModule(Component):
             self._save_order(req, backlog_id)
             req.redirect(req.href.backlog(backlog_id))
 
-        # TODO: use jQuery UI in Trac 1.0
-        from pkg_resources import parse_version
-        if parse_version(trac_version) >= parse_version('0.12'):
-            add_script(req, 'backlog/js/jquery-ui-1.8.23.custom.min.js')
-        else:
-            add_script(req, 'backlog/js/jquery-ui-1.6.min.js')
-        add_stylesheet(req, 'backlog/css/jquery-ui.custom.css')
+        self._add_jquery_ui(req)
         add_stylesheet(req, 'backlog/css/backlog.css')
 
         if backlog_id:
             return self._show_backlog(req, backlog_id)
         else:
             return self._show_backlog_list(req)
+
+    def _add_jquery_ui(self, req):
+        if hasattr(Chrome, 'add_jquery_ui'):
+            Chrome(self.env).add_jquery_ui(req)
+            return
+
+        from pkg_resources import parse_version
+        if parse_version(trac_version) >= parse_version('0.12'):
+            add_script(req, 'backlog/js/jquery-ui-1.8.23.custom.min.js')
+        else:
+            add_script(req, 'backlog/js/jquery-ui-1.6.min.js')
+        add_stylesheet(req, 'backlog/css/jquery-ui.custom.css')
 
     def _show_backlog(self, req, backlog_id):
         try:
