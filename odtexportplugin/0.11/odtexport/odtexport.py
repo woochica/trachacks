@@ -369,7 +369,7 @@ class ODTFile(object):
             self.options[kw+"_keyword"] = str(self.options[kw+"_keyword"])
 
         for k, v in {'wikiversion': str(self.page_version),
-                     'wikiname': str(self.page_name),
+                     'wikiname': unicode(self.page_name),
                      'timestamp': str(datetime.datetime.now())}.iteritems():
             for xmltype in self.xml.keys():
                 #self.env.log.debug("Key %s, Value %s, xml %s\n"%(k,v,xmltype))
