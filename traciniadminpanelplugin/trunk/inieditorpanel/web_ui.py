@@ -16,7 +16,7 @@ from genshi.template.text import NewTextTemplate
 
 from inieditorpanel.api import *
 
-from trac.util.translation  import domain_functions
+from trac.util.translation import dgettext, domain_functions
 
 _, tag_, N_, add_domain, gettext = domain_functions(
     'inieditorpanel', 
@@ -503,7 +503,8 @@ class TracIniAdminPanel(Component):
     if (section_name, option_name) in Option.registry:
       # Allow wiki formatting in descriptions
       option = Option.registry[(section_name, option_name)]
-      option_desc = format_to_oneliner(self.env, Context.from_request(req), option.__doc__)      
+      doc = dgettext(option.doc_domain, option.__doc__)
+      option_desc = format_to_oneliner(self.env, Context.from_request(req), doc)
       option_type = option.__class__.__name__.lower()[:-6] or 'text'
     else:
       option_desc = None

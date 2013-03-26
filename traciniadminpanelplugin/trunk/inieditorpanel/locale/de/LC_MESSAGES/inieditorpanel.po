@@ -23,6 +23,9 @@ msgid ""
 "`trac.ini`. Must be a valid regular expression. You only need to change \n"
 "these if you have plugins that use some strange section or option names."
 msgstr ""
+"Definiert die gültigen Zeichen für einen Abschnitts- oder Optionsnamen in"
+" `trac.ini`. Es muss ein regulärer Ausdruck sein. Dies muss nur geändert "
+"werden, wenn Plugins seltsame Abschnitts- oder Optionsnamen nutzen."
 
 #: inieditorpanel/web_ui.py:41
 msgid ""
@@ -41,11 +44,11 @@ msgstr ""
 
 #: inieditorpanel/web_ui.py:74
 msgid "General"
-msgstr ""
+msgstr "Allgemein"
 
 #: inieditorpanel/web_ui.py:74
 msgid "trac.ini Editor"
-msgstr "Editor für trac.ini"
+msgstr "Ini-Editor"
 
 #: inieditorpanel/web_ui.py:93 inieditorpanel/web_ui.py:146
 msgid "The section \"component\" can't be edited with the ini editor."
@@ -266,11 +269,11 @@ msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:141
 msgid "Description:"
-msgstr ""
+msgstr "Beschreibung:"
 
 #: inieditorpanel/templates/admin_tracini.html:143
 msgid "Type:"
-msgstr ""
+msgstr "Typ:"
 
 #: inieditorpanel/templates/admin_tracini.html:145
 msgid "list (separated by '"
@@ -298,21 +301,21 @@ msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:152
 msgid "Access:"
-msgstr ""
+msgstr "Zugriff:"
 
 #: inieditorpanel/templates/admin_tracini.html:155
 #: inieditorpanel/templates/admin_tracini.html:159
 msgid "Default value:"
-msgstr ""
+msgstr "Standardwert:"
 
 #: inieditorpanel/templates/admin_tracini.html:156
 #: inieditorpanel/templates/admin_tracini.html:160
 msgid "Currently stored value:"
-msgstr ""
+msgstr "Aktuell gespeicherter Wert"
 
 #: inieditorpanel/templates/admin_tracini.html:170
 msgid "Hidden Options"
-msgstr ""
+msgstr "Versteckte Optionen"
 
 #: inieditorpanel/templates/admin_tracini.html:175
 msgid ""
@@ -331,7 +334,7 @@ msgstr ""
 #: inieditorpanel/templates/admin_tracini.html:183
 #: inieditorpanel/templates/admin_tracini.html:195
 msgid "Apply changes"
-msgstr ""
+msgstr "Änderungen anwenden"
 
 #: inieditorpanel/templates/admin_tracini.html:183
 msgid "Applies the changes from this section."
@@ -339,7 +342,7 @@ msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:184
 msgid "Discard changes"
-msgstr ""
+msgstr "Änderungen verwerfen"
 
 #: inieditorpanel/templates/admin_tracini.html:184
 msgid ""
@@ -354,21 +357,4 @@ msgstr ""
 #: inieditorpanel/templates/admin_tracini.html:187
 msgid "Adds the specified options to this section"
 msgstr ""
-
-#~ msgid ""
-#~ "Defines the valid characters for a section name or option name in \n"
-#~ "      `trac.ini`. Must be a valid "
-#~ "regular expression. You only need to "
-#~ "change \n"
-#~ "      these if you have plugins "
-#~ "that use some strange section or "
-#~ "option names.\n"
-#~ "      "
-#~ msgstr ""
-
-#~ msgid ""
-#~ "Defines the security manager that specifies whether the user has \n"
-#~ "      access to certain options.\n"
-#~ "      "
-#~ msgstr ""
 
