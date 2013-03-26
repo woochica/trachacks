@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 #
 
-__docformat__ = 'restructuredtext en'
-
 """
 Annotation for lint results
 """
 
-from trac.core import *
+__docformat__ = 'restructuredtext en'
+
+from trac.core import Component, implements
 from trac.mimeview.api import IHTMLPreviewAnnotator
 from trac.resource import Resource
 from trac.web.api import IRequestFilter
@@ -55,7 +55,7 @@ class LintAnnotator(Component):
             rev = data['build']['rev']
             for step in steps:
                 for report in step.get('reports', []):
-                    if report.get('category') <> 'lint':
+                    if report.get('category') != 'lint':
                         continue
                     for item in report.get('data', {}).get('data', []):
                         href = item.get('href')
