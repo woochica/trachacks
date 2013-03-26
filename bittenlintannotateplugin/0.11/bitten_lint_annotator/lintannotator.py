@@ -103,7 +103,7 @@ class LintAnnotator(Component):
         reports = None
         for build in builds:
             config = BuildConfig.fetch(self.env, build.config)
-            if not resource.id.startswith('/' + config.path.lstrip('/')):
+            if not resource.id.lstrip('/').startswith(config.path.lstrip('/')):
                 self.log.debug('Skip build %s' % build)
                 continue
             path_in_config = resource.id[len(config.path)+1:].lstrip('/')
