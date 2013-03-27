@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2011 Max Sinelnikov <siniy@unigine.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from trac.core import *
 from trac.admin.api import IAdminPanelProvider
 from helpers import get_options, TeamCityQuery, TeamCityError
