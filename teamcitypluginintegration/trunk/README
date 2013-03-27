@@ -1,7 +1,7 @@
 INSTALLATION:
 
 Get latest version from svn:
-  svn co svn+ssh://studio/repos/web/trac-plugins/teamcity-plugin/trunk teamcity
+  svn co http://trac-hacks.org/svn/teamcitypluginintegration/trunk
 
 Build egg:
   cd teamcity

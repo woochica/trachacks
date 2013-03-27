@@ -15,6 +15,7 @@ setup(
 	author_email='siniy@unigine.com',
 	version='0.3',
 	license='BSD 3-Clause',
+	url="http://trac-hacks.org/wiki/TeamCityPluginIntegration",
 	packages=find_packages(exclude=['*.tests*']),
 	install_requires=[
 		"lxml>=2.2",
