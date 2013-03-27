@@ -89,7 +89,7 @@
             1190909220,
             u'',
             None,
-            u'#N/A',
+            u'#N/A!',
             u'jun66j5',
             u'testuser',
             u'',
@@ -106,5 +106,5 @@
         (u'priority', u'String', u'6'),
         (u'priority', u'2011-05-18 01:37', u'8'),
         (u'priority', u'TRUE', u'9'),
-        (u'priority', u'#N/A', u'10')],
+        (u'priority', u'#N/A!', u'10')],
     []]
