@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TracIniAdminPanel 0.90\n"
 "Report-Msgid-Bugs-To: trac@dstoecker.de\n"
-"POT-Creation-Date: 2013-03-25 22:00+0100\n"
+"POT-Creation-Date: 2013-03-27 18:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
 
-#: inieditorpanel/web_ui.py:29 inieditorpanel/web_ui.py:35
+#: inieditorpanel/web_ui.py:31 inieditorpanel/web_ui.py:37
 msgid ""
 "Defines the valid characters for a section name or option name in \n"
 "`trac.ini`. Must be a valid regular expression. You only need to "
@@ -27,13 +27,13 @@ msgid ""
 "names."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:41
+#: inieditorpanel/web_ui.py:43
 msgid ""
 "Defines the security manager that specifies whether the user has \n"
 "access to certain options."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:48
+#: inieditorpanel/web_ui.py:50
 msgid ""
 "Defines option fields (as `section-name|option-name`) that \n"
 "represent passwords. Password input fields are used for these fields."
@@ -43,92 +43,104 @@ msgid ""
 "fields provided by the ini editor."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:74
+#: inieditorpanel/web_ui.py:79
 msgid "General"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:74
+#: inieditorpanel/web_ui.py:79
 msgid "trac.ini Editor"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:93 inieditorpanel/web_ui.py:146
-msgid "The section \"component\" can't be edited with the ini editor."
+#: inieditorpanel/web_ui.py:103
+msgid "The section \"components\" can't be edited with the ini editor."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:97 inieditorpanel/web_ui.py:149
+#: inieditorpanel/web_ui.py:107 inieditorpanel/web_ui.py:159
 #, python-format
 msgid "The section name %s is invalid."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:119
+#: inieditorpanel/web_ui.py:129
 #, python-format
 msgid "Security manager could not be initated. %s"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:143
+#: inieditorpanel/web_ui.py:153
 msgid "The section name was empty."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:153
+#: inieditorpanel/web_ui.py:156
+msgid "The section \"component\" can't be edited with the ini editor."
+msgstr ""
+
+#: inieditorpanel/web_ui.py:163
 #, python-format
 msgid ""
 "Section %s has been created. Note that you need to add at least one "
 "option to store it permanently."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:155
+#: inieditorpanel/web_ui.py:165
 msgid "The section already exists."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:273
+#: inieditorpanel/web_ui.py:283
 #, python-format
 msgid "Changes for section %s have been applied."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:276 inieditorpanel/web_ui.py:288
+#: inieditorpanel/web_ui.py:286 inieditorpanel/web_ui.py:298
 msgid "No changes have been applied."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:285
+#: inieditorpanel/web_ui.py:295
 msgid "Changes have been applied."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:295
+#: inieditorpanel/web_ui.py:305
 #, python-format
 msgid "Your changes for section %s have been discarded."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:300
+#: inieditorpanel/web_ui.py:310
 msgid "All changes have been discarded."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:315
+#: inieditorpanel/web_ui.py:325
 #, python-format
 msgid "The option name %s is invalid."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:320
+#: inieditorpanel/web_ui.py:330
 #, python-format
 msgid "The new option %s could not be added due to security restrictions."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:327
+#: inieditorpanel/web_ui.py:337
 #, python-format
 msgid "The new fields have been added to section %s."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:329
+#: inieditorpanel/web_ui.py:339
 msgid "No new fields have been added."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:560
+#: inieditorpanel/web_ui.py:511
+msgid "text"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:515
+msgid "password"
+msgstr ""
+
+#: inieditorpanel/web_ui.py:573
 #, python-format
 msgid ""
 "The default value for option \"%s\" in section \"%s\" is invalid. "
 "Reason: %s"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:589
+#: inieditorpanel/web_ui.py:602
 #, python-format
 msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
 msgstr ""
@@ -143,9 +155,6 @@ msgid "Allows you to edit the trac.ini file."
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:23
-#: inieditorpanel/templates/admin_tracini.html:72
-#: inieditorpanel/templates/admin_tracini.html:129
-#: inieditorpanel/templates/admin_tracini.html:135
 msgid "Note:"
 msgstr ""
 
@@ -204,22 +213,23 @@ msgstr ""
 msgid "Value"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:72
-msgid "This section is essentially"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:72
-msgid "empty and won't persist"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:72
+#: inieditorpanel/templates/admin_tracini.html:71
 msgid ""
+"[1:Note:] This section is essentially [2:empty and won't persist] "
 "unless a not-default value is \n"
 "                  specified for at least one option in this section."
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:76
 msgid "Options count:"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:84
+msgid "Modifiable Options"
+msgstr ""
+
+#: inieditorpanel/templates/admin_tracini.html:84
+msgid "Read-only Options"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:102
@@ -230,46 +240,25 @@ msgstr ""
 msgid "false"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:129
-msgid "This option represents"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:129
-msgid "a password"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:129
+#: inieditorpanel/templates/admin_tracini.html:128
 msgid ""
-". Therefore the value of this field is intentionally empty.\n"
+"[1:Note:] This option represents [2:a password]. Therefore the value "
+"of this field is intentionally empty.\n"
 "                    To change the password, simply enter it. To keep "
 "the current password keep this field empty."
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:135
-msgid "This option is a"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:135
-msgid "custom option"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:135
-msgid ". It will be"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:135
-msgid "completely deleted"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:135
+#: inieditorpanel/templates/admin_tracini.html:134
 msgid ""
-"if it's set to its default value. \n"
+"[1:Note:] This option is a [2:custom option]. It will be "
+"[3:completely deleted] if it's set to its default value. \n"
 "                    To keep it you need to assign a (non-empty) value"
 " to it."
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:141
-msgid "Description:"
+#, python-format
+msgid "[1:Description:] %(description)s"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:143
@@ -277,7 +266,8 @@ msgid "Type:"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:145
-msgid "list (separated by '"
+#, python-format
+msgid "list (separated by '%(separation)s')"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:146
@@ -289,32 +279,28 @@ msgid "file system path relative to the Trac env"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:148
-msgid "one component implementing '"
+#, python-format
+msgid "one component implementing '%(name)s'"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:149
-msgid "ordered list of components implementing '"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:149
-msgid "' (comma separated)"
+#, python-format
+msgid "ordered list of components implementing '%(name)s' (comma separated)"
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:152
 msgid "Access:"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:155
-#: inieditorpanel/templates/admin_tracini.html:159
-msgid "Default value:"
+#: inieditorpanel/templates/admin_tracini.html:154
+#: inieditorpanel/templates/admin_tracini.html:158
+#, python-format
+msgid ""
+"| [1:Default value:] %(default)s \n"
+"                          | [2:Currently stored value:] %(stored)s"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:156
-#: inieditorpanel/templates/admin_tracini.html:160
-msgid "Currently stored value:"
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:170
+#: inieditorpanel/templates/admin_tracini.html:171
 msgid "Hidden Options"
 msgstr ""
 
@@ -325,37 +311,56 @@ msgid ""
 msgstr ""
 
 #: inieditorpanel/templates/admin_tracini.html:176
-msgid "Due to security restrictions there are"
+#, python-format
+msgid ""
+"Due to security restrictions there are %(options)s options marked as "
+"hidden in this section."
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:176
-msgid "options marked as hidden in this section."
-msgstr ""
-
-#: inieditorpanel/templates/admin_tracini.html:183
-#: inieditorpanel/templates/admin_tracini.html:195
+#: inieditorpanel/templates/admin_tracini.html:182
+#: inieditorpanel/templates/admin_tracini.html:194
 msgid "Apply changes"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:183
+#: inieditorpanel/templates/admin_tracini.html:182
 msgid "Applies the changes from this section."
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:184
+#: inieditorpanel/templates/admin_tracini.html:183
 msgid "Discard changes"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:184
+#: inieditorpanel/templates/admin_tracini.html:183
 msgid ""
 "Discards the changes from this section. Also removes custom options, "
 "if they still have their default value."
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:186
+#: inieditorpanel/templates/admin_tracini.html:185
 msgid "Options to be added to this section; comma-separated"
 msgstr ""
 
-#: inieditorpanel/templates/admin_tracini.html:187
+#: inieditorpanel/templates/admin_tracini.html:186
 msgid "Adds the specified options to this section"
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:2
+msgid "bool"
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:3
+msgid "int"
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:5
+msgid "readonly"
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:6
+msgid "hidden"
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:7
+msgid "modifiable"
 msgstr ""
 

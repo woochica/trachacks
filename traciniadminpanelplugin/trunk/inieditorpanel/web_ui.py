@@ -70,14 +70,13 @@ class TracIniAdminPanel(Component):
     for option in self.password_options:
       self.password_options_set[option] = True
 
-      
   #
   # IAdminPanelProvider methods
   #
 
   def get_admin_panels(self, req):
     if 'TRAC_ADMIN' in req.perm:
-      yield ('general', _('General'), 'trac_ini_editor', _('trac.ini Editor'))
+      yield ('general', dgettext('messages', 'General'), 'trac_ini_editor', _('trac.ini Editor'))
 
   def render_admin_panel(self, req, cat, page, path_info):  
     req.perm.require('TRAC_ADMIN')
@@ -380,6 +379,7 @@ class TracIniAdminPanel(Component):
     add_stylesheet(req, 'inieditorpanel/main.css')
     add_script(req, 'inieditorpanel/editor.js')
     data['_'] = _
+    data['gettext'] = gettext
     return 'admin_tracini.html', data
     
   def _get_session_value(self, req, section_name, option_name):
@@ -508,11 +508,11 @@ class TracIniAdminPanel(Component):
       option_type = option.__class__.__name__.lower()[:-6] or 'text'
     else:
       option_desc = None
-      option_type = 'text'
+      option_type = N_('text')
       
     # See "IniEditorBasicSecurityManager" for why we use a pipe char here.
     if ('%s|%s' % (section_name, option_name)) in self.password_options_set:
-      option_type = 'password'
+      option_type = N_('password')
       
     if section_default_values:
       default_value = (self._convert_value(section_default_values.get(option_name), option) or '')
@@ -644,5 +644,3 @@ class TracIniAdminPanel(Component):
     """
     from pkg_resources import resource_filename
     return [('inieditorpanel', resource_filename(__name__, 'htdocs'))]
-    #return []
-    

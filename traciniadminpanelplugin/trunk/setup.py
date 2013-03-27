@@ -49,7 +49,7 @@ setup(
         'License :: OSI Approved :: BSD License', 
     ],
     install_requires = ['Trac>=0.12'],
-    packages = [ PACKAGE ],
+    packages = find_packages(exclude=['*.texts*']),
     package_data = { PACKAGE: [ 'templates/*', 'htdocs/*', 'locale/*/LC_MESSAGES/*.mo' ] },
                                          
     entry_points = { 'trac.plugins': [ 
