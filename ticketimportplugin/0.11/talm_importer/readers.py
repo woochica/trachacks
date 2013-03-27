@@ -47,16 +47,36 @@ def _to_unicode(val):
 class UTF8Reader(object):
     def __init__(self, file, encoding):
         self.reader = codecs.getreader(encoding)(file, 'replace')
+        self.line_num = 0
 
     def __iter__(self):
         return self
 
     def next(self):
-        return self.reader.next().encode("utf-8")
+        line = self.reader.next()
+        self.line_num += 1
+        return line.encode("utf-8")
 
 class CSVDictReader(csv.DictReader):
+    def __init__(self, reader, fields):
+        csv.DictReader.__init__(self, reader, fields)
+        self.__reader = reader
+
     def next(self):
-        d = csv.DictReader.next(self)
+        reader = self.__reader
+        begin = reader.line_num + 1
+        try:
+            d = csv.DictReader.next(self)
+        except csv.Error, e:
+            end = reader.line_num
+            if begin == end:
+                message = 'Error while reading line %(num)d: %(error)s'
+                kwargs = {'num': end, 'error': to_unicode(e)}
+            else:
+                message = 'Error while reading from line %(begin)d to ' \
+                          '%(end)d: %(error)s'
+                kwargs = {'begin': begin, 'end': end, 'error': to_unicode(e)}
+            raise TracError(message % kwargs)
         return dict((_to_unicode(key), _to_unicode(val))
                     for key, val in d.iteritems()
                     if key is not None)

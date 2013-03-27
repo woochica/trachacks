@@ -464,7 +464,18 @@ datetime_format=%Y-%m-%d %H:%M
         ticket.insert()
         ticket['blockedby'] = str(ticket.id)
         ticket.save_changes('someone','Some comments', when=datetime.now(utc))
-        
+
+    def test_handling_csv_error(self):
+        env = self._setup()
+        try:
+            self._do_test(env, 'test-handling-csv-error.csv',
+                          self._test_preview)
+            assert False, 'No TracError'
+        except TracError, e:
+            self.assertEquals('Error while reading from line 4 to 6:'
+                              ' newline inside string',
+                              unicode(e))
+
 def suite():
     return unittest.makeSuite(ImporterTestCase, 'test')
 if __name__ == '__main__':
