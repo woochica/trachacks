@@ -1,28 +1,47 @@
-import re
-from trac.web.api import ITemplateStreamFilter
 from trac.core import *
-from genshi.builder import tag
-from trac.web import IRequestHandler
-from trac.util import Markup
-from trac.web.href import Href
-from genshi.filters.transform import Transformer
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter
+from trac.web.chrome import add_script
 
 
-class TicketWebUiAddon(Component):
-    implements(ITemplateStreamFilter)
-    
-    def __init__(self):
-        pass
+class BetterHoursDisplay(Component):
+    """This component changes decimal hours to hours/minutes"""
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
 
-    # ITemplateStreamFilter
-    def filter_stream(self, req, method, filename, stream, data):
-        self.log.debug("TicketWebUiAddon executing") 
-        if not filename == 'ticket.html':
-            #self.log.debug("TicketWebUiAddon not emitting ticket javascript because we are not on ticket.html")
-            return stream
-        stream = stream | Transformer('//div[@id="banner"]').before(
-            tag.script(type="text/javascript", 
-                       src=req.href.chrome("billing", "ticket.js"))()
-            )
-        return stream
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'ticket.html':
+            add_script(req, "billing/ticket.js")
+        return (template, data, content_type)
+
+class HoursLayoutChanger(Component):
+    """This moves the add hours box up to underneath the comment box.
+    Removes the add_hours field from the ticket properties display 
+    and then cleans up these tables
+
+    This prevents needing to expand the "Modify Ticket" section to 
+    add hours and a comment
+    """
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'ticket.html':
+            add_script(req, "billing/change_layout.js")
+        return (template, data, content_type)
+
+
+class AddHoursSinceComment(Component):
+    """Adds a button next to the changes in ticket history that fills
+    the Add Hours box with the time since that change"""
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'ticket.html':
+            add_script(req, "billing/add_hours_from_comment.js")
+        return (template, data, content_type)
+
+
