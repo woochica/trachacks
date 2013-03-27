@@ -13,7 +13,8 @@ function add_buttons(){
 function timestamp_from_change(el){
   el = $(el);
   if(!el.is(".change")) el = $(el.parents(".change"));
-  var id=el.attr("id"), r = /trac-change-\d+-(\d+)/, m=id.match(r),
+  var id=el.attr("id"), r = /trac-change-\d+-(\d+)/,
+    m = id && id.match(r),
     ts = m && m[1];
   if(ts) return new Date(Math.floor(Number(ts/1000)));
   return null;
