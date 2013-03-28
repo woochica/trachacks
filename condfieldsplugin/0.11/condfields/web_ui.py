@@ -1,5 +1,18 @@
-# Created by Noah Kantrowitz on 2007-05-05.
-# Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2007-2009 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+import urllib
 
 from trac.core import *
 from trac.config import ListOption, BoolOption
@@ -8,9 +21,7 @@ from trac.web.chrome import ITemplateProvider, add_script
 from trac.ticket.model import Type
 from trac.ticket.api import TicketSystem
 from trac.util.compat import sorted, set
-import urllib
 
-from pkg_resources import resource_filename
 
 class CondFieldsModule(Component):
     """A filter to implement conditional fields on the ticket page."""
@@ -19,15 +30,18 @@ class CondFieldsModule(Component):
     
     include_std = BoolOption('condfields', 'include_standard', default='true',
                              doc='Include the standard fields for all types.')
+    show_default = BoolOption('condfields', 'show_default', default='false',
+                             doc='Default is to show or hide selected fields.')
     
-    forced_fields = set(['type', 'summary', 'reporter', 'description', 'status', 'resolution', 'priority'])
+    forced_fields = ListOption('condfields', 'forced_fields', doc='Fields that cannot be disabled',
+                               default="type, summary, reporter, description, status, resolution, priority")
 
     def __init__(self):
         # Initialize ListOption()s for each type.
         # This makes sure they are visible in IniAdmin, etc
         self.types = [t.name for t in Type.select(self.env)]
         for t in self.types:
-            setattr(self.__class__, '%s_fields'%t, ListOption('condfields', t, doc='Fields to include for type "%s"'%t))
+            setattr(self.__class__, '%s_fields'%t, ListOption('condfields', t, doc='Fields to hide for type "%s"'%t))
 
     # IRequestHandler methods
     def match_request(self, req):
@@ -36,7 +50,8 @@ class CondFieldsModule(Component):
     def process_request(self, req):
         #self.log.debug("@ process_request")
         data = {}
-        data['types'] = {}
+        ticket_types = {}
+	field_types = {}
         mode = req.path_info[12:-3]
         if mode != 'new' and mode != 'view':
             raise TracError('Invalid condfields view')
@@ -44,6 +59,9 @@ class CondFieldsModule(Component):
         standard_fields = set()
         for f in TicketSystem(self.env).get_ticket_fields():
             all_fields.append(f['name'])
+
+	    field_types[f['name']] = f['type']
+	    
             if not f.get('custom'):
                 standard_fields.add(f['name'])
                 
@@ -58,11 +76,16 @@ class CondFieldsModule(Component):
                 del all_fields[curr_idx]
         
         for t in self.types:
-            fields = set(getattr(self, t+'_fields'))
-            if self.include_std:
-                fields.update(standard_fields)
-            fields.update(self.forced_fields)
-            data['types'][t] = dict([
+            if not self.show_default:
+                hiddenfields = set(getattr(self, t+'_fields'))
+                fields = set(all_fields)
+                fields.difference_update(hiddenfields)
+            else:
+                fields = set(getattr(self, t+'_fields'))
+                if self.include_std:
+                    fields.update(standard_fields)
+            fields.update(set(self.forced_fields))
+            ticket_types[t] = dict([
                 (f, f in fields) for f in all_fields
             ])
 
@@ -70,10 +93,12 @@ class CondFieldsModule(Component):
         self.log.info(standard_fields)
         
         data['mode'] = mode
-        data['all_fields'] = list(all_fields)
-        data['ok_view_fields'] = sorted(set(all_fields) - self.forced_fields, key=lambda x: all_fields.index(x))
-        data['ok_new_fields'] = sorted(set(all_fields) - set(['summary', 'reporter', 'description', 'owner', 'type', 'status', 'resolution']), key=lambda x: all_fields.index(x))
-        return 'condfields.js', {'condfields': data}, 'text/javascript'
+        data['types'] = json.dumps(ticket_types)
+        data['field_types'] = json.dumps(field_types)
+        data['required_fields'] = json.dumps(list(self.forced_fields))
+        #data['ok_view_fields'] = sorted(set(all_fields) - set(self.forced_fields), key=lambda x: all_fields.index(x))
+        #data['ok_new_fields'] = sorted(set(all_fields) - set(['summary', 'reporter', 'description', 'owner', 'type', 'status', 'resolution']), key=lambda x: all_fields.index(x))
+        return 'condfields.js', {'condfields': data}, 'text/plain'
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
@@ -95,14 +120,13 @@ class CondFieldsModule(Component):
             add_script(req, '/condfields/%s.js'%(req.path_info.startswith('/newticket') and 'new' or 'view'))
         return template, data, content_type
 
-    # ITemplateProvider methods
+    ### ITemplateProvider methods
+
     def get_htdocs_dirs(self):
-        #from pkg_resources import resource_filename
-        #return [('condfields', resource_filename(__name__, 'htdocs'))]
-        return ()
+        return []
             
     def get_templates_dirs(self):
-        #yield resource_filename(__name__, 'templates')
         return ()
+        from pkg_resources import resource_filename
+        return [resource_filename(__name__, 'templates')]
 
-    

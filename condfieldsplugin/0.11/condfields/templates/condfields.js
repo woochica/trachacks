@@ -1,37 +1,20 @@
-var condfields = {};
-#for type, fields in condfields.types.iteritems()
-condfields['$type'] = {};
-#for field, val in fields.iteritems()
-condfields['$type']['$field'] = ${val and 'true' or 'false'};
-#end
-#end
-
-var ok_view_fields = [];
-#for field, val in enumerate(condfields.ok_view_fields)
-ok_view_fields[$field] = '$val';
-#end
-
-var ok_new_fields = [];
-#for field, val in enumerate(condfields.ok_new_fields)
-ok_new_fields[$field] = '$val';
-#end
+var condfields = $condfields.types;
+var field_types = $condfields.field_types;
+var required_fields = $condfields.required_fields;
 
 $(function() {
     var mode = '$condfields.mode';
-
-    if(mode == 'view'){
-        ok_fields = ok_view_fields;
-    } else {
-        ok_fields = ok_new_fields;
-    }
-    
+    var all_fields = [];
+    $('#properties tbody').find('label[for]').each(function(i,e) {
+        var field = e.getAttribute('for') ? e.getAttribute('for').substr(6): e.getAttribute('htmlFor').substr(6);
+        all_fields.push(field)
+    });
     var field_data = {};
-    for(var i=0;i<ok_fields.length;i++) {
-        var field = ok_fields[i];
-        if(mode == 'view' && field == 'owner') continue;
+    for(var i=0;i<all_fields.length;i++) {
+        var field = all_fields[i];
         field_data[field] = {
-            label: $('label[@for=field-'+field+']').parents('th').html(),
-            input: $('#field-'+field).parents('td').html()
+            label: $('label[@for=field-'+field+']').parents('th'),
+            input: $('#field-'+field).parents('td')
         }
     }
     //console.info(field_data);
@@ -39,72 +22,60 @@ $(function() {
     
     function set_type(t) {
 
+		var condfields_fragement = $("<div/>");
+        $('#properties tbody tr').each(function(i,e) {
+            var lf = $(this).find("label[for]").attr('for');
+            if (lf && lf.length > 6 && required_fields.join(' ').indexOf(lf.substr(6))==-1) { 
+                $(this).appendTo(condfields_fragement); 
+            } 
+        })
+
         var col = 1;
-        var table = '';
-        var values = [];
-        for(var i=0;i<ok_fields.length;i++) {
-            var field = ok_fields[i];
+        var rows = [];
+        for(var i=0;i<all_fields.length;i++) {
+            var field = all_fields[i];
+            if (!field_data[field] || field_data[field].label == null) continue;
             if(mode == 'view' && field == 'owner') continue;
-            if(condfields[t][field] == 0) continue;
+            if(required_fields.join(' ').indexOf(field) != -1 || condfields[t][field] == 0) continue;
             
-            if(col == 1) {
-		table += '<tr><th class="col1">';
-		table += field_data[field].label + '</th>'
-		table += '<td class="col1">' + field_data[field].input + '</td>'
+            full_row = field_types[field] == 'textarea'
+
+            if(col == 1 || full_row) {
+				var tr = $("<tr/>");
+				field_data[field].label.removeClass("col2");
+				field_data[field].label.addClass("col1");
+				tr.append(field_data[field].label);
+				field_data[field].input.removeClass("col2");
+				field_data[field].input.addClass("col1");
+				tr.append(field_data[field].input);
+				rows.push(tr);
+				col = 2;
             } else {
-                table += '<th class="col2">'
-		table += field_data[field].label + '</th>'
-		table += '<td class="col2">' + field_data[field].input + '</td>'
-            }
-	
-	
-	
-	    if(col == 1){
-		col =2;	
-            } else {
-                table += '</tr>'
-                col = 1;
+				tr = rows[rows.length-1];
+				field_data[field].label.removeClass("col1");
+				field_data[field].label.addClass("col2");
+				tr.append(field_data[field].label);
+				field_data[field].input.removeClass("col1");
+				field_data[field].input.addClass("col2");
+				tr.append(field_data[field].input);
+				col = 1;
             }
 
-            // Copy out the value
-            values.push({field:field,value:$('#field-'+field).val()});
+	    if (full_row) {
+		    col = 1
+	    }
+        }
 
-        }
-        
-        if(mode == 'new') {
-            //$('#properties tbody').html(table);
-            var n=0;
-            $('#properties tbody tr').each(function() {
-                if(n > 3) {
-                    $(this).remove()
-                }
-                n += 1;
-            })
-            $('#properties tbody').append(table);
-        } else {
-            var n=0;
-            $('#properties tbody tr').each(function() {
-                if(n > 3) {
-                    $(this).remove()
-                }
-                n += 1;
-            })
-            $('#properties tbody').append(table);
-        }
-        
-        // Restore the previous values
-        for(var i=0;i<values.length;i++) {
-            $('#field-'+values[i].field).val(values[i].value);
-        }
+		if (col == 2) {
+			tr = rows[rows.length-1];
+			tr.append('<th class="col2"/><td class="col2"/>');
+		}
+		for (var i=0; i < rows.length; i++) {
+			$('#properties tbody').append(rows[i]);
+		}
     }
     
     function set_header_type(t) {
-        // Make a dict so I can check containment
-        ok_fields_dict = {}
-        for(var i=0;i<ok_fields.length;i++) {
-            ok_fields_dict[ok_fields[i]] = 1;
-        }
-        
         var elms = [[]];
         $('table.properties tr').each(function() {
             $(this).children().each(function() {
