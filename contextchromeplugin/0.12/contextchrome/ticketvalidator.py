@@ -25,27 +25,20 @@ class TicketValidatorDecolator(Component):
         self.workflow = get_workflow_config(self.config)
 
     def _get_validation_rules(self):
+        sentinel = 'sentinel'  # something that isn't None
+        conditionkeys = ['status', 'type']
+        conditionkeys.sort()
+        rules = {'status=new&type=*': {'summary': sentinel}}
         ''' compatible with TracTicketValidatorPlugin '''
-        rules = {'summary': {'status': 'new'}}  # default rule
-        for k, v in self.config.options('ticketvalidator'):
-            if k == 'validate_author':
-                pass
-            elif k == 'validates':
-                for v in self.config.getlist('ticketvalidator', k):
-                    if v not in rules:
-                        rules[v] = {}
-            elif k.find('.') > 0:
-                k, t = k.split('.', 1)
-                rule = rules[k] if k in rules else {}
-                rule[t] = v
-                rules[k] = rule
-            else:
-                pass  # error, skip it
-        # register rule in key as field-name if the rule have 'field'
-        for key in rules.keys():
-            if 'field' in rules[key]:
-                field = rules[key]['field']
-                rules[field] = rules.pop(key)
+        keys = [k[:-4] for k, v in self.config.options('ticketvalidator') if k.endswith('.rule')]  # includes dot
+        for key in keys:
+            values = dict([(k[len(key):], v) for k, v in self.config.options('ticketvalidator') if k.startswith(key)])
+            condition = '&'.join(['%s=%s' % (ck, values.get(ck, '*')) for ck in conditionkeys])
+            if condition not in rules:
+                rules[condition] = {}
+            rule = rules.get(condition)
+            field = values.get('field', key[:-1])
+            rule[field] = values.get('tip', sentinel)
         return rules
 
     # IRequestHandler methods

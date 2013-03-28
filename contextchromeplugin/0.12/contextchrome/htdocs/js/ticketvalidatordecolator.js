@@ -19,29 +19,34 @@
 			workflow['newticket'] = {newstate: 'new'}
 			// bind
 			$('#action input[type=radio]').change(addclass);
-			// force invoke a select handler
+            $('select#field-type').change(addclass);
+			// force invoke a select handler on document.ready
 			currentaction = $('#action input[checked=checked]')
-			dummyevent = {target:{value:'newticket'}}
+			dummyevent = {target:{'id':'action_', value:'newticket'}}
 			currentaction.length == 0 && addclass(dummyevent) || currentaction.change();
 		});
 	});
 
 	addclass = function(event) {
-		$(".tracvalidator").removeClass('tracvalidator');
-		action = event.target.value;
+		$(".tracvalidator").removeClass('tracvalidator');  // purge
+		// Generate condition
+		var type = $('#field-type option:selected').text();
+		var node = false;
+		var action = event.target.id.substring(0,7) == 'action_' && event.target.value ||
+		             (node = $('#action input[checked=checked]')[0]) && node.value || 'newticket';
 		if (!action in workflow) return;  // error exit
-		newstate = workflow[action].newstate
-		currentstate = $(".trac-status a").get(0).innerText
-		for (field in rules) {
-			if (!('status' in rules[field]) 
-			|| rules[field].status == newstate 
-			|| newstate == '*' && rules[field].status == currentstate) {
-				// $('#properties #field-' + field).addClass('tracvalidator');
-				// $('label[for=field-' + field + ']').addClass('tracvalidator');
-				// $('#properties #field-' + field).parentsUntil("tr","td").prev().addClass('tracvalidator');
-				$("#properties [name=field_" + field + "]").addClass('tracvalidator'); // take care for radio buttons
-				$("#properties [name=field_" + field + "]").parentsUntil("tr","td").prev().addClass('tracvalidator');
-			}
+		var state = workflow[action].newstate
+		// TODO: a line below will be fixed; after preview or auto_preview, .trac-status reflects invalid current status
+		if (state == '*') state = $(".trac-status a").get(0).innerText  // if wildcard, use a current state
+		rule = {}
+        jQuery.extend(rule, rules['status=' + state + '&type=' + type])
+        jQuery.extend(rule, rules['status=*&type=' + type])
+        jQuery.extend(rule, rules['status=' + state + '&type=*'])
+        jQuery.extend(rule, rules['status=*&type=*'])
+		// UI Change
+		for (field in rule) {
+			$("#properties [name=field_" + field + "]").addClass('tracvalidator'); // take care for radio buttons
+			$("#properties [name=field_" + field + "]").parentsUntil("tr","td").prev().addClass('tracvalidator');
 		}
 	}
 })(jQuery); 
