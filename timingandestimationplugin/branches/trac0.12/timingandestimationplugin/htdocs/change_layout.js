@@ -38,10 +38,17 @@ $.prototype.cleanupTable = function() {
     $(bodies).each(function(bodyIdx, body){
       body = $(body);
       var trs = $(body).children('tr');
-      var leftTds = [], rightTds = [];
+      var leftTds = [], rightTds = [], extraTDs=[];
       $(trs).each(function(ind, val){
         var kids = $(this).children();
-        if(kids.length == 4){
+
+        // special case for things that get removed badly (eg: CondFieldsGenshiPlugin)
+        // this is a two cell row in a table full of 4 cell rows
+        if(kids.length == 2 && !$(kids[1]).is('.fullrow')){
+          $(this).detach();
+          extraTDs.push([kids[0], kids[1]]);
+        }
+        else if(kids.length == 4){
           $(this).detach();
           if(has_contents(kids[0]) || has_contents(kids[1]))
             leftTds.push([kids[0], kids[1]]);
@@ -51,11 +58,11 @@ $.prototype.cleanupTable = function() {
           //else console.log('skipping empty', kids);
         };
       });
-
-      while(leftTds.length>0 || rightTds.length>0){
+      console.log(leftTds,rightTds, extraTDs);
+      while(leftTds.length>0 || rightTds.length>0 || extraTDs.length>0){
         var tr = $('<tr>');
-        var leftContent = leftTds.shift() || [$("<td>"),$("<td>")];
-        var rightContent = rightTds.shift() || [$("<td>"),$("<td>")];
+        var leftContent = leftTds.shift() || extraTDs.shift() || [$("<td>"),$("<td>")];
+        var rightContent = rightTds.shift() || extraTDs.shift() || [$("<td>"),$("<td>")];
         tr.append(leftContent[0]).append(leftContent[1])
           .append(rightContent[0]).append(rightContent[1]);
         $(body).append(tr);
@@ -70,6 +77,7 @@ $(document).ready(function() {
   TandE_MoveAddHours();
   // remove add_hours from header
   $('#h_hours,#h_hours + td').empty();
+  $('#h_hours,#h_hours + td').detach();
 
   //remove whitespace caused by the above
   $('#properties table').cleanupTable();
