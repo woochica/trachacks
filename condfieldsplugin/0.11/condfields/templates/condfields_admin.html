@@ -1,0 +1,113 @@
+<!DOCTYPE html
+    PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:py="http://genshi.edgewall.org/"
+      lang="en" xml:lang="en">
+<xi:include href="admin.html" />
+
+<head>
+  <title>Ticket Type Fields</title>
+</head>
+
+<body>
+
+<h2>Manage Ticket Type Fields</h2>
+
+<form class="mod" id="modtemplate" method="post">
+  <fieldset>
+    <legend>Select ticket type to modify</legend>
+    <div class="field">
+      <label for="type">Ticket Type:</label><br />
+      <select id="type" name="type">
+        <div py:for="type in template.types">
+        <option py:if="type.selected" id="ticket-${type.name}" value="${type.name}" selected="selected" hiddenfields="${type.hidden}">${type.name}</option>
+        <option py:if="not type.selected" id="ticket-${type.name}" value="${type.name}" hiddenfields="${type.hidden}">${type.name}</option>
+        </div>
+      </select>
+    </div>
+    <p>The following fields cannot be hidden:
+      <ul>
+        <li py:for="name in template.forcedfields">${name}</li>
+      </ul>
+    </p>
+  </fieldset>
+  <fieldset>
+    <legend>Standard Ticket Fields</legend>
+    <table py:if="len(template.standardfields)" id="standard-fieldlist" class="listing">
+      <thead>
+        <tr>
+          <th class="sel">Hide</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Label</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr py:for="cf in template.standardfields">
+          <td>
+            <input py:if="cf.hide" id="field-${cf.name}" type="checkbox" name="cf-hide" value="${cf.name}" checked="checked" />
+            <input py:if="not cf.hide" id="field-${cf.name}" type="checkbox" name="cf-hide" value="${cf.name}" />
+          </td>
+          <td>${cf.name}</td>
+          <td>${cf.type}</td>
+          <td>${cf.label}</td>
+        </tr>
+      </tbody>
+    </table>
+  </fieldset>
+  <fieldset>
+    <legend>Custom Ticket Fields</legend>
+    <table py:if="len(template.customfields)" id="custom-fieldlist" class="listing">
+      <thead>
+        <tr>
+          <th class="sel">Hide</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Label</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr py:for="cf in template.customfields">
+          <td>
+            <input py:if="cf.hide" id="field-${cf.name}" type="checkbox" name="cf-hide" value="${cf.name}" checked="checked" />
+            <input py:if="not cf.hide" id="field-${cf.name}" type="checkbox" name="cf-hide" value="${cf.name}" />
+          </td>
+          <td>${cf.name}</td>
+          <td>${cf.type}</td>
+          <td>${cf.label}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p py:if="not len(template.customfields)" class="help">No Custom Fields defined for this project.</p>
+  </fieldset>
+  
+  <div class="buttons">
+    <input type="submit" value="Apply changes" />
+  </div>
+</form>
+  <script type="text/javascript">
+$(function() {
+    function set_type(type) {
+      var hidden = $('#ticket-'+type).attr('hiddenfields').split(',');
+      $('input[@type=checkbox]').each(function(i) {
+        if (hidden.join(' ').indexOf(this.value) != -1) {
+          this.checked = true;
+        } else {
+          this.checked = false;
+        }
+      });
+    }
+    set_type($('#type').val());
+    
+    $('#type').change(function() {
+        set_type($(this).val());
+    })
+});
+
+  </script>
+
+</body>
+
+</html>
