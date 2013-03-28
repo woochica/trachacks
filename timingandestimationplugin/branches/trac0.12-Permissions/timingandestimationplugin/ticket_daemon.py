@@ -69,6 +69,8 @@ def save_ticket_change( db, ticket_id, author, change_time, field, oldvalue, new
 
 def delete_ticket_change( comp, ticket_id, author, change_time, field):
     """ removes a ticket change from the database """
+    if isinstance(change_time, datetime.datetime):
+        change_time = to_timestamp(change_time)
     sql = """DELETE FROM ticket_change  
              WHERE ticket=%s and author=%s and time=%s and field=%s""" 
     dbhelper.execute_non_query(comp.env, sql, ticket_id, author, change_time, field)
