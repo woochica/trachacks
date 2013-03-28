@@ -27,8 +27,16 @@ class SensitiveTicketsPolicy(Component):
     other permission check done on tickets that have been marked (through
     the UI) as "Sensitive".
 
+    Enable the plugin in trac.ini with:
+
+    {{{
+    [components]
+    sensitivetickets.* = enabled
+    }}}
+
     Once this plugin is enabled, you'll have to insert it at the appropriate
     place in your list of permission policies, e.g.
+
     {{{
     [trac]
     permission_policies = SensitiveTicketsPolicy, AuthzPolicy, 
