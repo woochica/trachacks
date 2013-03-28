@@ -58,7 +58,7 @@ $.prototype.cleanupTable = function() {
           //else console.log('skipping empty', kids);
         };
       });
-      console.log(leftTds,rightTds, extraTDs);
+      //console.log(leftTds,rightTds, extraTDs);
       while(leftTds.length>0 || rightTds.length>0 || extraTDs.length>0){
         var tr = $('<tr>');
         var leftContent = leftTds.shift() || extraTDs.shift() || [$("<td>"),$("<td>")];
