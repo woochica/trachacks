@@ -12,8 +12,8 @@ function load_data(cnt, stored) {
   s['${option_name}'] = '${option.stored_value.replace('\\\\', '\\\\\\\\').replace("'", "\\\\'")}';
 {% end %}
 
-  info_elem = settings_list.find('td#section-title-${section_name} .section-info');
-  cnt['${section_name}'] = { 'info_elem': info_elem, 'option_count': ${len(section)}, 'defaults_count': 0, 'modified_count': 0 };
-  stored['${section_name}'] = s;
+  info_elem = settings_list.find('td#section-title-${section_name.replace(':','_')} .section-info');
+  cnt['${section_name.replace(':','_')}'] = { 'info_elem': info_elem, 'option_count': ${len(section)}, 'defaults_count': 0, 'modified_count': 0 };
+  stored['${section_name.replace(':','_')}'] = s;
 {% end %}
 }

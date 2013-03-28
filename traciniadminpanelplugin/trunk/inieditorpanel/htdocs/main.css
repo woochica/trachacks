@@ -62,6 +62,15 @@
     font-size: 80%;
     display: block;
   }
+
+  #ini_settings_list td.section-title .section-description {
+    color: #888;
+    font-size: 80%;
+    font-weight: normal;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    display: block;
+ }
   
 #ini_settings_list td.subsection-title {
   font-weight: bold; 
@@ -115,4 +124,8 @@
 
 #ini_settings_list span.option-modify-section {
   float: right;
+}
+
+span.nobr {
+    white-space: nowrap; 
 }

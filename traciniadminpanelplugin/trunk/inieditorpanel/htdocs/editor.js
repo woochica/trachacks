@@ -75,7 +75,7 @@ $(document).ready(function(){
   settings_list.find('input:checkbox[name=inieditor_default]').each(function() {
     var field_name = $(this).val();
     var name_split  = field_name.split('##');
-    var section_name = name_split[0];
+    var section_name = name_split[0].replace(/:/g,'_');
     var option_name = name_split[1];
     var input_field = get_option_input_field(field_name);
     

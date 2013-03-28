@@ -55,11 +55,10 @@
     <form method="post" action="">
       <!--! This field is used to enable auto detection which submit button
             was meant to be used. Works only with JavaScript enabled. -->
-      <input type="hidden" name="inieditor_cur_focused_field" value=""/>
       <table class="listing" id="ini_settings_list">
         <thead>
           <tr>
-            <th>Name</th>
+            <th>Name<input type="hidden" name="inieditor_cur_focused_field" value=""/></th>
             <th>Default</th>
             <th>Value</th>
           </tr>
@@ -67,27 +66,28 @@
         <tbody>
           <py:for each="section_name, section in sorted([(key, value) for key, value in sections.items()], key=lambda section: section[0])">
             <tr>
-              <td colspan="3" class="section-title" id="section-title-${section_name}">
+              <td colspan="3" class="section-title" id="section-title-${section_name.replace(':','_')}">
                 <span i18n:msg="" py:if="len([option for option in section.values() if (option.value != option.default_value or option.option_info is not None)]) == 0" class="editor-note">
                   <b>Note:</b> This section is essentially <b>empty and won't persist</b> unless a not-default value is 
                   specified for at least one option in this section.
                 </span>
                 <span class="section-name">[${section_name}]</span>
+                <span class="section-description" py:if="descriptions.get(section_name)" i18n:msg="description"><b>Description:</b> ${descriptions.get(section_name)}</span>
                 <span class="section-info">Options count: ${len(section)}</span>
                 <!--! Add dummy field so that empty section won't get lost. -->
-                <input type="hidden" name="inieditor_value##${section_name}##dummy" value="dummy"/>
+                <input type="hidden" name="inieditor_value##${section_name.replace(':','_')}##dummy" value="dummy"/>
               </td>
             </tr>
             <py:for each="access_level, access_level_options in (('modifiable', modifiable_options[section_name]), ('readonly', readonly_options[section_name]))">
-              <tr py:if="len(access_level_options) != 0" class="collapsible-${section_name}">
+              <tr py:if="len(access_level_options) != 0" class="collapsible-${section_name.replace(':','_')}">
                 <td colspan="3" class="subsection-title">
                   ${access_level == 'modifiable' and _('Modifiable Options') or _('Read-only Options')}
                 </td>
               </tr>
               <py:for each="option_name, option in sorted([(key, value) for key, value in access_level_options.items()], key=lambda option: option[0])">
-                <tr class="collapsible-${section_name}">
-                  <td width="1" class="${option.access != 'modifiable' and 'disabled' or None}">
-                    <nobr>${option_name} <span class="modification-indicator">(*)</span></nobr>
+                <tr class="collapsible-${section_name.replace(':','_')}">
+                  <td class="${option.access != 'modifiable' and 'disabled' or None}">
+                    <span class="nobr">${option_name}&nbsp;<span class="modification-indicator">(*)</span></span>
                   </td>
                   <td class="default">
                     <input type="checkbox" name="inieditor_default" value="${section_name}##${option_name}" 
@@ -124,19 +124,19 @@
                     </py:choose>
                   </td>
                 </tr>
-                <tr py:if="option.type == 'password'" class="collapsible-${section_name} editor-note">
+                <tr py:if="option.type == 'password'" class="collapsible-${section_name.replace(':','_')} editor-note">
                   <td colspan="3" i18n:msg="">
                     <b>Note:</b> This option represents <b>a password</b>. Therefore the value of this field is intentionally empty.
                     To change the password, simply enter it. To keep the current password keep this field empty.
                   </td>
                 </tr>
-                <tr py:if="option.option_info is None" class="collapsible-${section_name} editor-note">
+                <tr py:if="option.option_info is None" class="collapsible-${section_name.replace(':','_')} editor-note">
                   <td colspan="3" i18n:msg="">
                     <b>Note:</b> This option is a <b>custom option</b>. It will be <b>completely deleted</b> if it's set to its default value. 
                     To keep it you need to assign a (non-empty) value to it.
                   </td>
                 </tr>
-                <tr class="collapsible-${section_name} option-info">
+                <tr class="collapsible-${section_name.replace(':','_')} option-info">
                   <td colspan="3">
                     <span class="option-description" i18n:msg="description"><b>Description:</b> ${option.desc or _('None available')}</span>
                     <span class="value-info">
@@ -167,17 +167,17 @@
               </py:for>
             </py:for>
             <py:if test="len(hidden_options[section_name]) > 0">
-              <tr class="collapsible-${section_name}">
+              <tr class="collapsible-${section_name.replace(':','_')}">
                 <td colspan="3" class="subsection-title">Hidden Options</td>
               </tr>
-              <tr class="collapsible-${section_name}">
+              <tr class="collapsible-${section_name.replace(':','_')}">
                 <py:choose test="len(hidden_options[section_name])">
                   <py:when test="1"><td colspan="3">Due to security restrictions there is one option marked as hidden in this section.</td></py:when>
                   <py:otherwise><td colspan="3" i18n:msg="options">Due to security restrictions there are ${hidden_options} options marked as hidden in this section.</td></py:otherwise>
                 </py:choose>
               </tr>
             </py:if>
-            <tr class="collapsible-${section_name}">
+            <tr class="collapsible-${section_name.replace(':','_')}">
               <td colspan="3">
                 <input type="submit" name="inieditor-submit-apply-${section_name}" value="${_('Apply changes')}" title="Applies the changes from this section."/>
                 <input type="submit" name="inieditor-submit-discard-${section_name}" value="${_('Discard changes')}" title="Discards the changes from this section. Also removes custom options, if they still have their default value."/>
