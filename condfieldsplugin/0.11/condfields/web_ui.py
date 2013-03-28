@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2007-2009 Noah Kantrowitz <noah@coderanger.net>
@@ -14,7 +13,7 @@ except ImportError:
     import simplejson as json
 import urllib
 
-from trac.core import *
+from trac.core import Component, TracError, implements
 from trac.config import ListOption, BoolOption
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_script
@@ -26,13 +25,14 @@ from trac.util.compat import sorted, set
 class CondFieldsModule(Component):
     """A filter to implement conditional fields on the ticket page."""
 
-    implements(IRequestHandler, IRequestFilter, ITemplateProvider)
-    
+    implements(IRequestFilter, IRequestHandler, ITemplateProvider)
+
     include_std = BoolOption('condfields', 'include_standard', default='true',
-                             doc='Include the standard fields for all types.')
+                             doc="Include the standard fields for all types.")
+
     show_default = BoolOption('condfields', 'show_default', default='false',
-                             doc='Default is to show or hide selected fields.')
-    
+                              doc="Default is to show or hide selected fields.")
+
     forced_fields = ListOption('condfields', 'forced_fields', doc='Fields that cannot be disabled',
                                default="type, summary, reporter, description, status, resolution, priority")
 
@@ -41,17 +41,19 @@ class CondFieldsModule(Component):
         # This makes sure they are visible in IniAdmin, etc
         self.types = [t.name for t in Type.select(self.env)]
         for t in self.types:
-            setattr(self.__class__, '%s_fields'%t, ListOption('condfields', t, doc='Fields to hide for type "%s"'%t))
+            hidden_fields = ListOption('condfields', t,
+                                       doc='Fields to hide for type "%s"' % t)
+            setattr(self.__class__, '%s_fields' % t, hidden_fields)
 
-    # IRequestHandler methods
+    ### IRequestHandler methods
+
     def match_request(self, req):
         return req.path_info.startswith('/condfields')
 
     def process_request(self, req):
-        #self.log.debug("@ process_request")
         data = {}
         ticket_types = {}
-	field_types = {}
+        field_types = {}
         mode = req.path_info[12:-3]
         if mode != 'new' and mode != 'view':
             raise TracError('Invalid condfields view')
@@ -60,11 +62,11 @@ class CondFieldsModule(Component):
         for f in TicketSystem(self.env).get_ticket_fields():
             all_fields.append(f['name'])
 
-	    field_types[f['name']] = f['type']
-	    
-            if not f.get('custom'):
-                standard_fields.add(f['name'])
-                
+        field_types[f['name']] = f['type']
+
+        if not f.get('custom'):
+            standard_fields.add(f['name'])
+
         if 'owner' in all_fields:
             curr_idx = all_fields.index('owner')
             if 'cc' in all_fields:
@@ -74,7 +76,7 @@ class CondFieldsModule(Component):
             if curr_idx < insert_idx:
                 all_fields.insert(insert_idx, all_fields[curr_idx])
                 del all_fields[curr_idx]
-        
+
         for t in self.types:
             if not self.show_default:
                 hiddenfields = set(getattr(self, t+'_fields'))
@@ -91,42 +93,32 @@ class CondFieldsModule(Component):
 
         self.log.debug(all_fields)
         self.log.info(standard_fields)
-        
+
         data['mode'] = mode
         data['types'] = json.dumps(ticket_types)
         data['field_types'] = json.dumps(field_types)
         data['required_fields'] = json.dumps(list(self.forced_fields))
-        #data['ok_view_fields'] = sorted(set(all_fields) - set(self.forced_fields), key=lambda x: all_fields.index(x))
-        #data['ok_new_fields'] = sorted(set(all_fields) - set(['summary', 'reporter', 'description', 'owner', 'type', 'status', 'resolution']), key=lambda x: all_fields.index(x))
+
         return 'condfields.js', {'condfields': data}, 'text/plain'
 
-    # IRequestFilter methods
+    ### IRequestFilter methods
+
     def pre_process_request(self, req, handler):
         return handler
-            
+
     def post_process_request(self, req, template, data, content_type):
-        if req.path_info.startswith('/newticket') or req.path_info.startswith('/ticket/'):
-            #Original code for v0.10
-            #idx = 0
-            #while True:
-            #    js = req.hdf.get('chrome.scripts.%i.href'%idx)
-            #    if not js:
-            #        break
-            #    idx += 1
-            #req.hdf['chrome.scripts.%i' % idx] = {
-            #    'href': req.href.condfields('condfield.js', mode=req.path_info.startswith('/newticket') and 'new' or 'view'), 
-            #    'type': 'text/javascript',
-            #}
-            add_script(req, '/condfields/%s.js'%(req.path_info.startswith('/newticket') and 'new' or 'view'))
+        if req.path_info.startswith('/newticket') or \
+                req.path_info.startswith('/ticket/'):
+            add_script(req, '/condfields/%s.js' %
+                            (req.path_info.startswith('/newticket') and 'new' or 'view'))
         return template, data, content_type
 
     ### ITemplateProvider methods
 
     def get_htdocs_dirs(self):
         return []
-            
+
     def get_templates_dirs(self):
-        return ()
         from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
