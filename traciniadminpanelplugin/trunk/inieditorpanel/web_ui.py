@@ -165,7 +165,7 @@ class TracIniAdminPanel(Component):
         add_warning(req, _('The section name was empty.'))
         req.redirect(req.href.admin(cat, page) + ext)
       elif section_name == 'components':
-        add_warning(req, _('The section "component" can\'t be edited with the ini editor.'))
+        add_warning(req, _('The section "components" can\'t be edited with the ini editor.'))
         req.redirect(req.href.admin(cat, page))
       elif self.valid_section_name_chars_regexp.match(section_name) is None:
         add_warning(req, _('The section name %s is invalid.') % section_name)
@@ -388,6 +388,9 @@ class TracIniAdminPanel(Component):
              'hidden_options': hidden_options
            }
 
+    data['_'] = _
+    data['gettext'] = gettext
+
     # Parse the JavaScript code
     # NOTE: We can't use <xi:include> for this as Genshi escapes XML characters
     #   in the JavaScript code leading invalid variable values (that contain
@@ -398,8 +401,6 @@ class TracIniAdminPanel(Component):
     
     add_stylesheet(req, 'inieditorpanel/main.css')
     add_script(req, 'inieditorpanel/editor.js')
-    data['_'] = _
-    data['gettext'] = gettext
     return 'admin_tracini.html', data
     
   def _get_session_value(self, req, section_name, option_name):

@@ -9,9 +9,9 @@ function update_section_info(section_name, count_diff, modified_diff, defaults_d
   section_counter['defaults_count'] += defaults_diff;
   section_counter['modified_count'] += modified_diff;
   
-  info_elem.html(  'Modified: ' + section_counter['modified_count'] 
-                 + ' | Defaults: ' + section_counter['defaults_count'] 
-                 + ' | Options count: ' + section_counter['option_count']);
+  info_elem.html( text_modified + section_counter['modified_count'] 
+                 + text_defaults + section_counter['defaults_count'] 
+                 + text_optionscount + section_counter['option_count']);
 }
 
 // Returns jquery result for the specified field

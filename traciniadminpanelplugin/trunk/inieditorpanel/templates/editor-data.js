@@ -1,5 +1,9 @@
 var section_count = ${len(sections)};
 
+var text_modified = '${_("Modified: ")}';
+var text_defaults = '${_(" | Defaults: ")}';
+var text_optionscount = '${_(" | Options count: ")}';
+
 function load_data(cnt, stored) {
   var info_elem;
   var s;
