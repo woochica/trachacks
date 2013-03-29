@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-29 21:49+0100\n"
+"POT-Creation-Date: 2013-03-29 21:57+0100\n"
 "PO-Revision-Date: 2013-03-25 21:41+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -130,15 +130,15 @@ msgstr "Die neuen Felder wurden zum Abschnitt %s hinzugefügt."
 msgid "No new fields have been added."
 msgstr "Es wurden keine neuen Felder hinzugefügt."
 
-#: inieditorpanel/web_ui.py:531
+#: inieditorpanel/web_ui.py:532
 msgid "text"
 msgstr "Text"
 
-#: inieditorpanel/web_ui.py:535
+#: inieditorpanel/web_ui.py:536
 msgid "password"
 msgstr "Passwort"
 
-#: inieditorpanel/web_ui.py:591
+#: inieditorpanel/web_ui.py:592
 #, python-format
 msgid ""
 "The default value for option \"%s\" in section \"%s\" is invalid. Reason:"
@@ -147,7 +147,7 @@ msgstr ""
 "Der Standardwert für Option \"%s\" in Abschnitt \"%s\" ist ungültig. "
 "Grund: %s"
 
-#: inieditorpanel/web_ui.py:620
+#: inieditorpanel/web_ui.py:621
 #, python-format
 msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
 msgstr "Der Wert für Option \"%s\" in Abschnitt \"%s\" ist ungültig. Grund: %s"
@@ -405,4 +405,8 @@ msgstr " | Standard: "
 #: inieditorpanel/texts/othertexts.py:11
 msgid " | Options count: "
 msgstr " | Optionsanzahl: "
+
+#: inieditorpanel/texts/othertexts.py:13
+msgid "<default value>"
+msgstr "<Standardwert>"
 

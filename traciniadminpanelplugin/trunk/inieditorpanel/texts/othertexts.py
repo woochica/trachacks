@@ -9,3 +9,5 @@ N_('modifiable')
 N_('Modified: ')
 N_(' | Defaults: ')
 N_(' | Options count: ')
+
+N_('<default value>')

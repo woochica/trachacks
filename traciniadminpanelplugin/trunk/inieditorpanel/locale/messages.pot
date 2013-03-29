@@ -7,9 +7,9 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: TracIniAdminPanel 0.90\n"
+"Project-Id-Version: TracIniAdminPanel 1.0.1\n"
 "Report-Msgid-Bugs-To: trac@dstoecker.de\n"
-"POT-Creation-Date: 2013-03-29 21:49+0100\n"
+"POT-Creation-Date: 2013-03-29 21:57+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -121,22 +121,22 @@ msgstr ""
 msgid "No new fields have been added."
 msgstr ""
 
-#: inieditorpanel/web_ui.py:531
+#: inieditorpanel/web_ui.py:532
 msgid "text"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:535
+#: inieditorpanel/web_ui.py:536
 msgid "password"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:591
+#: inieditorpanel/web_ui.py:592
 #, python-format
 msgid ""
 "The default value for option \"%s\" in section \"%s\" is invalid. "
 "Reason: %s"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:620
+#: inieditorpanel/web_ui.py:621
 #, python-format
 msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
 msgstr ""
@@ -371,5 +371,9 @@ msgstr ""
 
 #: inieditorpanel/texts/othertexts.py:11
 msgid " | Options count: "
+msgstr ""
+
+#: inieditorpanel/texts/othertexts.py:13
+msgid "<default value>"
 msgstr ""
 
