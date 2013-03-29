@@ -77,7 +77,6 @@ $(document).ready(function() {
   TandE_MoveAddHours();
   // remove add_hours from header
   $('#h_hours,#h_hours + td').empty();
-  $('#h_hours,#h_hours + td').detach();
 
   //remove whitespace caused by the above
   $('#properties table').cleanupTable();
