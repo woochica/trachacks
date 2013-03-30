@@ -50,7 +50,7 @@ except ImportError:
 
 
 PACKAGE = "WikiCalendarMacro"
-VERSION = "2.0.1"
+VERSION = "2.0.0"
 
 setup(
     name = PACKAGE,

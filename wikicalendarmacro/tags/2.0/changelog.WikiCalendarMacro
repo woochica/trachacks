@@ -1,0 +1,64 @@
+Author: Matthew Good <trac@matt-good.net>
+Maintainer: Steffen Hoffmann <hoff.st@web.de>
+
+Note: Because of a history of undocumented forks and merges the log might
+be incomplete, so notify the maintainer, if you know more details, please.
+
+
+initial version released for Trac 0.8 by Matthew Good (10-Jul-2005)
+ * small single script file macro, 67 lines
+ * one macro argument: wiki page names in strftime syntax, i.e.:
+{{{
+[[WikiCalendar(Meeting-%Y-%m-%d)]]
+}}}
+ * announced to work with the Blog macro
+
+month/year navigation contributed by Jan Finell
+<finell@cenix-bioscience.com> (28-Jul-2005)
+ * two links around month/year caption to step back and forwards
+   by one month per click, +28 lines
+
+improve wiki page detection adapted to Trac 0.9,
+developed by Matthew Good (29-Jul-2005)
+
+
+version for 0.11 announced by Alexander Klimetschek 
+<alexander.klimetschek@hpi.uni-potsdam.de> (08-Mar-2006),
+commited to repository by Ryan J Ollos <rjollos@gmail.com> (31-Dec-2009)
+ * introduce 4 macro arguments to adjust
+  * initial year and month displayed
+  * switch on/off month/year navigation buttons
+  * make path to wiki pages
+ * display link to milestone, if one is placed on that day
+ * add extensive table style CSS definition
+ * extend from previous/following month to pairs of navigation links
+   to step down/up one month or one year
+
+externally hosted version announced by Alexander Klimetschek due to 
+attachment limitation on WikiCalendarMacro wiki page at t-h.o (27-Mar-2006)
+ * includes time parse bug fix
+
+version with patch for WikiCalendarMacro.4.1.py parted to 0.11 version 
+contributed by Joshua Hoke and publish by Ryan J Ollos (31-Dec-2009)
+ * support relative paths for wiki pages
+
+version for Trac 0.11 with patch contributed by Joshua Hoke 
+and publish by Ryan J Ollos (31-Dec-2009)
+ * use locale setting to determine first-day-of-week
+ 
+macro file renaming for better presentation
+in installed plugins list of "About Trac" page,
+done by Ryan J Ollos (01-Jan-2010)
+
+version for Trac 0.11 with patch contributed by You(Ricky) Li 
+<you.li@sixnet.com> and publish by Ryan J Ollos (04-Feb-2010)
+ * improve positioning of month/year navigation arrows
+
+version for Trac 0.11 with patches contributed by fjruiz@citic.es and 
+neil@dip.sun.ac.za respectively, publish by Ryan J Ollos (27-Apr-2010)
+ * milestone names with non-ascii characters handled
+ * properly handle relative paths - again
+ * script grown to 290 lines-of-code
+
+version for Trac 0.11 fixed (18-Mai-2010),
+marked to require Trac >= 0.11.3 by Ryan J Ollos (11-Jun-2010)

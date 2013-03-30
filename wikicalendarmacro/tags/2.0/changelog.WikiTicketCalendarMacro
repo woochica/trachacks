@@ -1,0 +1,262 @@
+Author: Michael Comb <mcomb@mac.com>
+Maintainer: Ryan J Ollos <rjollos@gmail.com>
+
+Note: Because of a history of undocumented forks and merges log might still
+be incomplete, so notify the maintainer, if you know more details, please.
+
+
+WikiTicketCalendar inherits history of WikiCalendarMacro before 2008,
+most notably Month/Year navigation by Jan Finell <finell@cenix-bioscience.com>
+
+0.1.0 - initial release by Michael Comb <mcomb@mac.com> (11-Jan-2008)
+ based on WikiCalendarMacro by Matthew Good <trac@matt-good.net>
+ * add links to tickets as well as milestones
+ * changed format to look more like a regular, full page  calendar
+
+0.1.1 - initial import to SVN at trac-hacks.org by Ryan J Ollos (09-Feb-2010)
+ (trac-hacks.org SVN r7524, new maintainer)
+ * add revision and URL info
+
+0.1.1a - maintenance revision for 0.10 branch (09-Jun-2010)
+ changes by Steffen Hoffmann
+ * remove obsolete revision and URL info
+ * code cleanup for consistent indentation (PEP8) and
+   better SQL query formatting as done in other branches before
+ * add README with end-of-life statement for 0.10 branch
+
+0.1.1b - maintenance revision for 0.10 branch (09-Jun-2010)
+ changes suggested by delsauce@gmail.com
+ * better milestone query to match not on full time stamp by whole day
+
+
+# 0.11 branch from here #
+
+0.1.2 - bugfix release provided by Michael Comb (09-Feb-2008)
+ (was: WikiTicketCalendarMacro.py)
+ changes by Vladislav Naumov for compatibility with Trac 0.11.1
+
+0.1.3 - non-maintainer release provided by Michael Comb (24-Mar-2008)
+ (was: WikiTicketCalendarMacro.py.txt)
+ changes by Alex
+ * fixed 'ordinal not in range' issue by replacing
+   StringIO with cStringIO for better unicode handling,
+   actually a tradeoff of performance for unicode support
+
+0.2.0 - experimental release provided by Michael Comb (25-Mar-2008)
+ (was: WikiTicketCalendar-trac11-experimental.py.txt)
+ changes by Mike Greer, reported to work with Trac 0.11b1
+
+0.2.1 - non-maintainer release provided by Michael Comb (29-Sep-2008)
+ (was: WikiTicketCalendarMacro.zip)
+ * dates fixed for milestone presentation (Trac 0.11.1), 
+
+0.3.0 - non-maintainer release provided by Michael Comb (01-Oct-2008)
+ (was: WikiTicketCalendarMacro.2.py)
+ changes by JaeWook Choi <http://trac-hacks.org/wiki/butterflow>
+ * complete full functionality from both WikiTicketCalendarPlugin
+   and WikiCalendarPlugin
+ * CSS copied from Andy Schlaikjer <andrew.schlaikjer@gmail.com>
+
+0.4.0 - non-maintainer release provided by Michael Comb (27-Nov-2008)
+ (was: WikiTicketCalendarMacro.20081127.py)
+ changes by W. Martin Borgert <debacle@debian.org>
+ * shows also ticket opening dates
+ * use ISO 8601 date format by default
+ * description field: show only the first kByte
+ * simpler HTML structure (no nested tables)
+ * simplified some code
+ * use consistent indentation (PEP8)
+
+0.4.1 - public, unreleased revision (03-Feb-2009)
+ (was: wiki content describing patch)
+ changes
+ * fix encoding problems for e.g. German chars
+ * fix a problem related to daylight savings setting
+
+0.4.2 - non-maintainer release provided by Michael Comb (03-Apr-2009)
+ (was: WikiTicketCalendarMacro.20090403.py)
+ changes by W. Martin Borgert
+ * fixed two CSS issues that killed pisa/xhtml2pdf (TracWikiPrintPlugin)
+ * less table width for Saturday and Sunday
+
+0.5.0 - non-maintainer release provided by Michael Comb (29-Oct-2009)
+ (was: WikiTicketCalendarMacro.20091029.py.gz)
+ changes by JaeWook Choi
+ * update to Google Calendar style css
+ * Wiki brief is shown in calendar if exists
+ * open tickets shown under milestone (line 305)
+ * ticket action history shown instead of tickets created and closed
+ * only close history shown by default, this can be modified (hack line 330)
+
+0.5.1 - non-maintainer release provided by Michael Comb (29-Oct-2009)
+ * fix a problem with datetime -> POSIX time stamp conversion
+   related to daylight saving settings
+
+0.6.0 - private, unreleased revision (17-Aug-2009)
+ changes by Steffen Hoffmann
+ * configurabe template to create new wiki pages
+
+0.6.1 - private, unreleased revision (18-Aug-2009)
+ changes by Steffen Hoffmann
+ * preliminary i18n work (code borrowed from TracEditorGuidePlugin),
+   but beware: no-op l10n support
+
+0.6.2 - private, unreleased revision (18-Jan-2010)
+ changes by Steffen Hoffmann
+ * unicode error with Genshi fixed using to_unicode from trac.util.text
+
+0.7.0 - private, unreleased revision (18-Jan-2010)
+ changes by Steffen Hoffmann
+ * add a 3rd set of navfast-forward/-rewind month navigation links
+
+0.7.1 - maintenance revision for 0.11 branch (03-Jun-2010)
+ changes by Steffen Hoffmann
+ * add explicit version number
+ * finalize move of notes and references on history to changelog
+ * improve embedded documentation for display in Trac plugin admin page
+ * code cleanup removing change notes and non-functional i18n module
+
+0.8.0 - major revision for 0.11 and 0.12 without i18n support (03-Jun-2010)
+ changes by Steffen Hoffmann
+ * add conditional time stamp creation for new (POSIX mircroseconds) and
+   old timestamp format (as a fallback for 0.11 compatibility)
+ * code cleanup, lean import from trac.util, import from Genshi directly
+
+0.8.1 - maintenance revision for 0.11/0.12 branch (07-Jun-2010)
+ changes by Steffen Hoffmann
+ * code cleanup and consistent formatting again (PEP8)
+
+0.8.2 - maintenance revision for 0.11/0.12 branch (09-Jun-2010)
+ changes suggested by delsauce@gmail.com
+ * better milestone query to match not on full time stamp by whole day
+
+0.8.3 - maintenance revision for 0.11/0.12 branch (09-Jun-2010)
+ changes suggested by David Byrne
+ * correct year switch test condition for 3-months-back nav link
+
+0.8.4 - maintenance revision for 0.11/0.12 branch (13-Jul-2010)
+ by Steffen Hoffmann
+ merging all but i18n related development done in 1.1.5 + 1.1.6, especially
+ * use Genshi's tag() for sane HTML code construction, building markup
+   from Genshi calls only, overcoming old string serialization
+ * extend use of to_unicode() to further prevent encoding issues
+ * replace re-definition of config options (bad) with config read calls
+ * correct another flaw in 3-months-back nav link with year calculation
+ * change ticket description tooltip to pure CSS style pop-up box
+   with some tweaks to work around IE render bugs and other CSS updates
+ * wrap calender in div section with own style
+ * code cleanup
+
+0.8.5 - maintenance revision for 0.11/0.12 branch (31-Jul-2010)
+ by Steffen Hoffmann
+ backporting all development done for 1.2.0
+ * replace old SQL for ticket selection with powerful TracQuery support
+ * make custom due date field name configurable
+ * code cleanup in argument parser and time stamp creation
+
+0.8.6 - feature release for 0.11/0.12 branch (31-Jul-2010)
+ by Steffen Hoffmann
+ backporting development done for 1.2.1
+ * fixed bad inline CSS style creation with Genshi introduced in 0.8.4
+ * suppress ticket summary display depending on user configurable 
+   ticket count per day
+
+0.8.7 - maintenance revision for 0.11/0.12 branch (11-Aug-2010)
+ changes by Steffen Hoffmann
+ * remove CSS definition, that may disturb surrounding wiki page layout
+ * use cleaner code with 'datetime' objects for date/time variables
+ * re-apply calendar display width control as more flexible macro argument
+
+0.8.8 - maintenance revision for 0.11/0.12 branch (13-Aug-2010)
+ changes by Steffen Hoffmann
+ * rewrite time stamp generation and handling
+
+
+# 0.12 branch from here #
+
+1.0.0 - 1st release for Trac 0.12 imported to SVN by Ryan J Ollos (27-Apr-2010)  
+ changes by Steffen Hoffmann
+ * inherits changes 0.6.0 - 0.7.0
+ * fixed ticket queries using import to_utimestamp from trac.util.datefmt
+   to adapt for switch to POSIX microsecond time stamps in Trac SVN r9210
+ * code cleanup
+
+1.0.1 - maintenance revision for 0.12 branch (03-Jun-2010)
+ changes by Steffen Hoffmann
+ * add explicit version number
+ * finalize move of notes and references on history to changelog
+ * improve embedded documentation for display in Trac plugin admin page
+ * code cleanup removing change notes and non-functional i18n module
+
+1.1.0 - 1st genuine 0.12 version (04-Jun-2010)
+ by Steffen Hoffmann
+ * package single-file macro (as Python egg)
+ * break out CSS stylesheet into separate file
+ * implement Trac native i18n support for plugins
+ * generate first message catalog and German translation
+ * setup contribution of translations via Transifex
+   http://www.transifex.net/projects/p/Trac_Plugin-L10N/c/wikiticketcalendar/
+
+1.1.1 - maintenance revision for 0.12 branch (07-Jun-2010)
+ changes by Steffen Hoffmann
+ * code cleanup and consistent formatting again (PEP8)
+
+1.1.2 - maintenance revision for 0.12 branch (08-Jun-2010)
+ changes by Steffen Hoffmann
+ * correct source documentation on macro activation
+
+1.1.3 - maintenance revision for 0.12 branch (09-Jun-2010)
+ changes suggested by delsauce@gmail.com
+ * better milestone query to match not on full time stamp by whole day
+
+1.1.4 - maintenance revision for 0.12 branch (09-Jun-2010)
+ changes suggested by David Byrne
+ * correct year switch test condition for 3-months-back nav link
+
+1.1.5 - development version for 0.12 branch (02-Jul-2010)
+ changes by Steffen Hoffmann
+ * sanitize untrusted input before adding to calendar
+ * use Genshi's tag() for sane HTML code construction
+ * extend use of to_unicode() to further prevent encoding issues
+ * correct another flaw in 3-months-back nav link with year calculation
+ * change ticket description tooltip to pure CSS style pop-up box
+   with some tweaks to work around IE render bugs
+ * wrap calender in div section with own style
+
+1.1.6 - development version for 0.12 branch (03-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace re-definition of config options (bad) with config read calls
+ * build markup from Genshi calls only, overcoming old string serialization
+ * code cleanup
+
+1.1.7 - maintenance revision for 0.12 branch (13-Jul-2010)
+ by Steffen Hoffmann
+ bringing in all development done in 1.1.5 + 1.1.6 and
+ * set proper license for package (correction, dual licensing now)
+ * more code cleanup
+
+1.1.8 - maintenance revision for 0.12 branch (14-Jul-2010)
+ changes by Steffen Hoffmann
+ * ensure compile_catalog command is called before build command
+ * code cleanup, especially in message catalog files
+
+1.2.0 - development version for 0.12 branch (18-Jul-2010)
+ changes by Steffen Hoffmann
+ * replace old SQL for ticket selection with powerful TracQuery support
+ * make custom due date field name configurable
+ * code cleanup in argument parser and time stamp creation
+
+1.2.1 - development version for 0.12 branch (28-Jul-2010)
+ changes by Steffen Hoffmann
+ * suppress ticket summary display depending on user configurable 
+   ticket count per day
+
+1.2.2 - maintenance revision for 0.12 branch (11-Aug-2010)
+ changes by Steffen Hoffmann
+ * remove CSS definition, that may disturb surrounding wiki page layout
+ * use cleaner code with 'datetime' objects for date/time variables
+ * re-apply calendar display width control as more flexible macro argument
+
+1.2.3 - maintenance revision for 0.12 branch (13-Aug-2010)
+ changes by Steffen Hoffmann
+ * rewrite time stamp generation and handling

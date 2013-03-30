@@ -1,0 +1,30 @@
+# Japanese (Japan) translations for WikiTicketCalendarMacro.
+# Copyright (C) 2010
+# This file is distributed under the same license as the
+# WikiTicketCalendarMacro project.
+# Jun Omae <jun66j5@gmail.com>, 2010.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: WikiTicketCalendarMacro 1.1.7\n"
+"Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
+"POT-Creation-Date: 2010-08-14 10:56+0200\n"
+"PO-Revision-Date: 2010-06-08 05:40+0900\n"
+"Last-Translator: Jun Omae <jun66j5@gmail.com>\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.0dev-r482\n"
+
+#: wikiticketcalendar/macro.py:435
+#, python-format
+msgid "Go to page %s"
+msgstr "ページ %s へ移動"
+
+#: wikiticketcalendar/macro.py:442
+#, python-format
+msgid "Create page %s"
+msgstr "ページ %s の作成"
+
