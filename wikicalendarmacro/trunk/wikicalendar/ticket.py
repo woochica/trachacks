@@ -1,13 +1,19 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Copyright (C) 2010, 2012 Steffen Hoffmann <hoff.st@shaas.net>
 #
+# Copyright (C) 2010-2013 Steffen Hoffmann <hoff.st@shaas.net>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+# Author: Steffen Hoffmann
 
-from trac.config        import Option
-from trac.ticket.query  import Query
-from trac.util.text     import to_unicode
-from trac.wiki.api      import parse_args
+from trac.config import Option
+from trac.ticket.query import Query
+from trac.util.text import to_unicode
+from trac.wiki.api import parse_args
 
-from wikicalendar.api   import WikiCalendarBuilder
+from wikicalendar.api import WikiCalendarBuilder
 
 
 __all__ = ['WikiCalendarTicketProvider']
@@ -43,42 +49,33 @@ class WikiCalendarTicketProvider(WikiCalendarBuilder):
 
     def harvest(self, req, content):
         """TicketQuery provider method."""
-        # Options in 'wikicalendar' configuration section take precedence over
-        # those in old 'wikiticketcalendar' section.
-        c = self.config
-        if 'wikicalendar' in c.sections():
-            tkt_due_field = c.get('wikicalendar', 'ticket.due_field')
-        else:
-            tkt_due_field = c.get('wikiticketcalendar',
-                                  'ticket.due_field.name')
-
         # Parse args and kwargs.
         argv, kwargs = parse_args(content, strict=False)
 
         # Define minimal set of values.
         std_fields = ['description', 'owner', 'status', 'summary']
-        kwargs['col'] = "|".join(std_fields + [tkt_due_field])
+        kwargs['col'] = "|".join(std_fields)
 
-        # Construct the querystring.
-        query_string = '&'.join(['%s=%s' %
-            item for item in kwargs.iteritems()])
+        # Options from old 'wikiticketcalendar' section have been migrated to
+        # 'wikicalendar' configuration section.
+        due_field = self.config.get('wikicalendar', 'ticket.due_field')
 
-        # Get the Query Object.
+        if due_field:
+            kwargs['col'] += '|' + due_field
+
+        # Construct the query-string.
+        query_string = '&'.join(['%s=%s' % i for i in kwargs.iteritems()])
+
+        # Get the Query object.
         query = Query.from_string(self.env, query_string)
 
-        # Get the tickets.
-        tickets = self._get_tickets(query, req)
-        return tickets
-
-    def _get_tickets(self, query, req):
-        '''Returns a list of ticket objects.'''
-        # Initialize query and get 1st "page" of tickets.
+        # Initialize query and get 1st "page" of Ticket objects.
         result = query.execute(req)
         # Collect tickets from all other query "pages", if available.
         while query.offset + query.max < query.num_items:
             query.offset += query.max
             result.extend(query.execute(req))
-        # Do permissions check on tickets
+        # Filter tickets according to (view) permission.
         tickets = [t for t in result
                    if 'TICKET_VIEW' in req.perm('ticket', t['id'])]
         return tickets

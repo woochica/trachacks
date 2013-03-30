@@ -1,4 +1,6 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
+#
 # Copyright (C) 2005 Matthew Good <trac@matt-good.net>
 # Copyright (C) 2005 Jan Finell <finell@cenix-bioscience.com>
 # Copyright (C) 2007 Mike Comb <mcomb@mac.com>
@@ -6,15 +8,10 @@
 # Copyright (C) 2008, 2009 W. Martin Borgert <debacle@debian.org>
 # Copyright (C) 2010-2012 Steffen Hoffmann <hoff.st@shaas.net>
 #
-# "THE BEER-WARE LICENSE" (Revision 42):
-# <trac@matt-good.net> wrote this file.  As long as you retain this notice you
-# can do whatever you want with this stuff.  If we meet some day, and you think
-# this stuff is worth it, you can buy me a beer in return.  Matthew Good
-# (Beer-ware license written by Poul-Henning Kamp
-#  http://people.freebsd.org/~phk/)
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
 #
 # Author: Matthew Good <trac@matt-good.net>
-# See changelog for a detailed history
 
 import calendar
 import datetime
@@ -22,31 +19,37 @@ import locale
 import re
 import sys
 
-from genshi.builder         import tag
-from genshi.core            import escape, Markup
-from pkg_resources          import resource_filename
-from sgmllib                import SGMLParser
+from genshi.builder import tag
+from genshi.core import escape, Markup
+from pkg_resources import resource_filename
+from sgmllib import SGMLParser
 
-from trac.config            import BoolOption, Configuration, Option
-from trac.core              import Component, implements
-from trac.util.datefmt      import format_date
-from trac.util.text         import shorten_line, to_unicode
-from trac.web.href          import Href
-from trac.web.chrome        import add_stylesheet, ITemplateProvider
-from trac.wiki.api          import parse_args, IWikiMacroProvider, \
-                                   WikiSystem
-from trac.wiki.formatter    import format_to_html
+from trac.config import BoolOption, Configuration, Option
+from trac.core import Component, implements
+from trac.util.datefmt import format_date
+from trac.util.text import shorten_line, to_unicode
+from trac.web.href import Href
+from trac.web.chrome import add_stylesheet, ITemplateProvider
+from trac.wiki.api import parse_args, IWikiMacroProvider, WikiSystem
+from trac.wiki.formatter import format_to_html
+from trac.wiki.macros import WikiMacroBase
 
-from wikicalendar.api       import add_domain, _, tag_
-from wikicalendar.ticket    import WikiCalendarTicketProvider
+from wikicalendar.api import add_domain, _, cleandoc_, tag_
+from wikicalendar.ticket import WikiCalendarTicketProvider
 
 uts = None
 try:
-    from trac.util.datefmt  import to_utimestamp
+    from trac.util.datefmt import to_utimestamp
     uts = "env with POSIX microsecond time stamps found"
 except ImportError:
-    # fallback to old module for 0.11 compatibility
-    from trac.util.datefmt  import to_timestamp
+    # Fallback to old function for 0.11 compatibility.
+    from trac.util.datefmt import to_timestamp
+
+macro_doc_compat = False
+try:
+    WikiMacroBase._domain
+except AttributeError:
+    macro_doc_compat = True
 
 
 __all__ = ['TextExtractor', 'WikiCalendarMacros']
@@ -69,12 +72,11 @@ class TextExtractor(SGMLParser):
 
 
 class WikiCalendarMacros(Component):
-    """Provides macros to display wiki page navigation in a calendar view.
-    """
+    """Provides macros to display wiki page navigation in a calendar view."""
 
     implements(IWikiMacroProvider, ITemplateProvider)
 
-    # generic [wikicalendar] section
+    # Common [wikicalendar] section
     internal_css = BoolOption('wikicalendar', 'internal_css', False,
                               """Whether CSS should be embedded into the
                               HTML. This is meant as fallback, if linking
@@ -88,7 +90,7 @@ class WikiCalendarMacros(Component):
                             'ts' identifier for POSIX microsecond time stamps
                             as supported in later Trac versions.""")
 
-    # old [wikiticketcalendar] section
+    # Old [wikiticketcalendar] section
     due_field_name = Option('wikiticketcalendar', 'ticket.due_field.name',
                             'due_close', doc = """Custom due date field name
                             to evaluate for displaying tickets by date.
@@ -103,7 +105,7 @@ class WikiCalendarMacros(Component):
     htdocs_path = resource_filename(__name__, 'htdocs')
 
     def __init__(self):
-        # bind 'wikicalendar' catalog to the specified locale directory
+        # Bind 'wikicalendar' catalog to the specified locale directory.
         locale_dir = resource_filename(__name__, 'locale')
         add_domain(self.env.path, locale_dir)
 
@@ -124,15 +126,15 @@ class WikiCalendarMacros(Component):
 
         # Options in 'wikicalendar' configuration section take precedence over
         # those in old 'wikiticketcalendar' section.
-        c = self.config
-        if 'wikicalendar' in c.sections():
+        cfg = self.config
+        if 'wikicalendar' in cfg.sections():
             # Rewrite option name for easier plugin upgrade.
-            if c.has_option('wikicalendar', 'ticket.due_field.name'):
-                self.env.log.debug('Old wikiticketcalendar option found.')
-                c.set('wikicalendar', 'ticket.due_field',
+            if cfg.has_option('wikicalendar', 'ticket.due_field.name'):
+                self.env.log.debug("Old 'wikiticketcalendar' option found.")
+                cfg.set('wikicalendar', 'ticket.due_field',
                       c.get('wikicalendar', 'ticket.due_field.name'))
-                c.remove('wikicalendar', 'ticket.due_field.name')
-                c.save()
+                cfg.remove('wikicalendar', 'ticket.due_field.name')
+                cfg.save()
                 self.env.log.debug('Updated to new option: ticket.due_field')
 
             self.tkt_due_field = self.ticket_due
@@ -144,46 +146,11 @@ class WikiCalendarMacros(Component):
         # Read options from Trac configuration system, adjustable in trac.ini.
         #  [wiki] section
         self.sanitize = True
-        if self.config.getbool('wiki', 'render_unsafe_content') is True:
+        if cfg.getbool('wiki', 'render_unsafe_content') is True:
             self.sanitize = False
 
-        # TRANSLATOR: Keep macro doc style formatting here, please.
-        self.doc_calendar = _(
-    """Inserts a small calendar where each day links to a wiki page whose name
-    matches `wiki-page-format`. The current day is highlighted, and days with
-    Milestones are marked in bold. This version makes heavy use of CSS for
-    formatting.
-    
-    Usage:
-    {{{
-    [[WikiCalendar([year, [month, [show-buttons, [wiki-page-format]]]])]]
-    }}}
-    
-    Arguments:
-     1. `year` (4-digit year) - defaults to `*` (current year)
-     1. `month` (2-digit month) - defaults to `*` (current month)
-     1. `show-buttons` (boolean) - defaults to `true`
-     1. `wiki-page-format` (string) - defaults to `%Y-%m-%d`
-    
-    Examples:
-    {{{
-    [[WikiCalendar(2006,07)]]
-    [[WikiCalendar(2006,07,false)]]
-    [[WikiCalendar(*,*,true,Meeting-%Y-%m-%d)]]
-    [[WikiCalendar(2006,07,false,Meeting-%Y-%m-%d)]]
-    }}}
-    """)
-        self.doc_ticketcalendar = _(
-    """Display Milestones and Tickets in a calendar view.
-
-    displays a calendar, the days link to:
-     - milestones (day in bold) if there is one on that day
-     - a wiki page that has wiki_page_format (if exist)
-     - create that wiki page if it does not exist
-     - use page template (if exist) for new wiki page
-    """)
-
     # ITemplateProvider methods
+
     # Returns additional path where stylesheets are placed.
     def get_htdocs_dirs(self):
         return [('wikicalendar', self.htdocs_path)]
@@ -193,6 +160,7 @@ class WikiCalendarMacros(Component):
         return []
 
     # IWikiMacroProvider methods
+
     # Returns list of provided macro names.
     def get_macros(self):
         yield "WikiCalendar"
@@ -200,10 +168,53 @@ class WikiCalendarMacros(Component):
 
     # Returns documentation for provided macros.
     def get_macro_description(self, name):
+
+        # TRANSLATOR: Keep macro doc style formatting here, please.
+        cal_doc = cleandoc_(
+            """Inserts a small calendar where each day links to a wiki page,
+            whose name matches `wiki-page-format`. The current day is
+            highlighted, and days with Milestones are marked in bold.
+            This version makes heavy use of CSS for formatting.
+
+            Usage:
+            {{{
+            [[WikiCalendar([year, [month, [show-buttons, [wiki-page-format]]]])]]
+            }}}
+
+            Arguments:
+             1. `year` (4-digit year) - defaults to `*` (current year)
+             1. `month` (2-digit month) - defaults to `*` (current month)
+             1. `show-buttons` (boolean) - defaults to `true`
+             1. `wiki-page-format` (string) - defaults to `%Y-%m-%d`
+
+            Examples:
+            {{{
+            [[WikiCalendar(2006,07)]]
+            [[WikiCalendar(2006,07,false)]]
+            [[WikiCalendar(*,*,true,Meeting-%Y-%m-%d)]]
+            [[WikiCalendar(2006,07,false,Meeting-%Y-%m-%d)]]
+            }}}"""
+        )
+
+        tcal_doc = cleandoc_(
+            """Display Milestones and Tickets in a calendar view.
+
+            displays a calendar, the days link to:
+             - milestones (day in bold) if there is one on that day
+             - a wiki page that has wiki_page_format (if exist)
+             - create that wiki page if it does not exist
+             - use page template (if exist) for new wiki page"""
+        )
+
         if name == 'WikiCalendar':
-            return self.doc_calendar
-        if name == 'WikiTicketCalendar':
-            return self.doc_ticketcalendar
+            if macro_doc_compat:
+                # Optionally translated doc for Trac < 1.0.
+                return gettext(cal_doc)
+            return ('wikicalendar', cal_doc)
+        elif name == 'WikiTicketCalendar':
+            if macro_doc_compat:
+                return gettext(tcal_doc)
+            return ('wikicalendar', tcal_doc)
 
     def _mkdatetime(self, year, month, day=1):
         """A custom 'datetime' object builder.

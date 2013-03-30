@@ -7,7 +7,12 @@ origin, the fork of WikiTicketCalendarMacro and separate development prior to
 formation of the current macro bundle.
 
 
-wikicalendar-2.0.0 - new 'bundled macros' revision (not yet released)
+wikicalendar-2.1.0 (not yet released) - compatible to Trac 0.11 - 1.0
+ resolved issues
+ * fixed translation of macro descriptions
+
+
+wikicalendar-2.0.0 (30-Mar-2013) - new 'bundled macros' edition
  resolved issues
  * #64: utf-8 output not enforced
    by totally relying on Genshi builder instructions to sanitize content and
