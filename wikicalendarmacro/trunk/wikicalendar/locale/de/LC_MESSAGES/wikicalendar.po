@@ -1,14 +1,14 @@
-# German (Germany) translations for WikiTicketCalendarMacro.
-# Copyright (C) 2010
+# German (Germany) translations for WikiCalendarMacro.
+# Copyright (C) 2013
 # This file is distributed under the same license as the
 # WikiTicketCalendarMacro project.
-# Steffen Hoffmann <hoff.st@shaas.net>, 2010.
+# Steffen Hoffmann <hoff.st@shaas.net>, 2010,2013.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: WikiTicketCalendarMacro 1.1.7\n"
+"Project-Id-Version: WikiCalendarMacro 2.0\n"
 "Report-Msgid-Bugs-To: hoff.st@shaas.net\n"
-"POT-Creation-Date: 2010-08-14 10:56+0200\n"
+"POT-Creation-Date: 2013-03-30 21:10+0100\n"
 "PO-Revision-Date: 2010-06-04 03:05+0200\n"
 "Last-Translator: Steffen Hoffmann <hoff.st@web.de>\n"
 "Language-Team: German de_DE <trac-dev@googlegroups.com>\n"
@@ -18,12 +18,82 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.0dev-r482\n"
 
-#: wikiticketcalendar/macro.py:435
+#. TRANSLATOR: Keep macro doc style formatting here, please.
+#: wikicalendar/macros.py:173
+#, python-format
+msgid ""
+"Inserts a small calendar where each day links to a wiki page,\n"
+"whose name matches `wiki-page-format`. The current day is\n"
+"highlighted, and days with Milestones are marked in bold.\n"
+"This version makes heavy use of CSS for formatting.\n"
+"\n"
+"Usage:\n"
+"{{{\n"
+"[[WikiCalendar([year, [month, [show-buttons, [wiki-page-format]]]])]]\n"
+"}}}\n"
+"\n"
+"Arguments:\n"
+" 1. `year` (4-digit year) - defaults to `*` (current year)\n"
+" 1. `month` (2-digit month) - defaults to `*` (current month)\n"
+" 1. `show-buttons` (boolean) - defaults to `true`\n"
+" 1. `wiki-page-format` (string) - defaults to `%Y-%m-%d`\n"
+"\n"
+"Examples:\n"
+"{{{\n"
+"[[WikiCalendar(2006,07)]]\n"
+"[[WikiCalendar(2006,07,false)]]\n"
+"[[WikiCalendar(*,*,true,Meeting-%Y-%m-%d)]]\n"
+"[[WikiCalendar(2006,07,false,Meeting-%Y-%m-%d)]]\n"
+"}}}"
+msgstr ""
+"Fügt einen kleinen Kalender ein, in dem jeder Tag mit einer Wiki-Seite "
+"verknüpft ist, deren Name `wiki-page-format` entspricht. Der aktuelle Tag"
+" ist hervorgehoben, und Tage mit Meilensteinen sind fett markiert. Diese "
+"Version nutzt umfassend CSS zur Formattierung.\n"
+"\n"
+"Verwendung:\n"
+"{{{\n"
+"[[WikiCalendar([year, [month, [show-buttons, [wiki-page-format]]]])]]\n"
+"}}}\n"
+"\n"
+"Argumente:\n"
+" 1. `year` (4-stelliges Jahr) - Standard ist `*` (aktuelles Jahr)\n"
+" 1. `month` (2-stelliger Monat) - Standard ist `*` (aktueller Monat)\n"
+" 1. `show-buttons` (Bool-Wert) - Standard ist `true`\n"
+" 1. `wiki-page-format` (Zeichenkette) - Standard ist `%Y-%m-%d`\n"
+"\n"
+"Beispiele:\n"
+"{{{\n"
+"[[WikiCalendar(2006,07)]]\n"
+"[[WikiCalendar(2006,07,false)]]\n"
+"[[WikiCalendar(*,*,true,Meeting-%Y-%m-%d)]]\n"
+"[[WikiCalendar(2006,07,false,Meeting-%Y-%m-%d)]]\n"
+"}}}"
+
+#: wikicalendar/macros.py:199
+msgid ""
+"Display Milestones and Tickets in a calendar view.\n"
+"\n"
+"displays a calendar, the days link to:\n"
+" - milestones (day in bold) if there is one on that day\n"
+" - a wiki page that has wiki_page_format (if exist)\n"
+" - create that wiki page if it does not exist\n"
+" - use page template (if exist) for new wiki page"
+msgstr ""
+"Zeigt Meilensteine und Tickets in einer Kalender-Ansicht.\n"
+"\n"
+"Kalenderdarstellung, deren Tage verknüpft sind mit:\n"
+" - Meilensteinen (Tag gefettet), wenn es nur einen and dem Tag gibt\n"
+" - einer Wiki-Seite die wiki_page_format besitzt (falls sie existiert)\n"
+" - einer neuen Wiki-Seite, falls sie nicht existiert\n"
+" - nutzt eine Seitenvorlage (falls sie existiert) für neue Wiki-Seiten"
+
+#: wikicalendar/macros.py:247
 #, python-format
 msgid "Go to page %s"
 msgstr "Springe zur Seite %s"
 
-#: wikiticketcalendar/macro.py:442
+#: wikicalendar/macros.py:266
 #, python-format
 msgid "Create page %s"
 msgstr "Erstelle die Seite %s"
