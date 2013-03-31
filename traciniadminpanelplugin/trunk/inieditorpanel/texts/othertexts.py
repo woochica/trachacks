@@ -6,8 +6,6 @@ N_('readonly')
 N_('hidden')
 N_('modifiable')
 
-N_('Modified: ')
-N_(' | Defaults: ')
-N_(' | Options count: ')
+N_("Modified: %(mod)d | Defaults: %(def)d | Options count: %(opt)d")
 
 N_('<default value>')

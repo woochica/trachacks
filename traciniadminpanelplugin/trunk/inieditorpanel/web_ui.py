@@ -15,6 +15,7 @@ from genshi.template.text import NewTextTemplate
 
 from inieditorpanel.api import *
 
+from trac.util.text import javascript_quote
 from trac.util.translation import dgettext, domain_functions
 
 _, tag_, N_, add_domain, gettext = domain_functions(
@@ -390,6 +391,7 @@ class TracIniAdminPanel(Component):
 
     data['_'] = _
     data['gettext'] = gettext
+    data['javascript_quote'] = javascript_quote
 
     # Parse the JavaScript code
     # NOTE: We can't use <xi:include> for this as Genshi escapes XML characters

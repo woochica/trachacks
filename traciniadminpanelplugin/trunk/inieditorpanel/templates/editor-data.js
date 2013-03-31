@@ -1,8 +1,6 @@
 var section_count = ${len(sections)};
 
-var text_modified = '${_("Modified: ")}';
-var text_defaults = '${_(" | Defaults: ")}';
-var text_optionscount = '${_(" | Options count: ")}';
+var info_format = '${javascript_quote(_("Modified: %(mod)d | Defaults: %(def)d | Options count: %(opt)d"))}';
 
 function load_data(cnt, stored) {
   var info_elem;
@@ -13,7 +11,7 @@ function load_data(cnt, stored) {
   s = new Object();
 
 {% for option_name, option in sorted([(key, value) for key, value in modifiable_options[section_name].items() if (value.type != 'password')], key=lambda option: option[0]) %}\
-  s['${option_name}'] = '${option.stored_value.replace('\\\\', '\\\\\\\\').replace("'", "\\\\'")}';
+  s['${javascript_quote(option_name)}'] = '${javascript_quote(option.stored_value)}';
 {% end %}
 
   info_elem = settings_list.find('td#section-title-${section_name.replace(':','_')} .section-info');
