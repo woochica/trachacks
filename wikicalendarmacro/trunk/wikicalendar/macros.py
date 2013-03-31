@@ -51,6 +51,8 @@ try:
 except AttributeError:
     macro_doc_compat = True
 
+_TRUE_VALUES = ('True', 'true', 'yes', 'y', '1')
+
 
 __all__ = ['TextExtractor', 'WikiCalendarMacros']
 
@@ -169,23 +171,28 @@ class WikiCalendarMacros(Component):
     # Returns documentation for provided macros.
     def get_macro_description(self, name):
 
-        # TRANSLATOR: Keep macro doc style formatting here, please.
+        # TRANSLATOR: Keep Trac style WikiFormatting here, please.
         cal_doc = cleandoc_(
-            """Inserts a small calendar where each day links to a wiki page,
+            """Inserts a small calendar, where each day links to a wiki page,
             whose name matches `wiki-page-format`. The current day is
-            highlighted, and days with Milestones are marked in bold.
-            This version makes heavy use of CSS for formatting.
+            highlighted, and days with a due Milestone are marked in bold.
 
             Usage:
             {{{
-            [[WikiCalendar([year, [month, [show-buttons, [wiki-page-format]]]])]]
+            [[WikiCalendar([year, month, nav, wiki, base=<page.name>)]]
             }}}
 
-            Arguments:
-             1. `year` (4-digit year) - defaults to `*` (current year)
-             1. `month` (2-digit month) - defaults to `*` (current month)
-             1. `show-buttons` (boolean) - defaults to `true`
-             1. `wiki-page-format` (string) - defaults to `%Y-%m-%d`
+            Arguments (all optional, but positional - order matters):
+             1. `year` (4-digit year), defaults to `*` (current year)
+             1. `month` (2-digit month), defaults to `*` (current month)
+             1. `nav` (boolean) - show previous/next navigation, defaults to
+                `true`
+             1. `wiki` (valid strftime expression) - page name format,
+                defaults to `%Y-%m-%d`
+
+            Keyword-only argument:
+             * `base` (page name string) - create new pages from that
+               template in PageTemplates, defaults to: `''` (empty string)
 
             Examples:
             {{{
@@ -193,17 +200,84 @@ class WikiCalendarMacros(Component):
             [[WikiCalendar(2006,07,false)]]
             [[WikiCalendar(*,*,true,Meeting-%Y-%m-%d)]]
             [[WikiCalendar(2006,07,false,Meeting-%Y-%m-%d)]]
+            [[WikiCalendar(*,*,true,Meeting-%Y-%m-%d,base=MeetingNotes)]]
             }}}"""
         )
 
         tcal_doc = cleandoc_(
             """Display Milestones and Tickets in a calendar view.
 
-            displays a calendar, the days link to:
-             - milestones (day in bold) if there is one on that day
-             - a wiki page that has wiki_page_format (if exist)
-             - create that wiki page if it does not exist
-             - use page template (if exist) for new wiki page"""
+            Days include links to:
+             * all milestones, that are due on that day
+             * all tickets, that are due on that day
+             * all tickets created on that day (configurable)
+             * one or more wiki pages with name matching the configured format
+            preparing links for creating new wiki pages from a template too
+
+            Usage:
+            {{{
+            [[WikiTicketCalendar(year, month, nav, wiki, cdate, base, query,
+                                 short, width)]]
+            }}}
+
+            Arguments (all optional, but positional - order matters):
+             1. `year` (4-digit year), defaults to `*` (current year)
+             1. `month` (2-digit month), defaults to `*` (current month)
+             1. `nav` (boolean) - show previous/next navigation, defaults to
+                `true`
+             1. `wiki` (valid strftime expression) - page name format,
+                defaults to `%Y-%m-%d`
+             1. `cdate` (boolean) show tickets created on that day too,
+                defaults to: `true`
+             1. `base` (page name string) - create new pages from that
+                template in PageTemplates, defaults to: `''` (empty string)
+             1. `query` (valid TracQuery) - including expressions grouped by
+                AND (OR since 0.12) for general ticket selection - defaults
+                to `id!=0`
+             1. `short` (integer), total ticket count per day, that will have
+                ticket list display condensed to just ticket numbers, defaults
+                to `0` (never condense ticket list
+             1. `width` (valid CSS size), prefixed `+` forces more
+
+            Examples:
+            {{{
+            [[WikiTicketCalendar(2006,07)]]
+            [[WikiTicketCalendar(2006,07,false)]]
+            [[WikiTicketCalendar(*,*,true,Meeting-%Y-%m-%d)]]
+            [[WikiTicketCalendar(2006,07,false,Meeting-%Y-%m-%d)]]
+            [[WikiTicketCalendar(2006,07,true,*,true)]]
+            [[WikiTicketCalendar(2006,07,true,Meeting-%Y-%m-%d,true,Meeting)]]
+            }}}
+
+            Equivalent keyword arguments are available for all but the first
+            two arguments.
+
+            Examples:
+            {{{
+            [[WikiTicketCalendar(wiki=Talk-%Y-%m-%d,base=Talk)]]
+             same as [[WikiTicketCalendar(*,*,true,Talk-%Y-%m-%d,true,Talk)]]
+            [[WikiTicketCalendar(wiki=Meeting-%Y-%m-%d,query=type=task)]]
+            [[WikiTicketCalendar(wiki=Meeting_%Y/%m/%d,short=6)]]
+            }}}
+
+            Mixed use of both, simple and keyword arguments is possible, while
+            order of simple arguments (see above) still applies and keyword
+            arguments in-between do not count for positional argument mapping.
+
+            Example:
+            {{{
+            [[WikiTicketCalendar(wiki=Meeting_%Y/%m/%d,*,*,true,width=+75%;)]]
+            }}}
+
+            Keyword-only argument:
+             * `subpages` (list of page names separated by '|') - replace
+               wiki page link per day with one link per sub-page labeled by
+               first character of sub-page name
+            Example:
+            {{{
+            [[WikiTicketCalendar(wiki=Meetings_%Y/%m/%d,
+                                 subpages=Morning|Afternoon)]]
+            }}}"""
         )
 
         if name == 'WikiCalendar':
@@ -379,9 +453,9 @@ class WikiCalendarMacros(Component):
         showbuttons = True
         if len(args) >= 3 or kwargs.has_key('nav'):
             try:
-                showbuttons = kwargs['nav'] in ["True", "true", "yes", "1"]
+                showbuttons = kwargs['nav'] in _TRUE_VALUES
             except KeyError:
-                showbuttons = args[2] in ["True", "true", "yes", "1"]
+                showbuttons = args[2] in _TRUE_VALUES
 
         wiki_page_format = "%Y-%m-%d"
         if len(args) >= 4 and args[3] != "*" or kwargs.has_key('wiki'):
@@ -406,11 +480,9 @@ class WikiCalendarMacros(Component):
         if name == 'WikiTicketCalendar':
             if len(args) >= 5 or kwargs.has_key('cdate'):
                 try:
-                    show_t_open_dates = kwargs['cdate'] in \
-                                               ["True", "true", "yes", "1"]
+                    show_t_open_dates = kwargs['cdate'] in _TRUE_VALUES
                 except KeyError:
-                    show_t_open_dates = args[4] in \
-                                               ["True", "true", "yes", "1"]
+                    show_t_open_dates = args[4] in _TRUE_VALUES
 
         # Optional page template to create new wiki pages.
         # The default (empty page) is used, if the template name is invalid.
