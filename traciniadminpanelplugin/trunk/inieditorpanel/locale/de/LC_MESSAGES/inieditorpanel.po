@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-03-31 19:57+0200\n"
+"POT-Creation-Date: 2013-03-31 20:32+0200\n"
 "PO-Revision-Date: 2013-03-25 21:41+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: de <LL@li.org>\n"
@@ -16,6 +16,28 @@ msgstr ""
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 0.9.6\n"
+
+#: inieditorpanel/default_manager.py:65
+msgid ""
+"Defines the default access level for options that don't have an\n"
+"explicit access level defined. Defaults to readonly."
+msgstr ""
+"Definiert die Standardzugriffsstufe für Optionen, welche keine explizite "
+"Zugriffsstufe definiert haben. Standard ist nur lesbar (readonly)."
+
+#: inieditorpanel/default_manager.py:69
+msgid ""
+"This section is used to store restriction configurations used by\n"
+"TracIniAdminPanel plugin security manager. An example file can be found "
+"at\n"
+"http://trac-hacks.org/browser/traciniadminpanelplugin/0.12/safe-"
+"restrictions.ini"
+msgstr ""
+"Dieser Abschnitt wird zur Speicherung von Einstellungen für den "
+"Sicherheitsmanager des TracIniAdminPanel-Plugins genutzt. Eine "
+"Beispielkonfiguration ist unter http://trac-"
+"hacks.org/browser/traciniadminpanelplugin/0.12/safe-restrictions.ini zu "
+"finden."
 
 #: inieditorpanel/web_ui.py:31 inieditorpanel/web_ui.py:37
 msgid ""
@@ -48,35 +70,43 @@ msgstr ""
 "verwendet. Bitte beachten, dass die hier definierten Felder zusätzlich zu"
 " den im Editor vordefinierten Feldern verwendet werden."
 
-#: inieditorpanel/web_ui.py:79
+#: inieditorpanel/web_ui.py:57
+msgid ""
+"This section is used to handle configurations used by\n"
+"TracIniAdminPanel plugin."
+msgstr ""
+"Dieser Abschnitt wird für Einstellungen des TracIniAdminPanel-Plugins "
+"genutzt."
+
+#: inieditorpanel/web_ui.py:83
 msgid "General"
 msgstr "Allgemein"
 
-#: inieditorpanel/web_ui.py:79
+#: inieditorpanel/web_ui.py:83
 msgid "trac.ini Editor"
 msgstr "Ini-Editor"
 
-#: inieditorpanel/web_ui.py:103 inieditorpanel/web_ui.py:169
+#: inieditorpanel/web_ui.py:107 inieditorpanel/web_ui.py:173
 msgid "The section \"components\" can't be edited with the ini editor."
 msgstr ""
 "Der Abschnitt \"components\" kann mit dem Ini-Editor nicht geändert "
 "werden."
 
-#: inieditorpanel/web_ui.py:107 inieditorpanel/web_ui.py:172
+#: inieditorpanel/web_ui.py:111 inieditorpanel/web_ui.py:176
 #, python-format
 msgid "The section name %s is invalid."
 msgstr "Der Abschnittsname %s is ungültig."
 
-#: inieditorpanel/web_ui.py:142
+#: inieditorpanel/web_ui.py:146
 #, python-format
 msgid "Security manager could not be initated. %s"
 msgstr ""
 
-#: inieditorpanel/web_ui.py:166
+#: inieditorpanel/web_ui.py:170
 msgid "The section name was empty."
 msgstr "Der Abschnittsname war leer."
 
-#: inieditorpanel/web_ui.py:176
+#: inieditorpanel/web_ui.py:180
 #, python-format
 msgid ""
 "Section %s has been created. Note that you need to add at least one "
@@ -85,60 +115,60 @@ msgstr ""
 "Abschnitt %s wurde erstellt. Bitte beachten, dass mindestens eine Option "
 "erstellt werden muss, damit der Abschnitt permanent gespeichert wird."
 
-#: inieditorpanel/web_ui.py:178
+#: inieditorpanel/web_ui.py:182
 msgid "The section already exists."
 msgstr "Der Abschnitt existiert bereits."
 
-#: inieditorpanel/web_ui.py:294
+#: inieditorpanel/web_ui.py:298
 #, python-format
 msgid "Changes for section %s have been applied."
 msgstr "Änderungen für Abschnitt %s wurden vorgenommen."
 
-#: inieditorpanel/web_ui.py:297 inieditorpanel/web_ui.py:309
+#: inieditorpanel/web_ui.py:301 inieditorpanel/web_ui.py:313
 msgid "No changes have been applied."
 msgstr "Es wurden keine Änderungen gemacht."
 
-#: inieditorpanel/web_ui.py:306
+#: inieditorpanel/web_ui.py:310
 msgid "Changes have been applied."
 msgstr "Änderungen wurden vorgenommen."
 
-#: inieditorpanel/web_ui.py:316
+#: inieditorpanel/web_ui.py:320
 #, python-format
 msgid "Your changes for section %s have been discarded."
 msgstr "Die Änderungen für Abschnitt %s wurden verworfen."
 
-#: inieditorpanel/web_ui.py:321
+#: inieditorpanel/web_ui.py:325
 msgid "All changes have been discarded."
 msgstr "Alle Änderungen wurden verworfen."
 
-#: inieditorpanel/web_ui.py:336
+#: inieditorpanel/web_ui.py:340
 #, python-format
 msgid "The option name %s is invalid."
 msgstr "Der Optionsname %s ist ungültig."
 
-#: inieditorpanel/web_ui.py:341
+#: inieditorpanel/web_ui.py:345
 #, python-format
 msgid "The new option %s could not be added due to security restrictions."
 msgstr "Die neue Option %s konnte aus Sicherheitsgründen nicht hinzugefügt werden."
 
-#: inieditorpanel/web_ui.py:348
+#: inieditorpanel/web_ui.py:352
 #, python-format
 msgid "The new fields have been added to section %s."
 msgstr "Die neuen Felder wurden zum Abschnitt %s hinzugefügt."
 
-#: inieditorpanel/web_ui.py:350
+#: inieditorpanel/web_ui.py:354
 msgid "No new fields have been added."
 msgstr "Es wurden keine neuen Felder hinzugefügt."
 
-#: inieditorpanel/web_ui.py:534
+#: inieditorpanel/web_ui.py:538
 msgid "text"
 msgstr "Text"
 
-#: inieditorpanel/web_ui.py:538
+#: inieditorpanel/web_ui.py:542
 msgid "password"
 msgstr "Passwort"
 
-#: inieditorpanel/web_ui.py:594
+#: inieditorpanel/web_ui.py:598
 #, python-format
 msgid ""
 "The default value for option \"%s\" in section \"%s\" is invalid. Reason:"
@@ -147,7 +177,7 @@ msgstr ""
 "Der Standardwert für Option \"%s\" in Abschnitt \"%s\" ist ungültig. "
 "Grund: %s"
 
-#: inieditorpanel/web_ui.py:623
+#: inieditorpanel/web_ui.py:627
 #, python-format
 msgid "The value for option \"%s\" in section \"%s\" is invalid. Reason: %s"
 msgstr "Der Wert für Option \"%s\" in Abschnitt \"%s\" ist ungültig. Grund: %s"
@@ -367,31 +397,36 @@ msgstr "Zu diesem Abschnitt hinzuzufügende Optionen; kommagetrennt"
 msgid "Adds the specified options to this section"
 msgstr "Fügt die angegebenen Optionen zu diesem Abschnitt hinzu"
 
-#: inieditorpanel/texts/othertexts.py:2
+#: inieditorpanel/texts/othertexts.py:4
 msgid "bool"
 msgstr "Bool"
 
-#: inieditorpanel/texts/othertexts.py:3
+#: inieditorpanel/texts/othertexts.py:5
 msgid "int"
 msgstr "Zahl"
 
-#: inieditorpanel/texts/othertexts.py:5
+#: inieditorpanel/texts/othertexts.py:6
+msgid "choice"
+msgstr "Auswahl"
+
+#: inieditorpanel/texts/othertexts.py:9
 msgid "readonly"
 msgstr "nur lesbar"
 
-#: inieditorpanel/texts/othertexts.py:6
+#: inieditorpanel/texts/othertexts.py:10
 msgid "hidden"
 msgstr "versteckt"
 
-#: inieditorpanel/texts/othertexts.py:7
+#: inieditorpanel/texts/othertexts.py:11
 msgid "modifiable"
 msgstr "änderbar"
 
-#: inieditorpanel/texts/othertexts.py:9
+#: inieditorpanel/texts/othertexts.py:14
 #, python-format
 msgid "Modified: %(mod)d | Defaults: %(def)d | Options count: %(opt)d"
 msgstr "Geändert: %(mod)d | Standard:  %(def)d | Optionsanzahl: %(opt)d"
 
-#: inieditorpanel/texts/othertexts.py:11
+#: inieditorpanel/texts/othertexts.py:17
 msgid "<default value>"
 msgstr "<Standardwert>"
+

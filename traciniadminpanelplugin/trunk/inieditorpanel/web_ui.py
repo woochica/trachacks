@@ -53,6 +53,10 @@ class TracIniAdminPanel(Component):
       Note the fields specified here are taken additionally to some predefined 
       fields provided by the ini editor.
       """, doc_domain="inieditorpanel")
+
+  ini_section = ConfigSection('ini-editor',
+      """This section is used to handle configurations used by
+      TracIniAdminPanel plugin.""", doc_domain='inieditorpanel')
       
   DEFAULT_PASSWORD_OPTIONS = {
       'notification|smtp_password': True

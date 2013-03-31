@@ -1,7 +1,7 @@
 import copy
 
 from trac.core import *
-from trac.config import ChoiceOption
+from trac.config import ChoiceOption, ConfigSection
 
 from inieditorpanel.api import *
 
@@ -61,10 +61,16 @@ class IniEditorBasicSecurityManager(Component):
               }
     }
   
+  choices = [ ACCESS_READONLY, ACCESS_HIDDEN, ACCESS_MODIFIABLE ]
   default_access = ChoiceOption('ini-editor-restrictions', 'default-access', 
-      [ ACCESS_READONLY, ACCESS_HIDDEN, ACCESS_MODIFIABLE ],
-      doc="""Defines the default access level for options that don't have an
+      choices, doc="""Defines the default access level for options that don't have an
       explicit access level defined. Defaults to readonly.""", doc_domain="inieditorpanel")
+
+  ini_section = ConfigSection('ini-editor-restrictions',
+      """This section is used to store restriction configurations used by
+      TracIniAdminPanel plugin security manager. An example file can be found at
+      http://trac-hacks.org/browser/traciniadminpanelplugin/0.12/safe-restrictions.ini""",
+      doc_domain='inieditorpanel')
   
   def __init__(self):
     restrictions = self.config.options('ini-editor-restrictions')
