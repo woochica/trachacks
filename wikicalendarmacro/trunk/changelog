@@ -9,6 +9,8 @@ formation of the current macro bundle.
 
 wikicalendar-2.1.0 (not yet released) - compatible to Trac 0.11 - 1.0
  resolved issues
+ * #10991: WikiCalendarMacros.get_macro_description() doesn't work on Trac
+ * #10993: Day names header is garbled with `Accept-Language: ja`
  * fixed translation of macro descriptions
 
 

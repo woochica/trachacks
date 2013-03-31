@@ -491,11 +491,13 @@ class WikiCalendarMacros(Component):
         first_week_nextMonth = calendar.monthcalendar(nextYear, nextMonth)[0]
 
         # Switch to user's locale, if available.
+        # DEVEL: This is not thread-safe, investigate an alternative in Babel.
         try:
             loc_req = str(formatter.req.locale)
         except AttributeError:
-            # Available since in Trac 0.12 .
+            # Available since Trac 0.12.
             loc_req = None
+        loc_prop = loc_encoding = None
         if loc_req:
             loc = locale.getlocale()
             loc_prop = locale.normalize(loc_req)
@@ -508,6 +510,7 @@ class WikiCalendarMacros(Component):
                     locale.setlocale(locale.LC_TIME, loc_prop)
                 except locale.Error:
                     loc_prop = None
+            loc_encoding = locale.getlocale(locale.LC_TIME)[1]
             self.env.log.debug('Locale setting for calendar: ' + str(loc_prop))
 
         # Finally building the output
@@ -550,13 +553,10 @@ class WikiCalendarMacros(Component):
         heading = tag.tr()
         heading(align='center')
 
-        for day in calendar.weekheader(2).split()[:-2]:
-            col = tag.th(to_unicode(day))
-            col(class_='workday', scope='col')
-            heading(col)
-        for day in calendar.weekheader(2).split()[-2:]:
-            col = tag.th(to_unicode(day))
-            col(class_='weekend', scope='col')
+        for idx, day in enumerate(calendar.day_abbr):
+            day = to_unicode(day, charset=loc_encoding)
+            col = tag.th(day[:2])
+            col(class_=('workday', 'weekend')[idx > 4], scope='col')
             heading(col)
 
         heading = buff(tag.thead(heading))
