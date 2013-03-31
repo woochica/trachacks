@@ -174,7 +174,7 @@ class WikiCalendarMacros(Component):
         # TRANSLATOR: Keep Trac style WikiFormatting here, please.
         cal_doc = cleandoc_(
             """Inserts a small calendar, where each day links to a wiki page,
-            whose name matches `wiki-page-format`. The current day is
+            whose name matches the format set by `wiki`. The current day is
             highlighted, and days with a due Milestone are marked in bold.
 
             Usage:
@@ -192,7 +192,7 @@ class WikiCalendarMacros(Component):
 
             Keyword-only argument:
              * `base` (page name string) - create new pages from that
-               template in PageTemplates, defaults to: `''` (empty string)
+               template in PageTemplates, defaults to `''` (empty string)
 
             Examples:
             {{{
@@ -227,17 +227,18 @@ class WikiCalendarMacros(Component):
                 `true`
              1. `wiki` (valid strftime expression) - page name format,
                 defaults to `%Y-%m-%d`
-             1. `cdate` (boolean) show tickets created on that day too,
-                defaults to: `true`
+             1. `cdate` (boolean) - show tickets created on that day too,
+                defaults to `true`
              1. `base` (page name string) - create new pages from that
-                template in PageTemplates, defaults to: `''` (empty string)
+                template in PageTemplates, defaults to `''` (empty string)
              1. `query` (valid TracQuery) - including expressions grouped by
-                AND (OR since 0.12) for general ticket selection - defaults
+                AND (OR since 0.12) for general ticket selection, defaults
                 to `id!=0`
-             1. `short` (integer), total ticket count per day, that will have
+             1. `short` (integer) - total ticket count per day, that will have
                 ticket list display condensed to just ticket numbers, defaults
                 to `0` (never condense ticket list
-             1. `width` (valid CSS size), prefixed `+` forces more
+             1. `width` (valid CSS size), prefixed `+` forces more, defaults
+                to `100%;`
 
             Examples:
             {{{
@@ -272,7 +273,8 @@ class WikiCalendarMacros(Component):
             Keyword-only argument:
              * `subpages` (list of page names separated by '|') - replace
                wiki page link per day with one link per sub-page labeled by
-               first character of sub-page name
+               first character of sub-page name, defaults to an empty list
+
             Example:
             {{{
             [[WikiTicketCalendar(wiki=Meetings_%Y/%m/%d,
