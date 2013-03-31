@@ -48,7 +48,7 @@ setup(
         'Framework :: Trac',
         'License :: OSI Approved :: BSD License', 
     ],
-    install_requires = ['Trac>=0.12'],
+    install_requires = ['Trac>=1.0'],
     packages = find_packages(exclude=['*.texts*']),
     package_data = { PACKAGE: [ 'templates/*', 'htdocs/*', 'locale/*/LC_MESSAGES/*.mo' ] },
                                          
