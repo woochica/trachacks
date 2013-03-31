@@ -34,7 +34,7 @@ from trac.wiki.api import parse_args, IWikiMacroProvider, WikiSystem
 from trac.wiki.formatter import format_to_html
 from trac.wiki.macros import WikiMacroBase
 
-from wikicalendar.api import add_domain, _, cleandoc_, tag_
+from wikicalendar.api import add_domain, _, cleandoc_, gettext, tag_
 from wikicalendar.ticket import WikiCalendarTicketProvider
 
 uts = None
@@ -163,8 +163,8 @@ class WikiCalendarMacros(Component):
 
     # Returns list of provided macro names.
     def get_macros(self):
-        yield "WikiCalendar"
-        yield "WikiTicketCalendar"
+        yield 'WikiCalendar'
+        yield 'WikiTicketCalendar'
 
     # Returns documentation for provided macros.
     def get_macro_description(self, name):

@@ -14,8 +14,9 @@ from trac.core import Component
 # by keeping Babel optional here.
 try:
     from trac.util.translation import domain_functions
-    add_domain, _, tag_ = \
-        domain_functions('wikicalendar', ('add_domain', '_', 'tag_'))
+    add_domain, _, gettext, tag_ = \
+        domain_functions('wikicalendar',
+                         ('add_domain', '_', 'gettext', 'tag_'))
 except ImportError:
     from genshi.builder import tag as tag_
     from trac.util.translation import gettext
