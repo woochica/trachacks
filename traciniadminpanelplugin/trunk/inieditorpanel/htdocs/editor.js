@@ -1,4 +1,3 @@
-var settings_stored_values = new Object();
 var settings_input_fields = new Object();
 
 function update_section_info(section_name, count_diff, modified_diff, defaults_diff) {
@@ -67,11 +66,14 @@ function check_for_changes() {
 
 $(document).ready(function(){
   settings_list = $('#settings_table'); // global var
-  section_counters = new Object();
-  section_names = new Array();
   cur_focused_field = settings_list.find('input[name="inieditor_cur_focused_field"]');
-  
-  load_data(section_counters, settings_stored_values);
+
+  $.each(section_names, function(idx, name) {
+    var info_elem = settings_list.find('td#section-title-' + name +
+                                       ' .section-info');
+    $.extend(section_counters[name], {defaults_count: 0, modified_count: 0,
+                                      info_elem: info_elem});
+  });
 
   settings_list.find('input:checkbox[name=inieditor_default]').each(function() {
     var field_name = $(this).val();
@@ -174,7 +176,6 @@ $(document).ready(function(){
   // Update section information.
   settings_list.find('td.section-title').each(function() {
     var section_name = $(this).attr('id').substr('section-title'.length + 1);
-    section_names.push(section_name);
     update_section_info(section_name, 0, 0, 0);
     
     if (section_count > 1) { // only make hidable when showing all sections

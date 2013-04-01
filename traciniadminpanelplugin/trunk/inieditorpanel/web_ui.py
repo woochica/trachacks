@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import re
 import copy
 
@@ -5,18 +7,14 @@ from pkg_resources import resource_filename
 
 from trac.core import *
 from trac.config import ConfigSection, Option, ListOption, ExtensionOption, _TRUE_VALUES
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, add_notice, add_warning
+from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
+                            add_script_data, add_notice, add_warning
 from trac.admin.api import IAdminPanelProvider
 from trac.wiki.formatter import format_to_oneliner
 from trac.mimeview.api import Context
-
-from genshi.template import TemplateLoader
-from genshi.template.text import NewTextTemplate
+from trac.util.translation import dgettext, domain_functions
 
 from inieditorpanel.api import *
-
-from trac.util.text import javascript_quote
-from trac.util.translation import dgettext, domain_functions
 
 _, tag_, N_, add_domain, gettext = domain_functions(
     'inieditorpanel', 
@@ -393,18 +391,25 @@ class TracIniAdminPanel(Component):
              'hidden_options': hidden_options
            }
 
-    data['_'] = _
-    data['gettext'] = gettext
-    data['javascript_quote'] = javascript_quote
+    section_counters = {}
+    settings_stored_values = {}
+    for section_name, section in sections.iteritems():
+        escaped = section_name.replace(':', '_')
+        section_counters[escaped] = {'option_count': len(section)}
+        settings_stored_values[escaped] = dict(
+            (name, option['stored_value'])
+            for name, option in modifiable_options[section_name].iteritems()
+            if option['type'] != 'password')
 
-    # Parse the JavaScript code
-    # NOTE: We can't use <xi:include> for this as Genshi escapes XML characters
-    #   in the JavaScript code leading invalid variable values (that contain
-    #   for example '>') in some cases.    
-    jsLoader = TemplateLoader(self.get_templates_dirs(), auto_reload=self.config.getbool('trac', 'auto_reload'))
-    jsTmpl = jsLoader.load('editor-data.js', cls=NewTextTemplate)
-    data['javascript'] = jsTmpl.generate(**data).render(encoding=None) # pass data dict as kwargs
-    
+    add_script_data(req, {
+        'section_count': len(sections),
+        'section_names': sorted(section_counters),
+        'section_counters': section_counters,
+        'settings_stored_values': settings_stored_values,
+        'info_format': _("Modified: %(mod)d | Defaults: %(def)d | Options "
+                         "count: %(opt)d"),
+    })
+
     add_stylesheet(req, 'inieditorpanel/main.css')
     add_script(req, 'inieditorpanel/editor.js')
     return 'admin_tracini.html', data

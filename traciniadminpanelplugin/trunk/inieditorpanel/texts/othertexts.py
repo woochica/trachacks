@@ -10,8 +10,5 @@ N_('readonly')
 N_('hidden')
 N_('modifiable')
 
-# Javascript status
-N_("Modified: %(mod)d | Defaults: %(def)d | Options count: %(opt)d")
-
 # display field value when default
 N_('<default value>')
