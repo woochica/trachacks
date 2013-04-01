@@ -26,6 +26,7 @@ from sgmllib import SGMLParser
 
 from trac.config import BoolOption, Configuration, Option
 from trac.core import Component, implements
+from trac.util.compat import any
 from trac.util.datefmt import format_date
 from trac.util.text import shorten_line, to_unicode
 from trac.web.href import Href
@@ -400,8 +401,9 @@ class WikiCalendarMacros(Component):
 
         This method handles absolute as well as relative wiki paths.
         """
-        # Code taken from trac.wiki.api.WikiSystem at r10905.
-        if not pagename.startswith(('./', '../')):
+        # Code taken from trac.wiki.api.WikiSystem at r10905,
+        # improved by Jun Omae for compatibility with Python2.4.
+        if not any(pagename.startswith(prefix) for prefix in ('./', '../')):
             return pagename.lstrip('/')
         base = referrer.split('/')
         components = pagename.split('/')

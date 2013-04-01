@@ -9,6 +9,7 @@ formation of the current macro bundle.
 
 wikicalendar-2.1.0 (not yet released) - compatible to Trac 0.11 - 1.0
  resolved issues
+ * #9718: Resolve relative wiki paths in pattern for wiki pages too
  * #10991: WikiCalendarMacros.get_macro_description() doesn't work on Trac
  * #10993: Day names header is garbled with `Accept-Language: ja`
  * fixed translation of macro descriptions
@@ -25,7 +26,6 @@ wikicalendar-2.0.0 (30-Mar-2013) - new 'bundled macros' edition
  * #7653: Not all matching tickets showing up in calendar
  * #8818: CSS definitions not read
  * #9568: Can Babel be made an optional component for 0.12?
- * #9718: Resolve relative wiki paths in pattern for wiki pages too
  * #9719: Regression: WikiTicketCalendar doesn't show >1 milestones per day.
  * restored full backwards-compatibility down to Trac 0.11
  * added wiki page template preselection support to WikiCalendar macro too
