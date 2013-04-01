@@ -10,7 +10,7 @@
 from trac.core import implements, Component
 from trac.ticket.default_workflow import get_workflow_config
 from trac.web.api import ITemplateStreamFilter, IRequestHandler
-from trac.web.chrome import add_script
+from trac.web.chrome import add_script, add_script_data
 try:
     from tracticketconditionalvalidatefield.api import TicketsValidator
 except:
@@ -83,4 +83,6 @@ class TicketValidatorDecolator(Component):
                         'ticket.html',  # /ticket/{\d} or /newticket
                         ]:
             add_script(req, "contextchrome/js/ticketvalidatordecolator.js")
+            status = 'ticket' in data and data['ticket'].values['status'] or 'sentinel'
+            add_script_data(req, {"contextchrome_tracstatus": status})
         return stream

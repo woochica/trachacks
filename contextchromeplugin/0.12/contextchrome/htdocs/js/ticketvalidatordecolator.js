@@ -37,7 +37,7 @@
 		if (!action in workflow) return;  // error exit
 		var state = workflow[action].newstate
 		// TODO: a line below will be fixed; after preview or auto_preview, .trac-status reflects invalid current status
-		if (state == '*') state = $(".trac-status a").get(0).innerText  // if wildcard, use a current state
+		if (state == '*') state = contextchrome_tracstatus  // or $(".trac-status a").get(0).innerText  // if wildcard, use a current state
 		rule = {}
         jQuery.extend(rule, rules['status=' + state + '&type=' + type])
         jQuery.extend(rule, rules['status=*&type=' + type])
