@@ -17,33 +17,35 @@
     <p class="help" i18n:msg="">
       Allows you to edit the trac.ini file.<br/><i>Note:</i> To "delete" an option from the trac.ini file, just set it to its default value.
     </p>
+
+    <div class="toparea">
+      <div id="select_section_form">
+        <form method="post" action="">
+          <fieldset>
+            <legend>Change Section</legend>
+            <label>Section name: 
+              <select id="change-section-name" name="change-section" size="1">
+                <option value="" selected="${len(sections) == 0 or None}">select section</option>
+                <option value="_all_sections" selected="${len(sections) > 1 or None}">all sections</option>
+                <option py:for="section_name in all_section_names" value="${section_name}" selected="${len(sections) == 1 and sections.keys()[0] == section_name or None}">${section_name}</option>
+              </select>
+            </label>
+            <input type="submit" value="${_('Show Section')}"/>
+            <p class="help">Warning: Changing the section discards all unsaved changes.</p>
+          </fieldset>
+        </form>
+      </div>
     
-    <div id="select_section_form">
-      <form method="post" action="">
-        <fieldset>
-          <legend>Change Section</legend>
-          <label>Section name: 
-            <select id="change-section-name" name="change-section" size="1">
-              <option value="" selected="${len(sections) == 0 or None}">select section</option>
-              <option value="_all_sections" selected="${len(sections) > 1 or None}">all sections</option>
-              <option py:for="section_name in all_section_names" value="${section_name}" selected="${len(sections) == 1 and sections.keys()[0] == section_name or None}">${section_name}</option>
-            </select>
-          </label>
-          <input type="submit" value="${_('Show Section')}"/>
-          <p class="help">Warning: Changing the section discards all unsaved changes.</p>
-        </fieldset>
-      </form>
-    </div>
-    
-    <div id="new_section_form">
-      <form method="post" action="">
-        <fieldset>
-          <legend>Add New Section</legend>
-          <label>Section name:<input type="text" name="new-section-name"/></label>
-          <input type="submit" value="${_('Add Section')}"/>
-          <p class="help">Warning: Adding a new section discards all unsaved changes.</p>
-        </fieldset>
-      </form>
+      <div id="new_section_form">
+        <form method="post" action="">
+          <fieldset>
+            <legend>Add New Section</legend>
+            <label>Section name:<input type="text" name="new-section-name"/></label>
+            <input type="submit" value="${_('Add Section')}"/>
+            <p class="help">Warning: Adding a new section discards all unsaved changes.</p>
+          </fieldset>
+        </form>
+      </div>
     </div>
     
     <div id="settings_table" py:if="len(sections) != 0">
@@ -67,11 +69,13 @@
                   specified for at least one option in this section.
                 </span>
                 <span class="section-name">[${section_name}]</span>
-                <span class="section-description" py:if="descriptions.get(section_name)" i18n:msg="description"><b>Description:</b> ${descriptions.get(section_name)}</span>
                 <span class="section-info">Options count: ${len(section)}</span>
                 <!--! Add dummy field so that empty section won't get lost. -->
                 <input type="hidden" name="inieditor_value##${section_name.replace(':','_')}##dummy" value="dummy"/>
               </td>
+            </tr>
+            <tr class="collapsible-${section_name.replace(':','_')} section-description" py:if="descriptions.get(section_name)">
+              <td>${wiki_to_html(context, descriptions[section_name])}</td>
             </tr>
             <py:for each="access_level, access_level_options in (('modifiable', modifiable_options[section_name]), ('readonly', readonly_options[section_name]))">
               <tr py:if="len(access_level_options) != 0" class="collapsible-${section_name.replace(':','_')}">
@@ -133,7 +137,7 @@
                 </tr>
                 <tr class="collapsible-${section_name.replace(':','_')} option-info">
                   <td colspan="3">
-                    <span class="option-description" i18n:msg="description"><b>Description:</b> ${option.desc or _('None available')}</span>
+                    <div py:if="option.desc" class="option-description" xml:space="preserve">${wiki_to_html(context, "**"+_("Description:")+"** " + option.desc)}</div>
                     <span class="value-info">
                       <b>Type:</b> 
                       <py:choose test="option.type">

@@ -4,8 +4,8 @@
   margin-right: 1em;
 }
 
-#ini_settings_list {
-  clear: both;
+div.toparea {
+  border: 1px solid #FFFFFF;
 }
 
 #ini_settings_list span.editor-note, #ini_settings_list tr.editor-note td {
@@ -63,10 +63,11 @@
     display: block;
   }
 
-  #ini_settings_list td.section-title .section-description {
+  #ini_settings_list tr.section-description {
     color: #888;
     font-size: 80%;
     font-weight: normal;
+    padding-left: 30px;
     padding-top: 3px;
     padding-bottom: 3px;
     display: block;
@@ -116,6 +117,16 @@
     font-size: 80%;
     color: #888;
     padding-left: 2em;
+  }
+
+  #ini_settings_list tr.option-info div.option-description {
+    padding: 0;
+    margin: 0;
+  }
+
+  #ini_settings_list tr.option-info div.option-description p {
+    padding: 0;
+    margin: 0;
   }
 
   #ini_settings_list tr.option-info .value-info {

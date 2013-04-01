@@ -10,8 +10,6 @@ from trac.config import ConfigSection, Option, ListOption, ExtensionOption, _TRU
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
                             add_script_data, add_notice, add_warning
 from trac.admin.api import IAdminPanelProvider
-from trac.wiki.formatter import format_to_oneliner
-from trac.mimeview.api import Context
 from trac.util.translation import dgettext, domain_functions
 
 from inieditorpanel.api import *
@@ -124,9 +122,7 @@ class TracIniAdminPanel(Component):
       if not section_name in all_section_names:
         all_section_names.append(section_name)
       if doc:
-        doc = dgettext(section.doc_domain, doc)
-        format_to_oneliner(self.env, Context.from_request(req), doc)
-        descriptions[section_name] = doc
+        descriptions[section_name] = dgettext(section.doc_domain, doc)
 
     all_section_names.sort()
         
@@ -379,9 +375,7 @@ class TracIniAdminPanel(Component):
     for name, section in registry.items():
       doc = section.__doc__
       if doc:
-        doc = dgettext(section.doc_domain, doc)
-        format_to_oneliner(self.env, Context.from_request(req), doc)
-        descriptions[name] = doc
+        descriptions[name] = dgettext(section.doc_domain, doc)
     
     data = { 'all_section_names': all_section_names, 
              'sections' : sections,
@@ -535,9 +529,13 @@ class TracIniAdminPanel(Component):
     if (section_name, option_name) in Option.registry:
       # Allow wiki formatting in descriptions
       option = Option.registry[(section_name, option_name)]
-      doc = dgettext(option.doc_domain, option.__doc__)
-      option_desc = format_to_oneliner(self.env, Context.from_request(req), doc)
-      option_type = option.__class__.__name__.lower()[:-6] or 'text'
+      doc = option.__doc__
+      if doc:
+          doc = dgettext(option.doc_domain, doc)
+      else:
+          doc = None
+      option_desc = doc
+      option_type = option.__class__.__name__.lower()[:-6] or N_('text')
     else:
       option_desc = None
       option_type = N_('text')

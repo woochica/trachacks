@@ -3,11 +3,11 @@ var settings_input_fields = new Object();
 function update_section_info(section_name, count_diff, modified_diff, defaults_diff) {
   var section_counter = section_counters[section_name];    
   var info_elem = section_counter['info_elem'];
-  
+
   section_counter['option_count'] += count_diff;
   section_counter['defaults_count'] += defaults_diff;
   section_counter['modified_count'] += modified_diff;
-  
+
   info_elem.text(babel.format(info_format,
                               {mod: section_counter['modified_count'],
                                def: section_counter['defaults_count'],
@@ -20,13 +20,13 @@ function get_option_input_field(field_name) {
   if (input_fields != null) {
     return input_fields;
   }
-  
+
   input_fields = settings_list.find('input[name=\'inieditor_value##' + field_name + '\']');
   if (input_fields.length == 0) {
     // Not an input field but select field
     input_fields = settings_list.find('select[name=\'inieditor_value##' + field_name + '\']');
   }
-  
+
   settings_input_fields[field_name] = input_fields;
   return input_fields;
 }
@@ -35,13 +35,13 @@ function get_option_cur_value(input_field) {
   if (typeof input_field == 'string') {
     input_field = get_option_input_field(input_field);
   }
-  
+
   if (input_field.length == 1) {
     input_field = input_field;
     switch (input_field[0].nodeName.toLowerCase()) {
       case 'select':
         return input_field.children('option:selected').val();
-        
+
       default:
         return input_field.val();
     }
@@ -60,7 +60,7 @@ function check_for_changes() {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -81,11 +81,11 @@ $(document).ready(function(){
     var section_name = name_split[0].replace(/:/g,'_');
     var option_name = name_split[1];
     var input_field = get_option_input_field(field_name);
-    
+
     // Count section options, setup fields (default, modified), and add register 
     // listener to checkboxes that enables or disables the related input field.    
     var section_counter = section_counters[section_name];    
-    
+
     // Default values
     if ($(this).is(':checked')) {
       section_counter['defaults_count']++;
@@ -96,11 +96,11 @@ $(document).ready(function(){
     if (!$(this).attr('disabled')) {
       var stored_value = settings_stored_values[section_name][option_name];
       var containing_row = $(this).parents('tr');
-      
+
       if (stored_value == null) {
         stored_value = ''; // mainly for passwords
       }
-    
+
       // Register listeners
       $(this).change(function() {
         if ($(this).is(':checked')) {
@@ -111,13 +111,13 @@ $(document).ready(function(){
           update_section_info(section_name, 0, 0, -1);
         }
       });
-      
+
       // Modified values
       if (get_option_cur_value(input_field) != stored_value) {
         section_counter['modified_count']++;
         containing_row.addClass('modified-field');
       }
-      
+
       // Add triggers for detecting changed values 
       input_field.keyup(function() {
         var wasModified = containing_row.hasClass('modified-field');
@@ -151,7 +151,7 @@ $(document).ready(function(){
           }
         }
       });
-      
+
       // Add trigger to notify about the currently focused field type; used to
       // determine the pressed submit button when hitting return
       input_field.focus(function() {
@@ -159,28 +159,28 @@ $(document).ready(function(){
       });
     }    
   });
-  
+
   // Add trigger to notify about the currently focused field type; used to
   // determine the pressed submit button when hitting return
   settings_list.find('input[name^="new-options-"]').focus(function() {
     cur_focused_field.val($(this).attr('name'));
   });
-  
+
   // Same trigger. NOTE: We can't use "click" here as this is also triggered
   // when hitting return. We need to use "focus" here.
   settings_list.find(':submit').focus(function() {
     cur_focused_field.val('');
   });
-  
+
   // Register click listener for expanding/collpasing sections.
   // Update section information.
   settings_list.find('td.section-title').each(function() {
     var section_name = $(this).attr('id').substr('section-title'.length + 1);
     update_section_info(section_name, 0, 0, 0);
-    
+
     if (section_count > 1) { // only make hidable when showing all sections
       var rows = settings_list.find('tr.collapsible-' + section_name);
-      
+
       $(this).click(function() {
         if ($(this).hasClass('header-collapsed')) {
           rows.show();
@@ -192,29 +192,29 @@ $(document).ready(function(){
           $(this).addClass('header-collapsed');
         }
       });
-      
+
       $(this).addClass('header-collapsed');
       rows.hide();
     }
   });
-  
+
   // Change section form handling
   $('#change-section-name').change(function() {
     $(this).parents('form').submit();
   });
-  
+
   var cur_section = $('#change-section-name option:selected').val();
   $('#select_section_form form').submit(function() {
     var new_section = $('#change-section-name option:selected').val();
     if (cur_section == new_section || new_section == '') {
       return false;
     }
-    
+
     if (check_for_changes() && !confirm('You have unsaved changes in this section. Do you still want to change the section?')) {
       $(this)[0].reset(); // restore current section
       return false;
     }
-    
+
     $(this).find(':submit').attr('disabled', true); 
     return true;
   });
@@ -224,7 +224,7 @@ $(document).ready(function(){
     if (check_for_changes() && !confirm('You have unsaved changes in this section. Do you still want to change the section?')) {
       return false;
     }
-    
+
     return true;
   });
 });
