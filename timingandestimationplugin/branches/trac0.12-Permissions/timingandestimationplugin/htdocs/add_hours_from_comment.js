@@ -4,7 +4,9 @@ var btnTemp = $('<div class="inlinebuttons"><input type="submit" title="add time
 function add_buttons(){
   $(".change .trac-ticket-buttons").each(function(i,e){
     var ts = timestamp_from_change(this);
-    if(ts)$(this).append(btnTemp.clone().click(
+    var el = $(this);
+    // we had a timestamp, but no add hours button
+    if(ts && el.has('.add-hours-btn').length == 0) el.append(btnTemp.clone().click(
       function(){TandE_onClickOfADateElement(ts);}
     ));
   });
@@ -30,5 +32,7 @@ function TandE_onClickOfADateElement(commenttime) {
   return false;
 }
 
+// when we replace the changelog/timeline add buttons
+$(document).ajaxStop(add_buttons);
 $(document).ready(add_buttons);
 })(); // end of scoping function
