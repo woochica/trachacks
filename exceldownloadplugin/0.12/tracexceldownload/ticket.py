@@ -63,12 +63,11 @@ class ExcelTicketModule(Component):
         query.has_more_pages = False
         query.offset = 0
 
-        # extract all fields
+        # extract all fields except custom fields
         cols = ['id']
-        cols += [field['name'] for field in query.fields]
-        for name in ('time', 'changetime'):
-            if name not in cols:
-                cols.append(name)
+        cols.extend(f['name'] for f in query.fields if not f.get('custom'))
+        cols.extend(name for name in ('time', 'changetime')
+                         if name not in cols)
         query.cols = cols
 
         if hasattr(self.env, 'get_read_db'):
@@ -76,7 +75,12 @@ class ExcelTicketModule(Component):
         else:
             db = self.env.get_db_cnx()
         tickets = query.execute(req, db)
+        # add custom fields to avoid error to join many tables
+        custom_fields = [f['name'] for f in query.fields if f.get('custom')]
+        self._fill_custom_fields(tickets, custom_fields, db)
+
         context = Context.from_request(req, 'query', absurls=True)
+        cols.extend([name for name in custom_fields if name not in cols])
         data = query.template_data(context, tickets)
 
         book = Workbook(encoding='utf-8', style_compression=1)
@@ -85,6 +89,14 @@ class ExcelTicketModule(Component):
         if sheet_history:
             self._create_sheet_history(req, context, data, book)
         return get_workbook_content(book), 'application/vnd.ms-excel'
+
+    def _fill_custom_fields(self, tickets, custom_fields, db):
+        cursor = db.cursor()
+        for ticket in tickets:
+            cursor.execute('SELECT name,value FROM ticket_custom '
+                           'WHERE ticket=%s', (ticket['id'],))
+            for row in cursor:
+                ticket[row[0]] = row[1]
 
     def _create_sheet_query(self, req, context, data, book):
         sheet = book.add_sheet(dgettext('messages', 'Custom Query'))
@@ -122,7 +134,7 @@ class ExcelTicketModule(Component):
                 for idx, header in enumerate(headers):
                     name = header['name']
                     value, style, width, line = self._get_cell_data(
-                            name, result[name], req, ticket_context, writer)
+                        name, result.get(name), req, ticket_context, writer)
                     cells.append((value, style, width, line))
                 writer.write_row(cells)
             writer.row_idx += 1    # blank row
