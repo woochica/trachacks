@@ -155,7 +155,7 @@ class TicketMover(Component):
         for project in _projects:
             path = os.path.join(base_path, project)
             try:
-                env = open_environment(path)
+                env = open_environment(path, use_cache=True)
             except:
                 continue
             perm = PermissionSystem(env)
@@ -176,7 +176,8 @@ class TicketMover(Component):
         # open the environment if it is a string
         if isinstance(env, basestring):
             base_path, _project = os.path.split(self.env.path)
-            env = open_environment(os.path.join(base_path, env))
+            env = open_environment(os.path.join(base_path, env),
+                                   use_cache=True)
 
         # get the old ticket
         old_ticket = Ticket(self.env, ticket_id)
