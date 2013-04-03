@@ -14,7 +14,7 @@ from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
 from trac.resource import ResourceNotFound
-from trac.util import to_unicode
+from trac.util import escape, to_unicode
 from trac.util.html import html, Markup
 from trac.util.text import shorten_line
 from trac.util.compat import set, sorted, partial
@@ -281,13 +281,13 @@ class MasterTicketsModule(Component):
             tkt = link.tkt
             node = g[tkt.id]
             if label_summary:
-                node['label'] = u'#%s %s' % (tkt.id, tkt['summary'])
+                node['label'] = u'#%s: %s' % (tkt.id, escape(tkt['summary']))
             else:
                 node['label'] = u'#%s'%tkt.id
             node['fillcolor'] = tkt['status'] == 'closed' and self.closed_color or self.opened_color
             node['URL'] = req.href.ticket(tkt.id)
             node['alt'] = u'Ticket #%s'%tkt.id
-            node['tooltip'] = tkt['summary']
+            node['tooltip'] = escape(tkt['summary'])
             if self.highlight_target and tkt.id in tkt_ids:
                 node['penwidth'] = 3
             
