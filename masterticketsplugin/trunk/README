@@ -48,6 +48,16 @@ All other configuration options go in the ``[mastertickets]`` section.
 ``gs_path`` : *optional, default: gs*
     Path to the ghostscript executable.
 
+``closed_color`` : *optional, default: green*
+    Color of closed tickets
+
+``opened_color`` : *optional, default: red*
+    Color of opened tickets
+
+``graph_direction`` : *optional, default: TD*
+	Direction of the dependency graph (TD = Top Down, DT = Down Top, LR = Left Right, RL = Right Left)
+
+
 To enable the plugin::
 
     [components]

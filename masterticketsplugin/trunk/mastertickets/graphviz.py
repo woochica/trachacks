@@ -72,6 +72,7 @@ class Graph(object):
         self.name = name
         self.nodes = []
         self._node_map = {}
+        self.attributes={}
         self.edges = []
 
     def add(self, obj):
@@ -119,6 +120,8 @@ class Graph(object):
         process(self.edges)
         
         lines = [u'digraph "%s" {'%self.name]
+        for att,value in self.attributes.iteritems():
+            lines.append(u'\t%s="%s";' % (att,value))
         for obj in itertools.chain(nodes, edges):
             lines.append(u'\t%s;'%obj)
         lines.append(u'}')
