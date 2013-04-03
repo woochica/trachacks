@@ -11,6 +11,7 @@ from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
                             add_ctxtnav
 from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
+from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
 from trac.util.html import html, Markup
 from trac.util.compat import set, sorted, partial
@@ -101,6 +102,14 @@ class MasterTicketsModule(Component):
                             elms.append(u' removed')
                         field_data['rendered'] = elms
             
+        #add a link to generate a dependency graph for all the tickets in the milestone
+        if req.path_info.startswith('/milestone/'):
+            if not data:
+                return template, data, content_type
+            milestone=data['milestone']
+            add_ctxtnav(req, 'Depgraph', req.href.depgraph('milestone', milestone.name))
+
+
         return template, data, content_type
         
     # ITemplateStreamFilter methods
@@ -144,16 +153,35 @@ class MasterTicketsModule(Component):
         if not path_info:
             raise TracError('No ticket specified')
         
-        tkt_id = path_info.split('/', 1)[0]
-        g = self._build_graph(req, tkt_id)
-        if '/' in path_info or 'format' in req.args:
-            
+        #list of tickets to generate the depgraph for
+        tkt_ids=[]
+        milestone=None
+        split_path = path_info.split('/', 2)
+
+        #Urls to generate the depgraph for a ticket is /depgraph/ticketnum
+        #Urls to generate the depgraph for a milestone is /depgraph/milestone/milestone_name
+        if split_path[0] == 'milestone':
+            #we need to query the list of tickets in the milestone
+            milestone = split_path[1]
+            query=Query(self.env, constraints={'milestone' : [milestone]}, max=0)
+            tkt_ids=[fields['id'] for fields in query.execute()]
+        else:
+            #the list is a single ticket
+            tkt_ids = [int(split_path[0])]
+        g = self._build_graph(req, tkt_ids)
+
+        if path_info.endswith('/depgraph.png') or 'format' in req.args:
             format = req.args.get('format')
             if format == 'text':
-                req.send(str(g), 'text/plain')
+                #in case g.__str__ returns unicode, we need to convert it in ascii
+                req.send(unicode(g).encode('ascii', 'replace'), 'text/plain')
             elif format == 'debug':
                 import pprint
-                req.send(pprint.pformat(TicketLinks(self.env, tkt_id)), 'text/plain')
+                req.send(
+                    pprint.pformat(
+                        [TicketLinks(self.env, tkt_id) for tkt_id in tkt_ids]
+                        ),
+                    'text/plain')
             elif format is not None:
                 req.send(g.render(self.dot_path, format), 'text/plain')
             
@@ -170,18 +198,20 @@ class MasterTicketsModule(Component):
         else:
             data = {}
             
-            tkt = Ticket(self.env, tkt_id)
-            data['tkt'] = tkt
+            if milestone is None:
+                tkt = Ticket(self.env, tkt_ids[0])
+                data['tkt'] = tkt
+                add_ctxtnav(req, 'Back to Ticket #%s'%tkt.id, req.href.ticket(tkt.id))
+            else:
+                add_ctxtnav(req, 'Back to Mileston %s'%milestone, req.href.milestone(milestone))
+            data['milestone'] = milestone
             data['graph'] = g
             data['graph_render'] = partial(g.render, self.dot_path)
             data['use_gs'] = self.use_gs
             
-            add_ctxtnav(req, 'Back to Ticket #%s'%tkt.id, req.href.ticket(tkt_id))
             return 'depgraph.html', data, None
 
-    def _build_graph(self, req, tkt_id):
-        links = TicketLinks(self.env, tkt_id)
-        
+    def _build_graph(self, req, tkt_ids):
         g = graphviz.Graph()
         g.attributes['rankdir'] = self.graph_direction
         
@@ -192,9 +222,11 @@ class MasterTicketsModule(Component):
         edge_default['style'] = ''
         
         # Force this to the top of the graph
-        g[tkt_id] 
+        for id in tkt_ids:
+            g[id] 
         
-        links = sorted(links.walk(), key=lambda link: link.tkt.id)
+        links = TicketLinks.walk_tickets(self.env, tkt_ids)
+        links = sorted(links, key=lambda link: link.tkt.id)
         for link in links:
             tkt = link.tkt
             node = g[tkt.id]

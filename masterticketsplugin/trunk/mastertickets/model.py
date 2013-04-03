@@ -111,19 +111,20 @@ class TicketLinks(object):
             for tkt in arr:
                 if isinstance(tkt, Ticket):
                     tkt = tkt.id
-                arr2.append(tkt)
+                arr2.append(str(tkt))
             return '[%s]'%','.join(arr2)
             
         return '<mastertickets.model.TicketLinks #%s blocking=%s blocked_by=%s>'% \
                (self.tkt.id, l(getattr(self, 'blocking', [])), l(getattr(self, 'blocked_by', [])))
 
-    def walk(self):
-        """Return an iterable of all links reachable directly above or below this one."""
+    @staticmethod
+    def walk_tickets(env, tkt_ids):
+        """Return an iterable of all links reachable directly above or below those ones."""
         def visit(tkt, memo, next_fn):
             if tkt in memo:
                 return False
             
-            links = TicketLinks(self.env, tkt)
+            links = TicketLinks(env, tkt)
             memo[tkt] = links
             
             for n in next_fn(links):
@@ -131,7 +132,8 @@ class TicketLinks(object):
         
         memo1 = {}
         memo2 = {}
-        visit(str(self.tkt.id), memo1, lambda links: links.blocking)
-        visit(str(self.tkt.id), memo2, lambda links: links.blocked_by)
+        for id in tkt_ids:
+            visit(id, memo1, lambda links: links.blocking)
+            visit(id, memo2, lambda links: links.blocked_by)
         memo1.update(memo2)
         return memo1.itervalues()
