@@ -1,12 +1,20 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2007-2012 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 
 from setuptools import setup
 
 setup(
     name = 'TracMasterTickets',
-    version = '3.0.2',
+    version = '3.0.3',
     packages = ['mastertickets'],
     package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
 
@@ -14,7 +22,7 @@ setup(
     author_email = 'noah@coderanger.net',
     description = 'Provides support for ticket dependencies and master tickets.',
     long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
-    license = 'BSD',
+    license = '3-Clause BSD',
     keywords = 'trac plugin ticket dependencies master',
     url = 'http://github.com/coderanger/trac-mastertickets',
     classifiers = [

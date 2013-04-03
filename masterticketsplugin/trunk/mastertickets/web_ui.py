@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2007-2012 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import subprocess
 import re
 
@@ -281,7 +290,7 @@ class MasterTicketsModule(Component):
             tkt = link.tkt
             node = g[tkt.id]
             if label_summary:
-                node['label'] = u'#%s: %s' % (tkt.id, escape(tkt['summary']))
+                node['label'] = u'#%s %s' % (tkt.id, tkt['summary'])
             else:
                 node['label'] = u'#%s'%tkt.id
             node['fillcolor'] = tkt['status'] == 'closed' and self.closed_color or self.opened_color

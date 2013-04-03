@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
-# Created by Noah Kantrowitz on 2007-12-21.
-# Copyright (c) 2007 Noah Kantrowitz. All rights reserved.
+#
+# Copyright (c) 2007-2012 Noah Kantrowitz <noah@coderanger.net>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 import os
 import subprocess
 import tempfile
