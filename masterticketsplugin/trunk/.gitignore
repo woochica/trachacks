@@ -1,4 +1,7 @@
 *.pyc
 *.egg-info
-dist
+.project
+.pydevproject
+.settings
 build
+dist
