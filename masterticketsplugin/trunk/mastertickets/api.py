@@ -141,6 +141,11 @@ class MasterTicketsSystem(Component):
         tid = ticket.id
         links = self._prepare_links(ticket, db)
 
+        if req.args.get('action') == 'resolve' and req.args.get('action_resolve_resolve_resolution') == 'fixed':
+            for i in links.blocked_by:
+                if Ticket(self.env, i)['status'] != 'closed':
+                    yield None, 'Ticket #%s is blocking this ticket' % i
+
         # Check that ticket does not have itself as a blocker
         if tid in links.blocking | links.blocked_by:
             yield 'blocked_by', 'This ticket is blocking itself'

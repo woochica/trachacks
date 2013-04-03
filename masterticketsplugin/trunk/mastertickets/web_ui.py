@@ -163,12 +163,7 @@ class MasterTicketsModule(Component):
         pass
 
     def validate_ticket(self, req, ticket):
-        if req.args.get('action') == 'resolve' and req.args.get('action_resolve_resolve_resolution') == 'fixed':
-            links = TicketLinks(self.env, ticket)
-            for i in links.blocked_by:
-                if Ticket(self.env, i)['status'] != 'closed':
-                    yield None, 'Ticket #%s is blocking this ticket' % i
-
+        return []
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
