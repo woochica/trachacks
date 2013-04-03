@@ -18,8 +18,10 @@ try:
 except NameError:
     from sets import Set as set
 
+
 def _format_options(base_string, options):
-    return u'%s [%s]'%(base_string, u', '.join([u'%s="%s"'%x for x in options.iteritems()]))
+    return u'%s [%s]' % (base_string, u', '.join([u'%s="%s"' % x for x in options.iteritems()]))
+
 
 class Edge(dict):
     """Model for an edge in a dot graph."""
@@ -30,7 +32,7 @@ class Edge(dict):
         dict.__init__(self, **kwargs)
 
     def __str__(self):
-        ret = u'%s -> %s'%(self.source.name, self.dest.name)
+        ret = u'%s -> %s' % (self.source.name, self.dest.name)
         if self:
             ret = _format_options(ret, self)
         return ret
@@ -74,11 +76,11 @@ class Graph(object):
     """A model object for a graphviz digraph."""
 
     def __init__(self, name=u'graph'):
-        super(Graph,self).__init__()
+        super(Graph, self).__init__()
         self.name = name
         self.nodes = []
         self._node_map = {}
-        self.attributes={}
+        self.attributes = {}
         self.edges = []
 
     def add(self, obj):
@@ -104,14 +106,15 @@ class Graph(object):
     def __str__(self):
         edges = []
         nodes = []
-        
+
         memo = set()
+
         def process(lst):
             for obj in lst:
                 if obj in memo:
                     continue
                 memo.add(obj)
-                
+
                 if isinstance(obj, Node):
                     nodes.append(obj)
                     process(obj.edges)
@@ -121,21 +124,21 @@ class Graph(object):
                         process((obj.source,))
                     if isinstance(obj.dest, Node):
                         process((obj.dest,))
-        
+
         process(self.nodes)
         process(self.edges)
-        
-        lines = [u'digraph "%s" {'%self.name]
-        for att,value in self.attributes.iteritems():
-            lines.append(u'\t%s="%s";' % (att,value))
+
+        lines = [u'digraph "%s" {' % self.name]
+        for att, value in self.attributes.iteritems():
+            lines.append(u'\t%s="%s";' % (att, value))
         for obj in itertools.chain(nodes, edges):
-            lines.append(u'\t%s;'%obj)
+            lines.append(u'\t%s;' % obj)
         lines.append(u'}')
         return u'\n'.join(lines)
 
     def render(self, dot_path='dot', format='png'):
         """Render a dot graph."""
-        proc = subprocess.Popen([dot_path, '-T%s'%format], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+        proc = subprocess.Popen([dot_path, '-T%s' % format], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
         out, _ = proc.communicate(unicode(self).encode('utf8'))
         return out
 
@@ -145,7 +148,8 @@ if __name__ == '__main__':
     root = Node('me')
     root > Node('them')
     root < Node(u'Üs')
-    
+
     g.add(root)
-    
-    print g.render()
+
+    print
+    g.render()

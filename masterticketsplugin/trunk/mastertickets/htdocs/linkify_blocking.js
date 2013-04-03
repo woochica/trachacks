@@ -1,3 +1,3 @@
-$(function() {
-    $('td[@headers=h_blocking]').html($('#linkified_blocking').html());
+$(function () {
+  $('td[@headers=h_blocking]').html($('#linkified_blocking').html());
 });

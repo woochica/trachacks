@@ -13,21 +13,21 @@ import os
 from setuptools import setup
 
 setup(
-    name = 'TracMasterTickets',
-    version = '3.0.3',
-    packages = ['mastertickets'],
-    package_data = { 'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css' ] },
+    name='TracMasterTickets',
+    version='3.0.3',
+    packages=['mastertickets'],
+    package_data={'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css']},
 
-    author = 'Noah Kantrowitz',
-    author_email = 'noah@coderanger.net',
-    maintainer = 'Ryan J Ollos',
-    maintainer_email = 'ryan.j.ollos@gmail.com',
-    description = 'Provides support for ticket dependencies and master tickets.',
-    long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
-    license = 'BSD 3-Clause',
-    keywords = 'trac plugin ticket dependencies master',
-    url = 'http://github.com/coderanger/trac-mastertickets',
-    classifiers = [
+    author='Noah Kantrowitz',
+    author_email='noah@coderanger.net',
+    maintainer='Ryan J Ollos',
+    maintainer_email='ryan.j.ollos@gmail.com',
+    description='Provides support for ticket dependencies and master tickets.',
+    long_description=open(os.path.join(os.path.dirname(__file__), 'README')).read(),
+    license='BSD 3-Clause',
+    keywords='trac plugin ticket dependencies master',
+    url='http://github.com/coderanger/trac-mastertickets',
+    classifiers=[
         'Framework :: Trac',
         #'Development Status :: 1 - Planning',
         # 'Development Status :: 2 - Pre-Alpha',
@@ -42,10 +42,10 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
     ],
-    
-    install_requires = ['Trac>=0.12'],
 
-    entry_points = {
+    install_requires=['Trac>=0.12'],
+
+    entry_points={
         'trac.plugins': [
             'mastertickets.web_ui = mastertickets.web_ui',
             'mastertickets.api = mastertickets.api',
