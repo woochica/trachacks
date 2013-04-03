@@ -168,8 +168,14 @@ class MasterTicketsModule(Component):
         else:
             #the list is a single ticket
             tkt_ids = [int(split_path[0])]
-        g = self._build_graph(req, tkt_ids)
 
+        #the summary argument defines whether we place the ticket id or
+        #it's summary in the node's label
+        label_summary=0
+        if 'summary' in req.args:
+            label_summary=int(req.args.get('summary'))
+
+        g = self._build_graph(req, tkt_ids, label_summary=label_summary)
         if path_info.endswith('/depgraph.png') or 'format' in req.args:
             format = req.args.get('format')
             if format == 'text':
@@ -198,6 +204,12 @@ class MasterTicketsModule(Component):
         else:
             data = {}
             
+            #add a context link to enable/disable labels in nodes
+            if label_summary:
+                add_ctxtnav(req, 'Without labels', req.href(req.path_info, summary=0))
+            else:
+                add_ctxtnav(req, 'With labels', req.href(req.path_info, summary=1))
+
             if milestone is None:
                 tkt = Ticket(self.env, tkt_ids[0])
                 data['tkt'] = tkt
@@ -211,8 +223,10 @@ class MasterTicketsModule(Component):
             
             return 'depgraph.html', data, None
 
-    def _build_graph(self, req, tkt_ids):
+    def _build_graph(self, req, tkt_ids, label_summary=0):
         g = graphviz.Graph()
+        g.label_summary = label_summary
+
         g.attributes['rankdir'] = self.graph_direction
         
         node_default = g['node']
@@ -230,7 +244,10 @@ class MasterTicketsModule(Component):
         for link in links:
             tkt = link.tkt
             node = g[tkt.id]
-            node['label'] = u'#%s'%tkt.id
+            if label_summary:
+                node['label'] = u'#%s %s' % (tkt.id, tkt['summary'])
+            else:
+                node['label'] = u'#%s'%tkt.id
             node['fillcolor'] = tkt['status'] == 'closed' and self.closed_color or self.opened_color
             node['URL'] = req.href.ticket(tkt.id)
             node['alt'] = u'Ticket #%s'%tkt.id
