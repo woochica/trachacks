@@ -39,7 +39,17 @@ class MasterTicketsModule(Component):
         doc='Color of closed tickets')
     opened_color = Option('mastertickets', 'opened_color', default='red',
         doc='Color of opened tickets')
-
+    show_key = Option('mastertickets', 'show_key', default=False,
+        doc='Show a key for open/closed nodes')  
+    closed_text = Option('mastertickets', 'closed_text', default='Done',
+        doc='Text for key showing closed tickets')
+    opened_text = Option('mastertickets', 'opened_text', default='ToDo',
+        doc='Text for key showing opened tickets')
+    highlight_target = Option('mastertickets', 'highlight_target',
+        default=False, doc='Highlight target tickets in graph')
+    full_graph = Option('mastertickets', 'full_graph', default=False,
+        doc='Show full dep. graph, not just direct blocking links')
+ 
     graph_direction = ChoiceOption('mastertickets', 'graph_direction', choices = ['TD', 'LR', 'DT', 'RL'],
         doc='Direction of the dependency graph (TD = Top Down, DT = Down Top, LR = Left Right, RL = Right Left)')
 
@@ -257,8 +267,17 @@ class MasterTicketsModule(Component):
         # Force this to the top of the graph
         for id in tkt_ids:
             g[id] 
-        
-        links = TicketLinks.walk_tickets(self.env, tkt_ids)
+
+        if self.show_key:
+            g[-1]['label'] = self.closed_text
+            g[-1]['fillcolor'] = self.closed_color
+            g[-1]['shape'] = 'box'
+            g[-2]['label'] = self.opened_text
+            g[-2]['fillcolor'] = self.opened_color
+            g[-2]['shape'] = 'box'
+
+        links = TicketLinks.walk_tickets(self.env, tkt_ids,
+            full=self.full_graph)
         links = sorted(links, key=lambda link: link.tkt.id)
         for link in links:
             tkt = link.tkt
@@ -271,6 +290,8 @@ class MasterTicketsModule(Component):
             node['URL'] = req.href.ticket(tkt.id)
             node['alt'] = u'Ticket #%s'%tkt.id
             node['tooltip'] = tkt['summary']
+            if self.highlight_target and tkt.id in tkt_ids:
+                node['penwidth'] = 3
             
             for n in link.blocking:
                 node > g[n]

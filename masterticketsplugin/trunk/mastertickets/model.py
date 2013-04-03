@@ -9,7 +9,7 @@ from trac.util.datefmt import utc, to_utimestamp
 
 class TicketLinks(object):
     """A model for the ticket links used MasterTickets."""
-    
+
     def __init__(self, env, tkt, db=None):
         self.env = env
         if not isinstance(tkt, Ticket):
@@ -118,9 +118,9 @@ class TicketLinks(object):
                (self.tkt.id, l(getattr(self, 'blocking', [])), l(getattr(self, 'blocked_by', [])))
 
     @staticmethod
-    def walk_tickets(env, tkt_ids):
+    def walk_tickets(env, tkt_ids, full=False):
         """Return an iterable of all links reachable directly above or below those ones."""
-        def visit(tkt, memo, next_fn):
+        def visit(tkt, memo, next_fn, full=False):
             if tkt in memo:
                 return False
             
@@ -133,7 +133,10 @@ class TicketLinks(object):
         memo1 = {}
         memo2 = {}
         for id in tkt_ids:
-            visit(id, memo1, lambda links: links.blocking)
-            visit(id, memo2, lambda links: links.blocked_by)
+            if full:
+                visit(id, memo1, lambda links: links.blocking|links.blocked_by)
+            else:
+                visit(id, memo1, lambda links: links.blocking)
+                visit(id, memo2, lambda links: links.blocked_by)
         memo1.update(memo2)
         return memo1.itervalues()
