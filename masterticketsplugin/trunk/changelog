@@ -1,0 +1,13 @@
+Author: Noah Kantrowitz <noah@coderanger.net>
+Maintainer: Ryan J Ollos <ryan.j.ollos@gmail.com>
+
+mastertickets 3.0.4
+ resolved issues
+ * #10194: Traceback when moving a ticket number between the blocking and
+   blocked by field and also adding a comment.
+
+ new features
+ * none
+
+mastertickets 3.0.3
+ <changelog for 3.0.3 and earlier to be written>

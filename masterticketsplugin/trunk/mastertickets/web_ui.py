@@ -23,7 +23,6 @@ from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
 from trac.resource import ResourceNotFound
 from trac.util import escape, to_unicode
-from trac.util.html import html, Markup
 from trac.util.text import shorten_line
 from trac.util.compat import set, sorted, partial
 
@@ -208,7 +207,7 @@ class MasterTicketsModule(Component):
             tkt_ids = [int(id)]
 
         #the summary argument defines whether we place the ticket id or
-        #it's summary in the node's label
+        #its summary in the node's label
         label_summary = 0
         if 'summary' in req.args:
             label_summary = int(req.args.get('summary'))
@@ -316,11 +315,11 @@ class MasterTicketsModule(Component):
             if i % 2:
                 items.append(word)
             elif word:
-                ticketid = word
+                tid = word
                 word = '#%s' % word
 
                 try:
-                    ticket = Ticket(self.env, ticketid)
+                    ticket = Ticket(self.env, tid)
                     if 'TICKET_VIEW' in req.perm(ticket.resource):
                         word = \
                             tag.a(

@@ -9,15 +9,16 @@
 
 import re
 
-from trac.core import *
+from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
+from trac.ticket.model import Ticket
 from trac.util.compat import set, sorted
+from trac.util.text import to_unicode
 
 import db_default
 from model import TicketLinks
-from trac.ticket.model import Ticket
 
 
 class MasterTicketsSystem(Component):
@@ -137,11 +138,11 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        id = unicode(ticket.id)
+        tid = to_unicode(ticket.id)
         links = self._prepare_links(ticket, db)
 
         # Check that ticket does not have itself as a blocker 
-        if id in links.blocking | links.blocked_by:
+        if tid in links.blocking | links.blocked_by:
             yield 'blocked_by', 'This ticket is blocking itself'
             return
 
@@ -160,11 +161,11 @@ class MasterTicketsSystem(Component):
         for field in ('blocking', 'blockedby'):
             try:
                 ids = self.NUMBERS_RE.findall(ticket[field] or '')
-                for id in ids[:]:
-                    cursor.execute('SELECT id FROM ticket WHERE id=%s', (id,))
+                for tid in ids[:]:
+                    cursor.execute('SELECT id FROM ticket WHERE id=%s', (tid,))
                     row = cursor.fetchone()
                     if row is None:
-                        ids.remove(id)
+                        ids.remove(tid)
                 ticket[field] = ', '.join(sorted(ids, key=lambda x: int(x)))
             except Exception, e:
                 self.log.debug('MasterTickets: Error parsing %s "%s": %s', field, ticket[field], e)

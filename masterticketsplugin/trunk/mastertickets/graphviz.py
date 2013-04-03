@@ -13,10 +13,8 @@ import tempfile
 import time
 import itertools
 
-try:
-    set = set
-except NameError:
-    from sets import Set as set
+from trac.util.compat import set
+from trac.util.text import to_unicode
 
 
 def _format_options(base_string, options):
@@ -138,8 +136,11 @@ class Graph(object):
 
     def render(self, dot_path='dot', format='png'):
         """Render a dot graph."""
-        proc = subprocess.Popen([dot_path, '-T%s' % format], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        out, _ = proc.communicate(unicode(self).encode('utf8'))
+        cmd = [dot_path, '-T%s' % format]
+        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        out, stderr = proc.communicate(to_unicode(self).encode('utf8'))
         return out
 
 
