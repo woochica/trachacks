@@ -7,25 +7,23 @@
 # you should have received as part of this distribution.
 #
 
-import subprocess
+import graphviz
 import re
+import subprocess
 
-from genshi.core import Markup, START, END, TEXT
 from genshi.builder import tag
 
-from trac.core import *
-from trac.web.api import IRequestHandler, IRequestFilter, ITemplateStreamFilter
-from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
-    add_ctxtnav
+from trac.config import BoolOption, ChoiceOption, Option
+from trac.core import Component, implements
+from trac.resource import ResourceNotFound
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
-from trac.config import Option, BoolOption, ChoiceOption
-from trac.resource import ResourceNotFound
 from trac.util import escape, to_unicode
-from trac.util.text import shorten_line
 from trac.util.compat import set, sorted, partial
+from trac.util.text import shorten_line
+from trac.web.api import IRequestFilter, IRequestHandler, ITemplateStreamFilter
+from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_script
 
-import graphviz
 from model import TicketLinks
 
 

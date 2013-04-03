@@ -7,10 +7,7 @@
 # you should have received as part of this distribution.
 #
 
-import os
 import subprocess
-import tempfile
-import time
 import itertools
 
 from trac.util.compat import set

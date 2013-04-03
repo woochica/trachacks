@@ -10,12 +10,11 @@
 import re
 
 from trac.core import Component, implements
-from trac.env import IEnvironmentSetupParticipant
 from trac.db import DatabaseManager
+from trac.env import IEnvironmentSetupParticipant
 from trac.ticket.api import ITicketChangeListener, ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.util.compat import set, sorted
-from trac.util.text import to_unicode
 
 import db_default
 from model import TicketLinks
