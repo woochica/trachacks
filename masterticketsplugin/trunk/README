@@ -6,7 +6,7 @@ Note: MasterTickets 3.0 requires Trac 0.12 or higher.
 
 What is it?
 -----------
-This plugin adds "blocking" and "blocked_by" fields to each ticket, enabling you
+This plugin adds "blocking" and "blockedby" fields to each ticket, enabling you
 to express dependencies between tickets. It also provides a graphviz-based
 dependency-graph feature for those tickets having dependencies specified,
 allowing you to visually understand the dependency tree. The dependency graph
@@ -35,7 +35,7 @@ What is it not?
 Configuration
 =============
 To use this plugin you must configure two custom fields named ``blocking``
-and ``blocked_by``.
+and ``blockedby``.
 
 All other configuration options go in the ``[mastertickets]`` section.
 
