@@ -16,7 +16,15 @@ setup(
     name='TracMasterTickets',
     version='3.0.3',
     packages=['mastertickets'],
-    package_data={'mastertickets': ['templates/*.html', 'htdocs/*.js', 'htdocs/*.css']},
+    package_data={
+        'mastertickets': [
+            'htdocs/img/*.gif',
+            'htdocs/img/*.png',
+            'htdocs/js/*.js',
+            'htdocs/css/*.css',
+            'templates/*.html'
+        ]
+    },
 
     author='Noah Kantrowitz',
     author_email='noah@coderanger.net',
