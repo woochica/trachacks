@@ -13,6 +13,7 @@ from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
+from trac.util import to_unicode
 from trac.util.html import html, Markup
 from trac.util.compat import set, sorted, partial
 
@@ -180,7 +181,7 @@ class MasterTicketsModule(Component):
             format = req.args.get('format')
             if format == 'text':
                 #in case g.__str__ returns unicode, we need to convert it in ascii
-                req.send(unicode(g).encode('ascii', 'replace'), 'text/plain')
+                req.send(to_unicode(g).encode('ascii', 'replace'), 'text/plain')
             elif format == 'debug':
                 import pprint
                 req.send(
