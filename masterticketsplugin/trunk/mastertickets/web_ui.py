@@ -1,9 +1,9 @@
 import subprocess
+import re
 
 from pkg_resources import resource_filename
 from genshi.core import Markup, START, END, TEXT
 from genshi.builder import tag
-from genshi.filters.transform import Transformer
 
 from trac.core import *
 from trac.web.api import IRequestHandler, IRequestFilter, ITemplateStreamFilter
@@ -13,12 +13,13 @@ from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
+from trac.resource import ResourceNotFound
 from trac.util import to_unicode
 from trac.util.html import html, Markup
+from trac.util.text import shorten_line
 from trac.util.compat import set, sorted, partial
 
 import graphviz
-from util import *
 from model import TicketLinks
 
 class MasterTicketsModule(Component):
@@ -42,7 +43,6 @@ class MasterTicketsModule(Component):
     graph_direction = ChoiceOption('mastertickets', 'graph_direction', choices = ['TD', 'LR', 'DT', 'RL'],
         doc='Direction of the dependency graph (TD = Top Down, DT = Down Top, LR = Left Right, RL = Right Left)')
 
-    FIELD_XPATH = '//div[@id="ticket"]/table[@class="properties"]//td[@headers="h_%s"]/text()'
     fields = set(['blocking', 'blockedby'])
     
     # IRequestFilter methods
@@ -62,13 +62,6 @@ class MasterTicketsModule(Component):
                     add_script(req, 'mastertickets/disable_resolve.js')
                     break
 
-            data['mastertickets'] = {
-                'field_values': {
-                    'blocking': linkify_ids(self.env, req, links.blocking),
-                    'blockedby': linkify_ids(self.env, req, links.blocked_by),
-                },
-            }
-            
             # Add link to depgraph if needed
             if links:
                 add_ctxtnav(req, 'Depgraph', req.href.depgraph(tkt.id))
@@ -115,9 +108,34 @@ class MasterTicketsModule(Component):
         
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if 'mastertickets' in data:
-            for field, value in data['mastertickets']['field_values'].iteritems():
-                stream |= Transformer(self.FIELD_XPATH % field).replace(value)
+        if not data:
+            return stream
+
+        # We try all at the same time to maybe catch also changed or processed templates
+        if filename in ["report_view.html", "query_results.html", "ticket.html", "query.html"]:
+            # For ticket.html
+            if 'fields' in data and isinstance(data['fields'], list):
+                for field in data['fields']:
+                    for f in self.fields:
+                        if field['name'] == f and data['ticket'][f]:
+                            field['rendered'] = self._link_tickets(req, data['ticket'][f])
+            # For query_results.html and query.html
+            if 'groups' in data and isinstance(data['groups'], list):
+                for group, tickets in data['groups']:
+                    for ticket in tickets:
+                        for f in self.fields:
+                            if f in ticket:
+                                ticket[f] = self._link_tickets(req, ticket[f])
+            # For report_view.html
+            if 'row_groups' in data and isinstance(data['row_groups'], list):
+                for group, rows in data['row_groups']:
+                    for row in rows:
+                        if 'cell_groups' in row and isinstance(row['cell_groups'], list):
+                            for cells in row['cell_groups']:
+                                for cell in cells:
+                                    # If the user names column in the report differently (blockedby AS "blocked by") then this will not find it
+                                    if cell.get('header', {}).get('col') in self.fields:
+                                        cell['value'] = self._link_tickets(req, cell['value'])
         return stream
         
     # ITicketManipulator methods
@@ -259,3 +277,32 @@ class MasterTicketsModule(Component):
         
         return g
 
+    def _link_tickets(self, req, tickets):
+        items = []
+
+        for i, word in enumerate(re.split(r'([;,\s]+)', tickets)):
+            if i % 2:
+                items.append(word)
+            elif word:
+                ticketid = word
+                word = '#%s' % word
+
+                try:
+                    ticket = Ticket(self.env, ticketid)
+                    if 'TICKET_VIEW' in req.perm(ticket.resource):
+                        word = \
+                            tag.a(
+                                '#%s' % ticket.id,
+                                class_=ticket['status'],
+                                href=req.href.ticket(int(ticket.id)),
+                                title=shorten_line(ticket['summary'])
+                            )
+                except ResourceNotFound:
+                    pass
+               
+                items.append(word)
+
+        if items:
+            return tag(items)
+        else:
+            return None
