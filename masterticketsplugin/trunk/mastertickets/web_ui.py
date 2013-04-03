@@ -215,7 +215,7 @@ class MasterTicketsModule(Component):
                 data['tkt'] = tkt
                 add_ctxtnav(req, 'Back to Ticket #%s'%tkt.id, req.href.ticket(tkt.id))
             else:
-                add_ctxtnav(req, 'Back to Mileston %s'%milestone, req.href.milestone(milestone))
+                add_ctxtnav(req, 'Back to Milestone %s'%milestone, req.href.milestone(milestone))
             data['milestone'] = milestone
             data['graph'] = g
             data['graph_render'] = partial(g.render, self.dot_path)
