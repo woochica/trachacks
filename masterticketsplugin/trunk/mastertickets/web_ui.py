@@ -10,7 +10,6 @@
 import subprocess
 import re
 
-from pkg_resources import resource_filename
 from genshi.core import Markup, START, END, TEXT
 from genshi.builder import tag
 
@@ -65,6 +64,7 @@ class MasterTicketsModule(Component):
 
     fields = set(['blocking', 'blockedby'])
 
+
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
         return handler
@@ -79,7 +79,7 @@ class MasterTicketsModule(Component):
 
             for i in links.blocked_by:
                 if Ticket(self.env, i)['status'] != 'closed':
-                    add_script(req, 'mastertickets/disable_resolve.js')
+                    add_script(req, 'mastertickets/js/disable_resolve.js')
                     break
 
             # Add link to depgraph if needed
@@ -125,6 +125,7 @@ class MasterTicketsModule(Component):
 
         return template, data, content_type
 
+
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
         if not data:
@@ -157,6 +158,7 @@ class MasterTicketsModule(Component):
                                         cell['value'] = self._link_tickets(req, cell['value'])
         return stream
 
+
     # ITicketManipulator methods
     def prepare_ticket(self, req, ticket, fields, actions):
         pass
@@ -168,18 +170,16 @@ class MasterTicketsModule(Component):
                 if Ticket(self.env, i)['status'] != 'closed':
                     yield None, 'Ticket #%s is blocking this ticket' % i
 
+
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
-        """Return the absolute path of a directory containing additional
-        static resources (such as images, style sheets, etc).
-        """
+        from pkg_resources import resource_filename
         return [('mastertickets', resource_filename(__name__, 'htdocs'))]
 
     def get_templates_dirs(self):
-        """Return the absolute path of the directory containing the provided
-        ClearSilver templates.
-        """
+        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
+
 
     # IRequestHandler methods
     def match_request(self, req):
