@@ -13,14 +13,15 @@ import subprocess
 
 from genshi.builder import tag
 
-from trac.config import BoolOption, ChoiceOption, Option
-from trac.core import Component, implements
+from trac.config import BoolOption, ChoiceOption, ListOption, Option
+from trac.core import Component, TracError, implements
 from trac.resource import ResourceNotFound
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.util import escape, to_unicode
 from trac.util.compat import set, sorted, partial
 from trac.util.text import shorten_line
+from trac.util.translation import _
 from trac.web.api import IRequestFilter, IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_ctxtnav, add_script
 
@@ -39,7 +40,9 @@ class MasterTicketsModule(Component):
                      doc='Path to the ghostscript executable.')
     use_gs = BoolOption('mastertickets', 'use_gs', default=False,
                         doc='If enabled, use ghostscript to produce nicer output.')
-
+    acceptable_formats = ListOption('mastertickets', 'acceptable_formats',
+                                    default='png,cmapx', sep=',',
+                                    doc='The formats that may be chosen; execute dot -T? for a list of options.')
     closed_color = Option('mastertickets', 'closed_color', default='green',
                           doc='Color of closed tickets')
     opened_color = Option('mastertickets', 'opened_color', default='red',
@@ -212,7 +215,10 @@ class MasterTicketsModule(Component):
                     ),
                     'text/plain')
             elif format is not None:
-                req.send(g.render(self.dot_path, format), 'text/plain')
+                if format in self.acceptable_formats:
+                    req.send(g.render(self.dot_path, format), 'text/plain')
+                else:
+                    raise TracError(_("The %(format)s format is not allowed.", format=format))
 
             if self.use_gs:
                 ps = g.render(self.dot_path, 'ps2')
