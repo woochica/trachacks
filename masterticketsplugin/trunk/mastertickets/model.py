@@ -81,7 +81,8 @@ class TicketLinks(object):
                         'INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue) VALUES (%s, %s, %s, %s, %s, %s)',
                         (n, when_ts, author, field, old_value, new_value))
 
-                    if comment:
+                    # Add comment to referenced ticket if a comment hasn't already been added
+                    if comment and not any('comment' in entry for entry in self.tkt.get_changelog(when)):
                         cursor.execute(
                             'INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue) VALUES (%s, %s, %s, %s, %s, %s)',
                             (n, when_ts, author, 'comment', '', '(In #%s) %s' % (self.tkt.id, comment)))
