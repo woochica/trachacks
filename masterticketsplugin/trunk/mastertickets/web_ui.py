@@ -17,7 +17,6 @@ from trac.core import *
 from trac.web.api import IRequestHandler, IRequestFilter, ITemplateStreamFilter
 from trac.web.chrome import ITemplateProvider, add_stylesheet, add_script, \
     add_ctxtnav
-from trac.ticket.api import ITicketManipulator
 from trac.ticket.model import Ticket
 from trac.ticket.query import Query
 from trac.config import Option, BoolOption, ChoiceOption
@@ -34,7 +33,7 @@ class MasterTicketsModule(Component):
     """Provides support for ticket dependencies."""
 
     implements(IRequestHandler, IRequestFilter, ITemplateStreamFilter,
-               ITemplateProvider, ITicketManipulator)
+               ITemplateProvider)
 
     dot_path = Option('mastertickets', 'dot_path', default='dot',
                       doc='Path to the dot executable.')
@@ -157,13 +156,6 @@ class MasterTicketsModule(Component):
                                         cell['value'] = self._link_tickets(req, cell['value'])
         return stream
 
-
-    # ITicketManipulator methods
-    def prepare_ticket(self, req, ticket, fields, actions):
-        pass
-
-    def validate_ticket(self, req, ticket):
-        return []
 
     # ITemplateProvider methods
     def get_htdocs_dirs(self):
