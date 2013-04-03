@@ -20,9 +20,11 @@ setup(
 
     author = 'Noah Kantrowitz',
     author_email = 'noah@coderanger.net',
+    maintainer = 'Ryan J Ollos',
+    maintainer_email = 'ryan.j.ollos@gmail.com',
     description = 'Provides support for ticket dependencies and master tickets.',
     long_description = open(os.path.join(os.path.dirname(__file__), 'README')).read(),
-    license = '3-Clause BSD',
+    license = 'BSD 3-Clause',
     keywords = 'trac plugin ticket dependencies master',
     url = 'http://github.com/coderanger/trac-mastertickets',
     classifiers = [
