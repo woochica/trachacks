@@ -138,10 +138,10 @@ class MasterTicketsSystem(Component):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        tid = to_unicode(ticket.id)
+        tid = ticket.id
         links = self._prepare_links(ticket, db)
 
-        # Check that ticket does not have itself as a blocker 
+        # Check that ticket does not have itself as a blocker
         if tid in links.blocking | links.blocked_by:
             yield 'blocked_by', 'This ticket is blocking itself'
             return
