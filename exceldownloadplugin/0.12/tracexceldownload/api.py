@@ -25,6 +25,8 @@ class WorksheetWriter(object):
         self._col_widths = {}
         self._metrics_cache = {}
 
+    _normalize_newline = re.compile(r'\r\n?').sub
+
     def write_row(self, cells):
         row = self.sheet.row(self.row_idx)
         max_line = 1
@@ -42,6 +44,9 @@ class WorksheetWriter(object):
                 else:
                     width = len('YYYY-MM-DD HH:MM:SS')
                 line = 1
+            elif isinstance(value, basestring):
+                value = self._normalize_newline('\n',
+                                                to_unicode(value).strip())
             if width is None or line is None:
                 metrics = self.get_metrics(value)
                 if width is None:
@@ -69,10 +74,7 @@ class WorksheetWriter(object):
         for idx, width in self._col_widths.iteritems():
             self.sheet.col(idx).width = (1 + min(width, 50)) * 256
 
-    _NORMALIZE_NEWLINE = re.compile(r'\r\n?').sub
-
     def get_metrics(self, value):
-        value = self._NORMALIZE_NEWLINE('\n', to_unicode(value)).strip()
         if not value:
             return 0, 1
         if value not in self._metrics_cache:
