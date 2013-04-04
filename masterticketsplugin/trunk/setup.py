@@ -33,7 +33,7 @@ setup(
     long_description=open(os.path.join(os.path.dirname(__file__), 'README')).read(),
     license='BSD 3-Clause',
     keywords='trac plugin ticket dependencies master',
-    url='http://github.com/coderanger/trac-mastertickets',
+    url='http://trac-hacks.org/wiki/MasterTicketsPlugin',
     classifiers=[
         'Framework :: Trac',
         #'Development Status :: 1 - Planning',
