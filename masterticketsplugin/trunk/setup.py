@@ -52,6 +52,7 @@ setup(
 
     install_requires=['Trac>=0.12'],
 
+    test_suite='mastertickets.tests.suite',
     entry_points={
         'trac.plugins': [
             'mastertickets.api = mastertickets.api',
