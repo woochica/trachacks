@@ -13,7 +13,7 @@ from setuptools import setup
 
 setup(
     name='TracMasterTickets',
-    version='3.0.4',
+    version='3.0.5',
     packages=['mastertickets'],
     package_data={
         'mastertickets': [
@@ -54,8 +54,8 @@ setup(
 
     entry_points={
         'trac.plugins': [
-            'mastertickets.web_ui = mastertickets.web_ui',
             'mastertickets.api = mastertickets.api',
+            'mastertickets.web_ui = mastertickets.web_ui',
         ]
     }
 )
