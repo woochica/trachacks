@@ -13,8 +13,6 @@
 #
 # Author: Matthew Good <trac@matt-good.net>
 
-from babel import Locale, UnknownLocaleError
-from babel.dates import format_datetime, get_day_names
 from datetime import datetime, timedelta
 from genshi.builder import tag
 from genshi.core import escape, Markup
@@ -34,6 +32,20 @@ from trac.wiki.macros import WikiMacroBase
 
 from wikicalendar.api import add_domain, _, cleandoc_, gettext, tag_
 from wikicalendar.ticket import WikiCalendarTicketProvider
+
+has_babel = True
+try:
+    from babel import Locale, UnknownLocaleError
+    from babel.dates import format_datetime, get_day_names
+except ImportError:
+    has_babel = False
+    def get_day_names(*args):
+        """Cheap replacement for the identically named Babel function."""
+        names = dict()
+        for day in range(0,7):
+            dt = datetime(2001, 1, day + 1)
+            names[day] = dt.strftime('%a')[:2]
+        return names
 
 uts = None
 try:
@@ -88,7 +100,7 @@ class WikiCalendarMacros(Component):
                             '%y-%m-%d', doc="""Custom due date value format,
                             that is any expression supported by strftime or
                             'ts' identifier for POSIX microsecond time stamps
-                            as supported in later Trac versions.""")
+                            as supported in Trac since 1.1.1.""")
 
     # Old [wikiticketcalendar] section
     due_field_name = Option('wikiticketcalendar', 'ticket.due_field.name',
@@ -391,7 +403,7 @@ class WikiCalendarMacros(Component):
             # Available since Trac 0.12.
             loc_req = None
         loc = None
-        if loc_req:
+        if has_babel and loc_req:
             try:
                  loc = Locale.parse(loc_req, sep='-')
             except UnknownLocaleError:
@@ -427,10 +439,10 @@ class WikiCalendarMacros(Component):
         # Find first and last calendar day, probably in last/next month,
         # using exact start-of-day here.
         first_day_month = today.replace(day=1, second=0)
-        isoweekday = int(format_datetime(first_day_month, 'c', locale=loc))
+        isoweekday = _get_isoweekday(first_day_month, locale=loc)
         first_day_cal = first_day_month - timedelta(isoweekday - 1)
         last_day_month = next_month.replace(day=1) - timedelta(1)
-        isoweekday = int(format_datetime(last_day_month, 'c', locale=loc))
+        isoweekday = _get_isoweekday(last_day_month, locale=loc)
         last_day_cal = last_day_month + timedelta(7 - isoweekday)
 
         # Finally building the output now.
@@ -452,7 +464,10 @@ class WikiCalendarMacros(Component):
             buff(nav_pvY, nav_frM, nav_pvM)
 
         # The caption will always be there.
-        heading = tag.td(format_datetime(today, 'MMMM y', locale=loc))
+        if has_babel:
+            heading = tag.td(format_datetime(today, 'MMMM y', locale=loc))
+        else:
+            heading = tag.td(format_date(today, '%B %Y'))
         buff = buff(heading(class_='y'))
 
         if showbuttons is True:
@@ -485,7 +500,7 @@ class WikiCalendarMacros(Component):
         while day < last_day_cal:
             day += timedelta(1)
             # Insert a new row for every first-day-of-week.
-            if int(format_datetime(day, 'c', locale=loc)) == 1:
+            if _get_isoweekday(day, locale=loc) == 1:
                 line = tag.tr()
                 line(align='right')
             if not (day < first_day_month or day > last_day_month):
@@ -634,7 +649,7 @@ class WikiCalendarMacros(Component):
                     cell = tag.td('')
                     cell(class_='day adjacent_month')
                     line(cell)
-            if int(format_datetime(day, 'c', locale=loc)) == 7:
+            if _get_isoweekday(day, locale=loc) == 7:
                 buff(line)
 
         buff = tag.div(heading(buff))
@@ -749,12 +764,21 @@ def _gen_ticket_entry(env, formatter, t, a_class=''):
 
     return ticket, ticket_short
 
+def _get_isoweekday(dt, locale=None):
+    if has_babel:
+        return int(format_datetime(dt, 'c', locale=locale))
+    else:
+        return dt.isoweekday()
+
 def _mknav(formatter, label, a_class, dt, locale):
     """The calendar nav button builder.
 
     This is a convenience module for shorter and better serviceable code.
     """
-    tip = format_datetime(dt, 'MMMM y', locale=locale)
+    if has_babel:
+        tip = format_datetime(dt, 'MMMM y', locale=locale)
+    else:
+        tip = format_date(dt, '%B %Y')
     # URL to the current page
     thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
     url = thispageURL(month=dt.month, year=dt.year)
