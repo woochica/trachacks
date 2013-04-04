@@ -13,11 +13,6 @@
 #
 # Author: Matthew Good <trac@matt-good.net>
 
-import calendar
-import locale
-import re
-import sys
-
 from babel import Locale, UnknownLocaleError
 from babel.dates import format_datetime, get_day_names
 from datetime import datetime, timedelta
@@ -148,19 +143,13 @@ class WikiCalendarMacros(Component):
             self.tkt_due_field = self.due_field_name
             self.tkt_due_format = self.due_field_fmt
 
-        # Read options from Trac configuration system, adjustable in trac.ini.
-        #  [wiki] section
-        self.sanitize = True
-        if cfg.getbool('wiki', 'render_unsafe_content') is True:
-            self.sanitize = False
-
     # ITemplateProvider methods
 
-    # Returns additional path where stylesheets are placed.
+    # Returns additional path, where stylesheets are placed.
     def get_htdocs_dirs(self):
         return [('wikicalendar', self.htdocs_path)]
 
-    # Returns additional path where templates are placed.
+    # Returns additional path, where templates are placed.
     def get_templates_dirs(self):
         return []
 
@@ -295,168 +284,40 @@ class WikiCalendarMacros(Component):
                 return gettext(tcal_doc)
             return ('wikicalendar', tcal_doc)
 
-    def _mkdatetime(self, year, month, day=1):
-        """A custom 'datetime' object builder.
-
-        This is a convenience module for shortening function calls.
-        It uses Trac's timezone setting.
-        """
-        dt = datetime(year, month, day, tzinfo=self.tz_info)
-        return dt
-
-    def _mknav(self, label, a_class, month, year, locale):
-        """The calendar nav button builder.
-
-        This is a convenience module for shorter and better serviceable code.
-        """
-        tip = format_datetime(self._mkdatetime(year, month), 'MMMM y',
-                              locale=locale)
-        # URL to the current page
-        thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
-        url = thispageURL(month=month, year=year)
-        markup = tag.a(Markup(label), href=url)
-        markup(class_=a_class, title=tip)
-        markup = tag.td(markup)
-        return markup(class_='x')
-
-    def _gen_wiki_links(self, wiki, label, a_class, url, wiki_page_template,
-                        check=None):
-        check_sign = None
-        if WikiSystem(self.env).has_page(wiki.lstrip('/')):
-            a_class += " page"
-            title = _("Go to page %s") % wiki
-            if check and check[0] == 'link':
-                chrome_path = '/'.join([self.ref.req.base_path, 'chrome'])
-                ok_img = 'wikicalendar/check_ok.png'
-                ok = tag.image(src='/'.join([chrome_path, ok_img]),
-                               alt='ok', title='ok')
-                nok_img = 'wikicalendar/check_nok.png'
-                nok = tag.image(src='/'.join([chrome_path, nok_img]),
-                                alt='X', title='X')
-                unk_img = 'wikicalendar/check_unknown.png'
-                unk = tag.image(src='/'.join([chrome_path, unk_img]),
-                                alt='?', title='?')
-                result = self._do_check(check[1], wiki)
-                check_sign = result and (result == 1 and ok or nok) or unk
-        else:
-            url += "?action=edit"
-            # adding template name, if specified
-            if wiki_page_template != "":
-                url += "&template=" + wiki_page_template
-            title = _("Create page %s") % wiki
-        link = tag.a(tag(label), href=url)
-        link(class_=a_class, title_=title)
-        return tag(link, check_sign)
-
-    def _gen_ticket_entry(self, t, a_class=''):
-        id = str(t.get('id'))
-        status = t.get('status')
-        summary = to_unicode(t.get('summary'))
-        owner = to_unicode(t.get('owner'))
-        description = to_unicode(t.get('description'))
-        url = t.get('href')
-
-        if status == 'closed':
-            a_class = a_class + 'closed'
-        else:
-            a_class = a_class + 'open'
-
-        # Reduce content for tooltips.
-        markup = format_to_html(self.env, self.ref.context, description)
-        extractor = TextExtractor()
-        extractor.feed(markup)
-        tip = tag.span(shorten_line(extractor.getvalue()))
-
-        ticket = '#' + id
-        ticket = tag.a(ticket, href=url)
-        ticket(tip, class_='tip', target='_blank')
-        ticket = tag.div(ticket)
-        ticket(class_=a_class, align='left')
-        # fix stripping of regular leading space in IE
-        blank = '&nbsp;'
-        ticket(Markup(blank), summary, ' (', owner, ')')
-
-        summary = tag(summary, ' (', owner, ')')
-        ticket_short = '#' + id
-        ticket_short = tag.a(ticket_short, href=url)
-        ticket_short(target='_blank', title_=summary)
-        ticket_short = tag.span(ticket_short)
-        ticket_short(class_=a_class)
-
-        return ticket,ticket_short
-
-    def _do_check(self, test, item):
-        """Execute configurable tests per calendar item."""
-        # DEVEL: Fail condition not implemented yet, will need additional
-        #   configuration too.
-        if test in self.checks.keys():
-            sql = self.checks[test].get('test')
-            if sql:
-                db = self.env.get_db_cnx()
-                cursor = db.cursor()
-                cursor.execute(sql, (item,))
-                row = cursor.fetchone()
-                if row is not None:
-                    return 1
-
-    def _resolve_relative_name(self, pagename, referrer):
-        """Resolver for Trac wiki page paths.
-
-        This method handles absolute as well as relative wiki paths.
-        """
-        # Code taken from trac.wiki.api.WikiSystem at r10905,
-        # improved by Jun Omae for compatibility with Python2.4.
-        if not any(pagename.startswith(prefix) for prefix in ('./', '../')):
-            return pagename.lstrip('/')
-        base = referrer.split('/')
-        components = pagename.split('/')
-        for i, comp in enumerate(components):
-            if comp == '..':
-                if base:
-                    base.pop()
-            elif comp and comp != '.':
-                base.extend(components[i:])
-                break
-        return '/'.join(base)
-
     # Returns macro content.
     def expand_macro(self, formatter, name, arguments):
+        env = self.env
+        tz = formatter.req.tz
 
-        self.ref = formatter
-        tz = self.tz_info = formatter.req.tz
-        now = datetime.now(tz)
-        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        # Parse arguments from macro invocation
+        # Parse arguments from macro invocation.
         args, kwargs = parse_args(arguments, strict=False)
 
-        # Find out whether use http param, current or macro param year/month
-        http_param_year = formatter.req.args.get('year','')
-        http_param_month = formatter.req.args.get('month','')
+        # Find year and month of interest.
+        year = formatter.req.args.get('year')
+        # Not clicked on any previous/next button, next look for macro args.
+        if not year and len(args) >= 1 and args[0] <> "*":
+            year = args[0]
+        year = year and year.isnumeric() and int(year) or None
 
-        if http_param_year == "":
-            # not clicked on a prev or next button
-            if len(args) >= 1 and args[0] <> "*":
-                # year given in macro parameters
-                year = int(args[0])
-            else:
-                # use current year
-                year = today.year
-        else:
-            # year in http params (clicked by user) overrides everything
-            year = int(http_param_year)
+        month = formatter.req.args.get('month')
+        # Not clicked on any previous/next button, next look for macro args.
+        if not month and len(args) >= 2 and args[1] <> "*":
+            month = args[1]
+        month = month and month.isnumeric() and int(month) or None
 
-        if http_param_month == "":
-            # not clicked on a prev or next button
-            if len(args) >= 2 and args[1] <> "*":
-                # month given in macro parameters
-                month = int(args[1])
-            else:
-                # use current month
-                month = today.month
-        else:
-            # month in http params (clicked by user) overrides everything
-            month = int(http_param_month)
+        now = datetime.now(tz)
+        # Force offset from start-of-day to avoid a false 'today' marker,
+        # but use it only on request of different month/year.
+        now.replace(second=1)
+        today = None
+        if month and month != now.month:
+            today = now.replace(month=month)
+        if year and year != now.year:
+            today = today and today.replace(year=year) or \
+                    now.replace(year=year)
+        # Use current month and year, if nothing else has been requested.
+        if not today:
+            today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         showbuttons = True
         if len(args) >= 3 or kwargs.has_key('nav'):
@@ -472,12 +333,11 @@ class WikiCalendarMacros(Component):
             except KeyError:
                 wiki_page_format = str(args[3])
         # Support relative paths in macro arguments for wiki page links.
-        wiki_page_format = self._resolve_relative_name(wiki_page_format,
-                                                       formatter.resource.id)
+        wiki_page_format = _resolve_relative_name(wiki_page_format,
+                                                  formatter.resource.id)
 
         list_condense = 0
         show_t_open_dates = True
-        wiki_page_template = ""
         wiki_subpages = []
 
         # Read optional check plan.
@@ -492,15 +352,6 @@ class WikiCalendarMacros(Component):
                 except KeyError:
                     show_t_open_dates = args[4] in _TRUE_VALUES
 
-        # Optional page template to create new wiki pages.
-        # The default (empty page) is used, if the template name is invalid.
-        if len(args) >= 6 or kwargs.has_key('base'):
-            try:
-                wiki_page_template = kwargs['base']
-            except KeyError:
-                wiki_page_template = args[5]
-
-        if name == 'WikiTicketCalendar':
             # TracQuery support for ticket selection
             query_args = "id!=0"
             if len(args) >= 7 or kwargs.has_key('query'):
@@ -509,8 +360,8 @@ class WikiCalendarMacros(Component):
                     query_args = kwargs['query']
                 except KeyError:
                     query_args = args[6]
-            tickets = WikiCalendarTicketProvider(self.env)
-            self.tickets = tickets.harvest(formatter.req, query_args)
+            provider = WikiCalendarTicketProvider(env)
+            tickets = provider.harvest(formatter.req, query_args)
 
             # compress long ticket lists
             if len(args) >= 8 or kwargs.has_key('short'):
@@ -533,35 +384,6 @@ class WikiCalendarMacros(Component):
             if kwargs.has_key('subpages'):
                 wiki_subpages = kwargs['subpages'].split('|')
 
-            # Can use this to change the day the week starts on,
-            # but this is a system-wide setting.
-            calendar.setfirstweekday(calendar.MONDAY)
-
-        # for prev/next navigation links
-        prevMonth = month - 1
-        nextMonth = month + 1
-        nextYear = prevYear = year
-        # check for year change (KISS version)
-        if prevMonth == 0:
-            prevMonth = 12
-            prevYear -= 1
-        if nextMonth == 13:
-            nextMonth = 1
-            nextYear += 1
-
-        # for fast-forward/-rewind navigation links
-        ffYear = frYear = year
-        if month < 4:
-            frMonth = month + 9
-            frYear -= 1
-        else:
-            frMonth = month - 3
-        if month > 9:
-            ffMonth = month - 9
-            ffYear += 1
-        else:
-            ffMonth = month + 3
-
         # Respect user's locale, if available.
         try:
             loc_req = str(formatter.req.locale)
@@ -577,49 +399,64 @@ class WikiCalendarMacros(Component):
                 loc = Locale.default('LC_TIME')
             if not loc:
                 loc = Locale('en', 'US')
-            self.env.log.debug('Locale setting for wiki calendar: %s'
-                               % loc.get_display_name('en'))
+            env.log.debug('Locale setting for wiki calendar: %s'
+                          % loc.get_display_name('en'))
 
-        # Find first calendar page day, probably in last month.
-        first_day_month = datetime(year, month, 1, tzinfo=tz)
-        idx_day_in_week = int(format_datetime(first_day_month, 'c',
-                                              locale=loc))
-        first_day_cal = first_day_month - timedelta(idx_day_in_week - 1)
-        # Find last calendar page day, probably in next month.
-        last_day_month = datetime(nextYear, nextMonth, 1,
-                                  tzinfo=tz) - timedelta(1)
-        idx_day_in_week = int(format_datetime(last_day_month, 'c',
-                                              locale=loc))
-        last_day_cal = last_day_month + timedelta(7 - idx_day_in_week)
+        # Prepare datetime objects for previous/next navigation link creation.
+        prev_year = today.replace(year=today.year - 1)
+        if today.month < 4:
+            fr_month = today.replace(month=today.month + 9,
+                                     year=today.year - 1)
+        else:
+            fr_month = today.replace(month=today.month - 3)
+        if today.month == 1:
+            prev_month = today.replace(month=12, year=today.year - 1)
+        else:
+            prev_month = today.replace(month=today.month - 1)
+        if today.month == 12:
+            next_month = today.replace(month=1, year=today.year + 1)
+        else:
+            next_month = today.replace(month=today.month + 1)
+        if today.month > 9:
+            ff_month = today.replace(month=today.month - 9,
+                                     year=today.year + 1)
+        else:
+            ff_month = today.replace(month=today.month + 3)
+        next_year = today.replace(year=today.year + 1)
 
-        # Finally building the output
-        # Begin with caption and optional navigation links
+        # Find first and last calendar day, probably in last/next month,
+        # using exact start-of-day here.
+        first_day_month = today.replace(day=1, second=0)
+        isoweekday = int(format_datetime(first_day_month, 'c', locale=loc))
+        first_day_cal = first_day_month - timedelta(isoweekday - 1)
+        last_day_month = next_month.replace(day=1) - timedelta(1)
+        isoweekday = int(format_datetime(last_day_month, 'c', locale=loc))
+        last_day_cal = last_day_month + timedelta(7 - isoweekday)
+
+        # Finally building the output now.
+        # Begin with caption and optional navigation links.
         buff = tag.tr()
 
         if showbuttons is True:
-            # calendar navigation buttons
+            # Create calendar navigation buttons.
             nx = 'next'
             pv = 'prev'
-            nav_pvY = self._mknav('&lt;&lt;', pv, month, year-1, loc)
-            nav_frM = self._mknav('&nbsp;&lt;', pv, frMonth, frYear, loc)
-            nav_pvM = self._mknav('&nbsp;&laquo;', pv, prevMonth, prevYear,
-                                  loc)
-            nav_nxM = self._mknav('&raquo;&nbsp;', nx, nextMonth, nextYear,
-                                  loc)
-            nav_ffM = self._mknav('&gt;&nbsp;', nx, ffMonth, ffYear, loc)
-            nav_nxY = self._mknav('&gt;&gt;', nx, month, year+1, loc)
+            nav_pvY = _mknav(formatter, '&lt;&lt;', pv, prev_year, loc)
+            nav_frM = _mknav(formatter, '&nbsp;&lt;', pv, fr_month, loc)
+            nav_pvM = _mknav(formatter, '&nbsp;&laquo;', pv, prev_month, loc)
+            nav_nxM = _mknav(formatter, '&raquo;&nbsp;', nx, next_month, loc)
+            nav_ffM = _mknav(formatter, '&gt;&nbsp;', nx, ff_month, loc)
+            nav_nxY = _mknav(formatter, '&gt;&gt;', nx, next_year, loc)
 
-            # add buttons for going to previous months and year
+            # Add buttons for going to previous months and year.
             buff(nav_pvY, nav_frM, nav_pvM)
 
         # The caption will always be there.
-        heading = tag.td(
-             to_unicode(format_datetime(self._mkdatetime(year, month),
-                                        'MMMM y', locale=loc)))
+        heading = tag.td(format_datetime(today, 'MMMM y', locale=loc))
         buff = buff(heading(class_='y'))
 
         if showbuttons is True:
-            # add buttons for going to next months and year
+            # Add buttons for going to next months and year.
             buff(nav_nxM, nav_ffM, nav_nxY)
         buff = tag.caption(tag.table(tag.tbody(buff)))
         buff = tag.table(buff)
@@ -652,158 +489,151 @@ class WikiCalendarMacros(Component):
                 line = tag.tr()
                 line(align='right')
             if not (day < first_day_month or day > last_day_month):
-                if True:
-                    # check for wikipage with name specified in
-                    # 'wiki_page_format'
-                    wiki = format_date(day, wiki_page_format)
-                    if day == today:
-                        a_class = 'day today'
-                        td_class = 'today'
-                    else:
-                        a_class = 'day'
-                        td_class = 'day'
+                # check for wikipage with name specified in
+                # 'wiki_page_format'
+                wiki = format_date(day, wiki_page_format)
+                if day == today:
+                    a_class = 'day today'
+                    td_class = 'today'
+                else:
+                    a_class = 'day'
+                    td_class = 'day'
 
-                    if uts:
-                        day_ts = to_utimestamp(day)
-                        day_ts_eod = day_ts + 86399999999
-                    else:
-                        day_ts = to_timestamp(day)
-                        day_ts_eod = day_ts + 86399
+                if uts:
+                    day_ts = to_utimestamp(day)
+                    day_ts_eod = day_ts + 86399999999
+                else:
+                    day_ts = to_timestamp(day)
+                    day_ts_eod = day_ts + 86399
 
-                    # check for milestone(s) on that day
-                    db = self.env.get_db_cnx()
-                    cursor = db.cursor()
-                    cursor.execute("""
-                        SELECT name
-                          FROM milestone
-                         WHERE due >= %s and due <= %s
-                    """, (day_ts, day_ts_eod))
-                    milestones = tag()
-                    for row in cursor:
-                        if not a_class.endswith('milestone'):
-                            a_class += ' milestone'
-                        milestone = to_unicode(row[0])
-                        url = self.env.href.milestone(milestone)
-                        milestone = '* ' + milestone
-                        milestones = tag(milestones,
-                                         tag.div(tag.a(milestone, href=url),
-                                                 class_='milestone'))
-                    label = tag.span(day.day)
-                    label(class_='day')
-                    if len(wiki_subpages) > 0:
-                        pages = tag(label, Markup('<br />'))
-                        for page in wiki_subpages:
-                            label = tag(' ', page[0])
-                            page = '/'.join([wiki, page])
-                            url = self.env.href.wiki(page)
-                            pages(self._gen_wiki_links(page, label, 'subpage',
-                                                     url, wiki_page_template,
-                                                     check))
+                # check for milestone(s) on that day
+                db = env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute("""
+                    SELECT name
+                      FROM milestone
+                     WHERE due >= %s and due <= %s
+                """, (day_ts, day_ts_eod))
+                milestones = tag()
+                for row in cursor:
+                    if not a_class.endswith('milestone'):
+                        a_class += ' milestone'
+                    milestone = to_unicode(row[0])
+                    url = env.href.milestone(milestone)
+                    milestone = '* ' + milestone
+                    milestones = tag(milestones,
+                                     tag.div(tag.a(milestone, href=url),
+                                             class_='milestone'))
+                label = tag.span(day.day)
+                label(class_='day')
+                if len(wiki_subpages) > 0:
+                    pages = tag(label, Markup('<br />'))
+                    for page in wiki_subpages:
+                        label = tag(' ', page[0])
+                        page = '/'.join([wiki, page])
+                        pages(self._gen_wiki_links(formatter, args, kwargs,
+                                                   page, label, 'subpage',
+                                                   check))
+                else:
+                    pages = self._gen_wiki_links(formatter, args, kwargs,
+                                                 wiki, label, a_class, check)
+                cell = tag.td(pages)
+                cell(class_=td_class, valign='top')
+                if name == 'WikiCalendar':
+                    line(cell)
+                else:
+                    if milestones:
+                        cell(milestones)
                     else:
-                        url = self.env.href.wiki(wiki)
-                        pages = self._gen_wiki_links(wiki, label, a_class,
-                                                     url, wiki_page_template,
-                                                     check)
-                    cell = tag.td(pages)
-                    cell(class_=td_class, valign='top')
-                    if name == 'WikiCalendar':
-                        line(cell)
-                    else:
-                        if milestones:
-                            cell(milestones)
+                        cell(tag.br())
+
+                    match = []
+                    match_od = []
+                    ticket_heap = tag('')
+                    ticket_list = tag.div('')
+                    ticket_list(align='left', class_='condense')
+
+                    # get tickets with due date set to day
+                    for t in tickets:
+                        due = t.get(self.tkt_due_field)
+                        if due is None or due in ['', '--']:
+                            continue
                         else:
-                            cell(tag.br())
-
-                        match = []
-                        match_od = []
-                        ticket_heap = tag('')
-                        ticket_list = tag.div('')
-                        ticket_list(align='left', class_='condense')
-
-                        # get tickets with due date set to day
-                        for t in self.tickets:
-                            due = t.get(self.tkt_due_field)
-                            if due is None or due in ['', '--']:
-                                continue
-                            else:
-                                if self.tkt_due_format == 'ts':
-                                    if not isinstance(due, datetime):
-                                        continue
-                                    if uts:
-                                        due_ts = to_utimestamp(due)
-                                    else:
-                                        due_ts = to_timestamp(due)
-                                    if due_ts < day_ts or due_ts > day_ts_eod:
-                                        continue
-                                else:
-                                    # Beware: Format might even be unicode str
-                                    duedate = format_date(day_dt,
-                                                      str(self.tkt_due_format))
-                                    if not due == duedate:
-                                        continue
-
-                            id = t.get('id')
-                            ticket, short = self._gen_ticket_entry(t)
-                            ticket_heap(ticket)
-                            if not id in match:
-                                if len(match) == 0:
-                                    ticket_list(short)
-                                else:
-                                    ticket_list(', ', short)
-                                match.append(id)
-
-                        # optionally get tickets created on day
-                        if show_t_open_dates is True:
-                            ticket_od_list = tag.div('')
-                            ticket_od_list(align='left',
-                                           class_='opendate_condense')
-
-                            for t in self.tickets:
+                            if self.tkt_due_format == 'ts':
+                                if not isinstance(due, datetime):
+                                    continue
                                 if uts:
-                                    ticket_ts = to_utimestamp(t.get('time'))
+                                    due_ts = to_utimestamp(due)
                                 else:
-                                    ticket_ts = to_timestamp(t.get('time'))
-                                if ticket_ts < day_ts or \
-                                        ticket_ts > day_ts_eod:
+                                    due_ts = to_timestamp(due)
+                                if due_ts < day_ts or due_ts > day_ts_eod:
+                                    continue
+                            else:
+                                # Beware: Format might even be unicode str
+                                duedate = format_date(day_dt,
+                                                      str(self.tkt_due_format))
+                                if not due == duedate:
                                     continue
 
-                                a_class = 'opendate_'
-                                id = t.get('id')
-                                ticket, short = self._gen_ticket_entry(t,
-                                                                  a_class)
-                                ticket_heap(ticket)
-                                if not id in match:
-                                    if len(match_od) == 0:
-                                        ticket_od_list(short)
-                                    else:
-                                        ticket_od_list(', ', short)
-                                    match_od.append(id)
+                        id = t.get('id')
+                        ticket, short = _gen_ticket_entry(env, formatter, t)
+                        ticket_heap(ticket)
+                        if not id in match:
+                            if len(match) == 0:
+                                ticket_list(short)
+                            else:
+                                ticket_list(', ', short)
+                            match.append(id)
 
-                        matches = len(match) + len(match_od)
-                        if list_condense > 0 and matches >= list_condense:
-                            if len(match_od) > 0:
-                                if len(match) > 0:
-                                    ticket_list(', ')
-                                ticket_list = tag(ticket_list, ticket_od_list)
-                            line(cell(ticket_list))
-                        else:
-                            line(cell(ticket_heap))
-            else:
-                if True:
-                    if name == 'WikiCalendar':
-                        wiki = format_date(day, wiki_page_format)
-                        url = self.env.href.wiki(wiki)
-                        a_class = 'day adjacent_month'
-                        pages = self._gen_wiki_links(wiki, day.day, a_class,
-                                                 url, wiki_page_template)
+                    # optionally get tickets created on day
+                    if show_t_open_dates is True:
+                        ticket_od_list = tag.div('')
+                        ticket_od_list(align='left',
+                                       class_='opendate_condense')
 
-                        cell = tag.td(pages)
-                        cell(class_='day adjacent_month')
-                        line(cell)
+                        for t in tickets:
+                            if uts:
+                                ticket_ts = to_utimestamp(t.get('time'))
+                            else:
+                                ticket_ts = to_timestamp(t.get('time'))
+                            if ticket_ts < day_ts or ticket_ts > day_ts_eod:
+                                continue
+
+                            a_class = 'opendate_'
+                            id = t.get('id')
+                            ticket, short = _gen_ticket_entry(env, formatter,
+                                                              t, a_class)
+                            ticket_heap(ticket)
+                            if not id in match:
+                                if len(match_od) == 0:
+                                    ticket_od_list(short)
+                                else:
+                                    ticket_od_list(', ', short)
+                                match_od.append(id)
+
+                    matches = len(match) + len(match_od)
+                    if list_condense > 0 and matches >= list_condense:
+                        if len(match_od) > 0:
+                            if len(match) > 0:
+                                ticket_list(', ')
+                            ticket_list = tag(ticket_list, ticket_od_list)
+                        line(cell(ticket_list))
                     else:
-                        cell = tag.td('')
-                        cell(class_='day adjacent_month')
-                        line(cell)
+                        line(cell(ticket_heap))
+            else:
+                if name == 'WikiCalendar':
+                    wiki = format_date(day, wiki_page_format)
+                    a_class = 'day adjacent_month'
+                    pages = self._gen_wiki_links(formatter, args, kwargs,
+                                                 wiki, day.day, a_class)
+
+                    cell = tag.td(pages)
+                    cell(class_='day adjacent_month')
+                    line(cell)
+                else:
+                    cell = tag.td('')
+                    cell(class_='day adjacent_month')
+                    line(cell)
             if int(format_datetime(day, 'c', locale=loc)) == 7:
                 buff(line)
 
@@ -817,15 +647,138 @@ class WikiCalendarMacros(Component):
         if name == 'WikiCalendar':
                 buff(class_='wiki-calendar')
         # Add common CSS stylesheet
-        if self.internal_css and not self.ref.req.args.get('wikicalendar'):
+        if self.internal_css and not formatter.req.args.get('wikicalendar'):
             # Put definitions directly into the output.
             f = open('/'.join([self.htdocs_path, 'wikicalendar.css']), 'Ur')
             css = tag.style(Markup('<!--\n'), '\n'.join(f.readlines()),
                             Markup('-->\n'))(type="text/css")
             f.close()
             # Add hint to prevent multiple inclusions.
-            self.ref.req.args['wikicalendar'] = True
+            formatter.req.args['wikicalendar'] = True
             return tag(css, buff)
-        elif not self.ref.req.args.get('wikicalendar'):
-            add_stylesheet(self.ref.req, 'wikicalendar/wikicalendar.css')
+        elif not formatter.req.args.get('wikicalendar'):
+            add_stylesheet(formatter.req, 'wikicalendar/wikicalendar.css')
         return buff
+
+    def _do_check(self, test, item):
+        """Execute configurable tests per calendar item."""
+        # DEVEL: Fail condition not implemented yet, will need additional
+        #   configuration too.
+        if test in self.checks.keys():
+            sql = self.checks[test].get('test')
+            if sql:
+                db = self.env.get_db_cnx()
+                cursor = db.cursor()
+                cursor.execute(sql, (item,))
+                row = cursor.fetchone()
+                if row is not None:
+                    return 1
+
+    def _gen_wiki_links(self, formatter, args, kwargs, wiki, label, a_class,
+                        check=None):
+        check_sign = None
+        url = self.env.href.wiki(wiki)
+        if WikiSystem(self.env).has_page(wiki.lstrip('/')):
+            a_class += " page"
+            title = _("Go to page %s") % wiki
+            if check and check[0] == 'link':
+                chrome_path = '/'.join([formatter.req.base_path, 'chrome'])
+                ok_img = 'wikicalendar/check_ok.png'
+                ok = tag.image(src='/'.join([chrome_path, ok_img]),
+                               alt='ok', title='ok')
+                nok_img = 'wikicalendar/check_nok.png'
+                nok = tag.image(src='/'.join([chrome_path, nok_img]),
+                                alt='X', title='X')
+                unk_img = 'wikicalendar/check_unknown.png'
+                unk = tag.image(src='/'.join([chrome_path, unk_img]),
+                                alt='?', title='?')
+                result = self._do_check(check[1], wiki)
+                check_sign = result and (result == 1 and ok or nok) or unk
+        else:
+            # The default (empty page) is used, if template name is invalid.
+            url += "?action=edit"
+            # Add page template to create new wiki pages, if specified.
+            template = None
+            if len(args) >= 6 or kwargs.has_key('base'):
+                try:
+                    template = kwargs['base']
+                except KeyError:
+                    template = args[5]
+            if template:
+                url += "&template=" + template
+            title = _("Create page %s") % wiki
+        link = tag.a(tag(label), href=url)
+        link(class_=a_class, title_=title)
+        return tag(link, check_sign)
+
+
+def _gen_ticket_entry(env, formatter, t, a_class=''):
+    id = str(t.get('id'))
+    status = t.get('status')
+    summary = to_unicode(t.get('summary'))
+    owner = to_unicode(t.get('owner'))
+    description = to_unicode(t.get('description'))
+    url = t.get('href')
+
+    if status == 'closed':
+        a_class = a_class + 'closed'
+    else:
+        a_class = a_class + 'open'
+
+    # Reduce content for tooltips.
+    markup = format_to_html(env, formatter.context, description)
+    extractor = TextExtractor()
+    extractor.feed(markup)
+    tip = tag.span(shorten_line(extractor.getvalue()))
+
+    ticket = '#' + id
+    ticket = tag.a(ticket, href=url)
+    ticket(tip, class_='tip', target='_blank')
+    ticket = tag.div(ticket)
+    ticket(class_=a_class, align='left')
+    # fix stripping of regular leading space in IE
+    blank = '&nbsp;'
+    ticket(Markup(blank), summary, ' (', owner, ')')
+
+    summary = tag(summary, ' (', owner, ')')
+    ticket_short = '#' + id
+    ticket_short = tag.a(ticket_short, href=url)
+    ticket_short(target='_blank', title_=summary)
+    ticket_short = tag.span(ticket_short)
+    ticket_short(class_=a_class)
+
+    return ticket, ticket_short
+
+def _mknav(formatter, label, a_class, dt, locale):
+    """The calendar nav button builder.
+
+    This is a convenience module for shorter and better serviceable code.
+    """
+    tip = format_datetime(dt, 'MMMM y', locale=locale)
+    # URL to the current page
+    thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
+    url = thispageURL(month=dt.month, year=dt.year)
+    markup = tag.a(Markup(label), href=url)
+    markup(class_=a_class, title=tip)
+    markup = tag.td(markup)
+    return markup(class_='x')
+
+def _resolve_relative_name(pagename, referrer):
+    """Resolver for Trac wiki page paths.
+
+    This method handles absolute as well as relative wiki paths.
+    """
+    # Code taken from trac.wiki.api.WikiSystem at r10905,
+    # improved by Jun Omae for compatibility with Python2.4.
+    if not any(pagename.startswith(prefix) for prefix in ('./', '../')):
+        return pagename.lstrip('/')
+    base = referrer.split('/')
+    components = pagename.split('/')
+    for i, comp in enumerate(components):
+        if comp == '..':
+            if base:
+                base.pop()
+        elif comp and comp != '.':
+            base.extend(components[i:])
+            break
+    return '/'.join(base)
