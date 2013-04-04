@@ -12,6 +12,7 @@ import itertools
 
 from trac.util.compat import set
 from trac.util.text import to_unicode
+from trac.util.translation import _
 
 
 def _format_options(base_string, options):
@@ -70,9 +71,10 @@ class Node(dict):
 class Graph(object):
     """A model object for a graphviz digraph."""
 
-    def __init__(self, name=u'graph'):
+    def __init__(self, name=u'graph', log=None):
         super(Graph, self).__init__()
         self.name = name
+        self.log = log
         self.nodes = []
         self._node_map = {}
         self.attributes = {}
@@ -134,10 +136,13 @@ class Graph(object):
     def render(self, dot_path='dot', format='png'):
         """Render a dot graph."""
         cmd = [dot_path, '-T%s' % format]
-        proc = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-        out, stderr = proc.communicate(to_unicode(self).encode('utf8'))
+        p = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        out, error = p.communicate(to_unicode(self).encode('utf8'))
+        if error or p.returncode and self.log:
+            self.log.error(_("dot %(dot_path)s failed with code %(rc)s: %(error)s",
+                             dot_path=dot_path, rc=p.returncode, error=error))
         return out
 
 

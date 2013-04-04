@@ -7,7 +7,10 @@ mastertickets 3.0.4
    blocked by field and also adding a comment.
 
  new features
- * none
+ * #7621: Log errors from calling GraphViz.
 
 mastertickets 3.0.3
  <changelog for 3.0.3 and earlier to be written>
+
+mastertickets 3.0.1
+ * #3920: KeyError when selecting diff of ticket changes.

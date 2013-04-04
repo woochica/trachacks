@@ -254,7 +254,7 @@ class MasterTicketsModule(Component):
             return 'depgraph.html', data, None
 
     def _build_graph(self, req, tkt_ids, label_summary=0):
-        g = graphviz.Graph()
+        g = graphviz.Graph(log=self.log)
         g.label_summary = label_summary
 
         g.attributes['rankdir'] = self.graph_direction
