@@ -6,7 +6,7 @@
 # Copyright (C) 2007 Mike Comb <mcomb@mac.com>
 # Copyright (C) 2008 JaeWook Choi <http://trac-hacks.org/wiki/butterflow>
 # Copyright (C) 2008, 2009 W. Martin Borgert <debacle@debian.org>
-# Copyright (C) 2010-2012 Steffen Hoffmann <hoff.st@shaas.net>
+# Copyright (C) 2010-2013 Steffen Hoffmann <hoff.st@shaas.net>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -14,11 +14,13 @@
 # Author: Matthew Good <trac@matt-good.net>
 
 import calendar
-import datetime
 import locale
 import re
 import sys
 
+from babel import Locale, UnknownLocaleError
+from babel.dates import format_datetime, get_day_names
+from datetime import datetime, timedelta
 from genshi.builder import tag
 from genshi.core import escape, Markup
 from pkg_resources import resource_filename
@@ -299,15 +301,16 @@ class WikiCalendarMacros(Component):
         This is a convenience module for shortening function calls.
         It uses Trac's timezone setting.
         """
-        dt = datetime.datetime(year, month, day, tzinfo=self.tz_info)
+        dt = datetime(year, month, day, tzinfo=self.tz_info)
         return dt
 
-    def _mknav(self, label, a_class, month, year):
+    def _mknav(self, label, a_class, month, year, locale):
         """The calendar nav button builder.
 
         This is a convenience module for shorter and better serviceable code.
         """
-        tip = to_unicode(format_date(self._mkdatetime(year, month), '%B %Y'))
+        tip = format_datetime(self._mkdatetime(year, month), 'MMMM y',
+                              locale=locale)
         # URL to the current page
         thispageURL = Href(self.ref.req.base_path + self.ref.req.path_info)
         url = thispageURL(month=month, year=year)
@@ -420,8 +423,9 @@ class WikiCalendarMacros(Component):
     def expand_macro(self, formatter, name, arguments):
 
         self.ref = formatter
-        self.tz_info = formatter.req.tz
-        self.thistime = datetime.datetime.now(self.tz_info)
+        tz = self.tz_info = formatter.req.tz
+        now = datetime.now(tz)
+        today = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Parse arguments from macro invocation
         args, kwargs = parse_args(arguments, strict=False)
@@ -437,7 +441,7 @@ class WikiCalendarMacros(Component):
                 year = int(args[0])
             else:
                 # use current year
-                year = self.thistime.year
+                year = today.year
         else:
             # year in http params (clicked by user) overrides everything
             year = int(http_param_year)
@@ -449,7 +453,7 @@ class WikiCalendarMacros(Component):
                 month = int(args[1])
             else:
                 # use current month
-                month = self.thistime.month
+                month = today.month
         else:
             # month in http params (clicked by user) overrides everything
             month = int(http_param_month)
@@ -533,11 +537,6 @@ class WikiCalendarMacros(Component):
             # but this is a system-wide setting.
             calendar.setfirstweekday(calendar.MONDAY)
 
-        cal = calendar.monthcalendar(year, month)
-        curr_day = None
-        if year == self.thistime.year and month == self.thistime.month:
-            curr_day = self.thistime.day
-
         # for prev/next navigation links
         prevMonth = month - 1
         nextMonth = month + 1
@@ -563,31 +562,35 @@ class WikiCalendarMacros(Component):
         else:
             ffMonth = month + 3
 
-        last_week_prevMonth = calendar.monthcalendar(prevYear, prevMonth)[-1]
-        first_week_nextMonth = calendar.monthcalendar(nextYear, nextMonth)[0]
-
-        # Switch to user's locale, if available.
-        # DEVEL: This is not thread-safe, investigate an alternative in Babel.
+        # Respect user's locale, if available.
         try:
             loc_req = str(formatter.req.locale)
         except AttributeError:
             # Available since Trac 0.12.
             loc_req = None
-        loc_prop = loc_encoding = None
+        loc = None
         if loc_req:
-            loc = locale.getlocale()
-            loc_prop = locale.normalize(loc_req)
             try:
-                locale.setlocale(locale.LC_TIME, loc_prop)
-            except locale.Error:
-                try:
-                    # Re-try with UTF-8 as last resort.
-                    loc_prop = '.'.join([loc_prop.split('.')[0],'utf8'])
-                    locale.setlocale(locale.LC_TIME, loc_prop)
-                except locale.Error:
-                    loc_prop = None
-            loc_encoding = locale.getlocale(locale.LC_TIME)[1]
-            self.env.log.debug('Locale setting for calendar: ' + str(loc_prop))
+                 loc = Locale.parse(loc_req, sep='-')
+            except UnknownLocaleError:
+                # Re-try with system default.
+                loc = Locale.default('LC_TIME')
+            if not loc:
+                loc = Locale('en', 'US')
+            self.env.log.debug('Locale setting for wiki calendar: %s'
+                               % loc.get_display_name('en'))
+
+        # Find first calendar page day, probably in last month.
+        first_day_month = datetime(year, month, 1, tzinfo=tz)
+        idx_day_in_week = int(format_datetime(first_day_month, 'c',
+                                              locale=loc))
+        first_day_cal = first_day_month - timedelta(idx_day_in_week - 1)
+        # Find last calendar page day, probably in next month.
+        last_day_month = datetime(nextYear, nextMonth, 1,
+                                  tzinfo=tz) - timedelta(1)
+        idx_day_in_week = int(format_datetime(last_day_month, 'c',
+                                              locale=loc))
+        last_day_cal = last_day_month + timedelta(7 - idx_day_in_week)
 
         # Finally building the output
         # Begin with caption and optional navigation links
@@ -597,19 +600,22 @@ class WikiCalendarMacros(Component):
             # calendar navigation buttons
             nx = 'next'
             pv = 'prev'
-            nav_pvY = self._mknav('&lt;&lt;', pv, month, year-1)
-            nav_frM = self._mknav('&nbsp;&lt;', pv, frMonth, frYear)
-            nav_pvM = self._mknav('&nbsp;&laquo;', pv, prevMonth, prevYear)
-            nav_nxM = self._mknav('&raquo;&nbsp;', nx, nextMonth, nextYear)
-            nav_ffM = self._mknav('&gt;&nbsp;', nx, ffMonth, ffYear)
-            nav_nxY = self._mknav('&gt;&gt;', nx, month, year+1)
+            nav_pvY = self._mknav('&lt;&lt;', pv, month, year-1, loc)
+            nav_frM = self._mknav('&nbsp;&lt;', pv, frMonth, frYear, loc)
+            nav_pvM = self._mknav('&nbsp;&laquo;', pv, prevMonth, prevYear,
+                                  loc)
+            nav_nxM = self._mknav('&raquo;&nbsp;', nx, nextMonth, nextYear,
+                                  loc)
+            nav_ffM = self._mknav('&gt;&nbsp;', nx, ffMonth, ffYear, loc)
+            nav_nxY = self._mknav('&gt;&gt;', nx, month, year+1, loc)
 
             # add buttons for going to previous months and year
             buff(nav_pvY, nav_frM, nav_pvM)
 
         # The caption will always be there.
         heading = tag.td(
-             to_unicode(format_date(self._mkdatetime(year, month), '%B %Y')))
+             to_unicode(format_datetime(self._mkdatetime(year, month),
+                                        'MMMM y', locale=loc)))
         buff = buff(heading(class_='y'))
 
         if showbuttons is True:
@@ -629,42 +635,39 @@ class WikiCalendarMacros(Component):
         heading = tag.tr()
         heading(align='center')
 
-        for idx, day in enumerate(calendar.day_abbr):
-            day = to_unicode(day, charset=loc_encoding)
-            col = tag.th(day[:2])
+        for idx, day_name in get_day_names('abbreviated',
+                                           'format', loc).iteritems():
+            col = tag.th(day_name)
             col(class_=('workday', 'weekend')[idx > 4], scope='col')
             heading(col)
-
         heading = buff(tag.thead(heading))
 
         # Building main calendar table body
         buff = tag.tbody()
-        w = -1
-        for week in cal:
-            w = w + 1
-            line = tag.tr()
-            line(align='right')
-            d = -1
-            for day in week:
-                d = d + 1
-                if day:
+        day = first_day_cal - timedelta(1)
+        while day < last_day_cal:
+            day += timedelta(1)
+            # Insert a new row for every first-day-of-week.
+            if int(format_datetime(day, 'c', locale=loc)) == 1:
+                line = tag.tr()
+                line(align='right')
+            if not (day < first_day_month or day > last_day_month):
+                if True:
                     # check for wikipage with name specified in
                     # 'wiki_page_format'
-                    wiki = format_date(self._mkdatetime(year, month, day),
-                                                         wiki_page_format)
-                    if day == curr_day:
+                    wiki = format_date(day, wiki_page_format)
+                    if day == today:
                         a_class = 'day today'
                         td_class = 'today'
                     else:
                         a_class = 'day'
                         td_class = 'day'
 
-                    day_dt = self._mkdatetime(year, month, day)
                     if uts:
-                        day_ts = to_utimestamp(day_dt)
+                        day_ts = to_utimestamp(day)
                         day_ts_eod = day_ts + 86399999999
                     else:
-                        day_ts = to_timestamp(day_dt)
+                        day_ts = to_timestamp(day)
                         day_ts_eod = day_ts + 86399
 
                     # check for milestone(s) on that day
@@ -685,10 +688,10 @@ class WikiCalendarMacros(Component):
                         milestones = tag(milestones,
                                          tag.div(tag.a(milestone, href=url),
                                                  class_='milestone'))
-                    day = tag.span(day)
-                    day(class_='day')
+                    label = tag.span(day.day)
+                    label(class_='day')
                     if len(wiki_subpages) > 0:
-                        pages = tag(day, Markup('<br />'))
+                        pages = tag(label, Markup('<br />'))
                         for page in wiki_subpages:
                             label = tag(' ', page[0])
                             page = '/'.join([wiki, page])
@@ -698,7 +701,7 @@ class WikiCalendarMacros(Component):
                                                      check))
                     else:
                         url = self.env.href.wiki(wiki)
-                        pages = self._gen_wiki_links(wiki, day, a_class,
+                        pages = self._gen_wiki_links(wiki, label, a_class,
                                                      url, wiki_page_template,
                                                      check)
                     cell = tag.td(pages)
@@ -724,7 +727,7 @@ class WikiCalendarMacros(Component):
                                 continue
                             else:
                                 if self.tkt_due_format == 'ts':
-                                    if not isinstance(due, datetime.datetime):
+                                    if not isinstance(due, datetime):
                                         continue
                                     if uts:
                                         due_ts = to_utimestamp(due)
@@ -785,19 +788,13 @@ class WikiCalendarMacros(Component):
                             line(cell(ticket_list))
                         else:
                             line(cell(ticket_heap))
-                else:
+            else:
+                if True:
                     if name == 'WikiCalendar':
-                        if w == 0:
-                            day = last_week_prevMonth[d]
-                            wiki = format_date(self._mkdatetime(
-                                prevYear, prevMonth, day), wiki_page_format)
-                        else:
-                            day = first_week_nextMonth[d]
-                            wiki = format_date(self._mkdatetime(
-                                nextYear, nextMonth, day), wiki_page_format)
+                        wiki = format_date(day, wiki_page_format)
                         url = self.env.href.wiki(wiki)
                         a_class = 'day adjacent_month'
-                        pages = self._gen_wiki_links(wiki, day, a_class,
+                        pages = self._gen_wiki_links(wiki, day.day, a_class,
                                                  url, wiki_page_template)
 
                         cell = tag.td(pages)
@@ -807,15 +804,8 @@ class WikiCalendarMacros(Component):
                         cell = tag.td('')
                         cell(class_='day adjacent_month')
                         line(cell)
-            buff(line)
-
-        if loc_req and loc_prop:
-            # We may have switched to users locale, resetting now.
-            try:
-                locale.setlocale(locale.LC_ALL, loc)
-                self.env.log.debug('Locale setting restored: ' + str(loc))
-            except locale.Error:
-                pass
+            if int(format_datetime(day, 'c', locale=loc)) == 7:
+                buff(line)
 
         buff = tag.div(heading(buff))
         if name == 'WikiTicketCalendar':
