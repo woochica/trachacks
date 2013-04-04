@@ -149,5 +149,4 @@ if __name__ == '__main__':
 
     g.add(root)
 
-    print
-    g.render()
+    print g.render()
