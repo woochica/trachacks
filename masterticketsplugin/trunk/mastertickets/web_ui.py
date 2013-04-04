@@ -86,7 +86,7 @@ class MasterTicketsModule(Component):
                 add_ctxtnav(req, 'Depgraph', req.href.depgraph('ticket', tkt.id))
 
             for change in data.get('changes', {}):
-                if not change.has_key('fields'):
+                if not 'fields' in changes:
                     continue
                 for field, field_data in change['fields'].iteritems():
                     if field in self.fields:
