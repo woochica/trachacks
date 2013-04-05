@@ -94,10 +94,13 @@ class Budget:
                 if not flds:    flds = key
                 else:           flds += "," + key
 
-                if key in ('username', 'type', 'comment'): value = "'%s'" % value
+                if key in ('username', 'type', 'comment'):
+                    v = value.encode("utf-8")
+                    value = "'%s'" % str(v)
 
-                if not vals:    vals = str(value)
-                else:           vals += ",%s" % value
+                if not vals: vals = "%s" % value
+                else: vals += ",%s" % value
+
             actionFound = True
             sql = ("INSERT INTO %s (ticket, position, %s)"
                    " VALUES (%s, %s, %s)" %
