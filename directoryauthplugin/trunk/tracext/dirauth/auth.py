@@ -10,7 +10,7 @@
 # Extended: Branson Matheson <branson.matheson@nasa.gov>
 
 from trac.core import *
-from trac.config import Option
+from trac.config import IntOption, Option
 from trac.util.text import to_unicode
 
 import ldap
@@ -37,7 +37,7 @@ class DirAuthStore(Component):
     dir_uri = Option('account-manager', 'dir_uri', 'ldap://localhost', 'URI of the LDAP or Active Directory Server')
     dir_charset = Option('account-manager', 'dir_charset', 'utf-8',
                          'Text encoding used by the LDAP or Active Directory Server')
-    dir_scope = Option('account-manager', 'dir_scope', 1, '0=Base, 1=OneLevel, 2=Subtree')
+    dir_scope = IntOption('account-manager', 'dir_scope', 1, '0=Base, 1=OneLevel, 2=Subtree')
     dir_binddn = Option('account-manager', 'dir_binddn', '', 'DN used to bind to AD, leave blank for anonymous bind')
     dir_bindpw = Option('account-manager', 'dir_bindpw', '',
                         'Password used when binding to AD, leave blank for anonymous bind')
