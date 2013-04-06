@@ -7,13 +7,14 @@
 # you should have received as part of this distribution.
 #
 
-from trac.core import *
-from trac.perm import PermissionSystem, IPermissionRequestor
-from trac.env import IEnvironmentSetupParticipant
-from trac.ticket.web_ui import TicketModule
 from trac.config import Option
-
+from trac.core import *
+from trac.env import IEnvironmentSetupParticipant
+from trac.perm import PermissionSystem, IPermissionRequestor
+from trac.ticket.web_ui import TicketModule
+from trac.util.translation import _
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
+
 from genshi.builder import tag
 from genshi.filters import Transformer
 from genshi.filters.transform import StreamBuffer
@@ -21,7 +22,8 @@ from genshi.input import HTML
 
 
 class PrivateComments(Component):
-    implements(ITemplateStreamFilter, IEnvironmentSetupParticipant, IRequestFilter, IPermissionRequestor)
+    implements(IEnvironmentSetupParticipant, IPermissionRequestor,
+               IRequestFilter, ITemplateStreamFilter)
 
     private_comment_permission = Option(
         'privatecomments',
@@ -48,58 +50,49 @@ class PrivateComments(Component):
 
     # IRequestFilter methods
     def pre_process_request(self, req, handler):
-        if handler is not TicketModule(self.env) or req.method != 'POST':
+        if not isinstance(handler, TicketModule) or req.method != 'POST':
             return handler
 
-        ticket_id = self._get_ticketid_from_url(req.path_info)
+        ticket_id = req.args.get('id')
         if not ticket_id:
             return handler
 
-        # determine if the request is an editing request, the comment id and if the comment should be private
-        editing = comment_id = private = -1
-        arg_list = req.arg_list
-        for key, value in arg_list:
-            if key == 'comment':
-                editing = False
-            elif key == 'edited_comment':
-                editing = True
-            elif key == 'cnum':
-                comment_id = value
-            elif key == 'cnum_edit':
-                comment_id = value
-            elif key == 'private_comment' and value == 'on':
-                private = 1
-
-            if editing != -1 and comment_id != -1 and private != -1:
-                break
-
-        if editing == -1 or comment_id == -1:
+        if 'edited_comment' in req.args:
+            editing = True
+        elif 'comment' in req.args and req.args['comment']:
+            editing = False
+        else:
             return handler
 
-        if private == -1:
+        if 'cnum' in req.args:
+            comment_id = req.args['cnum']
+        elif 'cnum_edit' in req.args:
+            comment_id = req.args['cnum_edit']
+        else:
+            return handler
+
+        if 'private_comment' in req.args and \
+           req.args['private_comment'] == 'on':
+            private = 1
+        else:
             private = 0
 
-        # finally update or insert a private_comment entry
+        if editing:
+            sql = """
+                UPDATE private_comment SET private=%s
+                WHERE ticket_id=%s AND comment_id=%s
+                """
+            params = (int(private), int(ticket_id), int(comment_id))
+        else:
+            sql = """
+                INSERT INTO private_comment(ticket_id, comment_id, private)
+                  values(%s, %s, %s)"""
+            params = (int(ticket_id), int(comment_id), int(private))
+
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-
-        try:
-            if editing:
-                sql = """
-                    UPDATE private_comment SET private=%s
-                    WHERE ticket_id=%s AND comment_id=%s
-                    """
-                params = (int(private), int(ticket_id), int(comment_id))
-            else:
-                sql = """
-                    INSERT INTO private_comment(ticket_id, comment_id, private)
-                      values(%s, %s, %s)"""
-                params = (int(ticket_id), int(comment_id), int(private))
-
-            cursor.execute(sql, params)
-            db.commit()
-        except:
-            pass
+        cursor.execute(sql, params)
+        db.commit()
 
         return handler
 
@@ -133,10 +126,10 @@ class PrivateComments(Component):
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if filename not in ['ticket.html', 'ticket.rss']:
+        if filename not in ('ticket.html', 'ticket.rss'):
             return stream
 
-        ticket_id = self._get_ticketid_from_url(req.path_info)
+        ticket_id = req.args.get('id')
         if not ticket_id:
             return stream
 
@@ -170,41 +163,36 @@ class PrivateComments(Component):
                     comment_id = comment[:find]
 
                     # concat the delimiter and the comment again
-                    comment_code = delimiter+comment
+                    comment_code = delimiter + comment
 
                     # if the user has the permission to see the comment
-                    # the commentcode will be appended to the commentstream
-                    comment_private = self._is_comment_private(ticket_id,comment_id)
+                    # the comment_code will be appended to the comment_stream
+                    comment_private = self._is_comment_private(ticket_id, comment_id)
 
                     if comment_private:
                         comment_code = comment_code.replace(
                             '<span class="threading">',
-                            '<span class="threading"> <span class="%s">this comment is private</span>' % \
-                                (str(self.css_class_private_comment_marker))
+                            '<span class="threading"> <span class="%s">this comment is private</span>'
+                            % str(self.css_class_private_comment_marker)
                         )
 
                     if has_private_permission or not comment_private:
-                        comment_stream = comment_stream + comment_code
+                        comment_stream += comment_code
 
                 return HTML(comment_stream)
 
-            def checkbox_for_privatecomments():
-                return tag(
-                            tag.span('Private Comment ', class_=self.css_class_checkbox),
-                            tag.input(type='checkbox', name='private_comment')
-                        )
-
             # filter all comments
             stream |= Transformer('//div[@class="change" and @id]') \
-            .copy(buf) \
-            .replace(check_comments)
+                .copy(buf).replace(check_comments)
 
             # if the user has the private comment permission the checkboxes to change the private value will be added
             if has_private_permission:
-                stream |= Transformer('//textarea[@name="edited_comment" and @class="wikitext trac-resizable" and @rows and @cols]') \
-                .after(checkbox_for_privatecomments).end() \
-                .select('//fieldset[@class="iefix"]') \
-                .before(checkbox_for_privatecomments)
+                input = tag.label(_("Private Comment:"),
+                                  tag.input(type='checkbox',
+                                            name='private_comment'))
+                stream |= Transformer('//h2[@id="trac-add-comment"]').after(input)
+                # Trac 1.0 and later:
+                # stream |= Transformer('//div[@id="trac-add-comment"]//fieldset').prepend(input)
 
         # Remove private comments from ticket RSS feed
         if filename == 'ticket.rss':
@@ -218,15 +206,6 @@ class PrivateComments(Component):
         return stream
 
     # internal methods
-    def _get_ticketid_from_url(self, url):
-        if url.find('/ticket') == -1:
-            return None
-
-        find = url.rfind('/')
-        if find < 1:
-            return None
-
-        return int(url[find + 1:])
 
     def _is_comment_private(self, ticket_id, comment_id):
         db = self.env.get_db_cnx()
