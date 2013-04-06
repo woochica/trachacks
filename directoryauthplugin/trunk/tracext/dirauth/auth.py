@@ -14,17 +14,20 @@ from trac.config import Option
 from trac.util.text import to_unicode
 
 import ldap
-import time, types, hashlib
+import time
+import types
+import hashlib
 import cPickle
 
 from acct_mgr.api import IPasswordStore
 from trac.perm import IPermissionGroupProvider
-from tracext.adauth.api import IPermissionUserProvider
+from tracext.dirauth.api import IPermissionUserProvider
 
 GROUP_PREFIX = '@'
 NOCACHE = 0
 
 __all__ = ['DirAuthStore']
+
 
 class DirAuthStore(Component):
     """Directory Password Store for Account Manager """
@@ -80,7 +83,7 @@ class DirAuthStore(Component):
       self._cache_set('allusers', userlist)
       return sorted(userlist)
     
-    def has_user(self,user):
+    def has_user(self, user):
       users = self.get_users(user)
       if user in users:
         return True
@@ -224,8 +227,9 @@ class DirAuthStore(Component):
           return dn
             
         u = self._dir_search(self.dir_basedn, self.dir_scope,
-                                "(&(%s=%s)(objectClass=person))" % (self.user_attr, user),
-                                [self.user_attr], cache)
+                             "(&(%s=%s)(objectClass=person))"
+                             % (self.user_attr, user),
+                             [self.user_attr], cache)
 
         if not u:
           self.log.debug('user not found: %s' % user)
@@ -239,9 +243,11 @@ class DirAuthStore(Component):
     #-- expand_usergroups
     #   instead of depending on MemberOf overlay, we'll recurse upward all groups this user 
     #   belongs to to make sure we catch subgroups.
-    '''get a list of all groups this user belongs to.  This recurses up to make sure we get them all'''
     def _expand_user_groups(self, user, use_cache=1):
-      
+      """Get a list of all groups this user belongs to.
+      This recurses up to make sure we get them all
+      """
+
       if use_cache:
         groups = self._cache_get('usergroups:%s' % user)
         if groups:
@@ -260,10 +266,10 @@ class DirAuthStore(Component):
       for entry in usergroups:
         groupdn = entry[0]
         group = entry[1]['cn'][0]
-        group = group.replace(' ','_').lower()
+        group = group.replace(' ', '_').lower()
         groups.append(group) # dn
         if not group in groups:
-          groups.append(self._get_parent_groups(groups, groupdn)) # dn
+          groups.append(self._get_parent_groups(groups, groupdn))  # dn
                                                              
       self._cache_set('usergroups:%s'%user, groups)
       if groups:
@@ -281,7 +287,7 @@ class DirAuthStore(Component):
         for entry in ldapgroups:
           groupdn = entry[0]
           group = entry[1]['cn'][0]
-          group = group.replace(' ','_').lower()
+          group = group.replace(' ', '_').lower()
           if not group in groups:
             groups.append(group)
             groups.append(self._get_parent_groups(groups,groupdn) )
@@ -326,20 +332,27 @@ class DirAuthStore(Component):
             cur.execute("INSERT INTO session_attribute (sid, authenticated, name, value) VALUES ('%s', 1, 'enabled', '1')" % (uname))
         except:
             self.log.debug('session for %s exists.' % uname)
-        
-            
+
         # -- we want to update these regardless.
         if email:
             cur = db.cursor()
-            cur.execute("INSERT OR REPLACE INTO session_attribute (sid, authenticated, name, value) "
-                            "VALUES ('%s', 1, 'email', '%s')" % (uname, to_unicode(email)))
-            self.log.info('updating user session email info for %s (%s)' % (uname, to_unicode(email)))
-            
+            cur.execute("""
+                INSERT OR REPLACE INTO session_attribute
+                  (sid, authenticated, name, value)
+                VALUES (%s, 1, 'email', %s)
+                """, (uname, to_unicode(email)))
+            self.log.info('updating user session email info for %s (%s)'
+                          % (uname, to_unicode(email)))
+
         if displayname:
             cur = db.cursor()
-            cur.execute("INSERT OR REPLACE INTO session_attribute "
-                            "(sid, authenticated, name, value) VALUES ('%s', 1, 'name', '%s')" % (uname, to_unicode(displayname)))
-            self.log.info('updating user session displayname info for %s (%s)' % (uname, to_unicode(displayname)))
+            cur.execute("""
+                INSERT OR REPLACE INTO session_attribute
+                  (sid, authenticated, name, value) "
+                VALUES (%s, 1, 'name', %s)
+                """, (uname, to_unicode(displayname)))
+            self.log.info('updating user session displayname info for %s (%s)'
+                          % (uname, to_unicode(displayname)))
         db.commit()
         return db.close()
         
@@ -347,7 +360,7 @@ class DirAuthStore(Component):
         """Get an item from memory cache"""
         cache_ttl = ttl or self.cache_ttl
         if not self.cache_memsize:
-          return None;
+          return None
         
         now = time.time()
             
@@ -374,9 +387,14 @@ class DirAuthStore(Component):
         if 'last_prune' in self._cache:
           last_prune, data = self._cache['last_prune']
           if last_prune + self.cache_memsize_warn > now:
-            self.env.log.info('pruning memcache in less than %d seconds, you might increase cache_memsize.' % int(self.cache_memsize_warn))
+            self.env.log.info("""
+                pruning memcache in less than %d seconds, you might
+                increase cache_memsize.
+                """ % int(self.cache_memsize_warn))
                 
-        self.env.log.debug('pruning memcache by %d: (current: %d > max: %d )' % (self.cache_memprune, len(self._cache), int(self.cache_memsize)))
+        self.env.log.debug('pruning memcache by %d: (current: %d > max: %d )'
+                           % (self.cache_memprune, len(self._cache),
+                              int(self.cache_memsize)))
         cache_keys = self._cache.keys()
         cache_keys.sort(lambda x, y: cmp(self._cache[x][0],
                                            self._cache[y][0]))
@@ -426,7 +444,7 @@ class DirAuthStore(Component):
       
           # --  Check database
           cur = db.cursor()
-          cur.execute("""SELECT lut,data FROM ad_cache WHERE id=%s""", [key])
+          cur.execute("""SELECT lut,data FROM dir_cache WHERE id=%s""", (key,))
           row = cur.fetchone()
           if row:      
             lut, data = row
@@ -439,7 +457,7 @@ class DirAuthStore(Component):
             else: 
               # -- old data, delete it and anything else that's old.
               lut = str(current_time - int(self.cache_ttl)) 
-              cur.execute("""DELETE FROM ad_cache WHERE lut < %s""", [lut])
+              cur.execute("""DELETE FROM dir_cache WHERE lut < %s""", [lut])
               db.commit()
       else:
         self.log.debug('_dir_search: skipping cache.')
@@ -468,7 +486,7 @@ class DirAuthStore(Component):
       res_str = cPickle.dumps(res, 0)
       try:
           cur = db.cursor()
-          cur.execute("""INSERT OR REPLACE INTO ad_cache (id, lut, data) 
+          cur.execute("""INSERT OR REPLACE INTO dir_cache (id, lut, data) 
                          VALUES (%s, %s, %s)""", [str(key), int(current_time), buffer(res_str)])
           db.commit()
            
