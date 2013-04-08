@@ -92,6 +92,8 @@ class TracJSGanttSupport(Component):
                 """Display filter for tickets in the form 'field1:value1|field2:value2' or 'field:value1|value2'; displays tickets where field1==value1, etc.""")
     Option('trac-jsgantt', 'option.order', 'wbs',
            """Fields to sort tasks by before display.  May include tickets fields (including custom fields) or 'wbs'.""")
+    Option('trac-jsgantt', 'option.scrollTo', None,
+           """Date to scroll chart to (yyyy-mm--dd or 'today')""")
      
 
     # ITemplateProvider methods
@@ -184,7 +186,7 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
                    'openLevel', 'expandClosedTickets', 'colorBy', 'lwidth', 
                    'showdep', 'userMap', 'omitMilestones',
                    'schedule', 'hoursPerDay', 'doResourceLeveling',
-                   'display', 'order')
+                   'display', 'order', 'scrollTo')
 
         for opt in options:
             self.options[opt] = self.config.get('trac-jsgantt',
@@ -234,6 +236,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
         opt += self.GanttID+'.setShowRes(%s);\n' % options['res']
         opt += self.GanttID+'.setShowDur(%s);\n' % options['dur']
         opt += self.GanttID+'.setShowComp(%s);\n' % options['comp']
+        if (options['scrollTo']):
+            opt += self.GanttID+'.setScrollDate("%s");\n' % options['scrollTo']
         w = options['lwidth']
         if w:
             opt += self.GanttID+'.setLeftWidth(%s);\n' % w

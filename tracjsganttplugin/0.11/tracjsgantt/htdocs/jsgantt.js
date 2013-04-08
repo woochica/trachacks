@@ -685,7 +685,13 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat, pShowDep)
 * @default "mm/dd/yy"
 * @private
 */var vDateDisplayFormat = "mm/dd/yy";
-
+/**
+* Initial scroll position of chart
+* @property vScrollDateStr
+* @type String
+* @default null
+* @private
+*/var vScrollDateStr = null;
 /**
 * Popup-window features (width, height, scroll bars, etc.)
 * @property vPopupFeatures
@@ -771,6 +777,12 @@ JSGantt.GanttChart =  function(pGanttVar, pDiv, pFormat, pShowDep)
 * @method setDateDisplayFormat
 * @return {void}
 */      this.setDateDisplayFormat = function(pShow) { vDateDisplayFormat = pShow; };
+/**
+* Initial scroll position of chart
+* @param pDate {String} yyyy-mm-dd
+* @method setScrollDate
+* @return {void}
+*/      this.setScrollDate = function(pDateStr) { vScrollDateStr = pDateStr; };
 /**
 * Popup window features
 * @param pPopupFeatures {String} 
@@ -1065,6 +1077,8 @@ Complete-Displays task percent complete</p>
       var vTmpMonth = new Date();
       var vNxtDate = new Date();
       var vCurrDate = new Date();
+      var vScrollDate = null;
+      var vScrollID = '';
       var vTaskLeft = 0;
       var vTaskRight = 0;
       var vNumCols = 0;
@@ -1093,6 +1107,19 @@ Complete-Displays task percent complete</p>
          // get overall min/max dates plus padding
          vMinDate = JSGantt.getMinDate(vTaskList, vFormat);
          vMaxDate = JSGantt.getMaxDate(vTaskList, vFormat);
+
+          // Parse "scroll to" date, if any
+          if (vScrollDateStr) {
+              if (vScrollDateStr == 'today') {
+                  // Use today
+                  vScrollDate = new Date();
+              }
+              else {
+                  // Parse date string to date
+                  vScrollDate = JSGantt.parseDateStr(vScrollDateStr,
+                                                     this.getDateInputFormat());
+              }
+	  }
 
          // Calculate chart width variables.  vColWidth can be altered manually to change each column width
          // May be smart to make this a parameter of GanttChart or set it based on existing pWidth parameter
@@ -1277,8 +1304,9 @@ Complete-Displays task percent complete</p>
             vMainTable += vLeftTable;
 
             // Draw the Chart Rows
+            vRightID = 'rightside_'+pGanttVar;
             vRightTable = 
-            '<DIV class=scroll2 id=rightside_'+pGanttVar+'>' +
+            '<DIV class=scroll2 id='+vRightID+'>' +
             '<TABLE style="width: ' + vChartWidth + 'px;" cellSpacing=0 cellPadding=0 border=0>';
             if (JSGantt.isIE()) { // IE;
                 vRightTable += '<TBODY><TR style="HEIGHT: 25px">';
@@ -1400,13 +1428,20 @@ Complete-Displays task percent complete</p>
                   vWeekdayGColor = "f3f3f3";
                   vWeekendGColor = "c3c3c3";
                }
-               
+
+               if (JSGantt.formatDateStr(vScrollDate,'mm/dd/yyyy') == JSGantt.formatDateStr(vTmpDate,'mm/dd/yyyy')) {
+                   vScrollID = 'id="'+pGanttVar+'-scrollTo"';
+               }
+               else {
+                   vScrollID = '';
+               }
+
                if(vTmpDate.getDay() % 6 == 0) {
-                  vDateRowStr  += '<td class="gheadwkend" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekendColor + ' align=center><div style="width: '+vColWidth+'px">' + vTmpDate.getDate() + '</div></td>';
+                  vDateRowStr  += '<td class="gheadwkend" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekendColor + ' align=center><div style="width: '+vColWidth+'px">' + vTmpDate.getDate() + '</div></td>';
                   vItemRowStr  += '<td class="gheadwkend" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; cursor: default;"  bgcolor=#' + vWeekendColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp</div></td>';
                }
                else {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;"  bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">' + vTmpDate.getDate() + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;"  bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">' + vTmpDate.getDate() + '</div></td>';
                   if( JSGantt.formatDateStr(vCurrDate,'mm/dd/yyyy') == JSGantt.formatDateStr(vTmpDate,'mm/dd/yyyy')) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; cursor: default;"  bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
@@ -1427,15 +1462,22 @@ Complete-Displays task percent complete</p>
                else
                   vWeekdayColor = "ffffff";
 
+               if (vTmpDate <= vScrollDate && vScrollDate < vNxtDate ) {
+                   vScrollID = 'id="'+pGanttVar+'-scrollTo"';
+               }
+               else {
+                   vScrollID = '';
+               }
+
                if(vNxtDate <= vMaxDate) {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + (vTmpDate.getMonth()+1) + '/' + vTmpDate.getDate() + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + (vTmpDate.getMonth()+1) + '/' + vTmpDate.getDate() + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
 
                } else {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; bgcolor=#' + vWeekdayColor + ' BORDER-RIGHT: #efefef 1px solid;" align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + (vTmpDate.getMonth()+1) + '/' + vTmpDate.getDate() + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; bgcolor=#' + vWeekdayColor + ' BORDER-RIGHT: #efefef 1px solid;" align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + (vTmpDate.getMonth()+1) + '/' + vTmpDate.getDate() + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
@@ -1456,14 +1498,21 @@ Complete-Displays task percent complete</p>
                else
                   vWeekdayColor = "ffffff";
 
+               if (vTmpDate <= vScrollDate && vScrollDate < vNxtDate ) {
+                   vScrollID = 'id="'+pGanttVar+'-scrollTo"';
+               }
+               else {
+                   vScrollID = '';
+               }
+
                if(vNxtDate <= vMaxDate) {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + vMonthArr[vTmpDate.getMonth()].substr(0,3) + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + vMonthArr[vTmpDate.getMonth()].substr(0,3) + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                } else {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + vMonthArr[vTmpDate.getMonth()].substr(0,3) + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">' + vMonthArr[vTmpDate.getMonth()].substr(0,3) + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
@@ -1497,14 +1546,21 @@ Complete-Displays task percent complete</p>
                else
                   vWeekdayColor = "ffffff";
 
+               if (vTmpDate <= vScrollDate && vScrollDate < vNxtDate ) {
+                   vScrollID = 'id="'+pGanttVar+'-scrollTo"';
+               }
+               else {
+                   vScrollID = '';
+               }
+
                if(vNxtDate <= vMaxDate) {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">Qtr. ' + vQuarterArr[vTmpDate.getMonth()] + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">Qtr. ' + vQuarterArr[vTmpDate.getMonth()] + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid;" align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                } else {
-                  vDateRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">Qtr. ' + vQuarterArr[vTmpDate.getMonth()] + '</div></td>';
+                  vDateRowStr += '<td class="ghead" ' + vScrollID + ' style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; HEIGHT: 19px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center width:'+vColWidth+'px><div style="width: '+vColWidth+'px">Qtr. ' + vQuarterArr[vTmpDate.getMonth()] + '</div></td>';
                   if( vCurrDate >= vTmpDate && vCurrDate < vNxtDate ) 
                      vItemRowStr += '<td class="ghead" style="BORDER-TOP: #efefef 1px solid; FONT-SIZE: 12px; BORDER-LEFT: #efefef 1px solid; BORDER-RIGHT: #efefef 1px solid;" bgcolor=#' + vWeekdayColor + ' align=center><div style="width: '+vColWidth+'px">&nbsp&nbsp</div></td>';
                   else 
@@ -1708,6 +1764,14 @@ Complete-Displays task percent complete</p>
 	 }
 
 	 vDiv.style.width = width;
+
+        // Scroll to configured date, if any.
+        var vScrollToEl = document.getElementById(pGanttVar+'-scrollTo');
+        if (vScrollToEl != null) {
+            var vChartDiv = document.getElementById(vRightID);
+            // Scroll div to put scroll-to date on left
+            vChartDiv.scrollLeft = vScrollToEl.offsetLeft;
+	}
       }
 
    }; //this.draw
