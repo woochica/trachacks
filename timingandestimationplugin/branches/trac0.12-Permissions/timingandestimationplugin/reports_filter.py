@@ -16,7 +16,20 @@ from trac.ticket.report import ReportModule
 from trac.util.datefmt import format_datetime, format_time
 import csv
 from trac.web.api import RequestDone
+from trac.web.chrome import add_script
+from trac.web.api import IRequestFilter
 
+class ReportsFilter(Component):
+    """This component Removed rows from the report that require the 
+       management screen to supply values"""
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'report_list.html':
+            add_script(req, "billing/report_filter.js")
+        return (template, data, content_type)
 
 # This can go away once they fix http://genshi.edgewall.org/ticket/136
 # At that point we should use Transformer.filter
@@ -54,26 +67,7 @@ class FilterTransformation(object):
                     yield None,e
                 yield None,event
         for event in flush(queue):
-            yield None,event
-
-def split_stream(stream):
-    """splits the stream based on toplevel START / END tags"""
-    cl = []
-    res = []
-    num_start=0
-    for kind, data, pos in stream:
-        cl.append((kind, data, pos))
-        if kind == Stream.START:
-            num_start = num_start+1
-        elif kind == Stream.END:
-            num_start = num_start-1
-            if num_start == 0:
-                res.append(Stream(cl))
-                cl=[]
-    if cl != []:
-        res.append(Stream(cl))
-    return res
-                
+            yield None,event                
 
 billing_report_regex = re.compile("\{(?P<reportid>\d*)\}")
 def report_id_from_text(text):
@@ -87,52 +81,6 @@ def get_billing_reports(comp):
     if rows:
         billing_reports = set([x[0] for x in rows])
     return billing_reports
-
-
-class RowFilter(object):
-    """A genshi filter that operates on table rows, completely hiding any that
-    are in the billing_reports table."""
-
-    def __init__(self, comp):
-        self.component = comp
-        self.billing_reports = get_billing_reports(comp)
-        self.component.log.debug('self.billing_reports= %r' % self.billing_reports)
-
-    def __call__(self, row_stream):
-        #stream = Stream(list(row_stream))
-        def tryInt(v):
-            try:
-                return int(v)
-            except:
-                return None
-        streams = split_stream(row_stream)
-        #report_urls = [tryInt(i.get('href').split('/')[-1]) for i in stream.select('td[@class="report"]/a/@href')]
-        #self.component.log.debug("ReportRowFilter: #%s#,  %r" % (len(streams), list(report_urls)))
-        for stream in streams:
-            show_row = True
-            try:
-                report_url = stream.select('td[@class="report"]/a/@href').render()
-                id = tryInt(report_url.split('/')[-1])
-                self.component.log.debug("Report row filter: about to filter: %s not in %s : %s" % (id, self.billing_reports,  not id in self.billing_reports) )
-                show_row = not id in self.billing_reports 
-            except Exception, e:
-                self.component.log.exception("Report row filter failed")
-                show_row = True #Dont Hide Error Rows?
-            if show_row:
-                for kind,data,pos in stream:
-                    yield kind,data,pos
-
-class ReportsFilter(Component):
-    """Remove all billing reports from the reports list."""
-    implements(ITemplateStreamFilter)
-
-    def filter_stream(self, req, method, filename, stream, data):
-        if not filename in ('report_view.html', 'report_list.html'):
-            return stream
-        self.log.debug("Applying Reports Filter to remove T&E reports")
-        return stream | Transformer(
-            '//table[@class="listing reports"]/tbody/tr'
-            ).apply(FilterTransformation(RowFilter(self)))
 
 class ReportScreenFilter(Component):
     """Hides TandE reports even when you just go to the url"""

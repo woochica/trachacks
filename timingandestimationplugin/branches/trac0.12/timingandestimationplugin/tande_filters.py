@@ -2,73 +2,20 @@ import re
 import dbhelper
 from trac import util
 from trac.web.api import ITemplateStreamFilter
+from trac.web.api import IRequestFilter
 from trac.core import *
 from genshi.core import *
 from genshi.builder import tag
 from genshi.filters.transform import Transformer
-
-import sys 
-if sys.version_info < (2, 4, 0): 
-    from sets import Set as set
-
-def split_stream(stream):
-    """splits the stream based on toplevel START / END tags"""
-    cl = []
-    res = []
-    num_start=0
-    for kind, data, pos in stream:
-        cl.append((kind, data, pos))
-        if kind == Stream.START:
-            num_start = num_start+1
-        elif kind == Stream.END:
-            num_start = num_start-1
-            if num_start == 0:
-                res.append(Stream(cl))
-                cl=[]
-    if cl != []:
-        res.append(Stream(cl))
-    return res
-
-
-class RowFilter(object):
-    """A genshi filter that operates on table rows, completely hiding any that
-    are in the billing_reports table."""
-
-    def __init__(self, comp):
-        self.component = comp
-        rows = dbhelper.get_all(comp.env, "SELECT id FROM custom_report")[1]
-        if rows:
-            self.billing_reports = set([x[0] for x in rows])
-        else:
-            self.billing_reports = set()
-        self.component.log.debug('self.billing_reports= %r' % self.billing_reports)
-
-    def __call__(self, row_stream):
-        #stream = Stream(list(row_stream))
-        def tryInt(v):
-            try:
-                return int(v)
-            except:
-                return None
-        streams = split_stream(row_stream)
-        #report_urls = [tryInt(i.get('href').split('/')[-1]) for i in stream.select('td[@class="report"]/a/@href')]
-        #self.component.log.debug("ReportRowFilter: #%s#,  %r" % (len(streams), list(report_urls)))
-        for stream in streams:
-            show_row = True
-            try:
-                report_url = stream.select('td[@class="report"]/a/@href').render()
-                id = tryInt(report_url.split('/')[-1])
-                self.component.log.debug("Report row filter: about to filter: %s not in %s : %s" % (id, self.billing_reports,  not id in self.billing_reports) )
-                show_row = not id in self.billing_reports 
-            except Exception, e:
-                self.component.log.exception("Report row filter failed")
-                show_row = True #Dont Hide Error Rows?
-            if show_row:
-                for kind,data,pos in stream:
-                    yield kind,data,pos
+from trac.web.chrome import add_script
 
 # This can go away once they fix http://genshi.edgewall.org/ticket/136
-# At that point we should use Transformer.filter
+# At that point we should use Transformer.filter THIS IS STILL SOLVING
+# PROBLEMS WELL AFTER THAT TICKET HAS BEEN CLOSED - A new ticket #290
+# [1000] has fixed the bug, but is not the trac default yet Without
+# this (using the default filter) I was getting omitted closing tags
+# for some tags (Based on whitespace afaict)
+
 class FilterTransformation(object):
     """Apply a normal stream filter to the selection. The filter is called once
     for each contiguous block of marked events."""
@@ -102,19 +49,6 @@ class FilterTransformation(object):
         for event in flush(queue):
             yield None,event
 
-class ReportsFilter(Component):
-    """Remove all billing reports from the reports list."""
-    implements(ITemplateStreamFilter)
-
-    def match_stream(self, req, method, filename, stream, data):
-        return filename == 'report_view.html'
-
-    def filter_stream(self, req, method, filename, stream, data):
-        return stream | Transformer(
-            '//table[@class="listing reports"]/tbody/tr'
-            ).apply(FilterTransformation(RowFilter(self)))
-
-
 #@staticmethod
 def disable_field(field_stream):
     value = Stream(field_stream).select('@value').render()
@@ -127,10 +61,22 @@ class TotalHoursFilter(Component):
     implements(ITemplateStreamFilter)
 
     def match_stream(self, req, method, filename, stream, data):
-        self.log.debug("matching: ticket.html")
+        #self.log.debug("matching: ticket.html")
         return filename == 'ticket.html'
 
     def filter_stream(self, req, method, filename, stream, data):
         return stream | Transformer(
             '//input[@id="field-totalhours" and @type="text" and @name="field_totalhours"]'
             ).apply(FilterTransformation(disable_field))
+
+class ReportsFilter(Component):
+    """This component Removed rows from the report that require the 
+       management screen to supply values"""
+    implements(IRequestFilter)
+    def pre_process_request(self, req, handler):
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        if template == 'report_list.html':
+            add_script(req, "billing/report_filter.js")
+        return (template, data, content_type)
