@@ -355,7 +355,7 @@ class DirAuthStore(Component):
             cur = db.cursor()
             cur.execute("""
                 INSERT OR REPLACE INTO session_attribute
-                  (sid, authenticated, name, value) "
+                  (sid, authenticated, name, value)
                 VALUES (%s, 1, 'name', %s)
                 """, (uname, to_unicode(displayname)))
             self.log.info('updating user session displayname info for %s (%s)'
