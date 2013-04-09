@@ -17,7 +17,7 @@ class NeverNotifyUpdaterSetupParticipant(Component):
       def new_get_recipients(self, tktid):
         locally_enabled = self.env.compmgr.enabled.get(NeverNotifyUpdaterSetupParticipant)
         self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s,'
-                           ' locally enbabled:%s' % (tktid, locally_enabled))
+                           ' locally enabled:%s' % (tktid, locally_enabled))
         (torecipients, ccrecipients) = old_get_recipients(self,tktid)
         if not locally_enabled:
           self.env.log.debug('NeverNotifyUpdaterPlugin: disabled, returning original results')
