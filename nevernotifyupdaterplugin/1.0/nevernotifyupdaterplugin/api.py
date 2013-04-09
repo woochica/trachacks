@@ -13,12 +13,13 @@ class NeverNotifyUpdaterSetupParticipant(Component):
 
 
       old_get_recipients = note.TicketNotifyEmail.get_recipients
-      def is_enabled():
-        return self.compmgr.enabled[self.__class__]
+
       def new_get_recipients(self, tktid):
-        self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s' % tktid)
+        locally_enabled = self.env.compmgr.enabled.get(NeverNotifyUpdaterSetupParticipant)
+        self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s,'
+                           ' locally enbabled:%s' % (tktid, locally_enabled))
         (torecipients, ccrecipients) = old_get_recipients(self,tktid)
-        if not is_enabled():
+        if not locally_enabled:
           self.env.log.debug('NeverNotifyUpdaterPlugin: disabled, returning original results')
           return (torecipients, ccrecipients)
 
@@ -27,8 +28,8 @@ class NeverNotifyUpdaterSetupParticipant(Component):
         defaultDomain = self.env.config.get("notification", "smtp_default_domain")
         domain = ''
         if defaultDomain: domain = '@'+defaultDomain
-
-        cursor = self.db.cursor()
+        db = self.env.get_read_db()
+        cursor = db.cursor()
         # Suppress the updater from the recipients
         updater = None
         up_em = None

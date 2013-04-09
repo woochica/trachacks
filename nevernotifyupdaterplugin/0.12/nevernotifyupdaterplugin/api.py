@@ -13,12 +13,12 @@ class NeverNotifyUpdaterSetupParticipant(Component):
 
 
       old_get_recipients = note.TicketNotifyEmail.get_recipients
-      def is_enabled():
-        return self.compmgr.enabled[self.__class__]
       def new_get_recipients(self, tktid):
-        self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s' % tktid)
+        locally_enabled = self.env.compmgr.enabled.get(NeverNotifyUpdaterSetupParticipant)
+        self.env.log.debug('NeverNotifyUpdaterPlugin: getting recipients for %s,'
+                           ' locally enbabled:%s' % (tktid, locally_enabled))
         (torecipients, ccrecipients) = old_get_recipients(self,tktid)
-        if not is_enabled():
+        if not locally_enabled:
           self.env.log.debug('NeverNotifyUpdaterPlugin: disabled, returning original results')
           return (torecipients, ccrecipients)
 
