@@ -2654,7 +2654,7 @@ class TicketRescheduler(Component):
                 # controls) and *not* on the name of any fields so it
                 # should be correct regardless of what plugins are
                 # being used.
-                if previewFields[fwdField] in old_values:
+                if previewFields[fwd] in old_values:
                     # Get the set of old and new dependants
                     if len(old_values[previewFields[fwd]]) == 0:
                         oldDependants = set()
