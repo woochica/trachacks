@@ -56,13 +56,13 @@ function addBudgetRow() {
 	var trElements = tBodyContainer.children('tr');
 	var rowCounter = 1;
 	if (trElements && trElements.length > 0) {
-		rowCounter = trElements[trElements.length - 1].id.split(':')[1];
+		rowCounter = trElements[trElements.length - 1].id.split('-')[1];
 		rowCounter++;
 	}
 	var tableRow = document.createElement('tr');
 	// Amount of Columns, may should be given by function call
 	var columnCount = 6;
-	tableRow.id = 'row:' + rowCounter;
+	tableRow.id = 'row-' + rowCounter;
 	tBodyContainer.append(tableRow);
 	// Adding column by column to the row element
 	for (column = 1; column <= columnCount; column++) {
@@ -106,15 +106,15 @@ function addBudgetRow() {
 		default:
 			break;
 		}
-		columnElement.name = 'GSfield:' + rowCounter + ':' + column;
+		columnElement.name = rowCounter + '-' + column + "-Insert";
 		td.appendChild(columnElement);
 	}
 	// Adding a Delete Button to the end of the row
 	deleteButtonElement = document.createElement('td');
 	deleteButtonElement.innerHTML = '<div class="inlinebuttons">'
 			+ '<input type="button" style="border-radius: 1em 1em 1em 1em;'
-			+ ' font-size: 100%" name="deleteRow'
-			+ rowCounter + '" onclick="deleteRow(' + rowCounter
+			+ ' font-size: 100%" name="deleteRow' + rowCounter
+			+ '" onclick="deleteRow(' + rowCounter
 			+ ')" value = "&#x2718"/></div>';
 	tableRow.appendChild(deleteButtonElement);
 	// Change hidden tbody elment to be visible
@@ -149,21 +149,15 @@ function getSelect(optionArray) {
  * DEL + oldName The Prefix DEL is necessary to identify deleted rows in further
  * processing performed by the python plugin
  */
-function deleteRow(row) {
-	if (row < 0)
+function deleteRow(rowID) {
+	if (rowID < 0)
 		return;
 
-	var rowid = "row:" + row;
-	var rowElement = document.getElementById(rowid);
-	rowElement.style.display = "none";
-	var selectElements = rowElement.getElementsByTagName("select");
-	var inputElements = rowElement.getElementsByTagName("input");
-	for ( var i = 0; i < selectElements.length; i++) {
-		selectElements[i].name = ('DEL' + selectElements[i]
-				.getAttribute('name'));
-	}
-	for ( var i = 0; i < inputElements.length; i++) {
-		inputElements[i].name = ('DEL' + inputElements[i].getAttribute('name'));
+	var row = $("#row-" + rowID);
+	row.hide();
+	var rowElems = row.find("select , input");
+	for ( var i in rowElems) {
+		rowElems[i].name = (rowElems[i].name + "").match(/\d+-\d+/) + "-Delete";
 	}
 
 	// This logic ist responsible for hidding the complete tbody element, if no
@@ -171,4 +165,12 @@ function deleteRow(row) {
 	if ($('#budget_container tr[style!="display: none;"]').length == 0) {
 		hideTable();
 	}
+}
+
+function update(row, column) {
+	if (row < 0 || column < 0)
+		return;
+
+	var ename = row + "-" + column
+	$("[name='" + ename + "']").attr('name', ename + '-Update');
 }

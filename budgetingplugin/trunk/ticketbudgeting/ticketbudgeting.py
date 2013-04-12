@@ -39,130 +39,158 @@ authorizedToModify = ['TICKET_MODIFY', 'TRAC_ADMIN', 'TICKET_BUDGETING_MODIFY']
 
 class Budget:
     """ Container class for budgeting info"""
-    _budget_dict = None
     _action = None
-    _VALUE_LIST = ['username', 'type', 'estimation', 'cost', 'status', 'comment']
+    _VALUE_NAMES = 'username,type,estimation,cost,status,comment'
+    _VALUE_NAME_LIST = _VALUE_NAMES.split(',')
+    _values = None
+    _diff = None
 
     def __init__(self):
-        self._budget_dict = {}
+        self._values = {}
 
     def set(self, number, value):
         if number == None:
             return
 
         number = int (number)
-        if number > 0 and number < self._VALUE_LIST.__len__() + 1:
-            fld = self._VALUE_LIST[number - 1]
+        if number > 0 and number < self._VALUE_NAME_LIST.__len__() + 1:
+            fld = self._VALUE_NAME_LIST[number - 1]
+
             if fld in ('status'):
                 try:
                     if value == '':
-                        self._budget_dict[fld] = 0
+                        self._values[fld] = 0
                     else:
-                        self._budget_dict[fld] = int (value)
+                        self._values[fld] = int (value)
                 except Exception, e:
                     fld = '%s.%s' % (BUDGETING_TABLE.name, fld)
                     raise Exception (fld, e)
             elif fld in ('estimation', 'cost'):
                 try:
                     if value == '':
-                        self._budget_dict[fld] = 0
+                        self._values[fld] = 0
                     else:
                         try:
-                            self._budget_dict[fld] = locale.atof(value)
+                            self._values[fld] = locale.atof(value)
                         except:
-                            self._budget_dict[fld] = float(value)
+                            self._values[fld] = float(value)
                 except Exception, e:
                     fld = '%s.%s' % (BUDGETING_TABLE.name, fld)
                     raise Exception (fld, e)
             else:
-                self._budget_dict[fld] = value
+                self._values[fld] = value
 
     def do_action(self, env, ticket_id, position):
         if not self._action:
             env.log.warn('no action defined!')
             return
 
-        flds = None
-        vals = None
-        sql = None
-        actionFound = False
+        self._diff = {}
 
         if not ticket_id or not position:
             env.log.error('no ticket-id or position available!')
-        elif self._action == 1:
-            for key, value in self._budget_dict.iteritems():
-                if not flds:    flds = key
-                else:           flds += "," + key
 
+        elif self._action == "Insert":
+            setAttrs = 'ticket,position'
+            setValsSpace = '%s,%s'
+            setVals = [ticket_id, position]
+            for key, value in self._values.iteritems():
                 if key in ('username', 'type', 'comment'):
-                    v = value.encode("utf-8")
-                    value = "'%s'" % str(v)
+                    value = value.encode("utf-8")
 
-                if not vals: vals = "%s" % value
-                else: vals += ",%s" % value
+                setAttrs += ",%s" % key
+                setValsSpace += ",%s"
+                setVals.append(value)
 
-            actionFound = True
-            sql = ("INSERT INTO %s (ticket, position, %s)"
-                   " VALUES (%s, %s, %s)" %
-                   (BUDGETING_TABLE.name, flds, ticket_id, position, vals))
-        elif self._action == 2:
-            sql = ''
-            i = 0
-            for key, value in self._budget_dict.iteritems():
-                if i > 0: sql += ","
-                if key in ('username', 'type', 'comment'): value = "'%s'" % value
-                sql += "%s=%s" % (key, value)
-                i += 1
-            actionFound = True
-            sql = ('UPDATE %s SET %s WHERE ticket=%s AND position=%s' %
-                   (BUDGETING_TABLE.name, sql, ticket_id, position))
-        elif self._action == 3:
-            actionFound = True
-            sql = ('DELETE FROM %s WHERE ticket=%s AND position=%s' %
-                   (BUDGETING_TABLE.name, ticket_id, position))
+            self._diff['.%s' % position] = (self._toStr(), '')
 
-        if actionFound:
-            env.db_transaction(sql)
-            env.log.debug(sql)
-        else:
-            env.log.error('no appropriate action found! _action is: %s' % self._action)
+            sql = ("INSERT INTO %s (%s) VALUES (%s)" %
+                    (BUDGETING_TABLE.name, setAttrs, setValsSpace))
+            env.db_transaction(sql, setVals)
+            env.log.debug("Added Budgeting-row at positon %s to ticket %s:"
+                          "\n%s" % (position, ticket_id, self._toStr()))
+            return
+
+        elif self._action == "Update":
+
+            oldValuesSql = ("SELECT %s FROM %s WHERE"
+                            " ticket=%%s AND position =%%s"
+                             % (self._VALUE_NAMES, BUDGETING_TABLE.name))
+            oldValues = env.db_query(oldValuesSql, (ticket_id, position))[0];
+
+            setAttrs = ''
+            setVals = []
+            vnl = self._VALUE_NAME_LIST
+
+            for attrnr in range(len(vnl)):
+                value = self.get_value(attrnr + 1)
+                key = vnl[attrnr]
+                if key in ('username', 'type', 'comment'):
+                    value = value.encode("utf-8")
+
+                if not oldValues[attrnr] == value:
+                    new = '%s: %s' % (key, value)
+                    old = '%s: %s' % (key, oldValues[attrnr])
+
+                    if not setAttrs == '': setAttrs += ","
+
+                    setAttrs += "%s=%%s" % key
+                    setVals.append(value)
+
+                    self._diff[".%s" % key] = (new, old)
+
+
+            sql = ("UPDATE %s SET %s WHERE ticket=%%s AND position=%%s"
+                    % (BUDGETING_TABLE.name, setAttrs))
+
+            setVals.append(ticket_id)
+            setVals.append(position)
+            env.db_transaction(sql, setVals)
+            env.log.debug("Updated Budgeting-row for ticket %s"
+                          " at positon %s:\n%s" %
+                          (ticket_id, position, self._toStr()))
+            return
+
+        elif self._action == "Delete":
+            self._diff['.%s' % position] = ('', self._toStr())
+
+            sql = ("DELETE FROM %s WHERE ticket=%%s AND position=%%s"
+                    % BUDGETING_TABLE.name)
+            env.db_transaction(sql, (ticket_id, position))
+
+            env.log.debug("Deleted Budgeting-row for ticket %s"
+                          " at positon %s:\n%s" %
+                          (ticket_id, position, self._toStr()))
+            return
+
+        env.log.error('no appropriate action found! _action is: %s' % self._action)
 
     def get_values(self):
-        return self._budget_dict
+        return self._values
+
+    def _toStr (self):
+        return ("username: %s, type: %s, estimation: %s, cost: %s,"
+                " state: %s, comment: %s" %
+                (self.get_value(1), self.get_value(2), self.get_value(3),
+                self.get_value(4), self.get_value(5), self.get_value(6)))
 
     def get_value(self, number):
         if number == None:
             return ""
 
         number = int (number)
-        if number > 0 and number < self._VALUE_LIST.__len__() + 1:
-            fld = self._VALUE_LIST[number - 1]
+        if number > 0 and number < self._VALUE_NAME_LIST.__len__() + 1:
+            fld = self._VALUE_NAME_LIST[number - 1]
             if fld in ('estimation', 'cost'):
-                return locale.format('%.2f', self._budget_dict[fld])
-            return self._budget_dict[fld]
+                return locale.format('%.2f', self._values[fld])
+            return self._values[fld]
         return ""
 
-    def get_action(self):
-        return self._action
+    def set_action(self, action):
+        self._action = action
 
-    def get_action_name(self):
-        if self._action == 1:
-            return "insert"
-        elif self._action == 2:
-            return "update"
-        elif self._action == 3:
-            return "delete"
-        else:
-            return "unknown"
-
-    def set_as_insert(self):
-        self._action = 1
-
-    def set_as_update(self):
-        self._action = 2
-
-    def set_as_delete(self):
-        self._action = 3
+    def getDiff(self):
+        return self._diff
 
 """
 Main Api Module for Plugin ticketbudgeting
@@ -186,12 +214,6 @@ class TicketBudgetingView(Component):
     _budgets = None
     _changed_by_author = None
 
-
-
-    #===============================================================================
-    # see trac/db_default.py, method get_reports (line 175)
-    #===============================================================================
-#    BUDGET_REPORT_ALL_MINE_ID = self.BUDGET_REPORT_ALL_ID + 1
 
     BUDGET_REPORTS = [(BUDGET_REPORT_ALL_ID, 'report_title_90', 'report_description_90',
     u"""SELECT t.id, t.summary, t.milestone AS __group__, '../milestone/' || t.milestone AS __grouplink__, 
@@ -222,47 +244,6 @@ class TicketBudgetingView(Component):
     having count(b.ticket) > 0
     order by t.milestone desc, t.status, t.id desc""")
     ]
-
-#===============================================================================
-# SELECT t.id, t.summary, t.milestone AS __group__, t.owner, t.reporter, t.type, t.priority, t.component,
-#    count(b.ticket) AS Anz, sum(b.cost) AS Aufwand, sum(b.estimation) AS Schätzung, floor(avg(b.status)) AS "Status in %%",
-#    (CASE floor(avg(b.status)) = 100
-# WHEN true THEN 'font-weight: bold; color: green;'
-# ELSE CASE sum(b.cost) > sum(b.estimation)
-#              WHEN true THEN 'font-weight: bold; background: orange;'
-#              ELSE '' END END) AS __style__
-#    from ticket t
-#    left join budgeting b ON b.ticket = t.id
-#    where t.milestone like
-#    (CASE $MILESTONE
-#              WHEN '' THEN '%'
-#              ELSE $MILESTONE END) and
-#    t.component like (CASE $COMPONENT
-#              WHEN '' THEN '%'
-#              ELSE $COMPONENT END) and
-#    (t.owner like (CASE $OWNER
-#              WHEN '' THEN $USER
-#              ELSE $OWNER END) or
-#     b.username like (CASE $OWNER
-#              WHEN '' THEN $USER
-#              ELSE $OWNER END) )
-#    group by t.id, t.type, t.priority, t.summary, t.owner, t.reporter, t.component, t.milestone
-#    having count(b.ticket) > 0
-# order by t.milestone desc, t.id desc
-#===============================================================================
-
-
-    # Alle Tickets, in der der angemeldete Benutzer beteiligt ist.
-#    (BUDGET_REPORT_ALL_MINE_ID, '[budgeting] All tickets, I am involved',
-#    """All tickets with budget data, where logged user is involved in budget, or as reporter or owner.
-#    """,
-#    """SELECT t.id, t.summary, t.owner, t.reporter, t.type, t.priority, t.component,
-#    count(b.ticket) AS Anz, sum(b.cost) AS Aufwand, sum(b.estimation) AS Schätzung, avg(b.status) AS Status,
-#    t.milestone AS __group__
-#    from ticket t
-#    left join budgeting b ON b.ticket = t.id
-#    where b.username = $USER or t.owner = $USER or t.reporter = $USER
-#    group by t.id, t.type, t.priority, t.summary, t.owner, t.reporter, t.component, t.milestone""")
 
     def __init__(self):
         locale_dir = resource_filename(__name__, 'locale')
@@ -410,25 +391,21 @@ class TicketBudgetingView(Component):
         budget_obj = None
         # searching budgetfields an send them to db
         for arg in req.args:
-            arglist = []
-            arglist = arg.split(":")
-            if len(arglist) == 3:
-                row_no = arglist[1]
+            field_attrs = []
+            field_attrs = arg.split("-")
+            if len(field_attrs) >= 2:
+                row_no = field_attrs[0]
                 if budget_dict.has_key(row_no):
                     budget_obj = budget_dict[row_no]
                 else:
                     budget_obj = Budget()
                     budget_dict[row_no] = budget_obj
-                budget_obj.set(arglist[2], req.args.get(arg))
+                budget_obj.set(field_attrs[1], req.args.get(arg))
 
-                # New created field, should be insered
-                if arglist[0] == "GSfield":
-                    budget_obj.set_as_insert()
-                elif arglist[0] == "GSDBfield":
-                    budget_obj.set_as_update()
-                elif arglist[0] == "DELGSDBfield":
-                    budget_obj.set_as_delete()
-
+                if len(field_attrs) == 3:
+                    # New created field, should be insered
+                    if field_attrs[2] in ("Insert", "Delete", "Update"):
+                        budget_obj.set_action(field_attrs[2])
         return budget_dict
 
     def _get_milestone_html(self, req, group_by):
@@ -541,7 +518,7 @@ class TicketBudgetingView(Component):
                 user_options = ''
                 type_options = ''
                 values = budget.get_values()
-                input_html += '<tr id="row:%s">' % pos
+                input_html += '<tr id="row-%s">' % pos
                 preview_html += '<tr>'
                 el_in_list = False
 
@@ -567,9 +544,9 @@ class TicketBudgetingView(Component):
                 if not el_in_list:
                     type_options += '<option selected>%s</option>' % (values['type'])
 
-                input_html += '<td><select name="GSDBfield:%s:1" >%s</select></td>' % (pos, user_options)
+                input_html += '<td><select onChange="update(%s,1)" name="%s-1" >%s</select></td>' % (pos, pos, user_options)
                 preview_html += '<td>%s</td>' % values['username']
-                input_html += '<td><select name="GSDBfield:%s:2">%s</select></td>' % (pos, type_options)
+                input_html += '<td><select onChange="update(%s,2)" name="%s-2">%s</select></td>' % (pos, pos, type_options)
                 preview_html += '<td>%s</td>' % values['type']
                 size = 10
                 for col in range(3, 7):
@@ -583,7 +560,7 @@ class TicketBudgetingView(Component):
                         else:
                             col_val = ''
                             size = 60
-                    input_html += '<td><input size="%s" name="GSDBfield:%s:%s" value="%s"></td>' % (size, pos, col, col_val)
+                    input_html += '<td><input size="%s" onChange="update(%s,%s)" name="%s-%s" value="%s"></td>' % (size, pos, col, pos, col, col_val)
                     preview_html += '<td>%s' % col_val
                     if col == 5:
                         preview_html += '&nbsp;%'
@@ -602,13 +579,15 @@ class TicketBudgetingView(Component):
         else:
             self.log.debug ("check database")
             try:
-                self.env.db_query("SELECT ticket FROM %s" % BUDGETING_TABLE.name)
+                self.env.db_query("SELECT ticket FROM %s" %
+                                  BUDGETING_TABLE.name)
                 self.config.set(self._CONFIG_SECTION, 'version', '1')
                 self.config.save()
                 self.log.info ("created local ini entries with name budgeting")
                 return True
             except Exception:
-                self.log.warn ("[_check_init] error while checking database; table 'budgeting' is probably not present")
+                self.log.warn ("[_check_init] error while checking database;"
+                               " table 'budgeting' is probably not present")
 
         return False
 
@@ -628,13 +607,11 @@ class TicketBudgetingView(Component):
         if not ticket_id:
             return
 
-        sql = ("SELECT position, username, type, estimation, cost, status, comment"
-              " FROM budgeting"
-              " WHERE ticket=%s"
-              " ORDER BY position" % ticket_id)
+        sql = ("SELECT position, username, type, estimation, cost, status,"
+               " comment FROM budgeting WHERE ticket=%s ORDER BY position")
 
         try:
-            result = self.env.db_query(sql)
+            result = self.env.db_query(sql, (ticket_id,))
             for row in result:
                 budget = Budget()
                 for i, col in enumerate(row):
@@ -642,9 +619,11 @@ class TicketBudgetingView(Component):
                         budget.set(i, col)
                 pos = int (row[0])
                 self._budgets[pos] = budget
-                self.log.debug("[_load_budget] loaded budget: %s" % budget.get_values())
+                self.log.debug("[_load_budget] loaded budget: %s" %
+                               budget.get_values())
         except Exception, e:
-            self.log.error("Error executing SQL Statement %s \n Error: %s" % (sql, e))
+            self.log.error("Error executing SQL Statement %s \n Error: %s" %
+                           (sql % ticket_id, e))
 
     def _save_budget(self, tkt):
         if self._budgets and tkt and tkt.id:
@@ -662,28 +641,15 @@ class TicketBudgetingView(Component):
         cur_time = self._get_current_time()
 
         try:
-            with self.env.db_transaction as db:
-                for pos, budget in self._budgets.iteritems():
-                    action = budget.get_action_name()
-                    old_value = ''
-                    new_value = ''
-                    if action == 'insert':
-                        new_value = ("%s, %s: %s" % (budget.get_value(1),
-                                                     budget.get_value(2),
-                                                     budget.get_value(6)))
-                    elif action == 'delete':
-                        old_value = ("%s, %s: %s" % (budget.get_value(1),
-                                                     budget.get_value(2),
-                                                     budget.get_value(6)))
-                    elif action == 'update':
-                        continue
-
-                    sql = ("INSERT INTO ticket_change(ticket, time, author, field, oldvalue, newvalue)"
-                           " VALUES(%s, %s, '%s', 'budgeting.%s', '%s', '%s')"
-                            % (tkt.id, cur_time, change_user, pos, old_value, new_value))
-                    db(sql)
-                    self.log.debug("successfully logged budget, pos %s for ticket %s" % (pos, tkt.id))
-
+            for pos, budget in self._budgets.iteritems():
+                if budget.getDiff():
+                    diff = budget.getDiff()
+                    for key, (new, old) in diff.iteritems():
+                        sql = ("INSERT INTO ticket_change "
+                               "(ticket,time,author,field,oldvalue,newvalue) "
+                               "VALUES(%s,%s,%s,%s,%s,%s)")
+                        self.env.db_transaction(sql ,
+                            (tkt.id, cur_time, change_user, 'budgeting.%s%s' % (pos, key), old, new))
         except Exception, ex:
             self.log.error("Error while logging change: %s" % ex)
 
@@ -700,7 +666,8 @@ class TicketBudgetingView(Component):
         try:
             self._budgets = self._get_fields(req)
             self._changed_by_author = req.authname or 'anonymous'
-            self.log.info("[validate] budget has changed by author: %s" % self._changed_by_author)
+            self.log.info("[validate] budget has changed by author: %s"
+                           % self._changed_by_author)
         except Exception, ex:
             self.log.error("Error while validating: %s" % ex)
             fld, e = ex
@@ -724,7 +691,8 @@ class TicketBudgetingView(Component):
                     stmt += ";"
                     self.log.info("[INIT table] executing sql: %s" % stmt)
                     db(stmt)
-                    self.log.info("[INIT table] successfully created table %s" % BUDGETING_TABLE.name)
+                    self.log.info("[INIT table] successfully created table %s"
+                                   % BUDGETING_TABLE.name)
         except Exception, e:
             self.log.error("[INIT table] Error executing SQL Statement \n %s" % e)
         self.create_reports()
@@ -768,8 +736,8 @@ class TicketBudgetingView(Component):
     def get_user_list(self):
         sqlResult = []
 
-        sql = "SELECT DISTINCT sid FROM session WHERE authenticated > 0 ORDER BY sid"
-
+        sql = ("SELECT DISTINCT sid FROM session WHERE authenticated > 0"
+               " ORDER BY sid")
 
         if self.config.get(self._CONFIG_SECTION, 'retrieve_users') == "permission":
             sql = "SELECT DISTINCT username FROM permission"
