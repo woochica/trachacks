@@ -13,7 +13,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracDirectoryAuth'
-VERSION = '1.0.2'
+VERSION = '1.0.1'
 
 setup(  name=PACKAGE, version=VERSION,
         author = 'John Hampton',
