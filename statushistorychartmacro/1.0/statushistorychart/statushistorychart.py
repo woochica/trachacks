@@ -56,11 +56,17 @@ class Macro(Component):
    }}}"""
 
     def expand_macro(self, formatter, name, content, args=None):
+        def lte_ie8(req):
+            user_agent = formatter.req.get_header('user-agent')
+            msie = user_agent.find('MSIE ')
+            return (msie != -1) and user_agent[msie + 5:msie + 6] in ['6', '7', '8']
         query = None
         status_list = ['new', 'assigned', 'accepted', 'closed', '*']
         default_status = status_list.index('*')
+        if lte_ie8(formatter.req):
+            add_script(formatter.req, "statushistorychart/js/flot/excanvas.js")
         add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.js")
-#        add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.time.js")  # for flot 0.8dev or later
+        add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.time.js")
         add_script(formatter.req, "statushistorychart/js/enabler.js")
         if(content):
             # replace parameters
@@ -82,7 +88,7 @@ class Macro(Component):
                 status_list.append('*')
             default_status = status_list.index('*')
         if(query and len(query.constraint_cols) > 0):
-            result = query.execute() or [{'id': -1}]  # Sentinel for no result
+            result = query.execute() or [{'id':-1}]  # Sentinel for no result
             cond = "ticket.id in (%s)" % ', '.join([str(t['id']) for t in result])
         elif formatter.resource.realm == 'milestone':
             cond = "ticket.milestone='%s'" % formatter.resource.id
@@ -132,7 +138,18 @@ class Macro(Component):
             data.append({'color': no, 'label': tid,
                          'data': [[time / 1000, state not in status_list and default_status or status_list.index(state)]
                                   for void, time, void, state in tickets[tid]]})  # @UnusedVariable
-        # render
-        add_script_data(formatter.req, {'statushistorychart_yaxis': status_list})
-        add_script_data(formatter.req, {'statushistorychart_data': data})
-        return '<div id="statushistorychart" style="width: 800px; height: 400px;"></div>'
+        from trac import __version__ as VERSION
+        if VERSION[0:1] != '0':
+        # render for trac 1.0 or later
+            add_script_data(formatter.req, {'statushistorychart_yaxis': status_list})
+            add_script_data(formatter.req, {'statushistorychart_data': data})
+            return '<div id="statushistorychart" style="width: 800px; height: 400px;"></div>'
+        else:  # if trac < 1.0 or earlier
+            from trac.util.presentation import to_json
+            return """
+            <script type="text/javascript">
+            var statushistorychart_yaxis = %s;
+            var statushistorychart_data = %s;
+            </script>
+            <div id="statushistorychart" style="width: 800px; height: 400px;"></div>""" \
+            % (to_json(status_list), to_json(data))
