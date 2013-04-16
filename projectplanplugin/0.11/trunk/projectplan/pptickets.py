@@ -2,8 +2,9 @@
 
 import datetime
 import pputil
-from trac.util.datefmt import to_datetime, utc
+from trac.util.datefmt import to_datetime, utc, to_utimestamp
 from trac.ticket.model import Ticket
+from ppenv import PPConfiguration
 
 class TSExtensionRegister(object):
   '''
@@ -104,6 +105,9 @@ class ppTicket():
   def get_changelog( self ):
     t = Ticket(self.env, id)
     return( t.get_changelog() )
+  
+  def getID( self ):
+    self.getfield('id')
   
   def getstatus( self ):
     '''
@@ -211,7 +215,7 @@ class ppTicketSet():
     try: 
       return( t.get_changelog() )
     except:
-      self.macroenv.tracenv.log.warn("get_changelog failed on ticket %s", ticketid)
+      self.macroenv.tracenv.log.warning("get_changelog failed on ticket %s", ticketid)
       return [] # no changelogs
 
 
@@ -326,13 +330,19 @@ class ppTSDependencies( ppTicketSetExtension ):
 
     for k in self.__ts:
       v = self.__ts[ k ]
-      intset = pputil.ticketIDsFromString( v.getfielddef( depfield, '' ) )
+      tid = v.getfield('id')
+      authname = self.__tso.macroenv.tracreq.authname
+      #intset = pputil.ticketIDsFromString( v.getfielddef( depfield, '' ) )
+      dataaccess = DataAccessDependencies(self.__tso.macroenv.tracenv,authname)
+      intset =   pputil.ticketIDsFromString(dataaccess.getDependsOn( v.getfield('id') ) )
+      
       v._setextension( 'all_dependencies', intset )
       depset = set()
       for d in intset:
         if d in self.__ts:
           depset.add( self.__ts[ d ] )
       v._setextension( 'dependencies', depset )
+      
     return True
 
 TSExtensionRegister.add( ppTSDependencies, 'dependencies' )
@@ -346,6 +356,7 @@ class ppTSReverseDependencies( ppTicketSetExtension ):
   '''
 
   def __init__(self,ticketset,ticketsetdata):
+    self.__tso = ticketset
     self.__ts = ticketsetdata
     ticketset.needExtension( 'dependencies' )
 
@@ -353,11 +364,14 @@ class ppTSReverseDependencies( ppTicketSetExtension ):
     '''
       calculate the reverse_dependencies field based on the dependencies field.
     '''
+    
     for k in self.__ts:
       self.__ts[ k ]._setextension( 'reverse_dependencies', set() )
     # reverse dependency calculation
     for k in self.__ts:
       v = self.__ts[ k ]
+      tid = v.getfield('id')
+      
       for d in v.getextension( 'dependencies' ):
         d.getextension( 'reverse_dependencies' ).add( v )
     return True
@@ -699,3 +713,351 @@ class ppTSCriticalPathSimple( ppTicketSetExtension ):
 
 TSExtensionRegister.add( ppTSCriticalPathSimple, 'criticalpath_simple' )
 
+
+
+
+
+
+
+
+
+class DataAccessDependencies(object):
+  '''
+    data access wrapper
+  '''
+  useTable = None
+
+  
+  class DataAccessDependenciesAbstract(object):
+    '''
+      abstract class
+    '''
+    ticket_comments = None
+    authname = None
+    
+    def useFastSavingChangesOptimization( self ):
+      try:
+        return PPConfiguration( self.env ).get('use_fast_save_changes')
+      except Exception,e:
+        self.env.log.warning("use_fast_save_changes: Exception %s" % (e,))
+        return False
+    
+    def reset_postponed_ticket_comments( self ):
+      self.ticket_comments = {} # reset
+    
+    def postpone_ticket_comment(self, ticket_id, comment):
+      self.env.log.debug("postpone_ticket_comment: #%s: %s" % (ticket_id,comment))
+      if not self.ticket_comments.has_key(ticket_id):
+        self.ticket_comments[ticket_id] = []
+      self.ticket_comments[ticket_id].append(comment)
+      
+    def savePostponedTicketComments( self ):
+      for tid in self.ticket_comments.keys():
+        self.save_changes( tid, "Changed Dependencies:\n"+"\n".join(self.ticket_comments[tid]))
+      self.reset_postponed_ticket_comments()
+  
+    def save_changes( self, ticked_id, comment ):
+      self.env.log.debug("save_changes: #%s: %s" % (ticked_id, comment) )
+      if not self.useFastSavingChangesOptimization():
+        Ticket(self.env, ticked_id).save_changes(self.authname, "Changed Dependencies:\n"+"\n".join(self.ticket_comments[ticked_id]) ) # add comment to ticket --> SLOW
+      else:
+        when_ts = to_utimestamp(datetime.datetime.now(utc))
+        # SQL tested on MySQL and SQLite
+        sql = '''
+          UPDATE ticket SET changetime=%s WHERE id=%s;
+          INSERT INTO ticket_change(ticket,time,author,field,oldvalue,newvalue) 
+          SELECT ticket,%s,'%s',field,MAX(CAST(oldvalue AS UNSIGNED))+1,"%s" FROM ticket_change WHERE ticket = %s and field="comment" GROUP BY field;
+        ''' % (when_ts, ticked_id, when_ts, self.authname, comment, ticked_id)
+        self.env.log.debug("save_changes SQL:\n%s" % (sql,))
+        self.env.get_db_cnx().cursor().execute(sql) # execute, but no commit
+  
+  
+  
+  class DataAccessDependenciesInCustomFields(DataAccessDependenciesAbstract):
+    '''
+      legacy implementation of ticket dependencies
+    '''
+    field = None
+    fieldrev = None
+
+    def __init__(self, env):
+      self.env = env
+      self.authname = authname
+      self.field = PPConfiguration( self.env ).get('custom_dependency_field')
+      self.fieldrev = PPConfiguration( self.env ).get('custom_reverse_dependency_field')
+      self.reset_postponed_ticket_comments()
+    
+    def getDependsOn( self, ticket_id ):
+      # self.env.log.debug('DataAccessDependenciesInCustomFields.getDependsOn of #'+str(ticket_id)+': '+ repr(Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")))
+      return Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")
+
+    def getBlockedTickets(self, ticket_id):
+      '''
+	calculate blocking tickets of the given ticket
+	returns list of ticket ids (as string)
+      '''
+      sqlconstraint = '0'
+      #sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
+      #sqlconstraint += " OR value LIKE \"%% %s %%\"" % (ticket_id,) # middle
+      #sqlconstraint += " OR value LIKE \"%% %s\"" % (ticket_id,) # left 
+      #sqlconstraint += " OR value LIKE \"%s %%\"" % (ticket_id,) # right
+      
+      # TODO precondition: normalize dependencies field
+      sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
+      sqlconstraint += " OR value LIKE \"%% %s,%%\"" % (ticket_id,) # middle
+      sqlconstraint += " OR value LIKE \"%% %s\"" % (ticket_id,) # left 
+      sqlconstraint += " OR value LIKE \"%s,%%\"" % (ticket_id,) # right
+      
+      #sqlconstraint += " OR value = \"#%s\"" % (ticket_id,) # lonely value
+      #sqlconstraint += " OR value LIKE \"%% #%s %%\"" % (ticket_id,) # middle
+      #sqlconstraint += " OR value LIKE \"%%,%s\"" % (ticket_id,) # left 
+      #sqlconstraint += " OR value LIKE \"%s,%%\"" % (ticket_id,) # right
+      
+      # LIMIT for safety reasons
+      sql = "SELECT ticket FROM ticket_custom WHERE name = \"%s\" AND ( %s ) LIMIT 0,250" % (self.field, sqlconstraint )
+      self.env.log.debug("getBlockedTickets: SQL: " + repr(sql))
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      cursor.execute(sql)
+      blocking_tickets = cursor.fetchall()
+      ret = []
+      for res in blocking_tickets:
+	ret.append(str(res[0]))
+      return ret
+
+    def saveDependenciesToDatabase( self, ticket_id, newvalue):
+      '''
+	save new value to ticket custom
+      '''
+      sql = "UPDATE ticket_custom SET value = \"%s\" WHERE ticket = \"%s\" AND name = \"%s\" " % (newvalue, ticket_id, self.field )
+      self.env.log.debug("saveDependenciesToDatabase: %s" % (sql,));
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      cursor.execute(sql)
+      db.commit()
+
+      
+    def addBlockedTicket( self, ticket_id, blocked_ticket_id ):
+      '''
+	add ticket_id to dependencies of blocked_ticket_id
+      '''
+      try:
+	blocked_ticket_depends_on_tickets = self.getDependsOn(blocked_ticket_id)
+	blocked_ticket_depends_on_ticket_list = self.splitStringToTicketList(blocked_ticket_depends_on_tickets)
+	if not ticket_id in blocked_ticket_depends_on_ticket_list:
+	  blocked_ticket_depends_on_ticket_list.append(str(ticket_id))
+	  newvalue = self.createNormalizedTicketString(blocked_ticket_depends_on_ticket_list)
+	  self.env.log.debug('add: save to '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets)+' --> '+repr(newvalue))
+	  
+	  self.saveDependenciesToDatabase( blocked_ticket_id, newvalue )
+	  comment = 'changed "'+blocked_ticket_depends_on_tickets+'" to "'+newvalue+'" (add '+ticket_id+') initiated by #'+str(ticket_id)
+	  self.postpone_ticket_comment(blocked_ticket_id, comment) 
+	
+	else:
+	  self.env.log.debug('not added: '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets) )
+      except Exception,e:
+	self.env.log.error('ticket #%s error while adding a blocked ticket: %s' % ( ticket_id, repr(e) ) )
+      
+
+    def removeBlockedTicket( self, ticket_id, old_blockedtid):
+      '''
+	remove ticket_id from the dependencies of old_blockedtid
+      '''
+      dependencies = self.getDependsOn(old_blockedtid)
+      dependencies_list = self.splitStringToTicketList(dependencies)
+      new_dependencies_list = [ t.strip() for t in dependencies_list if str(t).strip() != ticket_id ]
+      new_dependencies = self.createNormalizedTicketString(new_dependencies_list)
+      
+      self.saveDependenciesToDatabase( old_blockedtid, new_dependencies )
+      comment = 'changed "'+dependencies+'" to "'+new_dependencies+'" (remove '+str(ticket_id)+') initiated by #'+str(ticket_id) 
+      try:
+	#Ticket(self.env, old_blockedtid).save_changes(self.authname, comment ) # add comment to ticket
+	self.postpone_ticket_comment(old_blockedtid, comment)
+	self.env.log.error('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies) )
+      except Exception,e:
+	self.env.log.error('error while adding the comment "%s" to #%s: %s' % (comment,ticket_id,repr(e)) )
+
+    #def postpone_ticket_comment( self, ticket_id, comment):
+      #Ticket(self.env, ticket_id).save_changes(self.authname, comment) # add comment to ticket
+	
+    def addBlockingTicket( self, ticket_id, blocking_ticket_id ):
+      '''
+	not needed 
+      '''
+      pass 
+    
+    def removeBlockingTicket( self, ticket_id, blocking_ticket_id ):
+      '''
+	not needed 
+      '''
+      pass 
+    
+    def commit(self):
+      pass
+    
+  class DataAccessDependenciesInExtraTable(DataAccessDependenciesAbstract):
+    '''
+      ticket dependencies access compatible with Mastertickets Trac hack
+    '''
+    blockingticket_colname = 'source'
+    blockedticket_colname = 'dest'
+    
+    def __init__(self, env, authname):
+      self.env = env
+      self.authname = authname
+      self.db = self.env.get_db_cnx()
+      self.cursor = self.db.cursor()
+      self.reset_postponed_ticket_comments()
+    
+    def getBlockedTickets(self, ticket_id):
+      '''
+	calculate blocked tickets of the given ticket
+	returns list of ticket ids 
+      '''
+      ret = self.getTicketDependencies(ticket_id, self.blockedticket_colname)
+      self.env.log.debug("getBlockedTicketsFromTable: #%s -> tickets: %s" % (ticket_id, repr(ret)) )
+      return ret
+      
+    def getDependsOn( self, ticket_id ):
+      '''
+	calculate blocking tickets of the given ticket
+	returns list of ticket ids (as string)
+      '''
+      ret = self.getTicketDependencies(ticket_id, self.blockingticket_colname)
+      ret = ', '.join(ret)
+    
+      return ret
+
+    def getTicketDependencies( self, ticket_id, result_col ):
+      '''
+	generalized implementation of fetching data from dependencies table
+      '''
+      if result_col == self.blockingticket_colname:
+	where_col = self.blockedticket_colname
+      else:
+	where_col = self.blockingticket_colname
+	
+      
+      sql = "SELECT %s FROM mastertickets WHERE %s = %s LIMIT 0,250" % (result_col, where_col, ticket_id)
+      self.env.log.debug("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+      cursor.execute(sql)
+      blocking_tickets = cursor.fetchall()
+      ret = []
+      for res in blocking_tickets:
+	ret.append(str(res[0]))
+      return ret
+    
+    def performTicketAction( self, tid_from, tid_to, sql, comment ):
+      self.dbexecute(sql)
+      self.postpone_ticket_comment( tid_from, comment) 
+      self.postpone_ticket_comment( tid_to, comment)
+      
+    def addBlockedTicket( self, ticket_id, blocked_ticket_id ):
+      '''
+	add ticket_id --> blocked_ticket_id
+      '''
+      sql = "INSERT INTO mastertickets (%s,%s) VALUES (%s,%s) " % (self.blockingticket_colname, self.blockedticket_colname, ticket_id, blocked_ticket_id )
+      comment = '|| added||  #%s -> #%s  ||i.e., #%s is now blocked by #%s ||' % (ticket_id,blocked_ticket_id, blocked_ticket_id, ticket_id)
+      self.performTicketAction( ticket_id, blocked_ticket_id, sql, comment )
+    
+    def removeBlockedTicket( self, ticket_id, old_blockedtid):
+      '''
+	remove ticket_id --> old_blockedtid
+      '''
+      sql = "DELETE FROM mastertickets WHERE %s = %s AND %s = %s " % (self.blockingticket_colname, ticket_id,  self.blockedticket_colname, old_blockedtid )
+      comment = '|| removed||  #%s -> #%s  ||i.e., #%s is NOT blocked by #%s anymore ||' % (ticket_id,old_blockedtid, old_blockedtid,ticket_id)
+      self.performTicketAction( ticket_id, old_blockedtid, sql, comment )
+    
+    def addBlockingTicket( self, ticket_id, blocking_ticket_id ):
+      '''
+	adapter
+      '''
+      self.addBlockedTicket( blocking_ticket_id, ticket_id )
+    
+    def removeBlockingTicket( self, ticket_id, blocking_ticket_id ):
+      '''
+	adapter
+      '''
+      self.removeBlockedTicket( blocking_ticket_id, ticket_id )
+
+    def dbexecute( self, sql ):
+      self.cursor.execute(sql)
+    
+    #def commit(self):
+      #self.db.commit()
+  
+  
+  def __init__(self, env, authname):
+    self.env = env
+    
+    useTable = None
+    try:
+      useTable = PPConfiguration( self.env ).get('use_fast_save_changes');
+    except Exception,e:
+      useTable = False
+    
+    if useTable:
+      self.dataaccess = DataAccessDependencies.DataAccessDependenciesInExtraTable(self.env, authname)
+    else:
+      # for legacy support
+      self.dataaccess = DataAccessDependencies.DataAccessDependenciesInCustomFields(self.env)
+    
+  
+  def getDependsOn( self, ticket_id ):
+    '''
+      calculate blocking tickets of the given ticket
+      returns list of ticket ids (as string)
+    '''
+    return self.dataaccess.getDependsOn(ticket_id)
+
+  def getBlockedTickets(self, ticket_id):
+    '''
+      calculate blocking tickets of the given ticket
+      returns list of ticket ids (as string)
+    '''
+    return self.dataaccess.getBlockedTickets(ticket_id)
+
+  def saveDependenciesToDatabase( self, ticket_id, newvalue):
+    '''
+      save new value to ticket
+    '''
+    self.dataaccess.saveDependenciesToDatabase( ticket_id, newvalue)
+
+  def addBlockedTicket( self, ticket_id, blocked_ticket_id ):
+    '''
+      add ticket_id to dependencies of blocked_ticket_id
+    '''
+    self.dataaccess.addBlockedTicket( ticket_id, blocked_ticket_id )
+
+  def removeBlockedTicket( self, ticket_id, old_blockedtid):
+    '''
+      remove ticket_id from the dependencies of old_blockedtid
+    '''
+    self.dataaccess.removeBlockedTicket( ticket_id, old_blockedtid)
+
+  def addBlockingTicket( self, ticket_id, blocking_ticket_id ):
+    '''
+      add a ticket dependency
+    '''
+    self.dataaccess.addBlockingTicket( ticket_id, blocking_ticket_id )
+  
+  def removeBlockingTicket( self, ticket_id, blocking_ticket_id ):
+    '''
+      remove ticket dependency
+    '''
+    self.dataaccess.removeBlockingTicket( ticket_id, blocking_ticket_id )
+
+  def commit(self):
+    start = datetime.datetime.now()
+    self.dataaccess.savePostponedTicketComments()
+    try:
+      self.env.get_db_cnx().commit() # commit all collected queries
+    except Exception,e:
+      self.env.log.warning("commit failed: %s " % (e,))
+    self.env.log.debug("commit has taken %s sec" % (datetime.datetime.now() - start,))
+    
+
+
+    

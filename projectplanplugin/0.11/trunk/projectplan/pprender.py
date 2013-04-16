@@ -683,6 +683,7 @@ class GVRenderer(RenderImpl):
     '''
     withbufs = self.withbufs and ( v.hasextension( 'mindepbuffers' ) and v.hasextension( 'buffer' ) )
     for d in v.getextension( 'reverse_dependencies' ):
+      self.macroenv.tracenv.log.debug("_writeticketdeps: %s -> %s" % (v.getfield('id'), d.getfield('id') ))
       if withbufs and ( d.getfield('id') in v.getextension('mindepbuffers') ):
         nlabel = str(v.getextension( 'buffer' ))
       else:

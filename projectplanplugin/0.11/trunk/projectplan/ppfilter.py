@@ -184,7 +184,7 @@ class QueryFilter( ParamFilter ):
       for filtercol in self.filterlist.keys():
         querystr = '%s%s%s&%s' % (filtercol, self.filterlist[filtercol][0], self.filterlist[filtercol][1], querystr )
       querystr = '%s%s' % ( querystr, self.colsstr )
-      self.macroenv.tracenv.log.warning('QueryFilterSum: '+querystr )
+      self.macroenv.tracenv.log.debug('QueryFilterSum: '+querystr )
       q = Query.from_string(self.macroenv.tracenv, querystr, max=self.max_ticket_number_at_filters , order='id' )
       return q.execute( self.macroenv.tracreq )
       
@@ -578,7 +578,7 @@ class ppFilterOld():
     # get tickets for "Parameter based Filters" using macrokw
     for ( k, v ) in self.macroenv.macrokw.items():
       parmfilter = False
-      self.macroenv.tracenv.log.error('Filter:'+repr(k))
+      self.macroenv.tracenv.log.debug('Filter:'+repr(k))
       if k in query_filters:
         f = QueryFilter( self.macroenv )
         f.set_col( query_filters[ k ] )

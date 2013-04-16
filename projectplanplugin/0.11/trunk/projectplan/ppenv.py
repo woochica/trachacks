@@ -352,6 +352,18 @@ class PPBooleanSwitchOption(PPSingleSelOption):
     '''
     return [ 'enabled', 'disabled' ]
 
+
+class PPConvertTicketDependenciesOption(PPSingleSelOption):
+  '''
+    Selectable Boolean Option
+  '''
+  def selectable( self ):
+    '''
+      Return a List of possible Values
+    '''
+    return [ 'enabled', 'disabled', 'convert dependencies' ]
+
+
 class PPDateFormatOption(PPSingleSelOption):
   '''
     Selectable DateFormat Option
@@ -784,6 +796,43 @@ class PPConfiguration():
       The default of Trac is 100, while the default of ProjectPlanPlugin is 1000.
       """ )
 
+    # determine the suggested configuration
+    db = self.env.get_db_cnx()
+    cursor = db.cursor()
+
+    sql="SELECT count(*) FROM mastertickets"
+    cursor.execute(sql)
+    mastertickets_count = cursor.fetchall()
+    
+    sql="SELECT count(*) FROM ticket_custom WHERE name='%s'" % (self.get("custom_dependency_field"),)
+    cursor.execute(sql)
+    customfields_count = cursor.fetchall()
+    
+    
+    # depending on the current data set a different default value
+    if mastertickets_count[0][0] == 0 and customfields_count[0][0] > 0:
+      mydynamicdefault = u'disabled' # the Trac instance has used the earlier implementation (version 0.94*) using ticket_custom
+    else:
+      mydynamicdefault = u'enabled' # the Trac instance has already converted the ticket dependencies or is a new installation
+
+    self.flatconf[ 'enable_mastertickets_compatiblity_mode' ] = PPConvertTicketDependenciesOption(
+      self.env, 'enable_mastertickets_compatiblity_mode', mydynamicdefault, catid='General', groupid='Compatibility', doc="""
+      This options should be enabled by default while installing ProjectPlanPlugin version 1.0 or higher. 
+      If you used ProjectPlanPlugin in Version 0.94 or lower the option should be disabled to use the legacy mode.\n
+       * Use "convert dependencies" if the old data should be translated into the new format (cannot be reverted automatically). The switch might take a while.\n
+       * Use "enabled" to just switch the data store and lose the earlier defined ticket dependencies.\n
+     Before switching to the new implementation it is strongly suggest to make a backup of the database!\n
+     Note: Currently %d mastertickets dependencies are defined in the database.
+      """ % (mastertickets_count[0][0],) )
+
+    self.flatconf[ 'use_fast_save_changes' ] = PPBooleanSwitchOption(
+      self.env, 'use_fast_save_changes', u'enabled', catid='General', groupid='Compatibility', doc="""
+      Enable this to use a self-written optimization for rapidly saving changes on tickets.
+      Reason: IMO Trac is not optimized for rapid ticket changes on multiple tickets. Therefore, saving dependencies might take long.
+      
+     If any errors appear while saving dependencies, then disable this optimization.
+      """ )
+      
     # TODO: Add Configuration
     # Ticket Visualizations Options
     #self.flatconf[ 'custom_show_tickettype' ] = PPActivateColumnOption(
@@ -1029,3 +1078,47 @@ class PPEnv():
     except:
       return default
 
+  def convertDependenciesToMastertickets(self):
+    '''
+      converts ticket dependencies save with version ProjectPlanPlugin 0.9* to dependencies used in ProjectPlanPlugin 1.* or higher
+    '''
+    
+    # bad style: copy from (beta) ticket view tweak
+    def splitStringToTicketList( tickets, current_ticket_id ):
+      r = re.compile('[;, ]')
+      if tickets == None:
+        return []
+      else:
+        tickets = r.split(tickets)
+        tickets = [ t.replace('#', '')  for t in tickets ]
+        tickets = [ t for t in tickets if str(t).strip() != "" and t != current_ticket_id and t.isdigit() ]
+        return list(set(tickets))
+
+    
+    dependencies = self.conf.get("custom_dependency_field")
+    # select only tickets that do not have an entry in mastertickets table
+    sql="SELECT ticket as oldsource,value as olddest FROM ticket_custom LEFT JOIN mastertickets ON ticket=source WHERE name = '%s' AND source IS NULL" % (dependencies, )
+    self.tracenv.log.debug("convertDependenciesToMastertickets: SELECT: %s" % (sql,))
+    self.tracenv.get_db_cnx().cursor().execute(sql)
+    db = self.tracenv.get_db_cnx()
+    cursor = db.cursor()
+    cursor.execute(sql)
+    sql = "" # reuse
+    sep = "" # separator
+    count = 0 # count the changes
+    old_ticketdependencies= cursor.fetchall()
+    # create SQL query
+    for (oldsource,olddestplain) in old_ticketdependencies:
+      olddestlist = splitStringToTicketList(olddestplain, oldsource)
+      if len(olddestlist) > 0 :
+        sql = sql + sep + ( ",".join( [ "(%s,%s)" % (oldsource,olddestid) for olddestid in olddestlist ] ) )
+        sep = ','
+        count = count + len(olddestlist)
+    sql = "INSERT INTO mastertickets (source,dest) VALUES %s" % (sql,)
+    self.tracenv.log.warn("convertDependenciesToMastertickets: %s" % (sql,) )
+    if count > 0:
+      self.tracenv.log.warn("convertDependenciesToMastertickets: try to convert %d ticket dependencies from ticket_custom to mastertickets." % (count,))
+      cursor.execute(sql)
+      db.commit()
+    else:
+      self.tracenv.log.warn("convertDependenciesToMastertickets: found no tickets to convert.")

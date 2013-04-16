@@ -17,7 +17,6 @@ htdocsubdirmapping = {
 		       u'images/*/*': u'*.*',
 		       u'images/*/*/*': u'*.*',
 		       u'js': u'*.js',
-		       #u'js': u'jquery-tooltip/*.js',
 		       u'js/jquery-tablesorter': u'*.*',
 		       u'js/jquery-tooltip': u'*.*',
 		       u'js/jquery-tooltip/lib': u'*.js',
@@ -31,7 +30,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'0.94.0',
+  version = u'1.0.0', # semantic versioning, c.f. http://semver.org/
   description = u'ProjectPlanPlugin for Trac',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
@@ -44,7 +43,7 @@ setup(
     Additional information can be found at the Trac-Hacks Projectpage for this Plugin.
   """,
   author = u'anbo & makadev',
-  author_email = u'makadev at googlemail dot com',
+  author_email = u' anbo@informatik-tipps.net',
   url = u'http://trac-hacks.org/wiki/ProjectPlanPlugin',
   download_url = u'http://trac-hacks.org/svn/projectplanplugin',
   #packages = [ pppackage ],

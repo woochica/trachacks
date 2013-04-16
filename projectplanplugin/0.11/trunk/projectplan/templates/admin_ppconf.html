@@ -15,6 +15,11 @@
 	padding-top:2ex; 
 }
 </style>
+<script>
+function PPsetParentBackgroundColor(myobj){
+  $(myobj).parent().css({backgroundColor:$(myobj).val()});
+}
+</script>
 
     <py:def function="conf_row(col)">
       <tr style="background-color:${col}">
@@ -74,7 +79,10 @@
             </span>
           </py:if>
           <py:if test="confdata['opttype']=='text'">
-            <input type="text" name="${confdata['id']}" value="${confdata['val']}"/>
+            <input type="text" name="${confdata['id']}" value="${confdata['val']}" onblur="PPsetParentBackgroundColor(this)"  />
+	    <script>
+	    PPsetParentBackgroundColor($("input[name='${confdata['id']}']"));
+	    </script>
           </py:if>
         </td>
       </tr>

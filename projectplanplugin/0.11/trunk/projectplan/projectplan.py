@@ -58,6 +58,15 @@ class PPConfigAdminPanel(Component):
 
       macroenv = PPEnv( self.env, req, '' )
 
+      #try:
+      if req.args.get("flat_enable_mastertickets_compatiblity_mode") == 'convert dependencies':
+        req.args.update( { "flat_enable_mastertickets_compatiblity_mode": "enabled" } )
+        macroenv.convertDependenciesToMastertickets()
+        macroenv = PPEnv( self.env, req, '' ) # rebuild values
+      #except Exception,e:
+        #raise(Exception("ticket dependencies conversion to mastertickets table failed: " % (repr(e),) ))
+
+
       if req.method == 'POST':
         # ! evertime the configuration changes, wipe the Cache completly, since
         # most of the options change the rendering
@@ -79,7 +88,6 @@ class PPConfigAdminPanel(Component):
 
       if category == 'ProjectPlanConfig':
         # TODO: add style via css file to page
-        #add_stylesheet( formatter.req, 'projectplan/js/jquery-tooltip/jquery.tooltip.css' )
         confdict = self.__getconfdict( req, macroenv.conf, page )
         iconset = {}
         defaultvalue='none' # TODO: move to constants

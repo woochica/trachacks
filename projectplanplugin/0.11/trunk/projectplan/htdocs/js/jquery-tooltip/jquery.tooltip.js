@@ -223,6 +223,29 @@
 		
 		// remove position helper classes
 		helper.parent.removeClass("viewport-right").removeClass("viewport-bottom");
+		spaceToTooltip = 20;
+		
+		// update of height to prevent bad representations
+		offset = $(current).offset();
+		windowScrollTop=$(window).scrollTop();
+		elementOffsetTop = $(current).offset().top;
+		spaceToBrowserTop = elementOffsetTop - windowScrollTop;
+		spaceToBrowserBottom = $(window).height() - spaceToBrowserTop;
+		// console.log("spaceToBrowserTop: "+spaceToBrowserTop);
+		// console.log("spaceToBrowserBottom: "+spaceToBrowserBottom);
+		m=Math.max( spaceToBrowserTop, spaceToBrowserBottom );
+		if( spaceToBrowserTop > spaceToBrowserBottom ){
+		  showTop = true;
+		  m = spaceToBrowserTop - spaceToTooltip;
+		  // console.log("showTop");
+		} else {
+		  showTop = false;
+		  m = spaceToBrowserBottom - spaceToTooltip;
+		  // console.log("showButtom");
+		}
+		// console.log("tooltip max-height: "+m);
+		helper.parent.css({"max-height":m+"px", overflow:"hidden"});
+		
 		
 		var left = helper.parent[0].offsetLeft;
 		var top = helper.parent[0].offsetTop;
@@ -243,15 +266,16 @@
 		}
 		
 		var v = viewport(),
-			h = helper.parent[0];
+		h = helper.parent[0];
 		// check horizontal position
 		if (v.x + v.cx < h.offsetLeft + h.offsetWidth) {
-			left -= h.offsetWidth + 20 + settings(current).left;
+			left -= h.offsetWidth + spaceToTooltip + settings(current).left;
 			helper.parent.css({left: left + 'px'}).addClass("viewport-right");
 		}
 		// check vertical position
-		if (v.y + v.cy < h.offsetTop + h.offsetHeight) {
-			top -= h.offsetHeight + 20 + settings(current).top;
+		// if (v.y + v.cy < h.offsetTop + h.offsetHeight) {
+		if( showTop ){
+			top -= h.offsetHeight /* - spaceToTooltip */ + settings(current).top;
 			helper.parent.css({top: top + 'px'}).addClass("viewport-bottom");
 		}
 	}

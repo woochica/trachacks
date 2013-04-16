@@ -993,7 +993,7 @@ function ppAddTooltip( sel ){
 			} else {
 			  $("#tooltip .url").fadeIn();
 			  $("#tooltip").append("<div id='"+myid+"' class='ticketcache'><img src='"+this.href+"/../../chrome/projectplan/images/loading.gif'> "+this.href+"</div>");
-			  $("#"+myid).load(this.href+" #content > *:lt(3)"); // works on Trac 0.12
+			  $("#"+myid).load(this.href+" #ticket"); // works on Trac 0.12, Trac 1.0
 			  $("#tooltip .url").fadeOut();
 			}
 			

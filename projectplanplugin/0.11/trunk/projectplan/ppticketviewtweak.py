@@ -12,7 +12,9 @@ from trac.ticket.model import Ticket
 from trac.ticket.query import *
 from ppenv import PPConfiguration
 from pputil import *
+from pptickets import DataAccessDependencies
 import re
+from datetime import datetime
 
 class PPTicketViewTweak(Component):
   '''
@@ -22,11 +24,27 @@ class PPTicketViewTweak(Component):
   
   field = None
   fieldrev = None
-
-  def lazy_init( self ):
+  useTable = True
+  
+  def lazy_init( self , authname):
     self.field = PPConfiguration( self.env ).get('custom_dependency_field')
     self.fieldrev = PPConfiguration( self.env ).get('custom_reverse_dependency_field')
+    self.dataaccess = DataAccessDependencies(self.env, authname)
+    
+    #if self.useTable:
+      #self.dataaccess = DataAccessDependenciesInExtraTable(self.env, authname)
+    #else:
+      #self.dataaccess = DataAccessDependenciesInCustomFields(self.env)
 
+  def cleanUp( self, req ):
+    '''
+      TODO
+    '''
+    if self.useTable:
+      req.args.__delitem__('field_'+self.field)
+      req.args.__delitem__('field_'+self.fieldrev)
+      self.dataaccess.commit()
+  
   # ITemplateStreamFilter methods
   def filter_stream(self, req, method, filename, stream, data):  
     '''
@@ -37,7 +55,7 @@ class PPTicketViewTweak(Component):
     if not req.path_info.startswith('/ticket/') and not req.path_info.startswith('/newticket'):
       return stream
     
-    self.lazy_init()
+    self.lazy_init(req.authname)
     
     current_ticket_id = None
     try:
@@ -45,24 +63,25 @@ class PPTicketViewTweak(Component):
       dependencies = self.getDependsOn(current_ticket_id)
       #dependencies = '1, 8; 2 y 3, 99,x' # test
     except Exception,e:
-      #self.env.log.debug('filter_stream fail '+repr(e))
+      self.env.log.warning('filter_stream fail '+repr(e))
       return stream
     
     deptickets = self.splitStringToTicketList(dependencies)
-    dependencies = self.createNormalizedTicketString( deptickets ) # normalized
+    blocking_tickets_string = self.createNormalizedTicketString( deptickets ) # normalized
     
     blocked_tickets = self.getBlockedTickets( current_ticket_id ) 
-    blocked_tickets_string = self.createNormalizedTicketString(blocked_tickets)
+    blocked_tickets_string = self.createNormalizedTicketString(blocked_tickets) # normalized
     
     nodeptickets = [ t for t in deptickets if str(t).strip() != "" and not isNumber(t) ]
     actualdeptickets = [ t for t in deptickets if str(t).strip() != "" and isNumber(t) ]
     
     depwithlinks = self.getTicketLinkList(req, actualdeptickets, nodeptickets)
+    
     blocked_tickets_with_links = self.getTicketLinkList(req, blocked_tickets, [])
     
     self.env.log.debug('nodeptickets of '+str(current_ticket_id)+': '+repr(nodeptickets))
     self.env.log.debug('actualdeptickets of '+str(current_ticket_id)+': '+repr(actualdeptickets))
-    self.env.log.debug('dependencies of '+str(current_ticket_id)+': '+repr(dependencies))
+    self.env.log.debug('dependencies of '+str(current_ticket_id)+': '+repr(blocking_tickets_string))
     
     # change summary block
     if str(depwithlinks) != '': # change HTML only if there is actually a link to show
@@ -72,10 +91,11 @@ class PPTicketViewTweak(Component):
       stream |= Transformer('//*[@headers="h_%s"]/text()' % self.fieldrev).replace( blocked_tickets_with_links )
     
     # change fields
-    stream |= Transformer('//*[@id="field-%s"]' % (self.field)).attr('value', dependencies)
+    stream |= Transformer('//*[@id="field-%s"]' % (self.field)).attr('value', blocking_tickets_string)
     stream |= Transformer('//*[@id="field-%s"]' % (self.fieldrev)).attr('value', blocked_tickets_string)  
     # create a backup field containing the earlier value
     stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.fieldrev), value=blocked_tickets_string, style='display:none') )
+    stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.field), value=blocking_tickets_string, style='display:none') )
     
     
     
@@ -110,31 +130,30 @@ class PPTicketViewTweak(Component):
     
     
     if req.path_info.startswith('/ticket/') or req.path_info.startswith('/newticket'):
-      self.lazy_init()
-      
+      self.lazy_init(req.authname)
       # get blocked tickets and save the dependencies
       blocked_tickets = req.args.get('field_'+self.fieldrev)
       blocked_tickets_backup = req.args.get('field_%s_backup' % (self.fieldrev) )
+      blocking_tickets = req.args.get('field_'+self.field)
+      blocking_tickets_backup = req.args.get('field_%s_backup' % (self.field) )
       ticket_id = req.args.get('id')
-      
-      # if the ticket was created lately, the blocking-dependencies are only available within ticket attribute; they are now added to the blocked tickets
-      #self.env.log.error("\n\n")
-      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,req.path_info, repr(req.args)))
-      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,req.path_info, req.args.get('submit') ))
-      #self.env.log.error('pre_process_request: #%s  %s  %s' % (ticket_id,'blocked_field', blocked_tickets ))
       
       newTicketFlag = False
       if (0 <= createDiff( ticket_id ) <= 1) and req.path_info.startswith('/ticket') :
         blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev) # read from the DB
-        self.env.log.warning('pre_process_request: new ticket #%s created: %s --> save blocked tickets' % (ticket_id, blocked_tickets)) # hack
+        self.env.log.debug('pre_process_request: new ticket #%s created: %s --> save blocked tickets' % (ticket_id, blocked_tickets)) # hack
         newTicketFlag = True
       
       # save "blocks tickets": save if the field was provided and changed, moreover, the submit button was hit 
-      if (blocked_tickets != None and (blocked_tickets != blocked_tickets_backup) and req.path_info.startswith('/ticket') and req.args.get('submit') != "" and req.args.get('submit') != None) or newTicketFlag:
-        self.authname = req.authname
-        #blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev)
-        self.change_blocked_tickets( ticket_id , blocked_tickets )
-      
+      if (blocked_tickets != None and req.path_info.startswith('/ticket') and req.args.get('submit') != "" and req.args.get('submit') != None) or newTicketFlag:
+	if blocked_tickets != blocked_tickets_backup:
+          self.env.log.debug('pre_process_request: ticket #%s change_blocked_tickets %s' % (ticket_id, blocked_tickets)) # hack
+          self.authname = req.authname
+          #blocked_tickets = Ticket(self.env, int(ticket_id)).get_value_or_default(self.fieldrev)
+          self.change_blocked_tickets( ticket_id , blocked_tickets )
+        if blocking_tickets != blocking_tickets_backup:
+	  self.change_blocking_tickets( ticket_id, blocking_tickets )
+        self.cleanUp(req)
       
       #if blocked_tickets != None :
       self.authname = req.authname
@@ -152,39 +171,24 @@ class PPTicketViewTweak(Component):
 
   def getBlockedTickets(self, ticket_id):
     '''
-      calculate blocking tickets of the given ticket
+      calculate blocked tickets of the given ticket
       returns list of ticket ids (as string)
     '''
-    sqlconstraint = '0'
-    #sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
-    #sqlconstraint += " OR value LIKE \"%% %s %%\"" % (ticket_id,) # middle
-    #sqlconstraint += " OR value LIKE \"%% %s\"" % (ticket_id,) # left 
-    #sqlconstraint += " OR value LIKE \"%s %%\"" % (ticket_id,) # right
-    
-    # TODO precondition: normalize dependencies field
-    sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
-    sqlconstraint += " OR value LIKE \"%% %s,%%\"" % (ticket_id,) # middle
-    sqlconstraint += " OR value LIKE \"%% %s\"" % (ticket_id,) # left 
-    sqlconstraint += " OR value LIKE \"%s,%%\"" % (ticket_id,) # right
-    
-    #sqlconstraint += " OR value = \"#%s\"" % (ticket_id,) # lonely value
-    #sqlconstraint += " OR value LIKE \"%% #%s %%\"" % (ticket_id,) # middle
-    #sqlconstraint += " OR value LIKE \"%%,%s\"" % (ticket_id,) # left 
-    #sqlconstraint += " OR value LIKE \"%s,%%\"" % (ticket_id,) # right
-    
-    # LIMIT for safety reasons
-    sql = "SELECT ticket FROM ticket_custom WHERE name = \"%s\" AND ( %s ) LIMIT 0,250" % (self.field, sqlconstraint )
-    self.env.log.debug("getBlockedTickets: SQL: " + repr(sql))
-    db = self.env.get_db_cnx()
-    cursor = db.cursor()
-    cursor.execute(sql)
-    blocking_tickets = cursor.fetchall()
-    ret = []
-    for res in blocking_tickets:
-      ret.append(str(res[0]))
-    
-    return ret
+    return self.dataaccess.getBlockedTickets(ticket_id)
+
+  def getBlockingTickets( self, ticket_id ):
+    '''
+      alias, returns list
+    '''
+    return self.splitStringToTicketList(self.getDependsOn( ticket_id ))
   
+  def getDependsOn( self, ticket_id ):
+    #self.env.log.debug('getDependsOn of #'+str(ticket_id)+': '+ repr(Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")))
+    #return Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")
+    return self.dataaccess.getDependsOn(ticket_id)
+  
+
+  @classmethod
   def splitStringToTicketList( self, tickets, current_ticket_id = -1 ):
     r = re.compile('[;, ]')
     if tickets == None:
@@ -194,15 +198,13 @@ class PPTicketViewTweak(Component):
       tickets = [ t.replace('#', '')  for t in tickets ]
       tickets = [ t for t in tickets if str(t).strip() != "" and t != current_ticket_id ]
       return list(set(tickets))
-
-  def getDependsOn( self, ticket_id ):
-    self.env.log.debug('getDependsOn of #'+str(ticket_id)+': '+ repr(Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")))
-    return Ticket(self.env, int(ticket_id)).get_value_or_default(self.field).replace(ticket_id, "")
-
+  
+  
   def getTicketLinkList(self, req, deptickets, nodeptickets):
     '''
       translate ticket list into a div structure with ticket links
     '''
+    deptickets = [ t.strip() for t in deptickets if t.strip() != '' and t.strip() != ',' ] # safety
     ticketsasstring = (','.join(deptickets))
     tickets = Query( self.env, constraints={ 'id' : [ticketsasstring] } ).execute( req )
     depwithlinks = ''
@@ -241,7 +243,7 @@ class PPTicketViewTweak(Component):
     if ticket_id == None:
       return
     
-    self.env.log.warning('change_blocked_tickets: #%s saved_blocking_tickets: %s' % (ticket_id, saved_blocked_tickets) )
+    self.env.log.debug('change_blocked_tickets: #%s saved_blocking_tickets: %s' % (ticket_id, saved_blocked_tickets) )
     
     # tickets saved in the form
     saved_blocked_tickets = self.splitStringToTicketList( saved_blocked_tickets )
@@ -250,8 +252,6 @@ class PPTicketViewTweak(Component):
     
     saved_blocked_tickets.sort()
     stored_blocked_tickets.sort()
-    #self.env.log.debug('change_blocked_tickets: #'+ticket_id+' saved_blocking_tickets: '+repr(saved_blocked_tickets ) )
-    #self.env.log.debug('change_blocked_tickets: #'+ticket_id+' stored_blocking_tickets: '+repr(stored_blocked_tickets) )
     
     for blocked_ticket_id in saved_blocked_tickets :
       if blocked_ticket_id in stored_blocked_tickets: # change nothing 
@@ -259,7 +259,7 @@ class PPTicketViewTweak(Component):
         pass
       elif not blocked_ticket_id in stored_blocked_tickets: # new blocking ticket id
         self.env.log.debug('ADD: new blocked ticket id '+blocked_ticket_id+' at #'+str(ticket_id))
-        self.addBlockedTicket(ticket_id, blocked_ticket_id)
+        self.dataaccess.addBlockedTicket(ticket_id, blocked_ticket_id)
     
     for tid in stored_blocked_tickets:
       if tid in saved_blocked_tickets : # change nothing 
@@ -267,52 +267,41 @@ class PPTicketViewTweak(Component):
         pass
       else: 
         self.env.log.debug('REMOVE '+str(ticket_id)+' from former blocked ticket id '+str(tid) )
-        self.removeBlockedTicket(ticket_id, tid)
+        self.dataaccess.removeBlockedTicket(ticket_id, tid)
 
-  def addBlockedTicket( self, ticket_id, blocked_ticket_id ):
-    '''
-      add ticket_id to dependencies of blocked_ticket_id
-    '''
-    try:
-      blocked_ticket_depends_on_tickets = self.getDependsOn(blocked_ticket_id)
-      blocked_ticket_depends_on_ticket_list = self.splitStringToTicketList(blocked_ticket_depends_on_tickets)
-      if not ticket_id in blocked_ticket_depends_on_ticket_list:
-        blocked_ticket_depends_on_ticket_list.append(str(ticket_id))
-        newvalue = self.createNormalizedTicketString(blocked_ticket_depends_on_ticket_list)
-        self.env.log.debug('add: save to '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets)+' --> '+repr(newvalue))
+
+  def change_blocking_tickets( self , ticket_id, saved_blocking_tickets ):
+    # TODO: refactor to general solution with change_blocked_tickets
+    
+    if ticket_id == None:
+      return
+    
+    self.env.log.debug('change_blocking_tickets: #%s change_blocking_tickets: %s' % (ticket_id, saved_blocking_tickets) )
+    
+    # tickets saved in the form
+    saved_blocking_tickets = self.splitStringToTicketList( saved_blocking_tickets )
+    # tickets currently saved in the database
+    stored_blocking_tickets = self.getBlockingTickets( ticket_id )
+    
+    saved_blocking_tickets.sort()
+    stored_blocking_tickets.sort()
+    
+    for blocking_ticket_id in saved_blocking_tickets :
+      if blocking_ticket_id in stored_blocking_tickets: # change nothing 
+        self.env.log.debug('NO new blocking ticket: #'+ticket_id+': %s was in %s' % (blocking_ticket_id,stored_blocking_tickets))
+        pass
+      elif not blocking_ticket_id in stored_blocking_tickets: # new blocking ticket id
+        self.env.log.debug('ADD: new blocking ticket id '+blocking_ticket_id+' at #'+str(ticket_id))
+        self.dataaccess.addBlockingTicket(ticket_id, blocking_ticket_id)
+    
+    for tid in stored_blocking_tickets:
+      if tid in saved_blocking_tickets : # change nothing 
+        self.env.log.debug('NO new blocking ticket: #%s already in %s' % (tid,saved_blocking_tickets) )
+        pass
+      else: 
+        self.env.log.debug('REMOVE '+str(ticket_id)+' from former blocking ticket id '+str(tid) )
+        self.dataaccess.removeBlockingTicket(ticket_id, tid)
+
+
         
-        self.saveDependenciesToDatabase( blocked_ticket_id, newvalue )
-        Ticket(self.env, blocked_ticket_id).save_changes(self.authname, 'note: change "'+blocked_ticket_depends_on_tickets+'" to "'+newvalue+'" (add '+ticket_id+') initiated by #'+str(ticket_id)) # add comment to ticket
-       
-      else:
-        self.env.log.debug('not added: '+blocked_ticket_id+': '+repr(blocked_ticket_depends_on_tickets) )
-    except Exception,e:
-      self.env.log.error('ticket #%s error while adding a blocked ticket: %s' % ( ticket_id, repr(e) ) )
-    
-
-  def removeBlockedTicket( self, ticket_id, old_blockedtid):
-    '''
-      remove ticket_id from the dependencies of old_blockedtid
-    '''
-    dependencies = self.getDependsOn(old_blockedtid)
-    dependencies_list = self.splitStringToTicketList(dependencies)
-    new_dependencies_list = [ t.strip() for t in dependencies_list if str(t).strip() != ticket_id ]
-    new_dependencies = self.createNormalizedTicketString(new_dependencies_list)
-    
-    self.saveDependenciesToDatabase( old_blockedtid, new_dependencies )
-    comment = 'note: change "'+dependencies+'" to "'+new_dependencies+'" (remove '+str(ticket_id)+') initiated by #'+str(ticket_id) 
-    try:
-      Ticket(self.env, old_blockedtid).save_changes(self.authname, comment ) # add comment to ticket
-      self.env.log.error('consider #%s: change dependencies of #%s: %s --> %s' % (ticket_id, old_blockedtid, dependencies, new_dependencies) )
-    except Exception,e:
-      self.env.log.error('error while adding the comment "%s" to #%s: %s' % (comment,ticket_id,repr(e)) )
-
-  def saveDependenciesToDatabase( self, ticket_id, newvalue):
-    '''
-      save new value to ticket custom
-    '''
-    sql = "UPDATE ticket_custom SET value = \"%s\" WHERE ticket = \"%s\" AND name = \"%s\" " % (newvalue, ticket_id, self.field )
-    db = self.env.get_db_cnx()
-    cursor = db.cursor()
-    cursor.execute(sql)
-    db.commit()
+        
