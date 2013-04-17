@@ -1,4 +1,4 @@
-# vim: set sw=4 et ts=4:
+# vim: set sw=2 et ts=2:
 #
 # -*- coding: utf-8 -*-
 #
@@ -24,11 +24,13 @@ from trac.util.datefmt import to_datetime
 from trac.ticket.query import Query
 from trac.ticket.query import TicketQueryMacro
 
+""" Encoder for decimal numbers for json strings.
+"""
 class DecimalEncoder(json.JSONEncoder):
-    def default(self, value):
-        if isinstance(value, decimal.Decimal):
-            return float(value)
-        super(DecimalEncoder, self).default(value)
+  def default(self, value):
+    if isinstance(value, decimal.Decimal):
+      return float(value)
+    super(DecimalEncoder, self).default(value)
 
 
 """ Runs a query
@@ -51,13 +53,13 @@ class QueryRunner(object):
     series_column: the name of a column that specifies a series name.
     """
     def __init__(self, env, current_user, base_url, report_id, query,
-            series_column):
-        self.env = env
-        self.current_user = current_user
-        self.query = query
-        self.series_column = series_column
-        self.base_url = base_url
-        self.report_id = report_id
+          series_column):
+      self.env = env
+      self.current_user = current_user
+      self.query = query
+      self.series_column = series_column
+      self.base_url = base_url
+      self.report_id = report_id
 
     """ Gets the sql query string and parameters to execute.
     """
@@ -343,10 +345,11 @@ class JQChartMacro(WikiMacroBase):
         chart.render(self.env, chart_type, options, link_to, query_runner, buf)
         return buf.getvalue()
 
-    # ITemplateProvider methods
+    # ITemplateProvider#get_templates_dirs
     def get_templates_dirs(self):
         return []
 
+    # ITemplateProvider#get_htdocs_dirs
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
         return [('jqplotchart', resource_filename(__name__, 'htdocs'))]
@@ -358,22 +361,23 @@ class JQChartMacro(WikiMacroBase):
     # IRequestFilter#post_process_request
     def post_process_request(self, req, template, data, content_type):
 
-        add_stylesheet (req, 'jqplotchart/jqplot/jquery.jqplot.min.css')
-        add_stylesheet (req, 'jqplotchart/jqchart.css')
+        add_stylesheet(req, 'jqplotchart/jqplot/jquery.jqplot.min.css')
+        add_stylesheet(req, 'jqplotchart/jqchart.css')
 
-        add_script (req, 'jqplotchart/jqplot/jquery.jqplot.min.js')
+        add_script(req, 'jqplotchart/jqplot/excanvas.min.js')
+        add_script(req, 'jqplotchart/jqplot/jquery.jqplot.min.js')
 
         plugin_base = 'jqplotchart/jqplot/plugins/jqplot.'
-        add_script (req, plugin_base + 'highlighter.min.js')
-        add_script (req, plugin_base + 'cursor.min.js')
-        add_script (req, plugin_base + 'dateAxisRenderer.min.js')
-        add_script (req, plugin_base + 'categoryAxisRenderer.min.js')
-        add_script (req, plugin_base + 'pointLabels.min.js')
-        add_script (req, plugin_base + 'pieRenderer.min.js')
-        add_script (req, plugin_base + 'donutRenderer.min.js')
-        add_script (req, plugin_base + 'barRenderer.min.js')
-        add_script (req, plugin_base + 'meterGaugeRenderer.min.js')
-        add_script (req, 'jqplotchart/jqchart.js')
+        add_script(req, plugin_base + 'highlighter.min.js')
+        add_script(req, plugin_base + 'cursor.min.js')
+        add_script(req, plugin_base + 'dateAxisRenderer.min.js')
+        add_script(req, plugin_base + 'categoryAxisRenderer.min.js')
+        add_script(req, plugin_base + 'pointLabels.min.js')
+        add_script(req, plugin_base + 'pieRenderer.min.js')
+        add_script(req, plugin_base + 'donutRenderer.min.js')
+        add_script(req, plugin_base + 'barRenderer.min.js')
+        add_script(req, plugin_base + 'meterGaugeRenderer.min.js')
+        add_script(req, 'jqplotchart/jqchart.js')
 
         return (template, data, content_type)
 
@@ -518,6 +522,7 @@ class Chart(object):
         count_only = False
         if chart_type == 'MeterGauge':
             count_only = True
+            # Sets the link gauge link to the report.
             if 'gaugeClickLocation' not in options:
                 options['gaugeClickLocation'] = query_runner.get_report_link()
 

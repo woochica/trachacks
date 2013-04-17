@@ -37,6 +37,7 @@ var renderChart = function (containerId, type, data, additionalInfo, useDate,
       rendererOptions: {
         labelPosition: 'bottom',
         labelHeightAdjust: -5,
+        intervals: [10, 100, 1000],
         intervalColors: ['#66cc66', '#E7E658', '#cc6666'],
         ringWidth: '2',
         ringColor: '#888',
@@ -96,7 +97,7 @@ var renderChart = function (containerId, type, data, additionalInfo, useDate,
   var seriesData = [];
   if (type == 'MeterGauge') {
     seriesData[0] = [];
-    seriesData[0][0] = data [0][0][1];
+    seriesData[0][0] = data[0][0][1];
     jQuery.extend(true, options, meterGaugeOptions);
   } else {
     seriesData = data;
@@ -109,6 +110,19 @@ var renderChart = function (containerId, type, data, additionalInfo, useDate,
   }
 
   jQuery.extend(true, options, baseOptions);
+
+  if (type == 'MeterGauge') {
+    /* The gauge is not shown if the upper limit of the interval is lower than
+     * the value to show. We add a new interval that ends in the value.
+     */
+    var intervals = options.seriesDefaults.rendererOptions.intervals;
+    var intervalsSize = intervals.length;
+    var value = seriesData[0][0];
+    if (value > intervals[intervalsSize - 1]) {
+      console.log("YES");
+      intervals.push(value);
+    }
+  }
 
   var plot = jQuery.jqplot(containerId, seriesData, options);
   var container = jQuery('#' + containerId);
