@@ -354,8 +354,47 @@ class PPBooleanSwitchOption(PPSingleSelOption):
 
 
 class PPConvertTicketDependenciesOption(PPSingleSelOption):
+  def __init__( self, env, key, defval, catid, groupid, doc, ppenv, section=PPConstant.definisection_name ):
+    PPSingleValOption.__init__( self, env, key, defval, section, catid, groupid, doc )
+    self.env.log.debug("PPConvertTicketDependenciesOption: %s " % (self.get(),) )
+
+    
+    # determine the suggested configuration
+    conf_key = key
+    conf_val = None
+    try:
+      conf_val = self.get()
+    except Exception,e:
+      self.env.log.warning("%s not set in configuration: %s" % (conf_key,e))
+      conf_val = None
+    
+    extended_note = ''
+    if conf_val == None:
+      self.env.log.warning("determine the suggested configuration: mastertickets compatibility vs. legacy ticket dependencies")
+      db = self.env.get_db_cnx()
+      cursor = db.cursor()
+
+      sql="SELECT count(*) FROM mastertickets"
+      cursor.execute(sql)
+      mastertickets_count = cursor.fetchall()
+
+      sql="SELECT count(*) FROM ticket_custom WHERE name='%s'" % (ppenv.get("custom_dependency_field"),)
+      cursor.execute(sql)
+      customfields_count = cursor.fetchall()
+    
+    
+      # depending on the current data set a different default value
+      if mastertickets_count[0][0] == 0 and customfields_count[0][0] > 0:
+        conf_val = u'disabled' # the Trac instance has used the earlier implementation (version 0.94*) using ticket_custom
+      else:
+        conf_val = u'enabled' # the Trac instance has already converted the ticket dependencies or is a new installation
+      extended_note = "Note: Currently %d mastertickets dependencies are defined in the database." % (mastertickets_count[0][0],)
+    
+      self.env.log.warning("determine the suggested configuration: mastertickets compatibility vs. legacy ticket dependencies --> %s" % (conf_val,))
+      PPSingleValOption.__init__( self, env, key, conf_val, section, catid, groupid, "%s %s" % (doc, extended_note) ) # re-init with chosen most suited value
+
   '''
-    Selectable Boolean Option
+    Selectable Mode Option
   '''
   def selectable( self ):
     '''
@@ -796,34 +835,15 @@ class PPConfiguration():
       The default of Trac is 100, while the default of ProjectPlanPlugin is 1000.
       """ )
 
-    # determine the suggested configuration
-    db = self.env.get_db_cnx()
-    cursor = db.cursor()
-
-    sql="SELECT count(*) FROM mastertickets"
-    cursor.execute(sql)
-    mastertickets_count = cursor.fetchall()
-    
-    sql="SELECT count(*) FROM ticket_custom WHERE name='%s'" % (self.get("custom_dependency_field"),)
-    cursor.execute(sql)
-    customfields_count = cursor.fetchall()
-    
-    
-    # depending on the current data set a different default value
-    if mastertickets_count[0][0] == 0 and customfields_count[0][0] > 0:
-      mydynamicdefault = u'disabled' # the Trac instance has used the earlier implementation (version 0.94*) using ticket_custom
-    else:
-      mydynamicdefault = u'enabled' # the Trac instance has already converted the ticket dependencies or is a new installation
-
-    self.flatconf[ 'enable_mastertickets_compatiblity_mode' ] = PPConvertTicketDependenciesOption(
-      self.env, 'enable_mastertickets_compatiblity_mode', mydynamicdefault, catid='General', groupid='Compatibility', doc="""
+    conf_key = 'enable_mastertickets_compatiblity_mode'
+    self.flatconf[ conf_key ] = PPConvertTicketDependenciesOption(
+      self.env, conf_key, None, catid='General', groupid='Compatibility', doc="""
       This options should be enabled by default while installing ProjectPlanPlugin version 1.0 or higher. 
       If you used ProjectPlanPlugin in Version 0.94 or lower the option should be disabled to use the legacy mode.\n
        * Use "convert dependencies" if the old data should be translated into the new format (cannot be reverted automatically). The switch might take a while.\n
        * Use "enabled" to just switch the data store and lose the earlier defined ticket dependencies.\n
      Before switching to the new implementation it is strongly suggest to make a backup of the database!\n
-     Note: Currently %d mastertickets dependencies are defined in the database.
-      """ % (mastertickets_count[0][0],) )
+      """, ppenv=self)
 
     self.flatconf[ 'use_fast_save_changes' ] = PPBooleanSwitchOption(
       self.env, 'use_fast_save_changes', u'enabled', catid='General', groupid='Compatibility', doc="""

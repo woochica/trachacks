@@ -79,7 +79,7 @@ class NullFilter( BaseFilter ):
       Return all Tickets using trac.ticket.query.Query
     '''
     
-    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=self.max_ticket_number_at_filters ).execute( self.macroenv.tracreq )
+    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=self.max_ticket_number_at_filters, desc=1 ).execute( self.macroenv.tracreq )
 
 class QueryFilter( ParamFilter ):
   '''

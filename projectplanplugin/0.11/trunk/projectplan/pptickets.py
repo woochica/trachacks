@@ -939,7 +939,7 @@ class DataAccessDependencies(object):
 	
       
       sql = "SELECT %s FROM mastertickets WHERE %s = %s LIMIT 0,250" % (result_col, where_col, ticket_id)
-      self.env.log.debug("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
+      self.env.log.warning("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       cursor.execute(sql)
