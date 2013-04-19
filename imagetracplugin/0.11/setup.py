@@ -24,7 +24,7 @@ setup(name='ImageTrac',
       extras_require={ 'geo': [ 'GeoTicket' ] },
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
         "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
         "http://dist.repoze.org/PIL-1.1.6.tar.gz",
         ],

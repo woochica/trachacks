@@ -45,7 +45,7 @@ setup(name='GeoTrac',
       "http://geopy.googlecode.com/svn/branches/reverse-geocode#egg=geopy-0.93dev",
 
       # Trac plugins
-      "http://trac-hacks.org/svn/traclegosscript/anyrelease#egg=TracLegos",
+      "http://trac-hacks.org/svn/traclegosscript/0.11#egg=TracLegos",
       "http://trac-hacks.org/svn/accountmanagerplugin/trunk#egg=TracAccountManager",
       "http://trac-hacks.org/svn/customfieldadminplugin/0.11#egg=TracCustomFieldAdmin",
       "http://trac-hacks.org/svn/datefieldplugin/0.11#egg=TracDateField",

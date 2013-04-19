@@ -31,7 +31,7 @@ setup(name='GeoTicket',
         "http://trac-hacks.org/svn/customfieldproviderplugin/0.11#egg=CustomFieldProvider",
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
         "http://trac-hacks.org/svn/mailtotracplugin/0.11/#egg=mail2trac",
-        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
         "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
         ],
       entry_points = """

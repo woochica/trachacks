@@ -83,7 +83,7 @@ setup(name='OSSTracProject',
       "http://trac-hacks.org/svn/contactinfoplugin/0.11#egg=ContactInfo",
       "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
       "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-      "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+      "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
       ],
       zip_safe=False,
       entry_points = """

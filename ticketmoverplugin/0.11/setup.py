@@ -20,7 +20,7 @@ setup(name='TicketMoverPlugin',
         ],
       dependency_links=[
         "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
         ],
       entry_points = """
       [trac.plugins]

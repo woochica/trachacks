@@ -21,7 +21,7 @@ setup(name='CaptchaAuth',
         'ComponentDependencyPlugin',
         ],
       dependency_links=[
-        "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
+        "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
         "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
         ],
       entry_points = """
