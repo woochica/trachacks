@@ -1,6 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+
 from setuptools import find_packages, setup
 
-version='0.5.2'
+version = '0.5.2'
 
 setup(name='TracHoursPlugin',
       version=version,
@@ -15,18 +24,18 @@ setup(name='TracHoursPlugin',
       package_data={'trachours': ['templates/*']},
       zip_safe=False,
       install_requires=['Trac >= 0.11',
-                        'python-dateutil', 
+                        'python-dateutil',
                         'FeedParser',
                         'ComponentDependencyPlugin',
                         'TicketSidebarProvider',
                         'TracSQLHelper'],
       dependency_links=[
-              "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
-              "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
-              "http://trac-hacks.org/svn/tracsqlhelperscript/anyrelease#egg=TracSQLHelper",
-              ],
+          "http://trac-hacks.org/svn/componentdependencyplugin/0.11#egg=ComponentDependencyPlugin",
+          "http://trac-hacks.org/svn/ticketsidebarproviderplugin/0.11#egg=TicketSidebarProvider",
+          "http://trac-hacks.org/svn/tracsqlhelperscript/0.11#egg=TracSQLHelper",
+      ],
       extras_require=dict(lxml=['lxml']),
-      entry_points = """
+      entry_points="""
       [trac.plugins]
       trachours.trachours = trachours.hours
       trachours.multiproject = trachours.multiproject

@@ -1,8 +1,11 @@
-"""
-SetupTracHours:
-plugin to enable the environment for TracHours.
-This plugin must be initialized prior to using TracHours
-"""
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 from api import custom_fields
 

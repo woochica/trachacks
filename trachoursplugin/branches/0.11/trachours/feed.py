@@ -1,3 +1,12 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 def total_hours(feed):
     """return a dictionary in the form of {worker: hours_worked}"""
     hours_dict = {}
