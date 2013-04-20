@@ -7,9 +7,6 @@ origin, the fork of WikiTicketCalendarMacro and separate development prior to
 formation of the current macro bundle.
 
 
-wikicalendar-2.2.0 (not yet released) - compatible to Trac 0.11 - 1.0
-
-
 wikicalendar-2.1.0 (20-Apr-2013) - compatible to Trac 0.11 - 1.0
  resolved issues
  * #1145: Start on sunday option
