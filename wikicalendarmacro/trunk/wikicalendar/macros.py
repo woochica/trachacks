@@ -415,26 +415,12 @@ class WikiCalendarMacros(Component):
                           % loc.get_display_name('en'))
 
         # Prepare datetime objects for previous/next navigation link creation.
-        prev_year = today.replace(year=today.year - 1)
-        if today.month < 4:
-            fr_month = today.replace(month=today.month + 9,
-                                     year=today.year - 1)
-        else:
-            fr_month = today.replace(month=today.month - 3)
-        if today.month == 1:
-            prev_month = today.replace(month=12, year=today.year - 1)
-        else:
-            prev_month = today.replace(month=today.month - 1)
-        if today.month == 12:
-            next_month = today.replace(month=1, year=today.year + 1)
-        else:
-            next_month = today.replace(month=today.month + 1)
-        if today.month > 9:
-            ff_month = today.replace(month=today.month - 9,
-                                     year=today.year + 1)
-        else:
-            ff_month = today.replace(month=today.month + 3)
-        next_year = today.replace(year=today.year + 1)
+        prev_year = month_offset(today, -12)
+        prev_quarter = month_offset(today, -3)
+        prev_month = month_offset(today, -1)
+        next_month = month_offset(today, 1)
+        next_quarter = month_offset(today, 3)
+        next_year = month_offset(today, 12)
 
         # Find first and last calendar day, probably in last/next month,
         # using exact start-of-day here.
@@ -453,15 +439,15 @@ class WikiCalendarMacros(Component):
             # Create calendar navigation buttons.
             nx = 'next'
             pv = 'prev'
-            nav_pvY = _mknav(formatter, '&lt;&lt;', pv, prev_year, loc)
-            nav_frM = _mknav(formatter, '&nbsp;&lt;', pv, fr_month, loc)
-            nav_pvM = _mknav(formatter, '&nbsp;&laquo;', pv, prev_month, loc)
-            nav_nxM = _mknav(formatter, '&raquo;&nbsp;', nx, next_month, loc)
-            nav_ffM = _mknav(formatter, '&gt;&nbsp;', nx, ff_month, loc)
-            nav_nxY = _mknav(formatter, '&gt;&gt;', nx, next_year, loc)
+            nav_pv_y = _nav_link(req, '&lt;&lt;', pv, prev_year, loc)
+            nav_pv_q = _nav_link(req, '&nbsp;&laquo;', pv, prev_quarter, loc)
+            nav_pv_m = _nav_link(req, '&nbsp;&lt;', pv, prev_month, loc)
+            nav_nx_m = _nav_link(req, '&gt;&nbsp;', nx, next_month, loc)
+            nav_nx_q = _nav_link(req, '&raquo;&nbsp;', nx, next_quarter, loc)
+            nav_nx_y = _nav_link(req, '&gt;&gt;', nx, next_year, loc)
 
             # Add buttons for going to previous months and year.
-            buff(nav_pvY, nav_frM, nav_pvM)
+            buff(nav_pv_y, nav_pv_q, nav_pv_m)
 
         # The caption will always be there.
         if has_babel:
@@ -472,7 +458,7 @@ class WikiCalendarMacros(Component):
 
         if showbuttons is True:
             # Add buttons for going to next months and year.
-            buff(nav_nxM, nav_ffM, nav_nxY)
+            buff(nav_nx_m, nav_nx_q, nav_nx_y)
         buff = tag.caption(tag.table(tag.tbody(buff)))
         buff = tag.table(buff)
         if name == 'WikiTicketCalendar':
@@ -770,8 +756,8 @@ def _get_isoweekday(dt, locale=None):
     else:
         return dt.isoweekday()
 
-def _mknav(formatter, label, a_class, dt, locale):
-    """The calendar nav button builder.
+def _nav_link(req, label, a_class, dt, locale):
+    """Build calendar navigation buttons/links.
 
     This is a convenience module for shorter and better serviceable code.
     """
@@ -779,13 +765,26 @@ def _mknav(formatter, label, a_class, dt, locale):
         tip = format_datetime(dt, 'MMMM y', locale=locale)
     else:
         tip = format_date(dt, '%B %Y')
-    # URL to the current page
-    thispageURL = Href(formatter.req.base_path + formatter.req.path_info)
-    url = thispageURL(month=dt.month, year=dt.year)
+    # Construct URL to current page.
+    href = Href(req.base_path + req.path_info)
+    url = href(month=dt.month, year=dt.year)
     markup = tag.a(Markup(label), href=url)
     markup(class_=a_class, title=tip)
     markup = tag.td(markup)
     return markup(class_='x')
+
+def month_offset(dt, offset):
+    """Calculate datetime month offsets.
+
+    Based on "Building Skills in Python" by Steven F. Lott, (C) 2008.
+    """
+    month_seq = (dt.year * 12 + dt.month - 1) + offset
+    year, month0 = divmod(month_seq, 12)
+    try:
+        return dt.replace(year=year, month=month0 + 1)
+    except ValueError:
+        # Clip day to last day of month.
+        return dt.replace(year=year, month=month0 + 2, day=1) - timedelta(1)
 
 def _resolve_relative_name(pagename, referrer):
     """Resolver for Trac wiki page paths.
