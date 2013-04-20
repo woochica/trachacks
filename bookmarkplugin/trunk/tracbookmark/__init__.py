@@ -10,20 +10,21 @@
 
 import re
 
-from trac.core import Component, implements
+from genshi.builder import tag
 from trac.config import ListOption
+from trac.core import Component, implements
+from trac.db import DatabaseManager, Table, Column
 from trac.env import IEnvironmentSetupParticipant
-from trac.web.api import IRequestFilter, IRequestHandler
-from trac.web.chrome import ITemplateProvider, add_stylesheet, \
-                            add_script, add_notice, add_ctxtnav
+from trac.perm import IPermissionRequestor, PermissionError
 from trac.resource import (
     Resource, ResourceNotFound, get_resource_description,
     get_resource_shortname, get_resource_summary
 )
-from trac.db import DatabaseManager, Table, Column
-from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import get_reporter_id
-from genshi.builder import tag
+from trac.web.api import IRequestFilter, IRequestHandler
+from trac.web.chrome import (
+    ITemplateProvider, add_ctxtnav, add_notice, add_script, add_stylesheet
+)
 
 
 class BookmarkSystem(Component):
