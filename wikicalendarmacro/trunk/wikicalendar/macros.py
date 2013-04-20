@@ -36,6 +36,7 @@ from wikicalendar.ticket import WikiCalendarTicketProvider
 has_babel = True
 try:
     from babel import Locale, UnknownLocaleError
+    from babel.core import LOCALE_ALIASES
     from babel.dates import format_datetime, get_day_names
 except ImportError:
     has_babel = False
@@ -305,6 +306,88 @@ class WikiCalendarMacros(Component):
         # Parse arguments from macro invocation.
         args, kwargs = parse_args(arguments, strict=False)
 
+        # Enable week number display regardless of argument position.
+        week_pref = 'w' in args and args.pop(args.index('w'))
+
+        week_pref = week_pref and week_pref or kwargs.get('w')
+        week_start = None
+        week_num_start = None
+        # Parse per-instance week calculation rules, if available.
+        if week_pref:
+            if ':' not in week_pref:
+                # Treat undelimitted setting as week start.
+                week_pref += ':'
+            w_start, wn_start = week_pref.split(':')
+            try:
+                week_start = int(w_start)
+            except ValueError:
+                week_start = None
+            else:
+                week_start = week_start > -1 and week_start < 7 and \
+                             week_start or None
+            try:
+                week_num_start = int(wn_start)
+            except ValueError:
+                week_num_start = None
+            else:
+                week_num_start = week_num_start in (1, 4, 7) and \
+                                 week_num_start or None
+
+        # Respect user's locale, if available.
+        try:
+            locale = Locale.parse(str(req.locale))
+        except (AttributeError, UnknownLocaleError):
+            # Attribute 'req.locale' vailable since Trac 0.12.
+            locale = None
+        if has_babel:
+            if locale:
+                if not locale.territory:
+                    # Search first locale, which has the same `language` and
+                    # territory in preferred languages.
+                    for l in req.languages:
+                        l = l.replace('-', '_').lower()
+                        if l.startswith(locale.language.lower() + '_'):
+                            try:
+                                l = Locale.parse(l)
+                                if l.territory:
+                                    locale = l
+                                    break # first one rules
+                            except UnknownLocaleError:
+                                pass
+                if not locale.territory and locale.language in LOCALE_ALIASES:
+                    locale = Locale.parse(LOCALE_ALIASES[locale.language])
+            else:
+                # Default fallback.
+                locale = Locale('en', 'US')
+            # DEVEL: Temporary debug code.
+            env.log.debug('Locale setting for wiki calendar: %s'
+                          % locale.get_display_name('en'))
+        if not week_start:
+            if week_pref and week_pref.lower().startswith('iso'):
+                week_start = 0
+                week_num_start = 4
+                # DEVEL: Temporary debug code.
+                env.log.debug('First_week_day (args): %s' % week_start)
+            elif has_babel:
+                week_start = locale.first_week_day
+                # DEVEL: Temporary debug code.
+                env.log.debug('First_week_day (Babel): %s' % week_start)
+            else:
+                import calendar
+                week_start = calendar.firstweekday()
+                # DEVEL: Temporary debug code.
+                env.log.debug('First_week_day (system): %s' % week_start)
+        # ISO calendar will remain as default.
+        if not week_num_start:
+            if week_start == 6:
+                week_num_start = 1
+            else:
+                week_num_start = 4
+        # DEVEL: Temporary debug code.
+        env.log.debug('Effective settings: first_week_day=%s, '
+                      '1st_week_of_year_rule=%s'
+                      % (week_start, week_num_start))
+
         # Find year and month of interest.
         year = req.args.get('year')
         # Not clicked on any previous/next button, next look for macro args.
@@ -397,24 +480,6 @@ class WikiCalendarMacros(Component):
             if kwargs.has_key('subpages'):
                 wiki_subpages = kwargs['subpages'].split('|')
 
-        # Respect user's locale, if available.
-        try:
-            loc_req = str(formatter.req.locale)
-        except AttributeError:
-            # Available since Trac 0.12.
-            loc_req = None
-        loc = None
-        if has_babel and loc_req:
-            try:
-                 loc = Locale.parse(loc_req, sep='-')
-            except UnknownLocaleError:
-                # Re-try with system default.
-                loc = Locale.default('LC_TIME')
-            if not loc:
-                loc = Locale('en', 'US')
-            env.log.debug('Locale setting for wiki calendar: %s'
-                          % loc.get_display_name('en'))
-
         # Prepare datetime objects for previous/next navigation link creation.
         prev_year = month_offset(today, -12)
         prev_quarter = month_offset(today, -3)
@@ -446,19 +511,21 @@ class WikiCalendarMacros(Component):
             # Create calendar navigation buttons.
             nx = 'next'
             pv = 'prev'
-            nav_pv_y = _nav_link(req, '&lt;&lt;', pv, prev_year, loc)
-            nav_pv_q = _nav_link(req, '&nbsp;&laquo;', pv, prev_quarter, loc)
-            nav_pv_m = _nav_link(req, '&nbsp;&lt;', pv, prev_month, loc)
-            nav_nx_m = _nav_link(req, '&gt;&nbsp;', nx, next_month, loc)
-            nav_nx_q = _nav_link(req, '&raquo;&nbsp;', nx, next_quarter, loc)
-            nav_nx_y = _nav_link(req, '&gt;&gt;', nx, next_year, loc)
+            nav_pv_y = _nav_link(req, '&lt;&lt;', pv, prev_year, locale)
+            nav_pv_q = _nav_link(req, '&nbsp;&laquo;', pv, prev_quarter,
+                                 locale)
+            nav_pv_m = _nav_link(req, '&nbsp;&lt;', pv, prev_month, locale)
+            nav_nx_m = _nav_link(req, '&gt;&nbsp;', nx, next_month, locale)
+            nav_nx_q = _nav_link(req, '&raquo;&nbsp;', nx, next_quarter,
+                                 locale)
+            nav_nx_y = _nav_link(req, '&gt;&gt;', nx, next_year, locale)
 
             # Add buttons for going to previous months and year.
             buff(nav_pv_y, nav_pv_q, nav_pv_m)
 
         # The caption will always be there.
         if has_babel:
-            heading = tag.td(format_datetime(today, 'MMMM y', locale=loc))
+            heading = tag.td(format_datetime(today, 'MMMM y', locale=locale))
         else:
             heading = tag.td(format_date(today, '%B %Y'))
         buff = buff(heading(class_='y'))
@@ -479,13 +546,21 @@ class WikiCalendarMacros(Component):
 
         heading = tag.tr()
         heading(align='center')
+        if week_pref:
+            # Add an empty cell matching the week number column below.
+            heading(tag.th())
 
         day_names = [(idx, day_name) for idx, day_name in
                      get_day_names('abbreviated', 'format', loc).iteritems()]
         # Read day names after shifting into correct position.
         for idx, name_ in day_names[week_start:7] + day_names[0:week_start]:
             col = tag.th(name_)
-            col(class_=('workday', 'weekend')[idx > 4], scope='col')
+            if has_babel:
+                weekend = idx >= locale.weekend_start and \
+                          idx <= locale.weekend_end
+            else:
+                weekend = idx > 4
+            col(class_=('workday', 'weekend')[weekend], scope='col')
             heading(col)
         heading = buff(tag.thead(heading))
 
@@ -493,10 +568,18 @@ class WikiCalendarMacros(Component):
         buff = tag.tbody()
         day = first_day
         while day.date() <= last_day.date():
+            # DEVEL: Temporary debug code.
+            env.log.debug('Day %s in week %s'
+                          % (format_date(day), week_num(env, day, week_start,
+                                                        week_num_start)))
             # Insert a new row for every week.
             if (day - first_day).days % 7 == 0:
                 line = tag.tr()
                 line(align='right')
+                if week_pref:
+                    cell = tag.td(week_num(env, day, week_start,
+                                           week_num_start))
+                    line(cell(class_='week'))
             if not (day < first_day_month or day > last_day_month):
                 wiki = format_date(day, wiki_page_format)
                 if day == today:
@@ -802,3 +885,41 @@ def resolve_relative_name(pagename, referrer):
             base.extend(components[i:])
             break
     return '/'.join(base)
+
+def week_index(dt, week_start):
+    """Calculate weekday position from datetime.
+
+    Unlike dt.weekday() the index returned by this function is correct for
+    calendars with specified first-day-of-week as derived i.e. from locale.
+    """
+    weekdays = range(0, 7)
+    week = weekdays[week_start:7] + weekdays[0:week_start]
+    return week.index(dt.weekday())
+
+def week_num(env, dt, week_start, week_num_start, years_back=0):
+    """Calculate week number for a given datetime."""
+    # DEVEL: Babel doesn't work correctly yet.
+    #   But we need more flexibility here anyway.
+    #if has_babel:
+    #    from babel.dates import format_date as babel_format_date
+    #    return int(babel_format_date(dt, format='w', locale=locale))
+    week_begin = dt - timedelta(week_index(dt, week_start))
+    year_start = dt.replace(year=dt.year + 1, month=1, day=1)
+    first_week_length = 7 - week_index(year_start, week_start)
+    if not (year_start - week_begin < timedelta(7) and
+            first_week_length >= week_num_start):
+        # This is not next year's first week.
+        year_start = dt.replace(year=dt.year - years_back, month=1, day=1)
+        first_week_length = 7 - week_index(year_start, week_start)
+    first_week_begin = year_start - timedelta(week_index(year_start, week_start))
+    # Choose anchor day for easy week number calculation.
+    if first_week_length < week_num_start:
+        # Year's first days are in old year's last week.
+        anchor = first_week_begin
+    else:
+        # Year's first days are in that year's first week.
+        anchor = first_week_begin - timedelta(7)
+    if (dt - anchor).days < 7:
+        # Need to count weeks in previous year.
+        return week_num(env, dt, week_start, week_num_start, 1)
+    return (dt - anchor).days / 7

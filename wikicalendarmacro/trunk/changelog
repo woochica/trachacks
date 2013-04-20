@@ -9,11 +9,18 @@ formation of the current macro bundle.
 
 wikicalendar-2.1.0 (not yet released) - compatible to Trac 0.11 - 1.0
  resolved issues
+ * #1145: Start on sunday option
+   resolved as regression after loosing that feature when bundling macros
  * #9718: Resolve relative wiki paths in pattern for wiki pages too
  * #10991: WikiCalendarMacros.get_macro_description() doesn't work on Trac
  * #10992: WikiCalendarMacro is not thread-safe
  * #10993: Day names header is garbled with `Accept-Language: ja`
  * fixed translation of macro descriptions
+
+ new features
+ * #7639: Add options to change week start per environment and per macro call
+   by introducing both, a new simple and a new keyword argument to both macros
+ * #8175: Add week numbers to calendar
 
 
 wikicalendar-2.0.0 (30-Mar-2013) - new 'bundled macros' edition
