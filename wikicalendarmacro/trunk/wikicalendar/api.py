@@ -21,7 +21,7 @@ except ImportError:
     from genshi.builder import tag as tag_
     from trac.util.translation import gettext
     _ = gettext
-    def add_domain(a,b,c=None):
+    def add_domain(a, b, c=None):
         pass
 
 from wikicalendar.compat import cleandoc

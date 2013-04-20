@@ -13,9 +13,9 @@ import unittest
 
 def suite():
     from wikicalendar.tests import macros
-    suite = unittest.TestSuite()
-    suite.addTest(macros.suite())
-    return suite
+    test_suite = unittest.TestSuite()
+    test_suite.addTest(macros.suite())
+    return test_suite
 
 
 # Start test suite directly from command line like so:
