@@ -359,31 +359,23 @@ class WikiCalendarMacros(Component):
             else:
                 # Default fallback.
                 locale = Locale('en', 'US')
-            # DEVEL: Temporary debug code.
             env.log.debug('Locale setting for wiki calendar: %s'
                           % locale.get_display_name('en'))
         if not week_start:
             if week_pref and week_pref.lower().startswith('iso'):
                 week_start = 0
                 week_num_start = 4
-                # DEVEL: Temporary debug code.
-                env.log.debug('First_week_day (args): %s' % week_start)
             elif has_babel:
                 week_start = locale.first_week_day
-                # DEVEL: Temporary debug code.
-                env.log.debug('First_week_day (Babel): %s' % week_start)
             else:
                 import calendar
                 week_start = calendar.firstweekday()
-                # DEVEL: Temporary debug code.
-                env.log.debug('First_week_day (system): %s' % week_start)
         # ISO calendar will remain as default.
         if not week_num_start:
             if week_start == 6:
                 week_num_start = 1
             else:
                 week_num_start = 4
-        # DEVEL: Temporary debug code.
         env.log.debug('Effective settings: first_week_day=%s, '
                       '1st_week_of_year_rule=%s'
                       % (week_start, week_num_start))
@@ -500,8 +492,6 @@ class WikiCalendarMacros(Component):
                        (last_day_month - first_day).days + 1) % 7)
         else:
             last_day = last_day_month
-        env.log.debug('Rendering WikiCalendar from %s to %s'
-                      % (format_date(first_day), format_date(last_day)))
 
         # Finally building the output now.
         # Begin with caption and optional navigation links.
@@ -551,7 +541,8 @@ class WikiCalendarMacros(Component):
             heading(tag.th())
 
         day_names = [(idx, day_name) for idx, day_name in
-                     get_day_names('abbreviated', 'format', loc).iteritems()]
+                     get_day_names('abbreviated', 'format',
+                                   locale).iteritems()]
         # Read day names after shifting into correct position.
         for idx, name_ in day_names[week_start:7] + day_names[0:week_start]:
             col = tag.th(name_)
@@ -568,10 +559,6 @@ class WikiCalendarMacros(Component):
         buff = tag.tbody()
         day = first_day
         while day.date() <= last_day.date():
-            # DEVEL: Temporary debug code.
-            env.log.debug('Day %s in week %s'
-                          % (format_date(day), week_num(env, day, week_start,
-                                                        week_num_start)))
             # Insert a new row for every week.
             if (day - first_day).days % 7 == 0:
                 line = tag.tr()
