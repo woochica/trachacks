@@ -9,10 +9,8 @@
     <div style="margin-bottom: 3em;">
     <ul class="bookmarks">
       <py:for each="bookmark in bookmarks">
-        <li class="${bookmark.realm}">
-            <a href="${bookmark.url}">${bookmark.linkname}</a>
-                ${bookmark.name} (<a href="${bookmark.delete}">delete</a>)
-        </li>
+        <li><a class="$bookmark.class_" href="$bookmark.href">
+          $bookmark.linkname</a> $bookmark.name (<a href="$bookmark.delete">delete</a>)</li>
       </py:for>
     </ul>
     </div>

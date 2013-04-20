@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010-2012 Yoshiyuki Sugimoto <s.yosiyuki@gmail.com>
-# Copyright (C) 2012 Jun Omae <jun66j5@gmail.com>
+# Copyright (C) 2012-2013 Jun Omae <jun66j5@gmail.com>
+# Copyright (C) 2012-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -15,7 +16,10 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import ITemplateProvider, add_stylesheet, \
                             add_script, add_notice, add_ctxtnav
-from trac.resource import Resource, get_resource_description, get_resource_shortname, get_resource_summary
+from trac.resource import (
+    Resource, ResourceNotFound, get_resource_description,
+    get_resource_shortname, get_resource_summary
+)
 from trac.db import DatabaseManager, Table, Column
 from trac.perm import IPermissionRequestor, PermissionError
 from trac.util import get_reporter_id
@@ -200,12 +204,21 @@ class BookmarkSystem(Component):
 
         path = url.split('/')
         realm = path[1]
+        class_ = realm
         if len(path) >= 3:
             resource = Resource(realm, path[2])
             if resource:
                 if realm == 'ticket':
                     linkname = get_resource_shortname(self.env, resource)
-                    name = get_resource_summary(self.env, resource)
+                    try:
+                        name = get_resource_summary(self.env, resource)
+                    except ResourceNotFound:
+                        name = ''
+                        class_ = 'missing ' + realm
+                    else:
+                        from trac.ticket.model import Ticket
+                        class_ = Ticket(self.env, resource.id)['status'] + \
+                            ' ' + class_
                 elif realm == 'milestone':
                     linkname = get_resource_shortname(self.env, resource)
                 elif realm == 'wiki':
@@ -236,7 +249,7 @@ class BookmarkSystem(Component):
         elif len(path) == 2 and path[1]:
             linkname = path[1].capitalize()
         else:
-            realm = 'wiki'
+            class_ = 'wiki'
             linkname = 'WikiStart'
 
         path_info = url
@@ -244,9 +257,13 @@ class BookmarkSystem(Component):
         idx = path_info.find('?')
         if idx >= 0:
             path_info, query_string = path_info[:idx], path_info[idx:]
+        if 'missing' not in class_:
+            href = req.href(path_info) + query_string
+        else:
+            href = None
         return {
-            'realm': realm,
-            'url': req.href(path_info) + query_string,
+            'class_': class_,
+            'href': href,
             'linkname': linkname,
             'name': name,
             'delete': req.href.bookmark('delete_in_page', url),
@@ -294,8 +311,9 @@ class BookmarkSystem(Component):
                 label = '%s %s' % (params['linkname'], params['name'])
             else:
                 label = params['linkname']
-            anchor = tag.a(label, href=params['url'], title=label)
-            menu.append(tag.li(anchor))
+            if params['href'] is not None:
+                anchor = tag.a(label, href=params['href'], title=label)
+                menu.append(tag.li(anchor))
         return menu
 
     def _get_resource_uri(self, req):
