@@ -298,6 +298,12 @@ class PPChangeTicketProvider(Component):
       # build new depstring
       depstring = ",".join( [ str(d) for d in deps ] )
       toticket[ self.conf.get( 'custom_dependency_field' ) ] = depstring
+      dad = DataAccessDependencies( self.env, self.req.authname )
+      # flip functionality, if a dependency already exists, an error will occur, then just remove the dependency
+      try:
+        dad.addBlockedTicket( dep_from, dep_to )
+      except:
+        dad.removeBlockedTicket( dep_from, dep_to )
 
       # commit
       try:

@@ -999,6 +999,9 @@ class PPConfiguration():
     '''
     self.env.config.save()
 
+  def isMasterticketsCompatible(self):
+    return ( (self.get('enable_mastertickets_compatiblity_mode') == 'enabled') or (self.get('enable_mastertickets_compatiblity_mode') == 'convert dependencies') )
+    
 class PPEnv():
   '''
     Project Plan Environment
@@ -1131,7 +1134,7 @@ class PPEnv():
     for (oldsource,olddestplain) in old_ticketdependencies:
       olddestlist = splitStringToTicketList(olddestplain, oldsource)
       if len(olddestlist) > 0 :
-        sql = sql + sep + ( ",".join( [ "(%s,%s)" % (oldsource,olddestid) for olddestid in olddestlist ] ) )
+        sql = sql + sep + ( ",".join( [ "(%s,%s)" % (olddestid,oldsource) for olddestid in olddestlist ] ) )
         sep = ','
         count = count + len(olddestlist)
     sql = "INSERT INTO mastertickets (source,dest) VALUES %s" % (sql,)

@@ -84,18 +84,18 @@ class PPTicketViewTweak(Component):
     self.env.log.debug('dependencies of '+str(current_ticket_id)+': '+repr(blocking_tickets_string))
     
     # change summary block
-    if str(depwithlinks) != '': # change HTML only if there is actually a link to show
+    if str(depwithlinks) != '' or PPConfiguration(self.env).isMasterticketsCompatible(): # change HTML only if there is actually a link to show
       stream |= Transformer('//*[@headers="h_%s"]/text()' % self.field).replace(depwithlinks)
    
-    if str(blocked_tickets_with_links) != '':
+    if str(blocked_tickets_with_links) != '' or PPConfiguration(self.env).isMasterticketsCompatible():
       stream |= Transformer('//*[@headers="h_%s"]/text()' % self.fieldrev).replace( blocked_tickets_with_links )
     
     # change fields
     stream |= Transformer('//*[@id="field-%s"]' % (self.field)).attr('value', blocking_tickets_string)
     stream |= Transformer('//*[@id="field-%s"]' % (self.fieldrev)).attr('value', blocked_tickets_string)  
     # create a backup field containing the earlier value
-    stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.fieldrev), value=blocked_tickets_string, style='display:none') )
     stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.field), value=blocking_tickets_string, style='display:none') )
+    stream |= Transformer('//*[@id="propertyform"]').prepend( tag.input(name='field_%s_backup' % (self.fieldrev), value=blocked_tickets_string, style='display:none') )
     
     
     

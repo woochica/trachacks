@@ -81,6 +81,23 @@ class NullFilter( BaseFilter ):
     
     return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=self.max_ticket_number_at_filters, desc=1 ).execute( self.macroenv.tracreq )
 
+class TicketIdFilter( BaseFilter ):
+  '''
+    Filter all Tickets by given Ids
+  '''
+  def get_tickets( self , ticket_ids = None):
+    '''
+      Return all Tickets by given Ids    
+    '''
+    if ticket_ids == None:
+      raise NotImplementedError()
+    elif ticket_ids == []:
+      return []
+    self.macroenv.tracenv.log.debug("TicketIdFilter: %s " % (ticket_ids,))
+    return Query( self.macroenv.tracenv, order='id', cols=self.cols, max=self.max_ticket_number_at_filters, constraints={'id': ticket_ids } ).execute( self.macroenv.tracreq )
+    
+
+
 class QueryFilter( ParamFilter ):
   '''
     Class for Query Based Filters
@@ -249,10 +266,33 @@ class TicketBiDepGraphFilter( ParamFilter ):
     # cached result values
     if self.cache != None:
       return self.cache 
+    ticketdata = []
+    ticketset = ppTicketSet( self.macroenv )
+    
+    if self.macroenv.conf.get('enable_mastertickets_compatiblity_mode'):
+      self.macroenv.tracenv.log.debug("enable_mastertickets_compatiblity_mode: %s" % (self.queryarg,))
+      dad = DataAccessDependencies.DataAccessDependenciesInExtraTable(self.macroenv.tracenv, self.macroenv.tracreq.authname )
+      # raise( Exception("stop: %s  ->  %d -> %s" % (repr(dad.getDependsOnRecursively(int(v))),int(v),repr(dad.getBlockedTicketsRecursively(int(v))),) ) )
+      try:
+        tid = int(v)
+      except Exception,e:
+        e_str = "get_tickets: %s is not int type (%s)" % (v,e)
+        self.macroenv.tracenv.log.error(e_str)
+        raise Exception(e_str)
+        
+      if self.DEPEXTENSION == 'dependencies':
+        ticketlist = dad.getDependsOnRecursively(tid)
+      else:
+        ticketlist = dad.getBlockedTicketsRecursively(tid)
+      ticketlist.append(v)
+      ticketlist=list(set(ticketlist)) # remove duplicates
+      self.macroenv.tracenv.log.debug("TicketBiDepGraphFilter: ids=%s " % (repr(ticketlist),))
+      return TicketIdFilter( self.macroenv ).get_tickets(ticketlist)
+
+    # old implementation (legacy mode)
+    ticketdata = NullFilter( self.macroenv ).get_tickets()
     
     # query data
-    ticketset = ppTicketSet( self.macroenv )
-    ticketdata = NullFilter( self.macroenv ).get_tickets()
     for t in ticketdata:
       ticketset.addTicket(t)
     
@@ -271,7 +311,6 @@ class TicketBiDepGraphFilter( ParamFilter ):
         if int( d.getfield( 'id' ) ) not in depset:
           depqueue.append( int( d.getfield( 'id' ) ) )
           depset.add( int( d.getfield( 'id' ) ) )
-    
     # build ticketlist with deps
     del ticketset
     depdata = list()
@@ -453,7 +492,7 @@ class ppFilter():
     global_filtered = False # was there every a filter applied
     for ( k, v ) in self.macroenv.macrokw.items():
       filtered = False
-      #self.macroenv.tracenv.log.warning('filter: '+repr(k))
+      self.macroenv.tracenv.log.debug('filter: '+repr(k))
       
       # do not perform each single query at AND, because it is not performant
       if k in query_filters and operator != self.OPERATOR_AND:
@@ -485,7 +524,7 @@ class ppFilter():
         filtered = True
         
       elif k in param_filters:
-        #self.macroenv.tracenv.log.debug('param_filters:'+repr(k))
+        self.macroenv.tracenv.log.debug('param_filters:'+repr(k))
         f = param_filters[ k ]( self.macroenv )
         f.set_queryarg( v )
         filtered = True

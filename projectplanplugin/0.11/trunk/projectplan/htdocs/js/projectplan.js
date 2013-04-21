@@ -866,11 +866,13 @@
 
 
 /* initialize globally for faster access */
-if(document.getElementById){
-	ppconnect = document.getElementById('ppconnect');
-	ppconnect_from = document.getElementById('ppconnect_from');
-	ppconnect_to = document.getElementById('ppconnect_to');
-}
+$(document).ready(function () {
+  if(document.getElementById){
+	  ppconnect = document.getElementById('ppconnect');
+	  ppconnect_from = document.getElementById('ppconnect_from');
+	  ppconnect_to = document.getElementById('ppconnect_to');
+  }
+});
 ppsavedivid = 'ppconnect_save';
 
 function ppconnecttickets(ticketid){

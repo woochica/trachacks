@@ -30,7 +30,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'1.0.1', # semantic versioning, c.f. http://semver.org/
+  version = u'1.0.2', # semantic versioning, c.f. http://semver.org/
   description = u'ProjectPlanPlugin for Trac',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and
@@ -40,7 +40,7 @@ setup(
       1. collect the tickets needed for the output: can be controlled by user arguments if its allowed by the output/plugin
       2. calculate (controlled by output), some calculations can be enabled/disabled with user arguments, depending on the output
       3. render (generate the output), controlled by user arguments, additional arguments are output dependend
-    Additional information can be found at the Trac-Hacks Projectpage for this Plugin.
+    Additional information can be found at the Trac-Hacks project page for this plugin.
   """,
   author = u'anbo & makadev',
   author_email = u' anbo@informatik-tipps.net',

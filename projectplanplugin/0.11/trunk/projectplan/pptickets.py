@@ -81,14 +81,14 @@ class ppTicket():
     '''
     return name in self.__extensions
 
-  def getextension(self,name):
+  def getextension(self,name,defaultvalue=None):
     '''
       return ticket extension for key <name> or None
     '''
     if self.hasextension( name ):
       return self.__extensions[ name ]
     else:
-      return None
+      return defaultvalue
 
   def _setextension(self,name,data):
     '''
@@ -184,14 +184,14 @@ class ppTicketSet():
     '''
     return name in self.__extensions
 
-  def getExtension(self,name):
+  def getExtension(self,name,defaultvalue=None):
     '''
       return ticketset extension for key <name> or None
     '''
     if self.hasExtension( name ):
       return self.__extensions[ name ]
     else:
-      return None
+      return defaultvalue
 
   def needExtension(self,name):
     '''
@@ -643,8 +643,12 @@ class ppTSCriticalPathSimple( ppTicketSetExtension ):
     # pass 4. get the first nodes for reverse run
     queue = []
     for k in self.__ts:
-      if len(self.__ts[ k ].getextension( 'depbuffers' )) <= 0:
-        queue.append( k )
+      try:
+        if len(self.__ts[ k ].getextension( 'depbuffers', None )) <= 0:
+          queue.append( k )
+      except Exception,e:
+	#raise Exception("ppTSCriticalPathSimple: k=%s, ts[k]=%s, e=%s, depbuffers=%s" % (k,repr(self.__ts[ k ]),e,self.__ts[ k ].getextension( 'depbuffers' )))
+	pass
     # pass 5. breadth first in reverse order, calculate the deps with min. cumulative buffers
     runtest = 0; # var for endless loop check (cyclic dependencies in graph)
     startnode_minbuffer = 36500
@@ -652,38 +656,39 @@ class ppTSCriticalPathSimple( ppTicketSetExtension ):
       current = queue.pop(0)
 
       if not self.__ts[ current ].hasextension( 'mindepbuffers' ):
-        depbufs = self.__ts[ current ].getextension( 'depbuffers' )
+        depbufs = self.__ts[ current ].getextension( 'depbuffers', None)
         depbufsresolved = True
-        for (k,buf) in depbufs:
-          if not self.__ts[ k ].hasextension( 'mindepbuffers' ):
-            depbufsresolved = False
-            break
-        if not depbufsresolved:
-          # dependend buffermins are not calculated, recycle the current node for later testing
-          queue.append( current )
-          runtest = runtest +1
-        else:
-          runtest = 0
-          for d in self.__ts[ current ].getextension( 'dependencies' ):
-            queue.append( d.getfield('id') )
-          mindepbuffers = []
-          if len(depbufs)>0:
-            minbuf = 36500
-            for (k,buf) in depbufs:
-              cbuf = ( buf + self.__ts[ k ].getextension( 'buffer' ) )
-              if cbuf < minbuf:
-                minbuf = cbuf
-            self.__ts[ current ]._setextension( 'buffer', minbuf )
-            if len(self.__ts[ current ].getextension( 'dependencies' )) <= 0:
-              if minbuf < startnode_minbuffer:
-                startnode_minbuffer = minbuf
-            for (k,buf) in depbufs:
-              cbuf = ( buf + self.__ts[ k ].getextension( 'buffer' ) )
-              if cbuf <= minbuf:
-                mindepbuffers.append( k )
-          else:
-            self.__ts[ current ]._setextension( 'buffer', 0 )
-          self.__ts[ current ]._setextension( 'mindepbuffers', mindepbuffers )
+        if depbufs != None:
+	  for (k,buf) in depbufs:
+	    if not self.__ts[ k ].hasextension( 'mindepbuffers' ):
+	      depbufsresolved = False
+	      break
+	  if not depbufsresolved:
+	    # dependend buffermins are not calculated, recycle the current node for later testing
+	    queue.append( current )
+	    runtest = runtest +1
+	  else:
+	    runtest = 0
+	    for d in self.__ts[ current ].getextension( 'dependencies' ):
+	      queue.append( d.getfield('id') )
+	    mindepbuffers = []
+	    if len(depbufs)>0:
+	      minbuf = 36500
+	      for (k,buf) in depbufs:
+		cbuf = ( buf + self.__ts[ k ].getextension( 'buffer' ) )
+		if cbuf < minbuf:
+		  minbuf = cbuf
+	      self.__ts[ current ]._setextension( 'buffer', minbuf )
+	      if len(self.__ts[ current ].getextension( 'dependencies' )) <= 0:
+		if minbuf < startnode_minbuffer:
+		  startnode_minbuffer = minbuf
+	      for (k,buf) in depbufs:
+		cbuf = ( buf + self.__ts[ k ].getextension( 'buffer' ) )
+		if cbuf <= minbuf:
+		  mindepbuffers.append( k )
+	    else:
+	      self.__ts[ current ]._setextension( 'buffer', 0 )
+	    self.__ts[ current ]._setextension( 'mindepbuffers', mindepbuffers )
       else:
         runtest = 0
     if len(queue) > 0:
@@ -914,21 +919,38 @@ class DataAccessDependencies(object):
 	calculate blocked tickets of the given ticket
 	returns list of ticket ids 
       '''
-      ret = self.getTicketDependencies(ticket_id, self.blockedticket_colname)
+      ret = self.getTicketDependencies( [ticket_id], self.blockedticket_colname)
       self.env.log.debug("getBlockedTicketsFromTable: #%s -> tickets: %s" % (ticket_id, repr(ret)) )
       return ret
-      
+
+    def getBlockedTicketsRecursively(self, ticket_id):
+      '''
+	calculate blocked tickets of the given ticket RECURSIVELY
+	returns list of ticket ids 
+      '''
+      ret = self.getTicketDependenciesRecursively( [ticket_id], self.blockedticket_colname)
+      self.env.log.debug("getBlockedTicketsFromTable Recursively: #%s -> tickets: %s" % (ticket_id, repr(ret)) )
+      return ret
+
+    
     def getDependsOn( self, ticket_id ):
       '''
 	calculate blocking tickets of the given ticket
 	returns list of ticket ids (as string)
       '''
-      ret = self.getTicketDependencies(ticket_id, self.blockingticket_colname)
+      ret = self.getTicketDependencies( [ticket_id], self.blockingticket_colname)
       ret = ', '.join(ret)
     
       return ret
 
-    def getTicketDependencies( self, ticket_id, result_col ):
+    def getDependsOnRecursively( self, ticket_id ):
+      '''
+	calculate blocking tickets of the given ticket RECURSIVELY
+	returns list of ticket ids (as string)
+      '''
+      return self.getTicketDependenciesRecursively( [ticket_id], self.blockingticket_colname)
+
+    def getTicketDependencies( self, ticket_ids, result_col ):
       '''
 	generalized implementation of fetching data from dependencies table
       '''
@@ -937,9 +959,9 @@ class DataAccessDependencies(object):
       else:
 	where_col = self.blockingticket_colname
 	
-      
-      sql = "SELECT %s FROM mastertickets WHERE %s = %s LIMIT 0,250" % (result_col, where_col, ticket_id)
-      self.env.log.warning("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
+      where = " OR ".join(["(%s = %s)" % (where_col,ticket_id) for ticket_id in ticket_ids])
+      sql = "SELECT %s FROM mastertickets WHERE 0 OR %s LIMIT 0,250" % (result_col, where)
+      self.env.log.debug("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
       db = self.env.get_db_cnx()
       cursor = db.cursor()
       cursor.execute(sql)
@@ -948,7 +970,26 @@ class DataAccessDependencies(object):
       for res in blocking_tickets:
 	ret.append(str(res[0]))
       return ret
-    
+
+    def getTicketDependenciesRecursively(self, ticket_ids, result_col ):
+      '''
+	generalized implementation of fetching RECURSIVELY data from dependencies table
+      '''
+      if result_col == self.blockingticket_colname:
+	where_col = self.blockedticket_colname
+      else:
+	where_col = self.blockingticket_colname
+      result_ticket_ids = []
+      new_ticket_ids = ticket_ids
+      
+      while len(new_ticket_ids) > 0:
+        new_ticket_ids = self.getTicketDependencies( new_ticket_ids, result_col )
+        # remove all elements already discovered to prevent infinite loops
+        new_ticket_ids = [tid for tid in new_ticket_ids if (not tid in result_ticket_ids) and (not tid in ticket_ids)]
+        result_ticket_ids.extend(new_ticket_ids)
+      
+      return result_ticket_ids
+
     def performTicketAction( self, tid_from, tid_to, sql, comment ):
       self.dbexecute(sql)
       self.postpone_ticket_comment( tid_from, comment) 
