@@ -133,7 +133,7 @@ class TracPM(Component):
     hpe = None
     # Format of parent field (e.g., with or without leading '#')
     parent_format = None
-    
+
 
     Option(cfgSection, 'hours_per_estimate', '1', 
            """Hours represented by each unit of estimated work""")
@@ -173,7 +173,7 @@ class TracPM(Component):
            """List of statuses for goal-type tickets that are active""")
     Option(cfgSection, 'useActuals', '0',
            """Use actual start, finish date for tickets""")
- 
+
     scheduler = ExtensionOption(cfgSection, 'scheduler', 
                                 ITaskScheduler, 'ResourceScheduler')
 
@@ -244,7 +244,7 @@ class TracPM(Component):
 
                         self.sources[f] = r
                     self.relations[r] = relations[r] + value
-                    
+
         # Tickets of this type will be treated as goals
         self.goalTicketType = self.config.get(self.cfgSection, 'milestone_type')
         if self.goalTicketType == '*deprecated*':
@@ -253,7 +253,7 @@ class TracPM(Component):
         else:
             self.env.log.info('The milestone_type setting is deprecated.'
                               ' Use goal_ticket_type.')
-        
+
         # Goal-type tickets with these statuses will be considered active.
         # (An empty list bypasses the test for active.)
         self.activeGoalStatuses = self.config.getlist(self.cfgSection,
@@ -281,8 +281,8 @@ class TracPM(Component):
         # How much to pad an estimate when a task has run over
         self.estPad = float(self.config.get(self.cfgSection, 'estimate_pad'))
 
-	# Parent format option
-	self.parent_format = self.config.get(self.cfgSection,'parent_format')
+        # Parent format option
+        self.parent_format = self.config.get(self.cfgSection,'parent_format')
 
         # This is the format of start and finish in the Trac database
         self.dbDateFormat = str(self.config.get(self.cfgSection, 'date_format'))
@@ -379,7 +379,7 @@ class TracPM(Component):
         # Note that seconds and microseconds are always positive
         # http://docs.python.org/library/datetime.html#timedelta-objects
         return  delta.seconds < 5
-        
+
 
     # Get the value for a PM field from a ticket
     def _fieldValue(self, ticket, field):
@@ -550,7 +550,7 @@ class TracPM(Component):
         # If no estimate and worked (above) and no percent, it's 0
         else:
             percent = 0
-            
+
         return percent
 
     # Find all the tasks connected (directly or indirectly) to the
@@ -899,7 +899,7 @@ class TracPM(Component):
                     milestoneTicket[self.fields[self.sources['succ']]] = []
                 elif self.isRelation('succ'):
                     milestoneTicket['succ'] = []
-                
+
                 tickets.append(milestoneTicket)
 
     # Get ticket dates from the database.
@@ -1015,7 +1015,7 @@ class TracPM(Component):
                     if fieldName not in t:
                         raise TracError('%s is not a custom ticket field' %
                                         fieldName)
-                
+
                     if t[fieldName] == '--':
                         t[fieldName] = ''
 
@@ -1058,7 +1058,7 @@ class TracPM(Component):
                 # exception be unhandled.
                 else:
                     t[fieldName] = [ int(t[fieldName]) ]
-                        
+
         # Build child lists
         for t in tickets:
             if not self.isCfg('parent'):
@@ -1120,7 +1120,7 @@ class TracPM(Component):
                     fwd[dst].append(src)
                 else:
                     fwd[dst] = [ src ]
-                    
+
                 if src in rev:
                     rev[src].append(dst)
                 else:
@@ -1164,7 +1164,7 @@ class TracPM(Component):
                             'start', 'finish', 
                             'useActuals', 'scheduled' ]:
                 query_args[str(key)] = options[key]
-        
+
         # Expand (or set) list of IDs to include those specified by PM
         # query meta-options (e.g., root)
         pm_ids = self.preQuery(options, req)
@@ -1190,7 +1190,7 @@ class TracPM(Component):
         query = Query.from_string(self.env, query_string)
 
         # Get all tickets
- 	tickets = query.execute(req) 
+        tickets = query.execute(req)
 
         # Post process to add more PM stuff
         self.postQuery(options, tickets)
@@ -1259,7 +1259,7 @@ class TracPM(Component):
                 rescheduled = True
             else:
                 rescheduled = False
-            
+
             t['_rescheduled'] = rescheduled
 
 
@@ -1566,7 +1566,7 @@ class ResourceScheduler(Component):
     def __init__(self):
         # Instantiate the PM component
         self.pm = TracPM(self.env)
-        
+
         self.calendar = self._mixIn('IResourceCalendar',
                                     self.calendars,
                                     SimpleCalendar)
@@ -1696,7 +1696,7 @@ class ResourceScheduler(Component):
                 better = False
 
             return better
-                
+
         # TODO: If we have start and estimate, we can figure out
         # finish (opposite case of figuring out start from finish and
         # estimate as we do now).  
@@ -1784,7 +1784,7 @@ class ResourceScheduler(Component):
                 # Otherwise, compute finish from dependencies.
                 else:
                     finish = _earliest_successor(t, _ancestor_finish(t))
-                    
+
                     # The finish derived from the earliest successor
                     # is *not* a fixed (user-specified) date.
                     if finish != None:
@@ -1881,7 +1881,7 @@ class ResourceScheduler(Component):
                     self.limits[t['owner']] = t['_calc_start'][0]
 
             self.taskStack.pop()
-            
+
             return t['_calc_start']
 
         # Schedule a task As Soon As Possible
@@ -1956,7 +1956,7 @@ class ResourceScheduler(Component):
                 # Otherwise, compute start from dependencies.
                 else:
                     start = _latest_predecessor(t, _ancestor_start(t))
-                    
+
                     # The start derived from the latest predecessor is
                     # *not* a fixed (user-specified) date.
                     if start != None:
@@ -2006,10 +2006,10 @@ class ResourceScheduler(Component):
                     s += _calendarOffset(t, 1, s)
                     s += timedelta(hours=-1)
                     start = [s, start[1]]
-                
+
                 # Set the field
                 t['_calc_start'] = start
-                
+
             if t.get('_calc_finish') == None:
                 # If this ticket is closed, the finish is the actual finish.
                 if t.get('_actual_finish') and options.get('useActuals'):
@@ -2233,7 +2233,7 @@ class TicketRescheduler(Component):
         self.pm = TracPM(self.env)
 
         self.scheduleFields = []
-        
+
         # Built-in fields that can affect scheduling
         self.scheduleFields = ['owner', 'priority', 'milestone']
 
@@ -2322,7 +2322,7 @@ class TicketRescheduler(Component):
                            list(ids))
             owners = [row[0] for row in cursor]
             return set(owners)
-            
+
         # Helper to find open tickets by owners
         # @param owners set of owner strings from tickets
         # @return a set of ticket ID strings for tickets owned by owners
@@ -2495,7 +2495,7 @@ class TicketRescheduler(Component):
         for t in tickets:
             ticketsByID[t['id']] = t
 
-        
+
         # Fairly often tickets is empty after pruning but setting up
         # the link field names is cheap and traversing an empty list
         # is basically free.
@@ -2524,7 +2524,7 @@ class TicketRescheduler(Component):
             # (Include only children still in the set)
             t['children'] = [cid for cid in t['children'] 
                              if cid in ticketsByID]
-                
+
             # Predecessors and successors
             for linkField in ['pred', 'succ']:
                 if linkFieldNames[linkField]:
@@ -2533,7 +2533,7 @@ class TicketRescheduler(Component):
                          if tid in ticketsByID]
 
         return tickets
-            
+
 
     # Query ticket table (and linked custom fields) for fields needed
     # to reschedule
@@ -2547,7 +2547,7 @@ class TicketRescheduler(Component):
         options['id'] = "|".join(ids)
 
         return self.pm.query(options, set())
-    
+
     ##
     # Update in-memory relationships because other plugins' ticket
     # change listeners may not have run yet so the database may be
@@ -2690,7 +2690,7 @@ class TicketRescheduler(Component):
                         if tid not in ticketsByID[ticket.id][fwdField]:
                             ticketsByID[ticket.id][fwdField].append(tid)
                             ticketsByID[tid][revField].append(ticket.id)
-            
+
 
     # Reschedule based on a ticket changing.  
     #
@@ -2888,7 +2888,7 @@ class TicketRescheduler(Component):
                                        ' newstart, newfinish)' + \
                                        ' VALUES %s' % valuesClause,
                                    values)
-                
+
                 end = datetime.now()
                 profile.append([ 'updating', len(toUpdate), end - start ])
 
@@ -2949,6 +2949,6 @@ class TicketRescheduler(Component):
                               ticket.id)
             self.rescheduleTickets(ticket, old_values)
 
-        
+
     def ticket_deleted(self, ticket):
         self.rescheduleTickets(ticket, {})

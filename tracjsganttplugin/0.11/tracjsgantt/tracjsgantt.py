@@ -311,8 +311,8 @@ All other macro arguments are treated as TracQuery specification (e.g., mileston
 
         rawtickets = self.pm.query(query_options, fields, self.req)
 
- 	# Do permissions check on tickets 
- 	tickets = [t for t in rawtickets  
+        # Do permissions check on tickets
+        tickets = [t for t in rawtickets
                    if 'TICKET_VIEW' in self.req.perm('ticket', t['id'])] 
 
         return tickets
