@@ -2505,7 +2505,7 @@ class TicketRescheduler(Component):
         # FIXME - this is a really gross and fragile way to do it but
         # it'll due for now.
         linkFieldNames = {}
-        for linkField in [ 'parent', 'pred', 'succ']:
+        for linkField in ['parent', 'pred', 'succ']:
             if not self.pm.isCfg(linkField):
                 linkFieldNames[linkField] = None
             elif self.pm.isField(linkField):
@@ -2527,8 +2527,9 @@ class TicketRescheduler(Component):
                 
             # Predecessors and successors
             for linkField in ['pred', 'succ']:
-                  t[linkFieldNames[linkField]] = \
-                        [tid for tid in t[linkFieldNames[linkField]] 
+                if linkFieldNames[linkField]:
+                    t[linkFieldNames[linkField]] = \
+                        [tid for tid in t[linkFieldNames[linkField]]
                          if tid in ticketsByID]
 
         return tickets
