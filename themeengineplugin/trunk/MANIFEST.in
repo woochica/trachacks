@@ -1,0 +1,6 @@
+
+include COPYING README
+graft themeengine/templates
+graft themeengine/htdocs
+graft themeengine/tests
+global-exclude *.pyc *.swp *.swo

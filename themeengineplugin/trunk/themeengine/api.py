@@ -69,6 +69,13 @@ class ThemeEngineSystem(Component):
             raise ThemeNotFound(self.theme_name)
     theme = property(theme)
 
+    def is_active_theme(self, name):
+        active_theme = self.theme
+        if self.env[ThemeEngineSystem] is None or active_theme is None:
+            return name in ('default', None, '')
+        else:
+            return active_theme['name'] == name
+
     providers = ExtensionPoint(IThemeProvider)
     
     def __init__(self):
