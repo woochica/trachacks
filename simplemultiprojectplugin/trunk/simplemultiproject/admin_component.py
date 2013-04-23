@@ -87,7 +87,11 @@ class SmpComponentAdminPanel(Component):
                 elif req.args.get('cancel'):
                     req.redirect(req.href.admin(category, page))
 
-            Chrome(self.env).add_wiki_toolbars(req)
+            try:
+                Chrome(self.env).add_wiki_toolbars(req)
+            except AttributeError:
+                pass
+
             data = {'view': 'detail', 'component': comp, 'component_projects': cprojects, 'projects': all_projects }
 
         else:

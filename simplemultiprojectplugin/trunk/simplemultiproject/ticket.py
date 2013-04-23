@@ -9,9 +9,24 @@ from simplemultiproject.model import *
 from trac.util.text import to_unicode
 from trac.core import *
 from trac.web.api import ITemplateStreamFilter, IRequestFilter
-from trac.web.chrome import add_script, add_script_data
+from trac.web.chrome import add_script
 from trac.ticket import model
 from operator import itemgetter
+
+try:
+    from trac.web.chrome import add_script_data
+except ImportError:
+    # Backported from 0.12
+    def add_script_data(req, data={}, **kwargs):
+        """Add data to be made available in javascript scripts as global variables.
+    
+        The keys in `data` and the keyword argument names provide the names of the
+        global variables. The values are converted to JSON and assigned to the
+        corresponding variables.
+        """
+        script_data = req.chrome.setdefault('script_data', {}) 
+        script_data.update(data)
+        script_data.update(kwargs) 
 
 class SmpTicketProject(Component):
     

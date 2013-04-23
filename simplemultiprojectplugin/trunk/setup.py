@@ -13,6 +13,7 @@ setup(
     },
     author = 'Christopher Paredes',
     author_email='jesuchristopher@gmail.com',
+    maintainer = "falkb",
     license='GPL',
     url='http://trac-hacks.org/wiki/SimpleMultiProject',
     description='Simple Project',
