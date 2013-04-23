@@ -89,11 +89,11 @@ class SimpleThemeAdminModule(Component):
         elif path_info == 'theme.css':
             req.send_file(os.path.join(self.env.path, 'htdocs', 'theme.css'), 'text/css')
         
-        raise HTTPNotFound
+        raise HTTPNotFound("The requested URL was not found on this server")
     
     def _send_screenshot(self, req, data, name):
         if name not in self.system.info:
-            raise HTTPNotFound('Invalid theme name "%s"', name)
+            raise HTTPNotFound("Invalid theme name '%s'", name)
         theme = self.system.info[name]
         
         if 'screenshot' in theme:
