@@ -35,7 +35,7 @@ class IThemeProvider(Interface):
         """Return a dict containing 0 or more of the following pairs:
         
          description::
-           A breif description of the theme.
+           A brief description of the theme.
          template::
            The name of the theme template file. 
          css::
@@ -69,13 +69,6 @@ class ThemeEngineSystem(Component):
             raise ThemeNotFound(self.theme_name)
     theme = property(theme)
 
-    def is_active_theme(self, name):
-        active_theme = self.theme
-        if self.env[ThemeEngineSystem] is None or active_theme is None:
-            return name in ('default', None, '')
-        else:
-            return active_theme['name'] == name
-
     providers = ExtensionPoint(IThemeProvider)
     
     def __init__(self):
@@ -100,6 +93,20 @@ class ThemeEngineSystem(Component):
 
     if lazy is not None:
         info = lazy(info)
+
+    def is_active_theme(self, name, provider=None):
+        try:
+            active_theme = self.theme
+        except ThemeNotFound:
+            not_found = True
+        else:
+            not_found = False
+        if not_found or self.env[ThemeEngineSystem] is None or \
+                active_theme is None:
+            return name in ('default', None, '')
+        elif active_theme['name'].lower() == name:
+            return provider is None or provider is active_theme['provider']
+        return False
 
     # IThemeProvider methods
     def get_theme_names(self):

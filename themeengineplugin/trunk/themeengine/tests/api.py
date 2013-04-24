@@ -10,9 +10,26 @@
 """Tests for the TracThemeEngine API"""
 import unittest
 
+from trac.core import Component, implements
 from trac.test import EnvironmentStub
 
-from themeengine.api import ThemeEngineSystem
+from themeengine.api import IThemeProvider, ThemeEngineSystem, ThemeBase
+
+class FullTheme(Component):
+    implements(IThemeProvider)
+
+    # IThemeProvider methods
+    def get_theme_names(self):
+        yield 'full'
+        yield 'quick'
+        
+    def get_theme_info(self, name):
+        return dict(disable_trac_css=True)
+
+
+class QuickTheme(ThemeBase):
+    disable_trac_css = True
+
 
 class ThemeSystemTestCase(unittest.TestCase):
     """Unit tests covering the theme system API
@@ -20,7 +37,6 @@ class ThemeSystemTestCase(unittest.TestCase):
     def setUp(self):
         self.env = env = EnvironmentStub(enable=['trac.*', 'themeengine.*'])
         self.themesys = ThemeEngineSystem(env)
-        env.config.set('theme', 'theme', 'default')
 
     def tearDown(self):
         pass
@@ -28,9 +44,40 @@ class ThemeSystemTestCase(unittest.TestCase):
     def test_default_theme_active(self):
         """Test theme and is_active_theme for default theme
         """
+        env = self.env
+
+        env.config.set('theme', 'theme', 'default')
         self.assertTrue(self.themesys.is_active_theme('default'))
-        self.assertFalse(self.themesys.is_active_theme('themefull'))
-        self.assertFalse(self.themesys.is_active_theme('themebase'))
+        self.assertTrue(self.themesys.is_active_theme('default', 
+                                                      self.themesys))
+        self.assertFalse(self.themesys.is_active_theme('full'))
+        self.assertFalse(self.themesys.is_active_theme('quick'))
+
+        env.config.remove('theme', 'theme')
+        self.assertTrue(self.themesys.is_active_theme('default'))
+        self.assertFalse(self.themesys.is_active_theme('full'))
+        self.assertFalse(self.themesys.is_active_theme('quick'))
+
+    def test_custom_theme_active(self):
+        """Test theme and is_active_theme for custom theme
+        """
+        env = self.env
+
+        env.config.set('theme', 'theme', 'full')
+        self.assertFalse(self.themesys.is_active_theme('default'))
+        self.assertTrue(self.themesys.is_active_theme('full'))
+        self.assertTrue(self.themesys.is_active_theme('full',
+                                                      FullTheme(env)))
+        self.assertFalse(self.themesys.is_active_theme('quick'))
+
+        env.config.set('theme', 'theme', 'quick')
+        self.assertFalse(self.themesys.is_active_theme('default'))
+        self.assertFalse(self.themesys.is_active_theme('full'))
+        self.assertTrue(self.themesys.is_active_theme('quick'))
+        self.assertTrue(self.themesys.is_active_theme('quick',
+                                                      QuickTheme(env)))
+        self.assertFalse(self.themesys.is_active_theme('quick',
+                                                      FullTheme(env)))
 
 
 def test_suite():
