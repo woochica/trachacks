@@ -69,6 +69,7 @@ class ThemeSystemTestCase(unittest.TestCase):
         self.assertTrue(self.themesys.is_active_theme('full',
                                                       FullTheme(env)))
         self.assertFalse(self.themesys.is_active_theme('quick'))
+        self.assertFalse(QuickTheme(self.env).is_active_theme)
 
         env.config.set('theme', 'theme', 'quick')
         self.assertFalse(self.themesys.is_active_theme('default'))
@@ -76,6 +77,7 @@ class ThemeSystemTestCase(unittest.TestCase):
         self.assertTrue(self.themesys.is_active_theme('quick'))
         self.assertTrue(self.themesys.is_active_theme('quick',
                                                       QuickTheme(env)))
+        self.assertTrue(QuickTheme(env).is_active_theme)
         self.assertFalse(self.themesys.is_active_theme('quick',
                                                       FullTheme(env)))
 

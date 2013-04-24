@@ -158,6 +158,16 @@ class ThemeBase(Component):
     theme = css = htdocs = screenshot = False
     colors = schemes = disable_trac_css = False
 
+    @property
+    def is_active_theme(self):
+        themesys = self.env[ThemeEngineSystem]
+        if themesys is None:
+            return False
+        active_theme = themesys.theme
+        if active_theme is None:
+            return False
+        return active_theme.get('provider') is self
+
     # IThemeProviderMethods
     def get_theme_names(self):
         name = self.__class__.__name__
