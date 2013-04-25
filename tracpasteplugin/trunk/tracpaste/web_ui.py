@@ -325,7 +325,7 @@ class BloodhoundPaste(Component):
                         is_active = active_theme['name'] == this_theme_name
                     return is_active
 
-                bhtheme.theme.BloodhoundTheme.is_active_theme = is_active_theme
+                bhtheme.theme.BloodhoundTheme.is_active_theme = property(is_active_theme)
 
             self.bhtheme = self.env[bhtheme.theme.BloodhoundTheme]
 
@@ -335,7 +335,7 @@ class BloodhoundPaste(Component):
         return handler
 
     def post_process_request(self, req, template, data, content_type):
-        if self.bhtheme is not None and self.bhtheme.is_active_theme() and \
+        if self.bhtheme is not None and self.bhtheme.is_active_theme and \
                 template == 'pastebin.html':
             return 'bh_pastebin.html', data, content_type
         else:
