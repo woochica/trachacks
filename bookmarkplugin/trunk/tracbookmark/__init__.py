@@ -13,7 +13,7 @@ import re
 from genshi.builder import tag
 from trac.config import ListOption
 from trac.core import Component, implements
-from trac.db import DatabaseManager, Table, Column
+from trac.db import Column, DatabaseManager, Table
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionError
 from trac.resource import (
@@ -214,7 +214,6 @@ class BookmarkSystem(Component):
                     try:
                         name = get_resource_summary(self.env, resource)
                     except ResourceNotFound:
-                        name = ''
                         class_ = 'missing ' + realm
                     else:
                         from trac.ticket.model import Ticket
