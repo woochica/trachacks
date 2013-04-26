@@ -5,7 +5,14 @@
 }
 
 div.toparea {
-  border: 1px solid #FFFFFF;
+  width: 100%;
+  display: table;
+}
+
+div#select_section_form, div#new_section_form {
+  display: table-cell;
+  float: left;
+  width: 49.5%;
 }
 
 #ini_settings_list span.editor-note, #ini_settings_list tr.editor-note td {
