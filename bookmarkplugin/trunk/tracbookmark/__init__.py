@@ -9,6 +9,7 @@
 # you should have received as part of this distribution.
 
 import re
+from fnmatch import fnmatchcase
 
 from genshi.builder import tag
 from trac.config import ListOption
@@ -168,7 +169,7 @@ class BookmarkSystem(Component):
         # Show bookmarks context menu except when on the bookmark page
         if self._authorize(req) and not self.match_request(req):
             for path in self.bookmarkable_paths:
-                if re.match(path, req.path_info):
+                if fnmatchcase(req.path_info, path):
                     self.render_bookmarker(req)
                     break
         return template, data, content_type
