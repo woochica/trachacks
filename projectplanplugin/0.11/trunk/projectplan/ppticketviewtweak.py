@@ -19,6 +19,7 @@ from datetime import datetime
 class PPTicketViewTweak(Component):
   '''
     BETA: computes links on ticket dependency entries
+    while using ProjectPlanPlugin in the standard configuration this component is NEEDED
   '''
   implements(ITemplateStreamFilter, IRequestFilter)
   
@@ -41,8 +42,14 @@ class PPTicketViewTweak(Component):
       TODO
     '''
     if self.useTable:
-      req.args.__delitem__('field_'+self.field)
-      req.args.__delitem__('field_'+self.fieldrev)
+      try:
+        req.args.__delitem__('field_%s' % (self.field,))
+      except:
+        pass
+      try:
+        req.args.__delitem__('field_%s' % (self.fieldrev,))
+      except:
+        pass
       self.dataaccess.commit()
   
   # ITemplateStreamFilter methods

@@ -551,13 +551,17 @@ class TicketTableAvsB(RenderImpl):
     
     # create HTML table
     table = tag.table( class_="data pptableticketperday" , border = "1", style = 'width:auto;')
-    
+    baseurl = self.macroenv.tracenv.href()
+    if baseurl == "":
+      self.macroenv.tracenv.log.warning("baseurl was empty: '%s'" % (baseurl,))
+    self.macroenv.tracenv.log.warning((repr(self.macroenv.tracreq)))
+
     # create HTML table head
     thead = tag.thead()
     tr = tag.tr()
     tr( tag.th("%s vs %s" % (self.rowtype,self.coltype) ) )
     for colkey in self.cols :
-      tr( tag.th(tag.h4(tag.a( tableKeyPrettyPrint(colkey), href=self.macroenv.tracenv.href()+('/query?%s&order=%s' % ( tableKeyQueryParameter(self.coltype, colkey),self.rowtype)) )),title="%s is %s" % (self.coltype, tableKeyPrettyPrint(colkey) ) ) ) # first line with all colkeys
+      tr( tag.th(tag.h4(tag.a( tableKeyPrettyPrint(colkey), href='%s/query?%s&order=%s' % ( baseurl, tableKeyQueryParameter(self.coltype, colkey),self.rowtype)) ),title="%s is %s" % (self.coltype, tableKeyPrettyPrint(colkey) ) ) ) # first line with all colkeys
     if self.showsummarypiechart:
       tr( tag.th(tag.h4( "Ticket Overview" ) ) )  
     thead(tr)
@@ -577,7 +581,7 @@ class TicketTableAvsB(RenderImpl):
       tr = tag.tr( class_=class_ ) # new line
       
       td = tag.td() # new cell
-      td(tag.h5(tag.a( tableKeyPrettyPrint(rowkey), href=self.macroenv.tracenv.href()+('/query?%s&order=%s' % ( tableKeyQueryParameter( self.rowtype,rowkey),self.coltype)) )),title="%s is %s" % (self.rowtype, tableKeyPrettyPrint(rowkey) ) ) # first cell contains row key
+      td(tag.h5(tag.a( tableKeyPrettyPrint(rowkey), href='%s/query?%s&order=%s' % ( baseurl, tableKeyQueryParameter( self.rowtype,rowkey),self.coltype)) ),title="%s is %s" % (self.rowtype, tableKeyPrettyPrint(rowkey) ) ) # first cell contains row key
       tr(td)
       for colkey in self.cols :
         td = tag.td()
