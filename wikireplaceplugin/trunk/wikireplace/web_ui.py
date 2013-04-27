@@ -37,7 +37,7 @@ class WikiReplaceModule(Component):
             
     def render_admin_panel(self, req, cat, page, path_info):
         wikipages = urllib.unquote_plus(req.args.get('wikipages',''));
-        parts = wikipages.split("\n");
+        parts = wikipages.splitlines();
 
         data = {
             'find': urllib.unquote_plus(req.args.get('find','')),
