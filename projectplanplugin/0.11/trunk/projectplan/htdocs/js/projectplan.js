@@ -988,13 +988,14 @@ function ppAddTooltip( sel ){
  		bodyHandler: function() { 
 			$("#tooltip div.ticketcache").each(function(i){ $(this).hide();} ); // hide all
 			myid = "ticket"+this.href.split("/").pop(); 
+			mybaseurl = $("#mainnav li").first().find("a").first().attr("href");
 			
 			if( $("#"+myid).size() != 0 ){
 			  $("#"+myid).fadeIn(); // to increase performance: if exists, only show the previous result
 			  $("#tooltip .url").hide();
 			} else {
 			  $("#tooltip .url").fadeIn();
-			  $("#tooltip").append("<div id='"+myid+"' class='ticketcache'><img src='"+this.href+"/../../chrome/projectplan/images/loading.gif'> "+this.href+"</div>");
+			  $("#tooltip").append("<div id='"+myid+"' class='ticketcache'><img src='"+mybaseurl+"/../chrome/projectplan/images/loading.gif'> "+this.href+"</div>");
 			  $("#"+myid).load(this.href+" #ticket"); // works on Trac 0.12, Trac 1.0
 			  $("#tooltip .url").fadeOut();
 			}
@@ -1010,6 +1011,17 @@ function ppAddTooltip( sel ){
  		extraClass: "tooltip2"
 	});
 }
+
+function ppAddTooltipWrapper(element_selector){
+	ppAddTooltip(element_selector+" .project_image .ticket_inner a"); // project image, @deprecated
+	ppAddTooltip(element_selector+" .projectplanrender .ticket_inner a"); // project plan general
+	// remove all title values
+//  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
+	ppAddTooltip(element_selector+" .properties a.ticket_inner"); // ticket view
+	ppAddTooltip(element_selector+" .pptickettable a.ticket"); // ticket view in report table
+ 
+}
+
 
 
 function ppInitializeTablesorter() {
@@ -1112,13 +1124,7 @@ var ppStore = new Array();
 
 
 $(document).ready(function () {
- 	ppAddTooltip(".project_image .ticket_inner a"); // project image, @deprecated
-	ppAddTooltip(".projectplanrender .ticket_inner a"); // project plan general
-	// remove all title values
-//  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
-	ppAddTooltip(".properties a.ticket_inner"); // ticket view
-	ppAddTooltip(".pptickettable a.ticket"); // ticket view in report table
-	
+	ppAddTooltipWrapper("body");
 	// normalize the ticket fields; ids are published by the ppticketviewtweak component
 	ppAddTicketListChecks("#ppDependenciesField");
 	ppAddTicketListChecks("#ppDependenciesReverseField");

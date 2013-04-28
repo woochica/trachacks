@@ -257,6 +257,8 @@ class TicketsPerUserDay(RenderImpl):
         
         # only show the highlight, if the date is in the past
         color_class = ''
+        if calendar[segment]['date'] == None:
+          self.macroenv.tracenv.log.warning("TicketsPerUserDay.render: calendar[%s][date] is null" % (segment,))
         if  self.showAggregatedTicketState()  and  calendar[segment]['date'] < currentDate:
           # determine color 
           state_new = 1

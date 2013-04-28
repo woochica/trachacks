@@ -658,7 +658,7 @@ class PPConfiguration():
                          }.get(n, fallback) # fallback to prevent images if unknown state
 
   # non-list attribute getter/setter
-  def get( self, n ):
+  def get( self, n, default=None ):
     '''
       Single Option Value Getter: get value for Key n
     '''
@@ -669,7 +669,12 @@ class PPConfiguration():
       else:
         return val
     else:
-      raise Exception( "Option %s not found" % n )
+      logmessage = "Option %s not found" % n 
+      if default == None:
+        raise Exception( logmessage )
+      else:
+        self.env.log.warning( logmessage )
+        return default
   
   def get_ticket_custom( self, option_name ):
     '''
@@ -833,6 +838,11 @@ class PPConfiguration():
       How many tickets should be get at maximum during one query?\n
       If not all tickets appear within your ticket representations, then increase this number.\n
       The default of Trac is 100, while the default of ProjectPlanPlugin is 1000.
+      """ )
+
+    self.flatconf[ 'use_ajax_for_fetching_reports' ] = PPBooleanSwitchOption(
+      self.env, 'use_ajax_for_fetching_reports', u'disabled', catid='General', groupid='Query', doc="""
+        BETA (since v1.1.0): Improve feeled performance by calling the reports asynchronously via AJAX. If longer reports or large report graphics slow down the load time of the Trac pages, then ENABLE this.
       """ )
 
     conf_key = 'enable_mastertickets_compatiblity_mode'

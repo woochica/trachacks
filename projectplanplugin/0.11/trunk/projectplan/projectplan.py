@@ -32,6 +32,8 @@ from ppcreatedependingtickettweak import *
 from pputil import *
 
 from pkg_resources import resource_filename
+import hashlib
+import urllib
 
 class PPConfigAdminPanel(Component):
     implements(IAdminPanelProvider)
@@ -202,6 +204,42 @@ class PPCacheContentProvider(Component):
       return req.send_file( accessname, get_mimetype( accessname ) )
 
 
+class PPService(Component):
+    '''
+      BETA: Project Plan Service: A service to call for reports standalone. 
+      Currently used for ajaxified version of ProjectPlan plugin (see the configuration panel).
+      Call $your_trac_url/projectplan_service/$configuration_string_as_in_the_macro_definition
+        to fetch a rendered report.
+    '''
+    implements(IRequestHandler)
+    
+    service_name = 'projectplan_service'
+    
+    # IRequestHandler methods
+    def match_request( self, req ):
+      '''
+        match basicly everything, check later for existence
+      '''
+      return re.match( '/%s/(.*)$' % (self.service_name,), req.path_info )
+
+    def process_request( self, req ):
+      '''
+        serve the request and send HTML code that can be shown
+      '''
+      content = urllib.unquote_plus(req.path_info.split('/%s/' % (self.service_name,))[-1])
+      macroenv = PPEnv( self.env, req, content )
+      html = ProjectPlanGenerator.get_html(macroenv, req, content).generate().render()
+      #time.sleep(5) # for testing slow machines
+      try:
+        req.send_response(200)
+        req.send_header('Content-Type', 'text/html')
+        req.send_header('Content-Length', len(html))
+        req.end_headers()
+        req.write(html)
+      except Exception,e:
+	raise(e)
+
+
 class PPChangeTicketProvider(Component):
     implements(IRequestHandler)
     '''
@@ -328,58 +366,119 @@ class ProjectPlanMacro(WikiMacroBase):
     def get_htdocs_dirs( self ):
       return [ ( 'projectplan', resource_filename( __name__, 'htdocs' ) ) ]
 
-    def get_time( self, starttime, macroenv ):
+    def expand_macro( self, formatter, name, content ):
       '''
-        computes the computing time of the macro
-        returned as HTML construct to be embeeded in HTML output
+        Wiki Macro Method which generates a Genshi Markup Stream
+      '''
+      # conf = PPConfiguration( self.env )
+      macroenv = PPEnv( self.env, formatter.req, content )
+      
+      addExternFiles( formatter.req )
+      # needed because of ajax call while showing ticket details (on mouseover)
+      add_stylesheet( formatter.req, 'common/css/ticket.css' )
+      
+      if macroenv.conf.get( 'use_ajax_for_fetching_reports', 'enabled' ) == 'enabled':
+        # HTML block with AJAX load block
+        return ProjectPlanGenerator.get_ajax( macroenv, formatter.req, content )
+      else:
+        # HTML block embedding finished rendered report block
+        return ProjectPlanGenerator.get_html( macroenv, formatter.req, content )
+
+                 
+class ProjectPlanGenerator(object):
+  
+  @classmethod
+  def get_ajax(self, macroenv, req, content):
+    macroenv.tracenv.log.debug("AJAX: %s" % (content,) )
+    
+    myhash = hashlib.md5(content).hexdigest()
+    ajax_url = "/projectplan_service/%s" % (urllib.quote_plus(content),)
+    
+    return tag.div(
+      tag.div(
+        tag.div(
+	  tag.a(tag.img(
+		src="%s/%s" % (macroenv.tracreq.href.chrome( 'projectplan', macroenv.PPConstant.RelDocPath ), 'loading.gif' ), 
+		style='display:none;margin-right:2ex;margin-top:3ex;',
+		title='computing projectplan report'
+	      ),
+	      tag.span("project report is loading"),
+	      href=ajax_url,
+	      style='padding:3ex;text-align:center;'
+	  ),
+          id="%s_inner" % myhash,
+          style="height:8ex;"
+        ),
+        id=myhash,
+        style="height:8ex"
+        ),
+      tag.script('''
+        $(document).ready(function(){
+	  $.ajax({
+	      url: "%s",
+	      cache: false,
+	      beforeSend: function(){
+	        $("#%s img").show();
+	      },
+	      success: function(data){
+	        $("#%s").hide().after(data);
+	        ppAddTooltipWrapper("#%s");
+	      },
+	      error: function(jqXHR, textStatus, errorThrown){
+	        $("#%s a").first().html("Error: report (of ProjectPlan) could not be rendered.").css({padding:"0",margin:"auto"});
+	        $("#%s").addClass("system-message").css({height:"auto"});
+	        $("#%s_inner").css({height:"auto"});
+	      }
+	  });
+	});
+        ''' % (ajax_url, myhash, myhash, myhash, myhash, myhash, myhash )) 
+    )
+
+  @classmethod
+  def get_html(self, macroenv, req, content):
+    def get_time( starttime, macroenv ):
+      '''
+	computes the computing time of the macro
+	returned as HTML construct to be embeeded in HTML output
       '''
       duration = (datetime.now()-starttime).microseconds/1000;
       macroenv.tracenv.log.debug('macro computation time: %s ms: %s ' % (duration,macroenv.macrokw) )
       return(tag.span('It took %s ms to generate this visualization. ' % (duration,), class_ = 'ppstat' ))
-
-    def expand_macro( self, formatter, name, content ):
-        '''
-          Wiki Macro Method which generates a Genshi Markup Stream
-        '''
-        macrostart = datetime.now()
-        
-        addExternFiles( formatter.req )
-        # needed because of ajax call while showing ticket details
-        add_stylesheet( formatter.req, 'common/css/ticket.css' )
-        
-        if content == None:
-          content = ''
-        macroenv = PPEnv( self.env, formatter.req, content )
-        ts = ppFilter( macroenv ).get_tickets()
-        
-        if macroenv.get_args('ppforcereload') == '1':
-          noteForceReload = tag.span('The visualization was recreated.', class_ = 'ppforcereloadinfo' )
-        else:
-          noteForceReload = tag.span()
-        
-        renderer = ppRender( macroenv )
-        
-        # show text in the headline
-        moretitle = ''
-        #macroenv.tracenv.log.warning('macroenv label=%s (%s)' % (macroenv.get_args('label'),macroenv.tracreq.args))
-        if macroenv.macrokw.get('label', None) != None: # use parameter: label 
-          moretitle = macroenv.macrokw.get('label', '')
-        else:
-          moretitle = renderer.getHeadline() # get the pre-defined headline
-          
-        
-        return tag.div(
-                 tag.h5( tag.a( name=macroenv.macroid )( '%s' % (moretitle,)  ) ),
-                 renderer.render( ts ),
-                 tag.div(  
-                         tag.div( 
-			    self.get_time(macrostart, macroenv),
-			    noteForceReload,
-			    tag.span(tag.a('Force recreation of the visualization.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
-			    )
-                         ),
-                 style=macroenv.macrokw.get('style', '') # CSS style
-                 )
-                 #tag.div( id = 'ppstat' ) )
-
-
+    
+    #macroenv = PPEnv( env, req, content )
+    macrostart = datetime.now()
+    if content == None:
+      content = ''
+    
+    ts = ppFilter( macroenv ).get_tickets()
+    
+    if macroenv.get_args('ppforcereload') == '1':
+      noteForceReload = tag.span('The visualization was recreated.', class_ = 'ppforcereloadinfo' )
+    else:
+      noteForceReload = tag.span()
+    
+    renderer = ppRender( macroenv )
+    
+    # show text in the headline
+    moretitle = ''
+    macroenv.tracenv.log.debug('macroenv label=%s (%s)' % (macroenv.get_args('label'),macroenv.tracreq.args))
+    if macroenv.macrokw.get('label', None) != None: # use parameter: label 
+      moretitle = macroenv.macrokw.get('label', '')
+    else:
+      moretitle = renderer.getHeadline() # get the pre-defined headline
+      
+    return tag.div(
+	      tag.h5( tag.a( name=macroenv.macroid )( '%s' % (moretitle,)  ) ),
+	      renderer.render( ts ),
+	      tag.div(  
+		      tag.div( 
+			get_time(macrostart, macroenv),
+			noteForceReload,
+			tag.span(tag.a('Force recreation of the visualization.', href='?ppforcereload=1', class_ = 'ppforcereload' ) )
+			)
+		      ),
+	      style=macroenv.macrokw.get('style', '') # CSS style
+	      )
+	      #tag.div( id = 'ppstat' ) )
+    
+  
