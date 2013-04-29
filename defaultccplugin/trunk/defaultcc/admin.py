@@ -69,12 +69,15 @@ class DefaultCCAdmin(Component):
 
     def pre_process_request(self, req, handler):
         if 'TICKET_ADMIN' in req.perm and req.method == 'POST' and req.path_info.startswith('/admin/ticket/components'):
-            if req.args.get('save'):
-                cc = DefaultCC(self.env, req.args.get('old_name'))
-                cc.delete()
-                cc.name = req.args.get('name')
-                cc.cc = req.args.get('defaultcc')
-                cc.insert()
+            if req.args.get('save') and req.args.get('name'):
+                old_name = req.args.get('old_name')
+                new_name = req.args.get('name')
+                old_cc = DefaultCC(self.env, old_name)
+                new_cc = DefaultCC(self.env, new_name)
+                new_cc.cc = req.args.get('defaultcc')
+                if old_name == new_name or not model.Component(self.env, new_name).exists:
+                    old_cc.delete()
+                    new_cc.insert()
             elif req.args.get('add') and req.args.get('name'):
                 name = req.args.get('name')
                 try:
