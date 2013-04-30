@@ -6,7 +6,7 @@ import sys
 try:
     import ldap
 except ImportError:
-    print """The python-ldap package isn't installed on your system 
+    print """The python-ldap package isn't installed on your system
 (`import ldap` failed).  I would just put this in `install_requires`, but
 I *do* have python-ldap on my system and I get this:
 
@@ -20,7 +20,7 @@ No local packages or download links found for python-ldap==2.3.1
 error: Could not find suitable distribution for Requirement.parse('python-ldap==2.3.1')
 }}}
 
-Well, that's awful.  If you know how to fix this, please file a ticket at 
+Well, that's awful.  If you know how to fix this, please file a ticket at
 http://trac-hacks.org/newticket?component=TracLdapAuthPlugin&owner=k0s
 """
     sys.exit(1)
@@ -34,6 +34,8 @@ setup(
 
     author = 'Noah Kantrowitz',
     author_email = 'coderanger@yahoo.com',
+    maintainer = 'Nikolaos Papagrigoriou',
+    maintainer_email = 'nikolaos@papagrigoriou.com',
     description = 'An AccountManager password store that uses python-ldap to check against an LDAP server.',
     license = 'BSD',
     keywords = 'trac plugin accountmanager',
@@ -41,7 +43,7 @@ setup(
     classifiers = [
         'Framework :: Trac',
     ],
-    
+
     install_requires = ['TracAccountManager' ],
 
     entry_points = {
