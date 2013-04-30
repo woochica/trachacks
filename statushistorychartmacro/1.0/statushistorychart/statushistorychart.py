@@ -129,14 +129,14 @@ class Macro(Component):
         for no, tid in enumerate(sorted(tickets)):
             if not too_many_tickets or tickets[tid][-1][3] != 'closed':
                 void, time, void, state = tickets[tid][-1]  # @UnusedVariable
-                index = state not in status_list and default_status or status_list.index(state)
+                index = state in status_list and status_list.index(state) or default_status
                 data.append({'points': {'show': True, 'radius': 8, 'color': no},
                              'label': tid,
                              'data': [[time / 1000, index]]})
         # lines
         for no, tid in enumerate(sorted(tickets)):
             data.append({'color': no, 'label': tid,
-                         'data': [[time / 1000, state not in status_list and default_status or status_list.index(state)]
+                         'data': [[time / 1000, state in status_list and status_list.index(state) or default_status]
                                   for void, time, void, state in tickets[tid]]})  # @UnusedVariable
         from trac import __version__ as VERSION
         if VERSION[0:1] != '0':
