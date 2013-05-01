@@ -1,12 +1,17 @@
 # -*- coding: utf-8 -*-
 
+import shutil
+import tempfile
 import unittest
+from StringIO import StringIO
 from pkg_resources import parse_version
 
 from trac import __version__ as TRAC_VERSION
+from trac.attachment import Attachment
 from trac.test import EnvironmentStub, Mock, MockPerm
 from trac.ticket.model import Ticket
 from trac.web.href import Href
+from trac.wiki.model import WikiPage
 
 from tracbookmark import BookmarkSystem
 
@@ -15,6 +20,7 @@ class BookmarkSystemTestCase(unittest.TestCase):
 
     def setUp(self):
         self.env = EnvironmentStub(default_data=True)
+        self.env.path = tempfile.mkdtemp()
         self.req = Mock(base_path='/trac.cgi', chrome={}, args={}, session={},
                         abs_href=Href('/trac.cgi'), href=Href('/trac.cgi'),
                         locale='', perm=MockPerm(), authname='admin', tz=None)
@@ -22,6 +28,7 @@ class BookmarkSystemTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.env.reset_db()
+        shutil.rmtree(self.env.path)
 
     def test_format_name_default_page(self):
         data = self.bmsys._format_name(self.req, '/')
@@ -49,7 +56,7 @@ class BookmarkSystemTestCase(unittest.TestCase):
         self.assertEquals('wiki', data['class_'])
         self.assertEquals('/trac.cgi/wiki/Page/SubPage?version=42',
                           data['href'])
-        self.assertEquals('Page/SubPage?version=42', data['linkname'])
+        self.assertEquals('Page/SubPage@42', data['linkname'])
         self.assertEquals('', data['name'])
 
     def test_format_name_new_ticket(self):
@@ -125,6 +132,52 @@ class BookmarkSystemTestCase(unittest.TestCase):
         self.assertEquals('[42]', data['linkname'])
         self.assertEquals('Changeset 42', data['name'])
 
+    def test_format_name_attachment(self):
+        attachment = Attachment(self.env, 'wiki', 'WikiStart')
+        attachment.insert('foo.txt', StringIO(''), 1)
+        data = self.bmsys._format_name(self.req,
+                                       '/attachment/wiki/WikiStart/foo.txt')
+        self.assertEquals('attachment', data['class_'])
+        self.assertEquals('/trac.cgi/attachment/wiki/WikiStart/foo.txt',
+                          data['href'])
+        self.assertEquals("Attachment 'foo.txt' in WikiStart",
+                          data['linkname'])
+        self.assertEquals('', data['name'])
+
+    def test_format_name_missing_attachment(self):
+        data = self.bmsys._format_name(self.req,
+                                       '/attachment/wiki/WikiStart/foo.txt')
+        self.assertEquals('missing attachment', data['class_'])
+        self.assertEquals(None, data['href'])
+        self.assertEquals("Attachment 'foo.txt' in WikiStart",
+                          data['linkname'])
+        self.assertEquals('', data['name'])
+
+    def test_format_name_attachment_list(self):
+        data = self.bmsys._format_name(self.req,
+                                       '/attachment/wiki/WikiStart')
+        self.assertEquals('attachment', data['class_'])
+        self.assertEquals('/trac.cgi/attachment/wiki/WikiStart/',
+                          data['href'])
+        self.assertEquals("Attachments of WikiStart",
+                          data['linkname'])
+        self.assertEquals('', data['name'])
+
+    def test_format_name_attachment_add(self):
+        page = WikiPage(self.env, 'WikiStart')
+        page.text = ' '
+        page.save('joe', '', '::1')
+        url = '/attachment/wiki/WikiStart?action=new' + \
+              '&attachfilebutton=Attach+file'
+        data = self.bmsys._format_name(self.req, url)
+        self.assertEquals('attachment', data['class_'])
+        self.assertEquals('/trac.cgi' + url, data['href'])
+        self.assertEquals("Add Attachment to WikiStart",
+                          data['linkname'])
+        self.assertEquals('', data['name'])
+
+    def test_format_name_attachment_list(self):
+        pass
 
 def suite():
     suite = unittest.TestSuite()

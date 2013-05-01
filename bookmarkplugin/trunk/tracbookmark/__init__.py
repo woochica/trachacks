@@ -12,6 +12,7 @@ import re
 from fnmatch import fnmatchcase
 
 from genshi.builder import tag
+from trac.attachment import Attachment
 from trac.config import ListOption
 from trac.core import Component, implements
 from trac.db import Column, DatabaseManager, Table
@@ -19,13 +20,19 @@ from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor, PermissionError
 from trac.resource import (
     Resource, ResourceNotFound, get_resource_description,
-    get_resource_shortname, get_resource_summary
+    get_resource_name, get_resource_shortname, get_resource_summary,
+    resource_exists
 )
 from trac.util import get_reporter_id
+from trac.util.translation import _
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import (
     ITemplateProvider, add_ctxtnav, add_notice, add_script, add_stylesheet
 )
+try:
+    from trac.web.api import arg_list_to_args, parse_arg_list
+except ImportError:
+    from compat import arg_list_to_args, parse_arg_list
 
 
 class BookmarkSystem(Component):
@@ -203,65 +210,88 @@ class BookmarkSystem(Component):
     def _format_name(self, req, url):
         linkname = url
         name = ""
-
-        path = url.split('/')
-        realm = path[1]
-        class_ = realm
-        if len(path) >= 3:
-            resource = Resource(realm, path[2])
-            if resource:
-                if realm == 'ticket':
-                    linkname = get_resource_shortname(self.env, resource)
-                    try:
-                        name = get_resource_summary(self.env, resource)
-                    except ResourceNotFound:
-                        class_ = 'missing ' + realm
-                    else:
-                        from trac.ticket.model import Ticket
-                        class_ = Ticket(self.env, resource.id)['status'] + \
-                            ' ' + class_
-                elif realm == 'milestone':
-                    linkname = get_resource_shortname(self.env, resource)
-                elif realm == 'wiki':
-                    resource = Resource(realm, '/'.join(path[2:]))
-                    linkname = get_resource_shortname(self.env, resource)
-                elif realm == 'report':
-                    linkname = "{%s}" % path[2]
-                    name = self._format_report_name(path[2])
-                elif realm == 'changeset':
-                    rev = path[2]
-                    parent = Resource('source', '/'.join(path[3:]))
-                    resource = Resource(realm, rev, False, parent)
-                    linkname = "[%s]" % rev
-                    name = get_resource_description(self.env, resource)
-                elif realm == 'browser':
-                    parent = Resource('source', path[2])
-                    resource = Resource('source', '/'.join(path[3:]), False, parent)
-                    linkname = get_resource_description(self.env, resource)
-                    name = get_resource_summary(self.env, resource)
-                elif realm == 'attachment':
-                    parent = Resource(path[2], '/'.join(path[3:-1]))
-                    resource = Resource(realm, path[-1], False, parent)
-                    linkname = get_resource_shortname(self.env, resource)
-                    name = get_resource_summary(self.env, resource)
-                else:
-                    linkname = get_resource_shortname(self.env, resource)
-                    name = get_resource_summary(self.env, resource)
-        elif len(path) == 2 and path[1]:
-            linkname = path[1].capitalize()
-        else:
-            class_ = 'wiki'
-            linkname = 'WikiStart'
+        missing = False
 
         path_info = url
         query_string = ''
         idx = path_info.find('?')
         if idx >= 0:
             path_info, query_string = path_info[:idx], path_info[idx:]
-        if 'missing' not in class_:
-            href = req.href(path_info) + query_string
+        href = req.href(path_info) + query_string
+
+        args = arg_list_to_args(parse_arg_list(query_string.lstrip('?')))
+        version = args.get('version', False)
+
+        path = path_info.strip('/').split('/')
+        realm = path[0]
+        class_ = realm
+        if len(path) > 1:
+            resource = Resource(realm, path[1])
+            if resource:
+                if realm == 'ticket':
+                    linkname = get_resource_shortname(self.env, resource)
+                    try:
+                        name = get_resource_summary(self.env, resource)
+                    except ResourceNotFound:
+                        missing = True
+                    else:
+                        from trac.ticket.model import Ticket
+                        class_ = Ticket(self.env, resource.id)['status'] + \
+                            ' ' + class_
+                elif realm == 'milestone':
+                    linkname = get_resource_name(self.env, resource)
+                elif realm == 'wiki':
+                    resource = Resource(realm, '/'.join(path[1:]), version)
+                    linkname = get_resource_shortname(self.env, resource)
+                    if version:
+                        linkname += '@' + version
+                elif realm == 'report':
+                    linkname = "{%s}" % path[1]
+                    name = self._format_report_name(path[1])
+                elif realm == 'changeset':
+                    rev = path[1]
+                    parent = Resource('source', '/'.join(path[2:]))
+                    resource = Resource(realm, rev, False, parent)
+                    linkname = "[%s]" % rev
+                    name = get_resource_description(self.env, resource)
+                elif realm == 'browser':
+                    parent = Resource('source', path[1])
+                    resource = Resource('source', '/'.join(path[2:]), False, parent)
+                    linkname = get_resource_description(self.env, resource)
+                    name = get_resource_summary(self.env, resource)
+                elif realm == 'attachment':
+                    # Assume a file and check existence
+                    parent = Resource(path[1], '/'.join(path[2:-1]))
+                    resource = Resource(realm, path[-1], parent=parent)
+                    linkname = get_resource_name(self.env, resource)
+                    if not resource_exists(self.env, resource):
+                        # Assume an attachment list page and check existence
+                        parent = Resource(path[1], '/'.join(path[2:]))
+                        if resource_exists(self.env, parent):
+                            resource = Resource(realm, parent=parent)
+                            linkname = get_resource_name(self.env, resource)
+                            if 'action=new' in query_string:
+                                linkname = _("Add Attachment to %(id)s"
+                                             % {'id': parent.id})
+                            elif not query_string:
+                                # Trailing slash needed for Trac < 1.0, t:#10280
+                                href += '/'
+                        else:
+                            # Assume it's a missing attachment
+                            missing = True
+                else:
+                    linkname = get_resource_shortname(self.env, resource)
+                    name = get_resource_summary(self.env, resource)
+        elif len(path) == 1 and path[0]:
+            linkname = path[0].capitalize()
         else:
+            class_ = 'wiki'
+            linkname = 'WikiStart'
+
+        if missing:
             href = None
+            class_ = 'missing ' + realm
+
         return {
             'class_': class_,
             'href': href,
@@ -321,7 +351,8 @@ class BookmarkSystem(Component):
         if req.environ.get('QUERY_STRING'):
             return "?".join([req.path_info, req.environ.get('QUERY_STRING')])
         else:
-            return req.path_info
+            # Stripping trailing slash is needed for attachment pages t:#10280
+            return req.path_info.rstrip('/')
 
     def _is_ajax(self, req):
         return req.get_header('X-Requested-With') == 'XMLHttpRequest'
