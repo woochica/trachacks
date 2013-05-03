@@ -11,53 +11,50 @@
 
   <body>
     <h2>PrivateReports</h2>
-	<form method="post">
-		<fieldset>
-			<legend>
-				<label>
-					Reports
-				</label>
-			</legend>
-		
-			<div class="field">
-				<label>
-					<select name="report_id">
-						<option py:for="report in reports" value='${report[1]}' selected='${report[1] == show_report or None}'>${report[0]}</option>
-					</select>
-					<input type="submit" name="show" value="show" />
-				</label>
-			</div>	
-		</fieldset>
-		<fieldset>
-			<legend>
-				<label>
-					Permissions
-				</label>
-			</legend>
-		
-			<div class="field">
-				<label>
-					<select name="report_permissions" multiple="1" size="5">
-						<option py:for="report_permission in report_permissions" value='${report_permission}'>${report_permission}</option>
-					</select>
-					<input type="submit" name="remove" value="remove" />
-				</label>
-			</div>
-		</fieldset>
-		<fieldset>
-			<legend>
-				<label>
-					New Permission
-				</label>
-			</legend>
-			<div class="field">
-				<label>
-					<input type="text" name="newpermission" value="" />
-					
-					<input type="submit" name="add" value="add" />
-				</label>
-			</div>
-		</fieldset>
-	</form>
+    <form method="post">
+        <fieldset>
+            <legend>
+                <label>
+                    Reports
+                </label>
+            </legend>
+            <div class="field">
+                <label>
+                    <select name="report_id">
+                        <option py:for="report in reports" value='${report[1]}' selected='${report[1] == show_report or None}'>${report[0]}</option>
+                    </select>
+                    <input type="submit" name="show" value="show" />
+                </label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>
+                <label>
+                    Permissions
+                </label>
+            </legend>
+            <div class="field">
+                <label>
+                    <select name="report_permissions" multiple="1" size="5">
+                        <option py:for="report_permission in report_permissions" value='${report_permission}'>${report_permission}</option>
+                    </select>
+                    <input type="submit" name="remove" value="remove" />
+                </label>
+            </div>
+        </fieldset>
+        <fieldset>
+            <legend>
+                <label>
+                    New Permission
+                </label>
+            </legend>
+            <div class="field">
+                <label>
+                    <input type="text" name="newpermission" value="" />
+                    <input type="submit" name="add" value="add" />
+                </label>
+            </div>
+        </fieldset>
+    </form>
   </body>
 </html>
