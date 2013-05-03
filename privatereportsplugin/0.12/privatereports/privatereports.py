@@ -36,21 +36,14 @@ class PrivateReports(Component):
     ### IRequestFilter methods
 
     def pre_process_request(self, req, handler):
-        if handler is not ReportModule(self.env):
+        if not isinstance(handler, ReportModule):
             return handler
-        url = req.path_info
-        user = req.authname
-        find = url.rfind('/')
-        report_id = url[find+1:]
-        try:
-            report_id = int(report_id)
-        except:
-            return handler
-        if self._has_permission(user, report_id):
+        report_id = req.args.get('id')
+        if not report_id or self._has_permission(req.authname, report_id):
             return handler
         else:
             raise TracError("You don't have permission to access this report",
-                            'No Permission')
+                            "No Permission")
 
     def post_process_request(self, req, template, data, content_type):
         return template, data, content_type
