@@ -9,12 +9,12 @@
 # are also available at http://trac.edgewall.org/wiki/TracLicense.
 #
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
     name='PrivateReports',
     version='0.4',
-    packages=['privatereports'],
+    packages=find_packages(),
 
     author='Michael Henke',
     author_email='michael.henke@she.net',
@@ -36,7 +36,7 @@ setup(
 
     entry_points={
         'trac.plugins': [
-            'privatereports = privatereports',
+            'privatereports = PrivateReports.privatereports',
         ],
     },
 )
