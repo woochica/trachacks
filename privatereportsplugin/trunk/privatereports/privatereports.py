@@ -129,7 +129,7 @@ class PrivateReports(Component):
     def environment_needs_upgrade(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute('SELECT report_id, permission FROM private_report')
+            cursor.execute("SELECT report_id, permission FROM private_report")
             return False
         except:
             return True
@@ -137,7 +137,7 @@ class PrivateReports(Component):
     def upgrade_environment(self, db):
         cursor = db.cursor()
         try:
-            cursor.execute('DROP TABLE IF EXISTS private_report')
+            cursor.execute("DROP TABLE IF EXISTS private_report")
             db.commit()
         except:
             cursor.connection.rollback()
@@ -193,8 +193,8 @@ class PrivateReports(Component):
     def get_permission_actions(self):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT permission FROM private_report GROUP BY permission'
-        cursor.execute(sql)
+        cursor.execute("""
+            SELECT permission FROM private_report GROUP BY permission""")
         report_perms = []
         try:
             for permission in cursor.fetchall():
@@ -225,8 +225,8 @@ class PrivateReports(Component):
         groups = []
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = "SELECT action FROM permission WHERE username = \'%s\'" % (user,)
-        cursor.execute(sql)
+        cursor.execute("""
+            SELECT action FROM permission WHERE username = %s""", (user,))
         rows = cursor.fetchall()
         for action in rows:
             if action[0].isupper():
@@ -236,27 +236,24 @@ class PrivateReports(Component):
     def _get_reports(self):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT title, id FROM report'
-        cursor.execute(sql)
+        cursor.execute("SELECT title, id FROM report")
         reports = cursor.fetchall()
         return reports
 
     def _insert_report_permission(self, report_id, permission):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = """
+        cursor.execute("""
             INSERT INTO private_report(report_id, permission)
-            VALUES(%d,'%s')""" % \
-            (int(report_id), str(permission))
-        cursor.execute(sql)
+            VALUES(%s, %s)""", (int(report_id), str(permission)))
         db.commit()
 
     def _alter_report_permissions(self, report_id, permissions):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'DELETE FROM private_report WHERE report_id=%d' % \
-            (int(report_id),)
-        cursor.execute(sql)
+        cursor.execute("""
+            DELETE FROM private_report WHERE report_id=%s
+            """, (int(report_id),))
         db.commit()
         for permission in permissions:
             self._insert_report_permission(report_id, permission)
@@ -264,10 +261,9 @@ class PrivateReports(Component):
     def _get_report_permissions(self, report_id):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = """
+        cursor.execute("""
             SELECT permission FROM private_report
-            WHERE report_id=%d GROUP BY permission""" % (int(report_id),)
-        cursor.execute(sql)
+            WHERE report_id=%s GROUP BY permission""", (int(report_id),))
         report_perms = []
         try:
             for permission in cursor.fetchall():
