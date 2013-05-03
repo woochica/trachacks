@@ -36,7 +36,7 @@ setup(
 
     entry_points={
         'trac.plugins': [
-            'privatereports = PrivateReports.privatereports',
+            'PrivateReports = privatereports.privatereports',
         ],
     },
 )
