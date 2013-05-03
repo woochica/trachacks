@@ -58,11 +58,20 @@ class Macro(Component):
    }}}"""
 
     def expand_macro(self, formatter, name, content, args=None):
-        # add scripts
+        # Utility methods
         def lte_ie8(req):
             user_agent = formatter.req.get_header('user-agent')
             msie = user_agent.find('MSIE ')
             return (msie != -1) and user_agent[msie + 5:msie + 6] in ['6', '7', '8']
+
+        def after_AS(string):
+            index = string.find(' AS ')
+            return index > 0 and string[index + 4:] or string
+
+        def before_AS(string):
+            index = string.find(' AS ')
+            return index > 0 and string[:index] or string
+        # add scripts
         if lte_ie8(formatter.req):
             add_script(formatter.req, "statushistorychart/js/flot/excanvas.js")
         add_script(formatter.req, "statushistorychart/js/flot/jquery.flot.js")
@@ -140,7 +149,13 @@ class Macro(Component):
             if ticket is None:
                 ticket = tickets[change[tid]] = []  # create new slot and use it
             ticket.append(list(change))
-        # group status_list
+        # generate status_list splitted, {a, b+c, d} => {a:0, b+c:1, b:1, c:1, d:2}
+        status_list_splitted = {}
+        for index, status in enumerate(map(before_AS, status_list)):
+            status_list_splitted[status] = index
+            if status.find('+') >= 0:
+                for each in status.split('+'):
+                    status_list_splitted[each] = index
 #        groupstats = self.compmgr[DefaultTicketGroupStatsProvider]
 #        ticket_groups = groupstats._get_ticket_groups()
 #        for group in ticket_groups:
@@ -155,19 +170,19 @@ class Macro(Component):
         for no, tid in enumerate(sorted(tickets)):
             if not too_many_tickets or tickets[tid][-1][3] != 'closed':
                 void, time, void, state = tickets[tid][-1]  # @UnusedVariable
-                index = (state in status_list and [status_list.index(state)] or [default_status])[0]
+                index = status_list_splitted.get(state, default_status)
                 data.append({'points': {'show': True, 'radius': 8, 'color': no},
                              'label': tid,
                              'data': [[time / 1000, index]]})
         # lines
         for no, tid in enumerate(sorted(tickets)):
             data.append({'color': no, 'label': tid,
-                         'data': [[time / 1000, (state in status_list and [status_list.index(state)] or [default_status])[0]]
+                         'data': [[time / 1000, status_list_splitted.get(state, default_status)]
                                   for void, time, void, state in tickets[tid]]})  # @UnusedVariable
         from trac import __version__ as VERSION
         if VERSION[0:1] != '0':
         # render for trac 1.0 or later
-            add_script_data(formatter.req, {'statushistorychart_yaxis': status_list})
+            add_script_data(formatter.req, {'statushistorychart_yaxis': map(after_AS, status_list)})
             add_script_data(formatter.req, {'statushistorychart_data': data})
             return '<div id="statushistorychart" style="width: 800px; height: 400px;"></div>'
         else:  # if trac < 1.0 or earlier
@@ -178,4 +193,5 @@ class Macro(Component):
             var statushistorychart_data = %s;
             </script>
             <div id="statushistorychart" style="width: 800px; height: 400px;"></div>""" \
-            % (to_json(status_list), to_json(data))
+            % (to_json(map(after_AS, status_list)), to_json(data))
+
