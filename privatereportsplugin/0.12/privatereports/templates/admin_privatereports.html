@@ -11,7 +11,7 @@
 
   <body>
     <h2>PrivateReports</h2>
-    <form method="post">
+    <form action="${href.admin('privatereports')}" method="post">
         <fieldset>
             <legend>
                 <label>
@@ -35,7 +35,7 @@
             </legend>
             <div class="field">
                 <label>
-                    <select name="report_permissions" multiple="1" size="5">
+                    <select name="report_permissions" multiple="multiple" size="5">
                         <option py:for="report_permission in report_permissions" value='${report_permission}'>${report_permission}</option>
                     </select>
                     <input type="submit" name="remove" value="remove" />
