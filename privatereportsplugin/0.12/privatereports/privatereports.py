@@ -11,6 +11,7 @@
 
 from types import ListType, StringTypes
 
+from trac import __version__ as trac_version
 from trac.admin import IAdminPanelProvider
 from trac.core import Component, ExtensionPoint, TracError, implements
 from trac.env import IEnvironmentSetupParticipant
@@ -74,7 +75,7 @@ class PrivateReports(Component):
                 report_id = req.args.get('report_id')
                 try:
                     report_id = int(report_id)
-                except:
+                except ValueError:
                     req.redirect(self.env.href.admin.reports('privatereports'))
                 if req.args.get('add'):
                     new_permission = req.args.get('newpermission')
@@ -154,16 +155,22 @@ class PrivateReports(Component):
     def filter_stream(self, req, method, filename, stream, data):
         if not filename == 'report_list.html':
             return stream
-        user = req.authname
         stream_buffer = StreamBuffer()
 
-        def check_report_permission():
+        from pkg_resources import parse_version
+        if parse_version(trac_version) < parse_version('1.0'):
             delimiter = '</tr>'
+            selector = '//tbody/tr'
+        else:
+            delimiter = '</div>'
+            selector = '//div[@class="reports"]/div'
+
+        def check_report_permission():
             report_stream = str(stream_buffer)
             reports_raw = report_stream.split(delimiter)
             report_stream = ''
             for row in reports_raw:
-                if row is not None and len(row) != 0:
+                if row is not None and len(row) != 0 and 'View report' in row:
                     # determine the report id
                     s = row.find('/report/')
                     if s == -1:
@@ -172,10 +179,12 @@ class PrivateReports(Component):
                     if e == -1:
                         continue
                     report_id = row[s+len('/report/'):e]
-                    if self._has_permission(user, report_id):
+                    if self._has_permission(req.authname, report_id):
                         report_stream += row
+                elif 'View report' in row:
+                    report_stream += row
             return HTML(report_stream)
-        return stream | Transformer('//tbody/tr') \
+        return stream | Transformer(selector) \
             .copy(stream_buffer) \
             .replace(check_report_permission)
 
