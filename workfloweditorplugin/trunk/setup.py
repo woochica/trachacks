@@ -12,7 +12,7 @@ from setuptools import find_packages, setup
 
 setup(
     name='WorkflowEditorPlugin',
-    version='1.1.6',
+    version='1.2.0',
     description="Edit Ticket Workflow",
     url="http://trac-hacks.org/wiki/WorkflowEditorPlugin",
     author="Takanori Suzuki",

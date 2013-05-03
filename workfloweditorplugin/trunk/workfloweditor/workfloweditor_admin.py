@@ -34,7 +34,7 @@ class WorkflowEditorAdmin(Component):
 
     # IAdminPanelProvider method
     def get_admin_panels(self, req):
-        if req.perm.has_permission('TRAC_ADMIN'):
+        if req.perm.has_permission('TICKET_ADMIN'):
             # localization
             locale = LocaleUtil().get_locale(req)
             if (locale == 'ja'):
@@ -44,7 +44,7 @@ class WorkflowEditorAdmin(Component):
 
     # IAdminPanelProvider method
     def render_admin_panel(self, req, cat, page, path_info):
-        req.perm.assert_permission('TRAC_ADMIN')
+        req.perm.assert_permission('TICKET_ADMIN')
         add_script(req, 'workfloweditor/js/grid/grid.locale-en.js')
         add_script(req, 'workfloweditor/js/grid/grid.base.js')
         add_script(req, 'workfloweditor/js/grid/grid.common.js')
