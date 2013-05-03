@@ -57,8 +57,8 @@ class PrivateReports(Component):
 
     def get_admin_panels(self, req):
         if req.perm.has_permission('TRAC_ADMIN'):
-            yield ('privatereports', 'PrivateReports',
-                   'privatereports', 'PrivateReports')
+            yield ('reports', 'Reports',
+                   'privatereports', 'Private Reports')
 
     def render_admin_panel(self, req, cat, page, path_info):
         if page == 'privatereports':
@@ -71,12 +71,13 @@ class PrivateReports(Component):
                 try:
                     report_id = int(report_id)
                 except:
-                    req.redirect(self.env.href.admin('privatereports'))
+                    req.redirect(self.env.href.admin.reports('privatereports'))
                 if req.args.get('add'):
                     new_permission = req.args.get('newpermission')
                     if new_permission is None or \
                             new_permission.isupper() is False:
-                        req.redirect(self.env.href.admin('privatereports'))
+                        req.redirect(
+                            self.env.href.admin.reports('privatereports'))
                     self._insert_report_permission(report_id, new_permission)
                     data['report_permissions'] = \
                         self._get_report_permissions(report_id) or ''
@@ -84,7 +85,8 @@ class PrivateReports(Component):
                 elif req.args.get('remove'):
                     arg_report_permissions = req.args.get('report_permissions')
                     if arg_report_permissions is None:
-                        req.redirect(self.env.href.admin('privatereports'))
+                        req.redirect(
+                            self.env.href.admin.reports('privatereports'))
                     report_permissions = \
                         self._get_report_permissions(report_id)
                     report_permissions = set(report_permissions)
@@ -94,7 +96,8 @@ class PrivateReports(Component):
                     elif type(arg_report_permissions) == ListType:
                         to_remove.update(arg_report_permissions)
                     else:
-                        req.redirect(self.env.href.admin('privatereports'))
+                        req.redirect(
+                            self.env.href.admin.reports('privatereports'))
                     report_permissions = report_permissions - to_remove
                     self._alter_report_permissions(report_id,
                                                    report_permissions)
