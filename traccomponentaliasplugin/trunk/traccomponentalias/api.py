@@ -7,11 +7,11 @@
 # you should have received as part of this distribution.
 
 from trac.core import Component, implements
-from trac.ticket.api import ITicketChangeListener
+from trac.ticket.api import ITicketManipulator
 import re
 
 class TracComponentAlias(Component):
-    implements(ITicketChangeListener)
+    implements(ITicketManipulator)
 
     def __init__(self):
         self.defin_patt = re.compile(r'(\w+)\.(\w+)')
@@ -28,27 +28,17 @@ class TracComponentAlias(Component):
         
     def _update_component(self, ticket, calias):
         if self._validate(calias['custom_field'], ticket, calias):
-            with self.env.db_transaction as db:
-                cursor = db.cursor()
-                cursor.execute("update ticket set component = %s where id = %s",
-                               (calias['alias'], ticket.id))
-                        
-    def ticket_created(self, ticket):
+            ticket.values['component'] = calias['alias']
+
+    def prepare_ticket(self, req, ticket, fields, actions):
+        pass
+
+    def validate_ticket(self, req, ticket):
         for v in self._calias.keys():
             calias = self._calias[v]
             self._update_component(ticket, calias)
-        
-    def ticket_changed(self, ticket, comment, author, old_values):
-        for v in self._calias.keys():
-            calias = self._calias[v]
-            if calias['custom_field'] in old_values \
-            and 'status' in ticket.values \
-            and ticket.values['status'] != 'closed':
-                self._update_component(ticket, calias)
+        return []
 
-    def ticket_deleted(self, ticket):
-        pass
-        
     def _get_calias_config(self):
         config = self.config['component_alias']
         calias = {}
