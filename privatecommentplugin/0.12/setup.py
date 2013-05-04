@@ -8,30 +8,31 @@
 # you should have received as part of this distribution.
 #
 
-from setuptools import setup
+from setuptools import find_packages, setup
 
 setup(
-    name='privatecomments',
+    name='PrivateComments',
     version='0.4',
-    packages=['privatecomments'],
+    packages=find_packages(),
 
     author='Michael Henke',
     author_email='michael.henke@she.net',
-    description="A trac plugin that lets you create comments which are only visible for users with a special permission",
-    license="GPL",
+    description="""A trac plugin that lets you create comments which are
+        only visible for users with a special permission""",
+    license="BSD 3-Clause",
 
     keywords='trac plugin security ticket comment group',
     url='http://trac-hacks.org/wiki/PrivateCommentPlugin',
 
-    classifiers = [
+    classifiers=[
         'Framework :: Trac',
     ],
 
-    install_requires = ['Trac'],
+    install_requires=['Trac'],
 
-    entry_points = {
+    entry_points={
         'trac.plugins': [
-            'privatecomments = privatecomments.privatecomments',
+            'PrivateComments = privatecomments.privatecomments',
         ],
     },
 )
