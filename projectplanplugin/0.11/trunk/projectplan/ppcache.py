@@ -2,7 +2,7 @@
 
 import os
 import shutil
-import md5
+from hashlib import md5 # deprecated: import md5
 import ConfigParser
 import copy
 import StringIO
@@ -69,7 +69,7 @@ class ppMD5HashObject(ppHashObject):
       Initialize additional md5 Object.
     '''
     ppHashObject.__init__(self)
-    self.md5o = md5.new()
+    self.md5o = md5()
 
   def hexDigestLen( self ):
     '''
