@@ -12,7 +12,7 @@ from setuptools import setup
 
 setup(
     name='privatecomments',
-    version='0.3',
+    version='0.4',
     packages=['privatecomments'],
 
     author='Michael Henke',

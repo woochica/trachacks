@@ -8,7 +8,7 @@
 #
 
 from trac.config import Option
-from trac.core import *
+from trac.core import Component, implements
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.ticket.web_ui import TicketModule
@@ -41,7 +41,8 @@ class PrivateComments(Component):
         'privatecomments',
         'css_class_private_comment_marker',
         default='private_comment_marker',
-        doc='The name of the css class for the \"this is a private comment\" -label')
+        doc="""The name of the css class for the 'this is a private comment'
+               label""")
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -138,14 +139,16 @@ class PrivateComments(Component):
 
         # determine if the user has the permission to see private comments
         perms = PermissionSystem(self.env)
-        has_private_permission = self.private_comment_permission in perms.get_user_permissions(user)
+        has_private_permission = \
+            self.private_comment_permission in perms.get_user_permissions(user)
 
         # Remove private comments from Ticket Page
         if filename == 'ticket.html':
             buf = StreamBuffer()
 
             def check_comments():
-                delimiter = '<div xmlns="http://www.w3.org/1999/xhtml" class="change" id="trac-change-'
+                delimiter = '<div xmlns="http://www.w3.org/1999/xhtml" ' + \
+                            'class="change" id="trac-change-'
 
                 comment_stream = str(buf)
                 # split the comment_stream to get single comments
@@ -167,12 +170,14 @@ class PrivateComments(Component):
 
                     # if the user has the permission to see the comment
                     # the comment_code will be appended to the comment_stream
-                    comment_private = self._is_comment_private(ticket_id, comment_id)
+                    comment_private = self._is_comment_private(ticket_id,
+                                                               comment_id)
 
                     if comment_private:
                         comment_code = comment_code.replace(
                             '<span class="threading">',
-                            '<span class="threading"> <span class="%s">this comment is private</span>'
+                            '<span class="threading"> <span class="%s">'
+                            'this comment is private</span>'
                             % str(self.css_class_private_comment_marker)
                         )
 
@@ -185,20 +190,24 @@ class PrivateComments(Component):
             stream |= Transformer('//div[@class="change" and @id]') \
                 .copy(buf).replace(check_comments)
 
-            # if the user has the private comment permission the checkboxes to change the private value will be added
+            # if the user has the private comment permission the checkboxes
+            # to change the private value will be added
             if has_private_permission:
-                input = tag.label(_("Private Comment:"),
-                                  tag.input(type='checkbox',
-                                            name='private_comment'))
-                stream |= Transformer('//h2[@id="trac-add-comment"]').after(input)
+                comment_box = tag.label(_("Private Comment:"),
+                                        tag.input(type='checkbox',
+                                                  name='private_comment'))
+                stream |= Transformer('//h2[@id="trac-add-comment"]') \
+                    .after(comment_box)
                 # Trac 1.0 and later:
-                # stream |= Transformer('//div[@id="trac-add-comment"]//fieldset').prepend(input)
+                # stream |= Transformer(
+                #   '//div[@id="trac-add-comment"]//fieldset').prepend(input)
 
         # Remove private comments from ticket RSS feed
         if filename == 'ticket.rss':
             comments = self._get_all_private_comments(ticket_id)
 
-            self.log.debug("Private Comments for Ticket %d: %s" % (ticket_id, comments))
+            self.log.debug("Private Comments for Ticket %d: %s"
+                           % (ticket_id, comments))
 
             for comment_id in comments:
                 stream |= Transformer('//item[%d]' % comment_id).remove()
