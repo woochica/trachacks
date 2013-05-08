@@ -1,4 +1,4 @@
-from trac.core import *
+from trac.core import Component, implements
 from trac.perm import PermissionSystem, IPermissionRequestor
 from trac.config import Option
 from trac.web.api import IRequestFilter, ITemplateStreamFilter
@@ -6,6 +6,7 @@ from trac.web.api import IRequestFilter, ITemplateStreamFilter
 from genshi.filters.transform import StreamBuffer
 from genshi.filters import Transformer
 from genshi.input import HTML
+
 
 class HideableQuery(Component):
 
@@ -21,7 +22,8 @@ class HideableQuery(Component):
         'hideable_query',
         'query_hidden_redirect',
         default='/report',
-        doc='The site to which the user will be redirected if he has not the query_permission and tries to access the query site')
+        doc="""The site to which the user will be redirected if he has not
+               the query_permission and tries to access the query site""")
 
     # IPermissionRequestor methods
     def get_permission_actions(self):
@@ -33,7 +35,8 @@ class HideableQuery(Component):
         if req.path_info.find('/query') == -1:
             return handler
 
-        if self.query_permission in PermissionSystem(self.env).get_user_permissions(req.authname):
+        if self.query_permission in \
+                PermissionSystem(self.env).get_user_permissions(req.authname):
             return handler
         else:
             if self.query_hidden_redirect == '':
@@ -47,28 +50,30 @@ class HideableQuery(Component):
 
     # ITemplateStreamFilter methods
     def filter_stream(self, req, method, filename, stream, data):
-        if filename != 'query.html' and filename != 'report_list.html' and filename != 'report_view.html':
+        if filename != 'query.html' and filename != 'report_list.html' and \
+                       filename != 'report_view.html':
             return stream
 
-        hasquerypermission = self.query_permission in PermissionSystem(self.env).get_user_permissions(req.authname)
+        has_query_permission = self.query_permission in \
+            PermissionSystem(self.env).get_user_permissions(req.authname)
 
         buffer = StreamBuffer()
 
         def replace_query_link():
-            if hasquerypermission:
+            if has_query_permission:
                 return buffer
             else:
                 return HTML('<div id="ctxtnav" class="nav"></div>')
 
         def replace_filter_box():
-            if hasquerypermission:
+            if has_query_permission:
                 return buffer
             else:
                 return HTML('')
 
         return stream | Transformer('//div[@id="ctxtnav" and @class="nav"]') \
-        .copy(buffer) \
-        .replace(replace_query_link).end() \
-        .select('//form[@id="query" and @method="post" and @action]') \
-        .copy(buffer) \
-        .replace(replace_filter_box)
+            .copy(buffer) \
+            .replace(replace_query_link).end() \
+            .select('//form[@id="query" and @method="post" and @action]') \
+            .copy(buffer) \
+            .replace(replace_filter_box)
