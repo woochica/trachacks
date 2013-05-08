@@ -1,3 +1,4 @@
+import types
 from trac.db import DatabaseManager
 
 def get_all(env, sql, *params):
@@ -29,7 +30,7 @@ def get_first_row(env, sql,*params):
         cur.execute(sql, params)
         data = cur.fetchone();
     except Exception, e:
-        env.log.error('There was a problem executing sql:%s \n \
+        env.log.exception('There was a problem executing sql:%s \n \
         with parameters:%s\nException:%s'%(sql, params, e));
     return data;
 
@@ -49,13 +50,19 @@ def execute_in_trans(env, *args):
         @env.with_transaction()
         def fn(db):
             cur = db.cursor()
-            for sql, params in args:
-                c_sql[0] = sql
-                c_params[0] = params
-                cur.execute(sql, params)
+            for thing in args:
+                if isinstance(thing, types.FunctionType): 
+                    c_sql[0] = thing
+                    c_params[0] = None
+                    thing()
+                else :
+                    c_sql[0] = thing[0]
+                    c_params[0] = thing[1]
+                    cur.execute(*thing)
     except Exception, e:
-        env.log.exception('There was a problem executing sql:%s \n \
-    with parameters:%s\nException:%s'%(c_sql[0], c_params[0], e));
+        msg = 'There was a problem executing sql:%s \n \
+    with parameters:%s\nException:%s'%(c_sql[0], c_params[0], e)
+        env.log.exception(msg);
         result = e
     return result
 
@@ -133,7 +140,8 @@ class ResultSet:
         else:
             print ("rs.value Type Failed col:%s  row:%s" % (type(col), type(row)))
    
-    def json_out(self):
+    def json_out(self, excluded_columns=None):
+        if not excluded_columns: excluded_columns = []
         json = "[%s]" % ',\r\n'. join(
             [("{%s}" % ','.join(
             ["'%s':'%s'" %
@@ -142,7 +150,9 @@ class ResultSet:
               replace('"','\\"').
               replace('\r','\\r').
               replace('\n','\\n'))
-             for (key, val) in self.columnMap.items()]))
+             for (key, val) in self.columnMap.items()
+             if key not in excluded_columns
+             ]))
              for row in self.rows])
         #mylog.debug('serializing to json : %s'% json)
         return json

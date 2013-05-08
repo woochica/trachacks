@@ -19,8 +19,8 @@
 
       <body>
 	<div class="estimate-page">
-	<form method="post" action="${estimate.href}" >
-	  <input type="hidden" name="id" value="${estimate.id}"/>
+	<form method="post" action="${estimate.href}" class="estimate-form" >
+	  <input id="estimate_id" type="hidden" name="id" value="${estimate.id}"/>
 	  
 	  <div id="content" class="estimate">
 	    <div id="messages" >
@@ -28,14 +28,25 @@
 		<div class="message" >$item</div>
 	      </py:for>
 	    </div>
+            <div class="copy-block" py:if="estimate.copyurl">
+              <a class="buttonlink" href="${estimate.copyurl}">Copy This Estimate</a>
+              <div class="killfloat"></div>
+            </div>
 	    <div class="reset">
+              <button onclick="return if (confirm('Really Load Data, overwriting any changes')) loadPersistedPage();" class="Load">
+                Load Saved Client Data</button><br />
+              <!-- 
+                 <button onclick="return persistPage();" class="save">
+		Save Client Data (happens automatically)</button><br />
+                 -->
 	      <button onclick="return resetPage();" class="reset">
 		Reset Page (removes data stored in browser)</button><br />
 	      <p>
 		The estimator plugin attempts to use HTML5 storage so that you do not
 		lose any data from an in progress estimate because your browser crashed,
 		or you accidentally closed the tab. If you want to start a new estimate
-		you can click this button to remove the data saved in your browser
+		you can click this button to remove the data saved in your browser. If you
+                feel you might have lost anything you can try clicking the "Load Saved Client Data"
 	      </p>
 	    </div>
 	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
@@ -105,11 +116,27 @@
 	<button id="newrow" class="new" onclick="newLineItem();return false;">new row</button>
 	<button class="refresh" onclick="runCalculation(true);return false;">refresh calculations</button>
 	<br /><br />
-	<input class="save" type="submit" value="Save Estimate"
-	       onclick="saveEstimate(this);return false;" />
-	<input class="save go" type="submit" value="Save and Go to Ticket"
-	       onclick="$('#shouldRedirect').val('True');saveEstimate(this);return false;" />
-	<input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
+        <div class="save-buttons">
+	  <input class="save" type="submit" value="Save Estimate"
+	         onclick="saveEstimate(this);return false;" />
+          
+	  <input class="save go" type="submit" value="Save and Go to Ticket"
+	         onclick="$('#shouldRedirect').val('True');saveEstimate(this);return false;" />
+          <div class="split">
+            <input class="save split" type="submit" value="Save Estimate and Split Into Tickets"
+            onclick="$('#splitIntoTickets').val('True'); saveEstimate(this);return false;" />
+            <p>This will create a new ticket for each line item
+            (updating the line-items with a link to the new ticket, if
+            there is already a ticket link we will skip this line
+            item) The summary will be the first line or first 45
+            characters of each line item description.</p>
+          </div>
+
+	  <input type="hidden" id="shouldRedirect" name="shouldRedirect" value="False"/>
+	  <input type="hidden" id="splitIntoTickets" name="splitIntoTickets" value="False"/>
+          <div class="kill-float"></div>
+        </div>
+        <div class="kill-float"></div>
 	<div>
 	    <h3>Comment Preview</h3>
 	    <div id="estimateoutput" >
@@ -126,8 +153,7 @@
 	   var rateDefault = ${estimate.rate};
 	   var variabilityDefault = ${estimate.variability};
 	   var communicationDefault = ${estimate.communication};
-	   loadLineItems();
-	   if(lineItems.length == 0) newLineItem();
+           var saveImmediately = ${estimate.saveImmediately};
 	</script >
       </div>
 

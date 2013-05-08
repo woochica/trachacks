@@ -28,6 +28,9 @@ button:hover{background-color:#FFC}
 
 div.reset { float:right; margin-right:100px; width:320px;}
 div.reset p {font-size:.8em;}
+div.copy-block { float:right; margin-right:100px; width:320px; margin-bottom:10px; }
+.buttonlink { border:1px solid #00A; color:#00A; padding:3px; float:left; }
+.killfloat, .kill-float,.clearer{clear:both; font-size:0; line-height:0;}
 
 input[type=submit].save, button.save, input[type=submit].save:hover, button.save:hover
 { background: url('accept.png') no-repeat 2px center #FFE; 
@@ -43,3 +46,9 @@ td.buttons{width:150px; border:0 none transparent;}
 .estimateBody{width:98%;}
 .estimate-page{width:800px;}
 
+
+.estimate-diff { overflow-x: auto; }
+.estimate-diff .diff { width: 100em; }
+
+.save-buttons > * { float:left; margin: 0 5px;}
+.save-buttons .split { border:1px solid blue; padding:3px; width:300px; }

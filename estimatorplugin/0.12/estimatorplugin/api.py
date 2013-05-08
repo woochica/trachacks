@@ -1,12 +1,10 @@
-import re
-import dbhelper
-from webui import *
-from macro_provider import *
-
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 
-dbversion = 4
+from estimatorplugin import dbhelper
+
+
+dbversion = 5
 dbkey = 'EstimatorPluginDbVersion'
 
 
@@ -68,6 +66,10 @@ class EstimatorSetupParticipant(Component):
         if ver < 4:
             self.log.debug('Adding save date to estimates (Version 3)')
             success = success and dbhelper.execute_in_trans(self.env, (""" ALTER TABLE estimate ADD COLUMN saveepoch int ; """,[]))
+        if ver < 5:
+            self.log.debug("Adding ordinal column to estimate_line_item table.")
+            success = success and dbhelper.execute_in_trans(self.env,
+                                                            (""" ALTER TABLE estimate_line_item ADD COLUMN ordinal integer;""", []))
 
 
         # SHOULD BE LAST IN THIS FUNCTION

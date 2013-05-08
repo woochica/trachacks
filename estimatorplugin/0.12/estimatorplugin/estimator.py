@@ -10,12 +10,12 @@ INSERT INTO estimate (rate, variability, communication, tickets, comment, diffco
 VALUES(%s,%s,%s,%s,%s,%s,%s,%s)
 """
 lineItemInsert = """
-INSERT INTO estimate_line_item (estimate_id, description, low, high, id)
-VALUES (%s,%s,%s,%s,%s)
+INSERT INTO estimate_line_item (estimate_id, description, low, high, ordinal, id)
+VALUES (%s,%s,%s,%s,%s,%s)
 """
 lineItemUpdate = """
 UPDATE estimate_line_item SET estimate_id=%s ,
-  description=%s, low=%s, high=%s
+  description=%s, low=%s, high=%s, ordinal=%s
 WHERE id=%s
 """
 estimateIdSql = "SELECT MAX(id) FROM estimate"
@@ -47,5 +47,5 @@ def getTextEstimate(env, id):
 
 estimateChangeTicketComment = """
 INSERT INTO ticket_change (ticket, time, author, field, oldvalue, newvalue)
-VALUES ( %s, %s, %s, 'comment', '', %s )
+VALUES ( %s, %s, %s, 'comment', %s, %s )
 """

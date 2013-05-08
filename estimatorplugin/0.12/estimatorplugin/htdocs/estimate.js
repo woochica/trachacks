@@ -1,4 +1,21 @@
+/* -*- js2-basic-offset:2 -*- */
 var cn = ADW.Controls.createNode;
+
+var numval = function(selector, root){
+  var v = Number($.trim($(selector,root).val()));
+  if(isNaN(v)) return 0;
+  return v;
+};
+
+var ave_no_zero = function (x, y){
+  if(x && y && x!=0 && y!=0){
+    var val = (x+y)/2;
+    return Math.round(val * 1000)/1000;
+  }
+  else if (x && x !=0) return x;
+  else if (y && y !=0) return y;
+  return 0;
+};
 
 var blinkFade = function(m){
   m = $(m);
@@ -46,12 +63,10 @@ if(typeof(localStorage) != 'undefined'){
     if(arguments.length >= 2){
       var value = arguments[1];
       localStorage.setItem(key, value);
-      //if(typeof(console)!='undefined') console.log("Persisting:",key, arguments[1]);
       return value;
     }
     else {
       var v = localStorage.getItem(key);
-      //if(typeof(console)!='undefined') console.log("Loading persisting:",key, v);
       return v;
     }
   };
@@ -61,12 +76,14 @@ else{
 }
 
 var persistenceDate = function (){
-  return browserPersist('persistenceDate');
+  return Number(browserPersist('persistenceDate'));
 };
 
 var saveEstimate = function(ctl){
-  runCalculation();
-  ctl.form.submit();
+  runCalculation(true);
+  ctl = $(ctl);
+  if(ctl.is('form')) ctl.submit();
+  else ctl.parents('form').first().submit();
 };
 
 var persistPage = function(){
@@ -81,7 +98,10 @@ $(window).unload(persistPage);// persist before we leave
 
 var loadPersistedPage = function(){
   // our persisted data is older than the saved data
-  if( Number(lastSaved) >= Number(persistenceDate()) ) return;
+  if( Number(lastSaved) >= persistenceDate() ){
+    clearPageHistory();
+    return;
+  }
   var items = persistedLineItems();
   if(items) message("Loading unsaved data, dont forget to save");
   else return;
@@ -91,25 +111,24 @@ var loadPersistedPage = function(){
     var i, v, name;
     for(i=0 ; v=browserPersist(name=names[i]); i++) if(v)$('#'+name).val(v);
   }
-  loadPersistedFields(['tickets','rate', 'variability', 'communication']);
+  loadPersistedFields(['tickets', 'rate', 'variability', 'communication']);
 };
 
 var persistLineItems = function(){
-  var preparedLineItems = [];
   var li;
-  var valueLi = function(id, row){
-    var newli = {id:id};
-    newli.description = $("#description"+id,row).val();
-    newli.low = $("#low"+id,row).val();
-    newli.high = $("#high"+id,row).val();
-    return newli;
-  };
-  var i = 0;
-  $("#estimateBody tbody tr").each(function(){
-    var tr= $(this);
-    var rowid = tr.attr('rowid');
-    preparedLineItems[i++] = valueLi(rowid, tr);
-  });
+  var preparedLineItems = [];
+  $("#estimateBody tbody tr").each(
+    function(idx) {
+      var id = $(this).attr('rowid');
+      preparedLineItems.push(
+        {id:id,
+         ordinal:$("#ordinal"+id, this).val(),
+         description:$("#description"+id, this).val(),
+         low:$.trim($("#low"+id, this).val()) || 0,
+         high:$.trim($("#high"+id, this).val()) || 0
+        });
+    });
+  // console.log("Saving preparedLineItems:", preparedLineItems);
   browserPersist('lineItems', JSON.stringify(preparedLineItems));
 };
 
@@ -117,10 +136,6 @@ var persistedLineItems = function(){
   return JSON.parse(browserPersist('lineItems'));;
 };
 
-var uid = function (lineitem, str){
-   return str+lineitem.id;
-};
-var _uid = uid;// wrappable version;
 
 function enterMeansNothing(event){
    if(!event) event = window.event;
@@ -168,27 +183,42 @@ function swapUp(btn){
   while((row = row.parentNode).tagName != 'TR');
   row = $(row);
   $(row).prev().before(row);
-  persistPage();
+  runCalculation();
 }
+
 function swapDown(btn){
   var row = btn;
   while((row = row.parentNode).tagName != 'TR');
   row = $(row);
   $(row).next().after(row);
-  persistPage();
+  runCalculation();
 }
 
+function reOrdinalLineItemRows() {
+  $('#estimateBody tbody tr').each(
+    function (idx){
+      var id = $(this).attr('rowid');
+      $("#ordinal"+id,this).val(idx);
+    });
+}
+
+var uid = function (lineitem, str){
+   return str+lineitem.id;
+};
+var _uid = uid;// wrappable version;
+var currentIdx = 400000000;
 function lineItemRow (lineitem){
    var uid = function (str){
       return _uid(lineitem, str);
    };
-   var valFn = function(str){
+   var valFn = function(str, def){
       if (lineitem[str]) return lineitem[str];
-      else return "";
+      else return def || "";
    };
    var  tarea;
-   var tr = cn('tr', {'class':"line-item", "rowid":lineitem.id},
-	     cn('td', {'class':'textarea-holder'},
+   lineitem.id = lineitem.id || ++currentIdx;
+   var tr = cn('tr', {'class':"line-item", "rowid": lineitem.id},
+	     cn('td', {'class':'textarea-holder description-cell'},
 		tarea=cn('textarea', {id:uid("description"), name:uid("description"),
 				      style:"height: 68px; width:100%;", 'class':'item-description'},
                    valFn('description'))),
@@ -202,6 +232,7 @@ function lineItemRow (lineitem){
 			     onkeydown:'return enterMeansNewRow(event)'})),
 	     cn('td', {id:uid('ave'), 'class':"numberCell", valign:'top', style:"width:80px;"}),
 	     cn('td', {id:uid('buttons'), 'class':'buttons',valign:'top'},
+                cn('input', {id:uid('ordinal'), name:uid('ordinal'), type:'hidden', value: valFn('ordinal')}),
 	        cn('button',{onclick:'removeLineItem(this);return false;', 'class':'delete'},
 		'remove'),
 		cn('button',{onclick:'swapUp(this);return false;', 'class':'up'},'&nbsp;'),
@@ -211,14 +242,13 @@ function lineItemRow (lineitem){
    $(tarea).autoResize({extraSpace:20});
    return tr;
 }
-var currentIdx = 400000000;
 
 function newLineItem(){
    $('#estimateBody tbody tr').each(function(){
      var id = Number($(this).attr("rowid"));
      if(id > currentIdx) currentIdx = id;
    });
-   var lineItem = {id:++currentIdx};
+   var lineItem = {};
    var tr = lineItemRow(lineItem);
    $('#estimateBody tbody').append(tr);
    return tr;
@@ -238,26 +268,23 @@ var rate = makeNumberAccessor('rate', 1);
 var variability = makeNumberAccessor('variability', 1);
 var communication = makeNumberAccessor('communication', 1);
 
-var ave_no_zero = function (x, y){
-   if(x!=0 && y!=0){
-      var val = (x+y)/2;
-      return Math.round(val * 1000)/1000;
-   }
-   else if (x !=0) return x;
-   else return y;
+var numberWithCommas = function(x) {
+  var parts = x.toString().split(".");
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return parts.join(".");
 };
-
 
 var _runCalcWait;
 function runCalculation(immediate){
+  reOrdinalLineItemRows();
   function calc (){
     var item, lowTotal=0, highTotal=0, lowAdjusted, highAdjusted,
       lowCost, highCost;
     $("#estimateBody tbody tr").each(function(){
       var tr= $(this);
       var rowid = tr.attr('rowid');
-      var low = Number($("#low"+rowid,tr).val());
-      var high = Number($("#high"+rowid,tr).val());
+      var low = numval("#low"+rowid, tr);
+      var high = numval("#high"+rowid, tr);
       lowTotal+=low;
       highTotal+=high;
       $("#ave"+rowid,tr).html( ave_no_zero(low, high));
@@ -277,9 +304,9 @@ function runCalculation(immediate){
     $('#lowAdjusted').html( lowAdjusted );
     $('#highAdjusted').html( highAdjusted );
     $('#aveAdjusted').html( ave_no_zero(lowAdjusted, highAdjusted) );
-    $('#lowCost').html( lowCost );
-    $('#highCost').html( highCost );
-    $('#aveCost').html( ave_no_zero(lowCost, highCost) );
+    $('#lowCost').html( numberWithCommas(lowCost) );
+    $('#highCost').html( numberWithCommas(highCost) );
+    $('#aveCost').html( numberWithCommas(ave_no_zero(lowCost, highCost)) );
     preparePreview();
     persistPage();
   }
@@ -306,49 +333,151 @@ function removeFirstRow( elem ){
   return elem;
 }
 
-function prepareComment( preview ){
-   var s = "";
-   function walker ( node ){
-      for (var i=0, kid ; kid = node.childNodes[i]; i++ ){
-	 if(kid && kid.tagName){
-	    var tn = kid.tagName.toLowerCase();
-	    if (tn == 'table'){
-	       var print_sep = false;
-	       for(var row,j=0 ; row = kid.rows[j] ; j++){
-		  if (row.className == "lineItemheader") print_sep = true;
-		  if (row.className == "lineItemFooter") print_sep = false;
-		  for(var cell, k=0 ; cell = row.cells[k] ; k++){
-		     var val = (cell.textContent || cell.innerText);
-		     if(val) s += val + ((k==0 && print_sep) ? "\n|  " :
-					 (print_sep ? "  |  " : "\t"));
-		  }
-		  s += "\n";
-		  if(print_sep)s+="---------------------------\n";
-	       }
-	       s += "\n";
-	    }
-	 }
-      }
-   }
-   walker(preview);
+function fillLines(o){
+  var line; o.lines=[];
+  while(o.text && o.text.length>0){
+    line = "";
+    var i = o.width;
+    var nextLine = o.text.indexOf('\n');
+    var explicitNewline = nextLine >= 0 && nextLine < i;
+    var foundSpace=false;
+    if(explicitNewline) i = nextLine;
+    else if(i>o.text.length) i = o.text.length;
+    else{
+      while(!o.text[i].match(/\s/i)) i--;
+      foundSpace=true;
+    }
+    line += o.text.substr(0,i);
+    if(explicitNewline || foundSpace) i++;     // skip newlines/spaces that are now newlines
+    o.text = o.text.substr(i);   // remove already process text
+    // pad out to correct num of chars
+    while( line.length < o.width )
+      if (o.alignment == 'RIGHT') line = " "+line;
+      else line += " ";
+
+    o.lines.push(line);
+  }
+  return o;
+}
+
+function fillwith (width, c){
+  var w,out="";
+  width=width||10;
+  c = c || " ";
+  for(w=0 ; w < width ; w++)out+=c;
+  return out;
+}
+
+function fillTexts(texts, widths, alignments){
+  var parts=[], lineCnt=0, i, o;
+  for( i=0 , o={} ; o.text=texts[i] ; i++, o={} ){
+    o.width = widths[i] || 10;
+    o.alignment = alignments[i];
+    parts.push(fillLines(o));
+  }
+  var part, line, j,  w, out="", more=true;
+  // splice the chunks of line together, while there are
+  // more lines in any part
+  //return parts;
+  var limit=100;
+  while(more && (limit-- > 0)){
+    more = false;
+    for(i=0; part = parts[i]; i++){
+      line = part.lines.shift() || fillwith(o.width);
+      out +=  line + " | ";
+      more |= part.lines.length > 0;
+    }
+    out+="\n";
+  }
+  return out;
+};
+
+function cellTexts (cells){
+  return cells.map(function(){
+    var e = $(this);
+    if(e.has('input,textarea').length>0) return e.find('input,textarea').val();
+    return e.text();
+  });
+};
+function prepareComment( ){
+   var s = "\n";
+   $('#estimateParams tr').each(function(){
+       var texts = cellTexts($(this.cells));
+       var widths = [16, 8];
+       var alignments = ['RIGHT','RIGHT'];
+       s += fillTexts(texts, widths, alignments);
+   });
+   s += fillwith(81, "_")+"\n";
+   var foundFoot = false;
+   $('#estimateBody tbody tr').each(function(){
+     var texts = cellTexts($(this.cells).not(':last-child'));
+     var widths = [40, 10, 10, 10];
+     var alignments = ['LEFT','RIGHT','RIGHT','RIGHT'];
+     s += fillTexts(texts, widths, alignments);
+     s += fillwith(81, "-")+"\n";
+   });
+   s += fillwith(81, "_")+"\n";
+   $('#estimateBody tfoot tr').each(function(){
+     var texts = cellTexts($(this.cells).not(':last-child'));
+     var widths = [40, 10, 10, 10];
+     var alignments = ['RIGHT','RIGHT','RIGHT','RIGHT'];
+     s += fillTexts(texts, widths, alignments);
+   });
+   s += fillwith(81, "_")+"\n";
    return s;
 };
+
+var ticketLinkRegex = /(\/ticket\/(?:\d+))/;
+var base = window.location.toString().replace(/\/Estimate.*$/, '');
+function linkifyTickets(estimateBody){
+  var linkifyCell = function(){
+    var el = $(this), h = el.html();
+    el.html(h.replace(ticketLinkRegex, '<a href="'+base+'$1">$1</a>'));
+  };
+  $('.description-cell', estimateBody).each(linkifyCell);
+  return estimateBody;
+}
 
 function preparePreview(){
   var preview = $('#estimateoutput');
   preview.empty().
     append(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams'))))).
-    append(removeInputsAndIds(evenDeeperClone($$('estimateBody'))));
-  $('#diffcomment').val( prepareComment(preview[0]));
+    append(linkifyTickets(removeInputsAndIds(evenDeeperClone($$('estimateBody')))));
+  var txtComment = prepareComment(preview[0]);
+  // console.log(txtComment);
+  $('#diffcomment').val( txtComment );
   $('#comment').val( preview.html() );
 };
 
 function loadLineItems() {
-  loadPersistedPage();
+  // loadPersistedPage();
   var item;
+  lineItems.sort(
+    function(a,b) {
+      if (a.ordinal < b.ordinal) {
+        return -1;
+      }
+      if (a.ordinal > b.ordinal) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
+    }
+  );
   for(var i=0; item = lineItems[i] ; i++){
     var tr = lineItemRow(item);
     $('#estimateBody tbody').append(tr);
   }
   runCalculation();
 };
+
+// init Everything
+$(function(){
+    loadLineItems();
+    if(lineItems.length == 0) newLineItem();
+    if(saveImmediately){
+      saveEstimate($('.estimate-form'));
+    }
+});
+

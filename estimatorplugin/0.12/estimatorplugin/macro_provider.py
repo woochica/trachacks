@@ -1,7 +1,9 @@
-from estimator import *
 from trac.core import *
-from trac.wiki.api import IWikiMacroProvider
 from trac.web.chrome import add_stylesheet
+from trac.wiki.api import IWikiMacroProvider
+
+from estimatorplugin.estimator import *
+
 
 class EstimatorMacroProvider(Component):
     implements(IWikiMacroProvider)
