@@ -37,11 +37,12 @@ BUDGET_REPORT_ALL_ID = 90
 
 authorizedToModify = ['TICKET_MODIFY', 'TRAC_ADMIN', 'TICKET_BUDGETING_MODIFY']
 
+_VALUE_NAMES = 'username,type,estimation,cost,status,comment'
+_VALUE_NAMES_LIST = _VALUE_NAMES.split(',')
+
 class Budget:
     """ Container class for budgeting info"""
     _action = None
-    _VALUE_NAMES = 'username,type,estimation,cost,status,comment'
-    _VALUE_NAME_LIST = _VALUE_NAMES.split(',')
     _values = None
     _diff = None
 
@@ -53,8 +54,8 @@ class Budget:
             return
 
         number = int (number)
-        if number > 0 and number < self._VALUE_NAME_LIST.__len__() + 1:
-            fld = self._VALUE_NAME_LIST[number - 1]
+        if number > 0 and number < _VALUE_NAMES_LIST.__len__() + 1:
+            fld = _VALUE_NAMES_LIST[number - 1]
 
             if fld in ('status'):
                 try:
@@ -102,7 +103,7 @@ class Budget:
                 setValsSpace += ",%s"
                 setVals.append(value)
 
-            self._diff['.%s' % position] = (self._toStr(), '')
+            self._diff[''] = (self._toStr(), '')
 
             sql = ("INSERT INTO %s (%s) VALUES (%s)" %
                     (BUDGETING_TABLE.name, setAttrs, setValsSpace))
@@ -115,18 +116,20 @@ class Budget:
 
             oldValuesSql = ("SELECT %s FROM %s WHERE"
                             " ticket=%%s AND position =%%s"
-                             % (self._VALUE_NAMES, BUDGETING_TABLE.name))
+                             % (_VALUE_NAMES, BUDGETING_TABLE.name))
             oldValues = env.db_query(oldValuesSql, (ticket_id, position))[0];
 
             setAttrs = ''
             setVals = []
-            vnl = self._VALUE_NAME_LIST
 
-            for attrnr in range(len(vnl)):
+            for attrnr in range(len(_VALUE_NAMES_LIST)):
                 value = self.get_value(attrnr + 1)
-                key = vnl[attrnr]
+                key = _VALUE_NAMES_LIST[attrnr]
+
                 if key in ('username', 'type', 'comment'):
                     value = value.encode("utf-8")
+                elif key in ('estimation', 'cost', 'status'):
+                    value = 0 if value == '' or float(value) == 0 else value
 
                 if not oldValues[attrnr] == value:
                     new = '%s: %s' % (key, value)
@@ -135,24 +138,25 @@ class Budget:
                     if not setAttrs == '': setAttrs += ","
 
                     setAttrs += "%s=%%s" % key
-                    setVals.append(value)
+                    setVals.append(str(value))
 
                     self._diff[".%s" % key] = (new, old)
 
+            if not setAttrs == '':
+                sql = ("UPDATE %s SET %s WHERE ticket=%%s AND position=%%s"
+                        % (BUDGETING_TABLE.name, setAttrs))
 
-            sql = ("UPDATE %s SET %s WHERE ticket=%%s AND position=%%s"
-                    % (BUDGETING_TABLE.name, setAttrs))
+                setVals.append(ticket_id)
+                setVals.append(position)
+                env.db_transaction(sql, setVals)
+                env.log.debug("Updated Budgeting-row for ticket %s"
+                              " at positon %s:\n%s" %
+                              (ticket_id, position, self._toStr()))
 
-            setVals.append(ticket_id)
-            setVals.append(position)
-            env.db_transaction(sql, setVals)
-            env.log.debug("Updated Budgeting-row for ticket %s"
-                          " at positon %s:\n%s" %
-                          (ticket_id, position, self._toStr()))
             return
 
         elif self._action == "Delete":
-            self._diff['.%s' % position] = ('', self._toStr())
+            self._diff[''] = ('', self._toStr())
 
             sql = ("DELETE FROM %s WHERE ticket=%%s AND position=%%s"
                     % BUDGETING_TABLE.name)
@@ -179,8 +183,8 @@ class Budget:
             return ""
 
         number = int (number)
-        if number > 0 and number < self._VALUE_NAME_LIST.__len__() + 1:
-            fld = self._VALUE_NAME_LIST[number - 1]
+        if number > 0 and number < _VALUE_NAMES_LIST.__len__() + 1:
+            fld = _VALUE_NAMES_LIST[number - 1]
             if fld in ('estimation', 'cost'):
                 return locale.format('%.2f', self._values[fld])
             return self._values[fld]
