@@ -172,7 +172,7 @@ def _create_query_object(env, query, required_columns=None):
     required_columns - Columns that must be included in the query.
     """
     if query is None:
-        return Query(env, cols = required_columns)
+        return Query(env, cols=required_columns)
 
     if required_columns is None:
         required_columns = []
@@ -189,15 +189,13 @@ def _create_query_object(env, query, required_columns=None):
 
 def _get_query_sql(env, query, required_columns=None):
     query_object = _create_query_object(env, query, required_columns)
-
-    sql_format_string, format_string_arguments = query_object.get_sql()
-    return sql_format_string % tuple(format_string_arguments)
+    return query_object.get_sql()
 
 
 def _get_stacked_bar_chart_stats(env, db, key, x_axis, query):
-    sql = _get_query_sql(env, query, required_columns=[key, x_axis])
+    sql, args = _get_query_sql(env, query, required_columns=[key, x_axis])
     cursor = db.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, args)
 
     query_columns = get_column_names(cursor)
 
@@ -358,9 +356,9 @@ def _get_pie_graph_stats(env, db, factor, query=None):
      'milestone2' : 12,
     }
     """
-    sql = _get_query_sql(env, query, required_columns=[factor, ])
+    sql, args = _get_query_sql(env, query, required_columns=[factor, ])
     cursor = db.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, args)
 
     query_columns = get_column_names(cursor)
     factor_index = query_columns.index(factor)
