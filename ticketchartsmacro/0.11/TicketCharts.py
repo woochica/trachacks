@@ -452,7 +452,7 @@ def create_graph(req, env, args):
     return additional_html + \
            _get_chart_html(chart, chart_div_id, height=args['height'],
                            width=args['width'], ofc_file=args['ofc_file'],
-                           js_dir=args['js_dir'], json_dir = args['json_dir'])
+                           js_dir=args['js_dir'], json_dir=args['json_dir'])
 
 
 def _get_random_string(length):
@@ -502,7 +502,7 @@ def _set_base_path(req):
     BASE_PATH = req.base_path
 
 
-class TicketChart(WikiMacroBase):
+class TicketChartMacro(WikiMacroBase):
     def expand_macro(self, formatter, name, args):
         """Return some output that will be displayed in the Wiki content.
 
