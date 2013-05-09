@@ -119,8 +119,10 @@ var renderChart = function (containerId, type, data, additionalInfo, useDate,
     var intervalsSize = intervals.length;
     var value = seriesData[0][0];
     if (value > intervals[intervalsSize - 1]) {
-      console.log("YES");
+      intervalColors = options.seriesDefaults.rendererOptions.intervalColors;
       intervals.push(value);
+      // Duplicate the last color in the interval.
+      intervalColors.push(intervalColors[intervalColors.length - 1]);
     }
   }
 
