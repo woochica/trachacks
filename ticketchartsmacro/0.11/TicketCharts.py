@@ -83,7 +83,7 @@ from trac.wiki.macros import WikiMacroBase
 from trac.db.api import get_column_names
 from trac.web.href import Href
 
-revison = "$Rev$"
+revision = "$Rev$"
 url = "$URL$"
 
 PLUGIN_CONFIG_NAME = 'ticket-charts'
@@ -129,7 +129,7 @@ def _get_args_defaults(env, args):
     # Elegant :)
     defaults.update(args)
     return defaults
-    
+
 def _create_chart(title, *elements):
     chart = openFlashChart.template(title)
     for element in elements:
