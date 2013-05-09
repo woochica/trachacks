@@ -800,12 +800,9 @@ class DataAccessDependencies(object):
       '''
 	calculate blocking tickets of the given ticket
 	returns list of ticket ids (as string)
+	Note: This a very inconvenient and expensive way. If you consider performance issues, then switch to Mastertickets compatibility mode
       '''
-      sqlconstraint = '0'
-      #sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
-      #sqlconstraint += " OR value LIKE \"%% %s %%\"" % (ticket_id,) # middle
-      #sqlconstraint += " OR value LIKE \"%% %s\"" % (ticket_id,) # left 
-      #sqlconstraint += " OR value LIKE \"%s %%\"" % (ticket_id,) # right
+      sqlconstraint = 'false'
       
       # TODO precondition: normalize dependencies field
       sqlconstraint += " OR value = \"%s\"" % (ticket_id,) # lonely value
@@ -819,7 +816,7 @@ class DataAccessDependencies(object):
       #sqlconstraint += " OR value LIKE \"%s,%%\"" % (ticket_id,) # right
       
       # LIMIT for safety reasons
-      sql = "SELECT ticket FROM ticket_custom WHERE name = \"%s\" AND ( %s ) LIMIT 0,250" % (self.field, sqlconstraint )
+      sql = "SELECT ticket FROM ticket_custom WHERE name = \"%s\" AND ( %s ) LIMIT 250" % (self.field, sqlconstraint )
       self.env.log.debug("getBlockedTickets: SQL: " + repr(sql))
       db = self.env.get_db_cnx()
       cursor = db.cursor()
@@ -960,7 +957,7 @@ class DataAccessDependencies(object):
 	where_col = self.blockingticket_colname
 	
       where = " OR ".join(["(%s = %s)" % (where_col,ticket_id) for ticket_id in ticket_ids])
-      sql = "SELECT %s FROM mastertickets WHERE 0 OR %s LIMIT 0,250" % (result_col, where)
+      sql = "SELECT %s FROM mastertickets WHERE %s LIMIT 250" % (result_col, where)
       self.env.log.debug("getTicketDependencies: SQL: #%s -> %s" % (ticket_id, repr(sql)) )
       db = self.env.get_db_cnx()
       cursor = db.cursor()

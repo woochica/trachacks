@@ -532,6 +532,7 @@ class BurndownChart(ChartRenderer):
     #outerframe(outer) # DEBUG
     outerframe(frame)
     outerframe(tag.div( id = holderid ), style="border-width:1px" )
+    outerframe(tag.script("$.getScript('%s'); $.getScript('%s'); $.getScript('%s');  " % ('projectplan/js/jquery-burndown/raphael.js', 'projectplan/js/jquery-burndown/raphael_002.js','projectplan/js/jquery-burndown/burndown.js' ) ) )
     return outerframe
 
 
