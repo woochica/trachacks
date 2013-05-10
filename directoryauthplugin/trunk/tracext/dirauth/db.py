@@ -20,7 +20,7 @@ db_version = 1
 schema = [
     # Blog posts
     Table('dir_cache', key=('id'))[
-        Column('id', type='varcahar(32)'),
+        Column('id', type='varchar(32)'),
         Column('lut', type='int'),
         Column('data', type='blob'),
         Index(['id'])],
