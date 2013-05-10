@@ -1141,17 +1141,17 @@ class PPEnv():
     count = 0 # count the changes
     old_ticketdependencies= cursor.fetchall()
     # create SQL query
+    ticket_dependencies = []
     for (oldsource,olddestplain) in old_ticketdependencies:
-      olddestlist = splitStringToTicketList(olddestplain, oldsource)
-      if len(olddestlist) > 0 :
-        sql = sql + sep + ( ",".join( [ "(%s,%s)" % (olddestid,oldsource) for olddestid in olddestlist ] ) )
-        sep = ','
-        count = count + len(olddestlist)
-    sql = "INSERT INTO mastertickets (source,dest) VALUES %s" % (sql,)
-    self.tracenv.log.warn("convertDependenciesToMastertickets: %s" % (sql,) )
+      for olddestid in splitStringToTicketList(olddestplain, oldsource):
+        ticket_dependencies.append( (olddestid,oldsource) )
+        count = count + 1
     if count > 0:
       self.tracenv.log.warn("convertDependenciesToMastertickets: try to convert %d ticket dependencies from ticket_custom to mastertickets." % (count,))
-      cursor.execute(sql)
+      for (source,dest) in ticket_dependencies:
+        self.tracenv.log.debug("convertDependenciesToMastertickets: convert (%s,%s)" % (source,dest) )
+        cursor.execute("INSERT INTO mastertickets (source,dest) VALUES (%s,%s)" , (source,dest) )
       db.commit()
     else:
       self.tracenv.log.warn("convertDependenciesToMastertickets: found no tickets to convert.")
+    
