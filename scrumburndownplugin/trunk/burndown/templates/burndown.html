@@ -7,17 +7,17 @@
   xmlns:xi="http://www.w3.org/2001/XInclude">
 
   <xi:include href="layout.html"><xi:fallback/></xi:include>
-  
+
   <head><title>Scrum Burndown chart</title>
     <py:choose test="library">
-	  <py:when test="'flot'">
+      <py:when test="'flot'">
       <!--[if IE]><script language="javascript" type="text/javascript" src="${href.chrome('/hw/js/excanvas.pack.js')}"></script><![endif]-->
     </py:when>
     </py:choose>
   </head>
-  
+
     <body>
-<div id="ctxtnav" class="nav"></div>  
+<div id="ctxtnav" class="nav"></div>
 <div id="content" class="burndown">
 <table cellpadding="0" cellspacing="0" border="0">
 <tr><td><img src="${href.chrome('/hw/images/trac-scrum-burndown-plugin-logo.png')}" /></td>
@@ -27,22 +27,22 @@
 <form action="" method="get">
     <label for="selected_milestone">Select milestone:</label>
     <select id="selected_milestone" name="selected_milestone">
-	  <py:for each="mile in milestones">
-	  <py:choose test="selected_milestone.name">
+      <py:for each="mile in milestones">
+      <py:choose test="selected_milestone.name">
         <option py:when="mile.name" value="${mile.name}" selected="selected">$mile.name</option>
         <option py:otherwise="" value="${mile.name}">$mile.name</option>
-	  </py:choose>
-	  </py:for>
+      </py:choose>
+      </py:for>
     </select>
     <label for="selected_component">Select component:</label>
     <select id="selected_component" name="selected_component">
         <option>All Components</option>
-	  <py:for each="comp in components">
-	  <py:choose test="selected_component">
+      <py:for each="comp in components">
+      <py:choose test="selected_component">
         <option py:when="comp.name" value="$comp.name" selected="selected">$comp.name</option>
         <option py:otherwise="" value="$comp.name">$comp.name</option>
-	  </py:choose>
-	  </py:for>
+      </py:choose>
+      </py:for>
     </select>
 
     <div class="buttons">
@@ -57,14 +57,14 @@
 <br />
 
 <py:if test="draw_graph">
-	<py:choose test="len(burndown_data)>0">
-	<py:when test="True">
+    <py:choose test="len(burndown_data)>0">
+    <py:when test="True">
     <b>Current effort remaining: ${burndown_data[len(burndown_data) - 1][1]} hours</b>
     </py:when>
     <py:otherwise>
     <b>Current effort remaining: 0 hours</b>
     </py:otherwise>
-    
+
     </py:choose>
     <br/>
     <br/>
@@ -72,13 +72,13 @@
 
 <py:choose test="library">
 
-	<py:when test="'flot'">
-  		<div id="burndownGraph" style="position:relative;height:400px;width:800px;"></div>
-  		<script language="javascript"> 
-  		    var data=[[<py:for each="idx, row in enumerate(burndown_data)">[${row[0]}, ${row[1]}]<py:if test="idx != (len(burndown_data)-1)">,</py:if></py:for>]];
-  		    $.plot($("#burndownGraph"), data);
-  		
-  		</script>
+    <py:when test="'flot'">
+        <div id="burndownGraph" style="position:relative;height:400px;width:800px;"></div>
+        <script language="javascript">
+            var data=[[<py:for each="idx, row in enumerate(burndown_data)">[${row[0]}, ${row[1]}]<py:if test="idx != (len(burndown_data)-1)">,</py:if></py:for>]];
+            $.plot($("#burndownGraph"), data);
+
+        </script>
     </py:when>
     <py:otherwise>
 
@@ -86,17 +86,17 @@
 
 <script>
     var g = new line_graph();
-    
-	<py:for each="row in burndown_data">
+
+    <py:for each="row in burndown_data">
         g.add('${row[0]}', ${row[1]});
     </py:for>
-    
+
     //If called without a height parameter, defaults to 250
     g.render("burndownGraph", "hours remaining vs. days of sprint", 300);
 
 </script>
     </py:otherwise>
-    
+
     </py:choose>
 </py:if>
 

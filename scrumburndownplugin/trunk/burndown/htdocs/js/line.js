@@ -46,7 +46,7 @@ function h2d(h)
 function line_graph()
 {
  this.ct = 0;
- 
+
  this.data      = new Array();
  this.x_name    = new Array();
  this.max       = -64000; //MAX INT
@@ -123,7 +123,7 @@ function line_graph()
          {
           jg.setColor(color);
           jg.drawLine(oldx, h-oldy, sx, h-ht1);
-	 }
+     }
 
        jg.setColor("red");
        jg.fillEllipse(sx-2, h-ht1-2, 5, 5);
