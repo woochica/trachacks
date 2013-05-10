@@ -138,7 +138,7 @@ class NodePrototype():
       draw a closing image
     '''
     # TODO: make configurable
-    self.enterimg(src = os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png'))
+    self.enterimg(src = os.path.join( self.imgpath, os.sep.join(['crystal_project','16x16','plusminus','viewmag-.png'])))
     self.leave()
 
   def openimg(self):
@@ -146,7 +146,7 @@ class NodePrototype():
       draw a opening image
     '''
     # TODO: make configurable
-    self.enterimg(src = os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag+.png'))
+    self.enterimg(src = os.path.join( self.imgpath, os.sep.join(['crystal_project','16x16','plusminus','viewmag+.png'])))
     self.leave()
 
   def render( self ):
@@ -304,21 +304,21 @@ class TicketNodePrototype( NodePrototype ):
       return (
         '#ffb6c2',  # lightpink
         '!', 
-        'crystal_project/16x16/calendar/timespan.png', 
+        os.sep.join(['crystal_project','16x16','calendar','timespan.png']),
         'closed: '+str( cd ) + ' '+days+' to late'
       )
     if TicketNodePrototype.TICKET_CLOSED_TO_EARLY == dueclassification :
       return (
         '#98fa98' ,  # palegreen
         '', 
-        'crystal_project/16x16/calendar/todo.png',  
+        os.sep.join(['crystal_project','16x16','calendar','todo.png']),
         'closed: ' + str( 0 - cd ) + ' '+days+' earlier'
       )
     if TicketNodePrototype.TICKET_CLOSED_ON_TIME == dueclassification :
       return (
         '#98fa98' , # palegreen
         '', 
-        'crystal_project/16x16/calendar/todo.png', 
+        os.sep.join(['crystal_project','16x16','calendar','todo.png']), 
         'closed: bang on time' 
       )
     if TicketNodePrototype.TICKET_CLOSED_NO_TIME == dueclassification :
@@ -328,7 +328,7 @@ class TicketNodePrototype( NodePrototype ):
         self.macroenv.conf.get( 'ticket_overdue_color' ), 
         '!', 
         self.macroenv.conf.get( 'ticket_overdue_image' ), 
-        'closed: ' + str( cd ) + ' '+days+' delayed' 
+        'open: ' + str( cd ) + ' '+days+' delayed' 
       )
     if TicketNodePrototype.TICKET_OPEN_TO_EARLY == dueclassification :
       return ( 
@@ -341,7 +341,7 @@ class TicketNodePrototype( NodePrototype ):
       return (  
         '#9CF9F9',  # Turquoise
         '!', 
-        'crystal_project/16x16/calendar/today.png', 
+        os.sep.join(['crystal_project','16x16','calendar','today.png']), 
         'open: due today!' 
       )
     if TicketNodePrototype.TICKET_OPEN_NO_TIME == dueclassification :

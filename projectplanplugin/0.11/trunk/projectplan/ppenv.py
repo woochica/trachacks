@@ -711,22 +711,22 @@ class PPConfiguration():
                          'closed': '#C0F0C0'
                          }.get(k, self.get('ColorForStatusNE'))
     elif 'ImageForPriority' == n :
-      return {     'blocker': 'crystal_project/16x16/arrow/priority1up2.png',
-                         'critical': 'crystal_project/16x16/arrow/priority2up1.png',
-                         'major': 'crystal_project/16x16/arrow/priority3right.png',
-                         'minor': 'crystal_project/16x16/arrow/priority4down1.png',
-                         'trivial': 'crystal_project/16x16/arrow/priority5down2.png'
+      return {     'blocker': os.sep.join(['crystal_project','16x16','arrow','priority1up2.png']),
+                         'critical': os.sep.join(['crystal_project','16x16','arrow','priority2up1.png']),
+                         'majory': os.sep.join(['crystal_project','16x16','arrow','priority3right.png']),
+                         'minor': os.sep.join(['crystal_project','16x16','arrow','priority4down1.png']),
+                         'trivial': os.sep.join(['crystal_project','16x16','arrow','priority5down2.png'])
                          }.get(k, 'none') # fallback to prevent images if unknown state
     elif 'ImageForStatus' == n :
-      return {     'new': 'crystal_project/16x16/state/new.png',
-                         'assigned': 'crystal_project/16x16/state/kate.png',
-                         'closed': 'crystal_project/16x16/state/ok.png',
-                         'reopened': 'crystal_project/16x16/state/restart.png'
+      return {     'new': os.sep.join(['crystal_project','16x16','state','new.png']),
+                         'assigned': os.sep.join(['crystal_project','16x16','state','kate.png']),
+                         'closed': os.sep.join(['crystal_project','16x16','state','ok.png']),
+                         'reopened': os.sep.join(['crystal_project','16x16','state','restart.png'])
                          }.get(k, 'none') # fallback to prevent images if unknown state
     elif 'ImageForTicketType' == n :
-      return {     'task': 'crystal_project/16x16/type/settings.png',
-                         'defect': 'crystal_project/16x16/type/flag.png',
-                         'enhancement': 'crystal_project/16x16/type/enhancements2.png'
+      return {     'task': os.sep.join(['crystal_project','16x16','type','settings.png']),
+                         'defect': os.sep.join(['crystal_project','16x16','type','flag.png']),
+                         'enhancement': os.sep.join(['crystal_project','16x16','type','enhancements2.png'])
                          }.get(k, 'none') # fallback to prevent images if unknown state
     else :
       return color

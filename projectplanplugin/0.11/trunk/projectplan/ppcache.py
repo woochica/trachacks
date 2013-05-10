@@ -259,7 +259,7 @@ class ppFSFileCache:
 	'''
     rel = self.relCacheFile( absname, subroot )
     if rel!=None:
-      rel = rel.replace( '\\', '/' )
+      rel = rel.replace( '\\', os.sep )
     return rel
 
   def relCacheFile( self, absname, subroot=False ):

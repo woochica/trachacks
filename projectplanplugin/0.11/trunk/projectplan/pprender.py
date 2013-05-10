@@ -524,7 +524,7 @@ class GVRenderer(RenderImpl):
       self.cmapxgen += 'label=<%s> ' % myversion
     elif str(self.macroenv.macroid) == '1' : # hierarchical rendering including closing image
       self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0" TITLE="close this version"><TR><TD>'
-      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
+      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, os.sep.join(['crystal_project','16x16','plusminus','viewmag-.png']))+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+myversion+'</TD></TR></TABLE>>; '+"\n"
 
   def _writeVersionClusterFooter( self ):
@@ -556,7 +556,7 @@ class GVRenderer(RenderImpl):
       self.cmapxgen += 'label=<%s> ' % mylabel
     elif str(self.macroenv.macroid) == '1' : # hierarchical rendering including closing image
       self.cmapxgen += 'label=<<TABLE BORDER="0" CELLPADDING="0"><TR><TD>'
-      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, 'crystal_project/16x16/plusminus/viewmag-.png')+'"></IMG>'
+      self.cmapxgen += '<IMG SRC="'+os.path.join( self.imgpath, os.sep.join(['crystal_project','16x16','plusminus','viewmag-.png']))+'"></IMG>'
       self.cmapxgen += '</TD><TD>'+mylabel+'</TD></TR></TABLE>>; '+"\n"
 
   def _writeMilestoneClusterFooter( self ):
