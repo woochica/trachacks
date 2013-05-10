@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 PACKAGE = 'TracBurndown'
-VERSION = '1.9.2'
+VERSION = '2.0.0'
 
 setup(name=PACKAGE,
       description='Plugin to provide a dynamic burndown chart in Trac.',
@@ -14,7 +14,7 @@ setup(name=PACKAGE,
       packages=find_packages(exclude=['ez_setup']),
       package_data={
           'burndown': ['htdocs/js/*.js', 'htdocs/css/*.css',
-                       'htdocs/images/*', 'templates/*']
+                       'htdocs/images/*', 'templates/.html']
       },
       entry_points={'trac.plugins': '%s = burndown' % PACKAGE},
       tests_require=['nose'],
