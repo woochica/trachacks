@@ -14,6 +14,7 @@ from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
 from trac.web.chrome import add_script, ITemplateProvider, add_script_data
 from trac.wiki.api import IWikiMacroProvider
+import copy
 import re
 
 re_param = re.compile("\$[a-zA-Z]+")
@@ -103,7 +104,7 @@ class Macro(Component):
         field = field[0]
         custom = 'custom' in field and field['custom'] or None
         status_list = query and query.format and query.format.split('/') or \
-                      'options' in field and field['options'] or status_list
+                      'options' in field and copy.copy(field['options']) or status_list
         if field['name'] == 'status' and not (query and query.format):
             def isprime(item):
                 primaries = ['new', 'assigned', 'accepted', 'closed']
@@ -127,7 +128,8 @@ class Macro(Component):
         # execute query for value changes of each ticket
         join_clause_dummy = ''
         join_clause = "JOIN ticket_custom ON ticket.id = ticket_custom.ticket and ticket_custom.name = '%s'"
-        changes = [row for row in formatter.env.get_read_db().execute("""
+        cursor = formatter.env.get_read_db().cursor()
+        cursor.execute("""
                 SELECT id, time, null, %s
                     FROM ticket
                     %s
@@ -140,7 +142,8 @@ class Macro(Component):
                 ORDER BY id, time
                 """ % (custom and "'\uFEFF'" or field['name'],  # ZERO WIDTH NO-BREAK SPACE; uses for mark of invalid data
                        custom and (join_clause % field['name']) or join_clause_dummy,
-                       cond, cond, field['name']))]
+                       cond, cond, field['name']))
+        changes = [row for row in cursor.fetchall()]
         # transform (ticket, time, status)* ==> (ticket <>- status)*
         tid = 0  # position of ticket id
         tickets = {}
@@ -194,4 +197,3 @@ class Macro(Component):
             </script>
             <div id="statushistorychart" style="width: 800px; height: 400px;"></div>""" \
             % (to_json(map(after_AS, status_list)), to_json(data))
-
