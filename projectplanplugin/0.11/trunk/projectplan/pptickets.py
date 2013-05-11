@@ -5,6 +5,7 @@ import pputil
 from trac.util.datefmt import to_datetime, utc, to_utimestamp
 from trac.ticket.model import Ticket
 from ppenv import PPConfiguration
+from ppenv import PPDateFormatOption
 
 class TSExtensionRegister(object):
   '''
@@ -401,8 +402,9 @@ class ppTSDueTimes( ppTicketSetExtension ):
       convert a field, with given day/month/year mask into
       a datetime value
     '''
+    
     theDate = v.getfielddef( field, 'DD/MM/YYYY' )
-    if theDate != '' and theDate != 'MM/DD/YYYY' and theDate != 'DD/MM/YYYY':
+    if theDate != '' and not theDate.upper() in PPDateFormatOption.selectable() :
       AtheDate = None
       if dtf == 'DD/MM/YYYY':
         AtheDate = theDate.split('/');

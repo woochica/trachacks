@@ -407,11 +407,12 @@ class PPDateFormatOption(PPSingleSelOption):
   '''
     Selectable DateFormat Option
   '''
+  @classmethod
   def selectable( self ):
     '''
       Check wether the value is in the List of possible Values
     '''
-    return [ 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY' ]
+    return [ 'DD/MM/YYYY', 'MM/DD/YYYY', 'DD.MM.YYYY', 'YYYY-MM-DD' ]
 
 class PPActivateColumnOption(PPSingleSelOption):
   '''
