@@ -13,7 +13,7 @@
 
   function addAnchor(target, name) {
     $(target)
-      .css('position', 'relative')
+//      .css('position', 'relative')
       .attr("id", name);
     $("<a>\u00B6</a>")
       .addClass('anchor')
