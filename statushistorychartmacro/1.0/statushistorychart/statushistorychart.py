@@ -37,25 +37,31 @@ class Macro(Component):
         return ['StatusHistoryChart']
 
     def get_macro_description(self, name):
-        return """Plot a graph of ticket's status change history.
+        return """Plot a graph of ticket's field change history.
  without arguments::
   If argument is omitted, use following:
   - Result for report or query, if used on report description.
   - Bound for milestone, if used on milestone description.
-  - Your last query result. You Feeling Lucky!
+  - Your last query result. You're Feeling Lucky!
  args::
   - If you want to add filter, use TracQuery#QueryLanguage.
  Yaxis options::
-  Use '''{{{format}}}''' parameter in query for yaxis values.
-  slash {{{/}}} separated column name or {{{*}}} for wildcard.
-  default: {{{new/assigned/accepted/closed/*}}}
+   - Use '''{{{report}}}''' parameter in query for field name to plot.[[BR]]
+  default: {{{status}}}
+  - Use '''{{{format}}}''' parameter in query for yaxis values.[[BR]]
+  slash {{{/}}} separated column name or {{{*}}} for wildcard.[[BR]] 
+  two or more value can join with '+' in one, rename with ' AS ' i.e. {{{/new/assigned+accepted AS in progress/closed}}}[[BR]]
+  default: options for the field, i.e. {{{new/assigned/accepted/closed/*}}} for status.
 
  Example::
    {{{
    [[StatusHistoryChart]]
    [[StatusHistoryChart(format=new/*/closed)]]
+   [[StatusHistoryChart(format=new/accepted+assigned AS in progress/closed)]]
    [[StatusHistoryChart(owner=$USER&format=new/*/closed)]]
    [[StatusHistoryChart(type=$TYPE&format=new/*/closed)]]  (uses CGI parameter for $TYPE)
+   [[StatusHistoryChart(report=milestone)]]
+   [[StatusHistoryChart(report=owner&format=/somebody/*/matobaa/)]]
    }}}"""
 
     def expand_macro(self, formatter, name, content, args=None):
