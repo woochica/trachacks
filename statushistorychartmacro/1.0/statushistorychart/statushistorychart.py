@@ -130,7 +130,7 @@ class Macro(Component):
             tickets = len(query_tickets) and query_tickets.split(' ') or ['-1']  # Sentinel for no result
             cond = "ticket.id in (%s)" % ', '.join(tickets)
         else:
-            raise TracError("Currently %sMacro without content is not supported." % name)
+            raise TracError("%sMacro: Empty. There are no content and no context." % name)
         # execute query for value changes of each ticket
         join_clause_dummy = ''
         join_clause = "JOIN ticket_custom ON ticket.id = ticket_custom.ticket and ticket_custom.name = '%s'"
