@@ -288,7 +288,7 @@ class TicketsPerUserDay(RenderImpl):
         
         for ticket in orderedtickets[segment][o]:
           counttickets[segment] += 1
-          td_div(tag.div( tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner') ) )
+          td_div(tag.div( tag.span(self.createTicketLink(ticket), class_ = 'ticket_inner') , class_="draggable", data="%s" % (ticket.getfield("id"),) ) )
           
           if ticket.getfield('status') in countStatus.keys(): # count values
             countStatus[ticket.getfield('status')] += 1
@@ -296,7 +296,9 @@ class TicketsPerUserDay(RenderImpl):
             countStatus[ticket.getfield('status')] = 1
         
         #tr(tag.td( tag.div( td_div, style = 'border-left:3px solid %s;' % (color) ) ) )
-        tr(tag.td( tag.div( td_div ), self.render_statistics(orderedtickets[segment][o]), class_ = '%s %s %s' % (color_class, class_, self.statistics_class)  ) )
+        tr(tag.td( tag.div( td_div ), self.render_statistics(orderedtickets[segment][o]), class_ = 'droppable %s %s %s' % (color_class, class_, self.statistics_class), 
+          data="{ %s:\"%s\", %s:\"%s\" }" % (self.rowtype, o, field, segment )   ) 
+        )
       if self.showsummarypiechart:
         tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', countStatus)))) # Summary
       tbody(tr)

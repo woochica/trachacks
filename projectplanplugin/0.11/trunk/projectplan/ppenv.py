@@ -868,7 +868,16 @@ class PPConfiguration():
       
      If any errors appear while saving dependencies, then disable this optimization.
       """ )
-      
+     
+     
+    self.flatconf[ 'add_date_field_definition_at_url_pattern' ] = PPSingleValOption(
+      self.env, 'add_date_field_definition_at_url_pattern', u'', catid='General', groupid='Compatibility', doc="""
+      the (hidden) definition of the date fields will be included via PPTicketDateTweak on pages where the pattern /ticket/ or /newticket is matching. 
+      Moreover, it is possible to define here an extra pattern. Mostly this is only relevant if you are a developer planning to take advantages from 
+      the ticket field definition on extra pages, e.g., wiki pages.
+      """ )
+    
+    
     # TODO: Add Configuration
     # Ticket Visualizations Options
     #self.flatconf[ 'custom_show_tickettype' ] = PPActivateColumnOption(
