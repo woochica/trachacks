@@ -10,10 +10,10 @@
 
 import re
 import random
-import string
 from datetime import timedelta, datetime
 
 from trac.ticket.query import Query
+from trac.web.chrome import Chrome
 from trac.wiki.macros import WikiMacroBase
 from trac.util.datefmt import utc, format_date
 
@@ -24,82 +24,6 @@ except ImportError:
 
 from ticketstats import date_range
 from tracadvparseargs import parseargs           # Trac plugin
-
-revision = "$Rev$"
-url = "$URL$"
-
-PLUGIN_CONFIG_NAME = 'ticketstatsmacro'
-
-graphTemplate = """
-<style type="text/css">
-#chart_$id { height: ${height}px }
-</style>
-
-<!-- Dependencies -->
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/yahoo-dom-event/yahoo-dom-event.js"></script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/element/element-min.js"></script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/datasource/datasource-min.js"></script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/json/json-min.js"></script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/swf/swf-min.js"></script>
-<!-- OPTIONAL: Connection (enables XHR) -->
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/connection/connection-min.js"></script>
-<!-- Source files -->
-<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/charts/charts-min.js"></script>
-<p>
-<span class="chart_title">
-    <h3>$chart_title</h3>
-</span>
-<div id="chart_$id"></div>
-
-<script type = "text/javascript">
-YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.9.0/build/charts/assets/charts.swf";
-
-
-var mychartdata_$id =
-[
-//
-$chart_data
-];
-
-var myDataSource_$id = new YAHOO.util.DataSource( mychartdata_$id );
-myDataSource_$id.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
-myDataSource_$id.responseSchema =
-{
-    fields: [ "date", "new_tickets", "open", "closed" ]
-};
-
-var seriesDef_$id =
-[
-    { displayName: "New Tickets", yField: "new_tickets",
-      style: {color: 0xff0000, size: ${column_width}} },
-    { displayName: "Closed Tickets", yField: "closed",
-      style: {color: 0x00ff00, size:${column_width}} },
-    { type: "line", displayName: "Open Tickets", yField: "open",
-      style: {color: 0x0000ff} }
-];
-
-var numtixAxis_$id = new YAHOO.widget.NumericAxis();
-numtixAxis_$id.minimum = 0
-
-YAHOO.example.getDataTipText_$id = function( item, index, series )
-{
-    var toolTipText = series.displayName + " for " + item.date;
-    toolTipText += "\\n" + item[series.yField] ;
-    return toolTipText;
-}
-
-var mychart_$id = new YAHOO.widget.ColumnChart( "chart_$id", myDataSource_$id,
-{
-    xField: "date",
-    series: seriesDef_$id,
-    yAxis: numtixAxis_$id,
-    dataTipFunction: YAHOO.example.getDataTipText_$id,
-    style: {legend: {display: "bottom"}}
-});
-
-
-</script>
-"""
 
 # BEGIN - Stolen from trac/util/datefmt.py@8546 on trunk
 _REL_TIME_RE = re.compile(
@@ -194,8 +118,8 @@ def _parse_args(args, args_dict=None):
     return stripped_args
 
 
-def _get_config_variable(env, varaible_name, default_value):
-    return env.config.get(PLUGIN_CONFIG_NAME, varaible_name, default_value)
+def _get_config_variable(env, variable_name, default_value):
+    return env.config.get('ticketstats', variable_name, default_value)
 
 
 def _get_args_defaults(env, args):
@@ -360,12 +284,17 @@ class TicketStatsMacro(WikiMacroBase):
                                   'closed: %(closed)d, open: %(open)d}' % d
                                   for d in count])
 
-        return string.Template(graphTemplate).safe_substitute({
+        data = {
             'chart_title': chart_title,
             'chart_data': chart_data,
             'height': args['height'],
             'column_width': args['column_width'],
-            'id': random.randint(1, 9999999)})
+            'id': random.randint(1, 9999999)
+        }
+
+        template = Chrome(self.env).load_template('ticketstats_macro.html')
+
+        return template.generate(**data)
 
 ##             "chart_data": """
 ## {date: "from1to2", new_tickets:23, closed: 22, open:33 },

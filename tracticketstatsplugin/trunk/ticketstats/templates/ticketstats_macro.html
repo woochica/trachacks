@@ -1,0 +1,102 @@
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/">
+
+    <!-- Dependencies -->
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/element/element-min.js"></script>
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/datasource/datasource-min.js"></script>
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/json/json-min.js"></script>
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/swf/swf-min.js"></script>
+    <!-- OPTIONAL: Connection (enables XHR) -->
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/connection/connection-min.js"></script>
+    <!-- Source files -->
+    <script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/charts/charts-min.js"></script>
+
+    <style type="text/css">#chart_$id { height: ${height}px }</style>
+
+      <span class="chart_title">
+        <h3>$chart_title</h3>
+      </span>
+      <div id="chart_$id"></div>
+
+      <script type = "text/javascript">
+        YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.9.0/build/charts/assets/charts.swf";
+
+        var mychartdata_$id =
+        [
+        //
+        $chart_data
+        ];
+
+        var myDataSource_$id = new YAHOO.util.DataSource( mychartdata_$id );
+        myDataSource_$id.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+        myDataSource_$id.responseSchema =
+        {
+          fields: [ "date", "new_tickets", "open", "closed" ]
+        };
+
+        var seriesDef_$id =
+        [
+          { displayName: "New Tickets", yField: "new_tickets",
+            style: {color: 0xff0000, size: ${column_width}} },
+          { displayName: "Closed Tickets", yField: "closed",
+            style: {color: 0x00ff00, size:${column_width}} },
+          { type: "line", displayName: "Open Tickets", yField: "open",
+            style: {color: 0x0000ff} }
+        ];
+
+        var numtixAxis_$id = new YAHOO.widget.NumericAxis();
+        numtixAxis_$id.minimum = 0
+
+        YAHOO.example.getDataTipText_$id = function( item, index, series )
+        {
+          var toolTipText = series.displayName + " for " + item.date;
+          toolTipText += "\\n" + item[series.yField] ;
+          return toolTipText;
+        }
+
+        var mychart_$id = new YAHOO.widget.ColumnChart( "chart_$id", myDataSource_$id,
+        {
+          xField: "date",
+          series: seriesDef_$id,
+          yAxis: numtixAxis_$id,
+          dataTipFunction: YAHOO.example.getDataTipText_$id,
+          style: {legend: {display: "bottom"}}
+        });
+        var myDataSource_$id = new YAHOO.util.DataSource( mychartdata_$id );
+        myDataSource_$id.responseType = YAHOO.util.DataSource.TYPE_JSARRAY;
+        myDataSource_$id.responseSchema =
+        {
+          fields: [ "date", "new_tickets", "open", "closed" ]
+        };
+
+        var seriesDef_$id =
+        [
+          { displayName: "New Tickets", yField: "new_tickets",
+            style: {color: 0xff0000, size: ${column_width}} },
+          { displayName: "Closed Tickets", yField: "closed",
+            style: {color: 0x00ff00, size:${column_width}} },
+          { type: "line", displayName: "Open Tickets", yField: "open",
+            style: {color: 0x0000ff} }
+        ];
+
+        var numtixAxis_$id = new YAHOO.widget.NumericAxis();
+        numtixAxis_$id.minimum = 0
+
+        YAHOO.example.getDataTipText_$id = function( item, index, series )
+        {
+          var toolTipText = series.displayName + " for " + item.date;
+          toolTipText += "\\n" + item[series.yField] ;
+          return toolTipText;
+        }
+
+        var mychart_$id = new YAHOO.widget.ColumnChart( "chart_$id", myDataSource_$id,
+        {
+          xField: "date",
+          series: seriesDef_$id,
+          yAxis: numtixAxis_$id,
+          dataTipFunction: YAHOO.example.getDataTipText_$id,
+          style: {legend: {display: "bottom"}}
+        });
+    </script>
+</html>
