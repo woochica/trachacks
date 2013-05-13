@@ -134,13 +134,19 @@ class SmpVersionProject(Component):
         if req.path_info.startswith('/admin/ticket/versions'):
             if req.method == 'POST':
                 versions = req.args.get('sel')
-                action = req.args.get('remove')
-                if not action is None and not versions is None:
+                remove = req.args.get('remove')
+                save = req.args.get('save')
+                if not remove is None and not versions is None:
                     if type(versions) is list:
                         for version in versions:
                             self.__SmpModel.delete_version_project(version)
                     else:
                         self.__SmpModel.delete_version_project(versions) 
+                elif not save is None:
+                    match = re.match(r'/admin/ticket/versions/(.+)$', req.path_info)
+                    if match and match.group(1) != req.args.get('name'):                    
+                        self.__SmpModel.rename_version_project(match.group(1), req.args.get('name'))
+
         return handler
         
     def post_process_request(self, req, template, data, content_type):

@@ -6,6 +6,7 @@ from trac.web.api import IRequestFilter
 from trac.web.api import ITemplateStreamFilter
 from trac.wiki.formatter import wiki_to_oneliner
 from operator import itemgetter
+import re
 
 class SmpMilestoneProject(Component):
     """Add a 'Project' attribute to milestones.
@@ -51,13 +52,18 @@ class SmpMilestoneProject(Component):
         elif req.path_info.startswith('/admin/ticket/milestones'):
             if req.method == 'POST':
                 milestones = req.args.get('sel')
-                action = req.args.get('remove')
-                if not action is None and not milestones is None:
+                remove = req.args.get('remove')
+                save = req.args.get('save')
+                if not remove is None and not milestones is None:
                     if type(milestones) is list:
                         for ms in milestones:
                             self.__SmpModel.delete_milestone_project(ms)
                     else:
                         self.__SmpModel.delete_milestone_project(milestones) 
+                elif not save is None:
+                    match = re.match(r'/admin/ticket/milestones/(.+)$', req.path_info)
+                    if match and match.group(1) != req.args.get('name'):                    
+                        self.__SmpModel.rename_milestone_project(match.group(1), req.args.get('name'))
 
         return handler
         

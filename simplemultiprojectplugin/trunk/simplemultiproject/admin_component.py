@@ -12,7 +12,7 @@ from trac.perm import PermissionSystem
 from trac.web.chrome import Chrome, add_notice
 
 # Trac extension point imports
-from trac.web.api import ITemplateStreamFilter
+from trac.web.api import ITemplateStreamFilter, IRequestFilter
 from trac.perm import IPermissionRequestor
 from trac.admin.api import IAdminPanelProvider
 from trac.web.chrome import ITemplateProvider, add_notice
@@ -25,13 +25,38 @@ from genshi.builder import tag
 from genshi.filters.transform import Transformer
 
 from operator import itemgetter
+import re
 
 class SmpComponentAdminPanel(Component):
     """Allows to specify project dependent components"""
 
-    implements(IAdminPanelProvider, ITemplateProvider, ITemplateStreamFilter)
+    implements(IAdminPanelProvider, ITemplateProvider, ITemplateStreamFilter, IRequestFilter)
     def __init__(self):
         self.__SmpModel = SmpModel(self.env)
+
+    # IRequestFilter
+    # required for handling component deletion on admin panel
+    def pre_process_request(self, req, handler):
+        if req.path_info.startswith('/admin/ticket/components'):
+            if req.method == 'POST':
+                components = req.args.get('sel')
+                remove = req.args.get('remove')
+                save = req.args.get('save')
+                if not remove is None and not components is None:
+                    if type(components) is list:
+                        for cmp in components:
+                            self.__SmpModel.delete_component_projects(cmp)
+                    else:
+                        self.__SmpModel.delete_component_projects(components)
+                elif not save is None:
+                    match = re.match(r'/admin/ticket/components/(.+)$', req.path_info)
+                    if match and match.group(1) != req.args.get('name'):                    
+                        self.__SmpModel.rename_component_project(match.group(1), req.args.get('name'))
+
+        return handler
+
+    def post_process_request(self, req, template, data, content_type):
+        return template, data, content_type
 
     # ITemplateStreamFilter methods
 
