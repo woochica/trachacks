@@ -16,19 +16,18 @@ from trac.core import *
 from trac.config import Option, IntOption
 from trac.web import IRequestHandler
 from trac.web.chrome import INavigationContributor, ITemplateProvider
-from trac.perm import IPermissionRequestor
 from trac.ticket import Milestone
 
 from datetime import date, datetime, time, timedelta
 from trac.util.datefmt import format_date, parse_date, to_utimestamp, utc
 
 # ************************
-DEFAULT_DAYS_BACK = 30*6 
+DEFAULT_DAYS_BACK = 30*6
 DEFAULT_INTERVAL = 30
 # ************************
 
 class TicketStatsPlugin(Component):
-   implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
+   implements(INavigationContributor, IRequestHandler, ITemplateProvider)
 
    yui_base_url = Option('ticketstats', 'yui_base_url',
          default='http://yui.yahooapis.com/2.9.0',
@@ -48,12 +47,9 @@ class TicketStatsPlugin(Component):
    def get_active_navigation_item(self, req):
       return 'ticketstats'
 
-   def get_permission_actions(self):
-      return ['TSTATS_VIEW']
-
    def get_navigation_items(self, req):
-      if req.perm.has_permission('TSTATS_VIEW'):
-         yield ('mainnav', 'ticketstats', 
+      if req.perm.has_permission('REPORT_VIEW'):
+         yield ('mainnav', 'ticketstats',
             tag.a('Ticket Stats', href=req.href.ticketstats()))
 
    # ==[ Helper functions ]==
@@ -76,7 +72,7 @@ class TicketStatsPlugin(Component):
 
       db = self.env.get_db_cnx()
       cursor = db.cursor()
-   
+
       # TODO clean up this query
       cursor.execute("SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority FROM enum p, ticket_change tc INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s AND tc.time <= %s WHERE p.name = t.priority AND p.type = 'priority' %s ORDER BY tc.time"
                      % (to_utimestamp(from_date), to_utimestamp(at_date), ma_milestone_str))
@@ -108,7 +104,7 @@ class TicketStatsPlugin(Component):
 
       db = self.env.get_db_cnx()
       cursor = db.cursor()
-   
+
       # TODO clean up this query
       cursor.execute("SELECT t.type AS type, owner, status, time FROM ticket t, enum p WHERE p.name = t.priority AND p.type = 'priority' AND t.time <= %s %s"
                      % (to_utimestamp(at_date), ma_milestone_str))
@@ -133,10 +129,10 @@ class TicketStatsPlugin(Component):
       return re.match(r'/ticketstats(?:_trac)?(?:/.*)?$', req.path_info)
 
    def process_request(self, req):
-       req.perm.require('TSTATS_VIEW')
+       req.perm.require('REPORT_VIEW')
        req_content = req.args.get('content')
        milestone = None
-      
+
        if not None in [req.args.get('end_date'), req.args.get('start_date'), req.args.get('resolution')]:
          # form submit
          grab_at_date = req.args.get('end_date')
@@ -154,7 +150,7 @@ class TicketStatsPlugin(Component):
 
          if None in [grab_resolution]:
             raise TracError('Please specify the graph interval.')
-         
+
          if 0 in [len(grab_at_date), len(grab_from_date), len(grab_resolution)]:
             raise TracError('Please ensure that all fields have been filled in.')
 
@@ -175,10 +171,10 @@ class TicketStatsPlugin(Component):
          at_date = datetime.combine(todays_date,time(11,59,59,0,utc))
          from_date = at_date - timedelta(self.default_days_back)
          graph_res = self.default_interval
-   
+
          at_date_str = format_date(at_date)
          from_date_str=  format_date(from_date)
-         
+
        count = []
 
        # Calculate 0th point
@@ -189,9 +185,9 @@ class TicketStatsPlugin(Component):
        for cur_date in daterange(from_date, at_date, graph_res):
           num_open = self._get_num_open_tix(cur_date, milestone, req)
           num_closed = self._get_num_closed_tix(last_date, cur_date, milestone, req)
-          datestr = format_date(cur_date) 
+          datestr = format_date(cur_date)
           if graph_res != 1:
-            datestr = "%s thru %s" % (format_date(last_date), datestr) 
+            datestr = "%s thru %s" % (format_date(last_date), datestr)
           count.append( {'date'  : datestr,
                    'new'   : num_open - last_num_open + num_closed,
                    'closed': num_closed,
@@ -210,13 +206,13 @@ class TicketStatsPlugin(Component):
              jsdstr += ' "open": %s},\n' % x['open']
           jsdstr = jsdstr[:-2] +'\n]}'
           req.send(jsdstr.encode('utf-8'))
-          return 
+          return
        else:
           db = self.env.get_db_cnx()
           showall = req.args.get('show') == 'all'
           milestone_list = [ m.name for m in Milestone.select(self.env, showall, db) ]
           if milestone == None:
-             milestone_num = 0 
+             milestone_num = 0
           elif milestone in milestone_list:
              milestone_num = milestone_list.find(milestone)
           else:
@@ -231,8 +227,9 @@ class TicketStatsPlugin(Component):
           data['milestones'] = milestone_list
           data['cmilestone'] = milestone_num
           data['yui_base_url'] = self.yui_base_url
+
           return 'greensauce.html', data, None
- 
+
    def get_htdocs_dirs(self):
       return []
 
