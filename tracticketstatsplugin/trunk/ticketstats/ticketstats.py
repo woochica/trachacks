@@ -103,7 +103,6 @@ class TicketStatsPlugin(Component):
                                          time(0, 0, 0, 0, utc))  # Add tzinfo
 
             graph_res = int(grab_resolution)
-
         else:
             # default data
             todays_date = date.today()
@@ -146,7 +145,6 @@ class TicketStatsPlugin(Component):
             req.send(js_data.encode('utf-8'))
             return
         else:
-            db = self.env.get_db_cnx()
             show_all = req.args.get('show') == 'all'
             milestone_list = [m.name for m in
                               Milestone.select(self.env, show_all, db)]
@@ -177,7 +175,6 @@ class TicketStatsPlugin(Component):
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
-
         return [resource_filename(__name__, 'templates')]
 
 
@@ -185,84 +182,65 @@ def get_num_closed_tix(db, from_date, at_date, milestone):
     """Returns an integer of the number of close ticket events counted
     between from_date to at_date."""
 
-    status_map = {'new': 0,
-                  'reopened': 0,
-                  'assigned': 0,
-                  'closed': 1,
-                  'edit': 0}
-
-    count = 0
-
-    ma_milestone_str = ""
-    if milestone is not None:
-        ma_milestone_str = " AND t.milestone = \"%s\" " % milestone
-
     cursor = db.cursor()
 
-    # TODO clean up this query
+    args = [to_timestamp(from_date), to_timestamp(at_date)]
+    milestone_str = ''
+    if milestone:
+        args.append(milestone)
+        milestone_str += 'AND t.milestone = %s'
+
+    # Count tickets between two dates (note: does not account for tickets
+    # that were closed and then reopened between the two dates)
     cursor.execute("""
-        SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue,
-          t.priority
-        FROM enum p, ticket_change tc
-          INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s
-            AND tc.time <= %s
-        WHERE p.name = t.priority AND p.type = 'priority' %s
-        ORDER BY tc.time""" % (to_timestamp(from_date),
-                               to_timestamp(at_date), ma_milestone_str))
+        SELECT newvalue
+        FROM ticket_change tc
+        INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %%s
+          AND tc.time <= %%s AND tc.field == 'status' %s
+        ORDER BY tc.time""" % milestone_str, args)
 
-    for tid, field, time, old, status, priority in cursor:
-        if field == 'status':
-            if status in ('new', 'assigned', 'reopened', 'closed', 'edit'):
-                count += status_map[status]
+    closed_count = 0
+    for (status,) in cursor:
+        if status == 'closed':
+            closed_count += 1
 
-    return count
+    return closed_count
 
 
 def get_num_open_tix(db, at_date, milestone):
     """Returns an integer of the number of tickets currently open on that
     date."""
 
-    status_map = {'new': 0,
-                  'reopened': 1,
-                  'assigned': 0,
-                  'closed': -1,
-                  'edit': 0}
-
-    count = 0
-
-    ma_milestone_str = ""
-    if milestone is not None:
-        ma_milestone_str = " AND t.milestone = \"%s\" " % milestone
-
     cursor = db.cursor()
 
-    # TODO clean up this query
+    args = [to_timestamp(at_date)]
+    milestone_str = ''
+    if milestone:
+        args.append(milestone)
+        milestone_str += 'AND t.milestone = %s'
+
+    # Count number of tickets created before specified date
     cursor.execute("""
-        SELECT t.type AS type, owner, status, time
-        FROM ticket t, enum p
-        WHERE p.name = t.priority AND p.type = 'priority'
-          AND t.time <= %s %s
-        """ % (to_timestamp(at_date), ma_milestone_str))
+        SELECT COUNT(*) FROM ticket t
+        WHERE t.time <= %%s %s
+        """ % milestone_str, args)
+    open_count = cursor.fetchone()[0]
 
-    for rows in cursor:
-        count += 1
-
-    # TODO clean up this query
+    # Count closed and reopened tickets
     cursor.execute("""
-        SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue,
-          t.priority
-        FROM enum p, ticket_change tc
-          INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0
-            AND tc.time <= %s WHERE p.name = t.priority
-            AND p.type = 'priority' %s
-        ORDER BY tc.time""" % (to_timestamp(at_date), ma_milestone_str))
+        SELECT newvalue
+        FROM ticket_change tc
+        INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0
+          AND tc.time <= %%s AND tc.field == 'status' %s
+        ORDER BY tc.time""" % milestone_str, args)
 
-    for tid, field, time, old, status, priority in cursor:
-        if field == 'status':
-            if status in ('new', 'assigned', 'reopened', 'closed', 'edit'):
-                count += status_map[status]
+    for (status,) in cursor:
+        if status == 'closed':
+            open_count -= 1
+        elif status == 'reopened':
+            open_count += 1
 
-    return count
+    return open_count
 
 
 def date_range(begin, end, delta=timedelta(1)):
