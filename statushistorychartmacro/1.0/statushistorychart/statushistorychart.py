@@ -49,7 +49,7 @@ class Macro(Component):
    - Use '''{{{report}}}''' parameter in query for field name to plot.[[BR]]
   default: {{{status}}}
   - Use '''{{{format}}}''' parameter in query for yaxis values.[[BR]]
-  slash {{{/}}} separated column name or {{{*}}} for wildcard.[[BR]] 
+  slash {{{/}}} separated column name or {{{*}}} for wildcard.[[BR]]
   two or more value can join with '+' in one, rename with ' AS ' i.e. {{{/new/assigned+accepted AS in progress/closed}}}[[BR]]
   default: options for the field, i.e. {{{new/assigned/accepted/closed/*}}} for status.
 
@@ -86,6 +86,7 @@ class Macro(Component):
         add_script(formatter.req, "statushistorychart/js/enabler.js")
         # from macro parameters
         query = None
+        query_href = None
         status_list = ['new', 'assigned', 'accepted', 'closed']  # default
         if(content):
             # replace parameters
@@ -127,6 +128,7 @@ class Macro(Component):
             cond = "ticket.milestone='%s'" % formatter.resource.id
         elif('query_tickets' in formatter.req.session):  # You Feeling Lucky
             query_tickets = formatter.req.session.get('query_tickets', '')
+            query_href = formatter.req.session.get('query_href', '')
             tickets = len(query_tickets) and query_tickets.split(' ') or ['-1']  # Sentinel for no result
             cond = "ticket.id in (%s)" % ', '.join(tickets)
         else:
@@ -193,13 +195,12 @@ class Macro(Component):
         # render for trac 1.0 or later
             add_script_data(formatter.req, {'statushistorychart_yaxis': map(after_AS, status_list)})
             add_script_data(formatter.req, {'statushistorychart_data': data})
-            return '<div id="statushistorychart" style="width: 800px; height: 400px;"></div>'
+            return tag.a(query_href, href=query_href) \
+                 + tag.div(id="statushistorychart", style="width: 800px; height: 400px;")
         else:  # if trac < 1.0 or earlier
             from trac.util.presentation import to_json
-            return """
-            <script type="text/javascript">
-            var statushistorychart_yaxis = %s;
-            var statushistorychart_data = %s;
-            </script>
-            <div id="statushistorychart" style="width: 800px; height: 400px;"></div>""" \
-            % (to_json(map(after_AS, status_list)), to_json(data))
+            return tag.script("var statushistorychart_yaxis = %s; var statushistorychart_data = %s" \
+                              % (to_json(map(after_AS, status_list)), to_json(data)),
+                              type="text/javascript") \
+                 + tag.a(query_href, href=query_href) \
+                 + tag.div(id="statushistorychart", style="width: 800px; height: 400px;")
