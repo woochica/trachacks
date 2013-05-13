@@ -9,17 +9,20 @@
 #
 
 import re
+from datetime import date, datetime, time, timedelta
 
 from genshi.builder import tag
-
+from trac.config import IntOption, Option
 from trac.core import *
-from trac.config import Option, IntOption
-from trac.web import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider
 from trac.ticket import Milestone
+from trac.util.datefmt import format_date, parse_date, utc
+from trac.web.api import IRequestHandler
+from trac.web.chrome import INavigationContributor, ITemplateProvider
 
-from datetime import date, datetime, time, timedelta
-from trac.util.datefmt import format_date, parse_date, to_utimestamp, utc
+try:
+    from trac.util.datefmt import to_utimestamp as to_timestamp
+except ImportError:
+    from trac.util.datefmt import to_timestamp
 
 # ************************
 DEFAULT_DAYS_BACK = 30 * 6
@@ -82,8 +85,8 @@ class TicketStatsPlugin(Component):
               INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > %s
                 AND tc.time <= %s
             WHERE p.name = t.priority AND p.type = 'priority' %s
-            ORDER BY tc.time""" % (to_utimestamp(from_date),
-                                   to_utimestamp(at_date), ma_milestone_str))
+            ORDER BY tc.time""" % (to_timestamp(from_date),
+                                   to_timestamp(at_date), ma_milestone_str))
 
         for tid, field, time, old, status, priority in cursor:
             if field == 'status':
@@ -117,7 +120,7 @@ class TicketStatsPlugin(Component):
             FROM ticket t, enum p
             WHERE p.name = t.priority AND p.type = 'priority'
               AND t.time <= %s %s
-            """ % (to_utimestamp(at_date), ma_milestone_str))
+            """ % (to_timestamp(at_date), ma_milestone_str))
 
         for rows in cursor:
             count += 1
@@ -130,7 +133,7 @@ class TicketStatsPlugin(Component):
               INNER JOIN ticket t ON t.id = tc.ticket AND tc.time > 0
                 AND tc.time <= %s WHERE p.name = t.priority
                 AND p.type = 'priority' %s
-            ORDER BY tc.time""" % (to_utimestamp(at_date), ma_milestone_str))
+            ORDER BY tc.time""" % (to_timestamp(at_date), ma_milestone_str))
 
         for tid, field, time, old, status, priority in cursor:
             if field == 'status':

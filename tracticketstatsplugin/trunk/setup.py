@@ -25,7 +25,7 @@ setup(
         ticketstats.ticketstats = ticketstats.ticketstats
         ticketstats.macro = ticketstats.macro
     """,
-    install_requires=['Trac >= 0.12'],
+    install_requires=['Trac >= 0.11'],
     package_data={'ticketstats': ['templates/*.html']},
 )
 
