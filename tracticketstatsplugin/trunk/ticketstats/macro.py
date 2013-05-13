@@ -22,6 +22,7 @@ try:
 except ImportError:
     from trac.util.datefmt import to_timestamp
 
+from ticketstats import date_range
 from tracadvparseargs import parseargs           # Trac plugin
 
 revision = "$Rev$"
@@ -168,40 +169,6 @@ def _parse_relative_time(text, tzinfo):
                         tzinfo=tzinfo)
     return None
 # END - Stolen from trac/util/datefmt.py@8546 on trunk
-
-
-def date_range(begin, end, delta=timedelta(1)):
-    """Stolen from:
-       http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/574441
-
-    Form a range of dates and iterate over them.
-
-    Arguments:
-    begin -- a date (or datetime) object; the beginning of the range.
-    end   -- a date (or datetime) object; the end of the range.
-    delta -- (optional) a timedelta object; how much to step each iteration.
-             Default step is 1 day.
-
-    Usage:
-
-    """
-    if not isinstance(delta, timedelta):
-        delta = timedelta(delta)
-
-    ZERO = timedelta(0)
-
-    if begin < end:
-        if delta <= ZERO:
-            raise StopIteration
-        test = end.__gt__
-    else:
-        if delta >= ZERO:
-            raise StopIteration
-        test = end.__lt__
-
-    while test(begin):
-        yield begin
-        begin += delta
 
 
 def _parse_args(args, args_dict=None):
