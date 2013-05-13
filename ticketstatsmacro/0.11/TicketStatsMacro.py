@@ -1,15 +1,16 @@
 import re
 import random
 import string
-from datetime import tzinfo, timedelta, datetime, date, time
-from tracadvparseargs import parseargs           # Trac plugin
+from datetime import timedelta, datetime
 
 from trac.ticket.query import Query
 from trac.wiki.macros import WikiMacroBase
 from trac.util.datefmt import to_timestamp, utc, format_date
 
-revision="$Rev$"
-url="$URL$"
+from tracadvparseargs import parseargs           # Trac plugin
+
+revision = "$Rev$"
+url = "$URL$"
 
 PLUGIN_CONFIG_NAME = 'ticketstatsmacro'
 
@@ -56,9 +57,12 @@ myDataSource_$id.responseSchema =
 
 var seriesDef_$id =
 [
-    { displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: ${column_width}} },
-    { displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size:${column_width}} },
-    { type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
+    { displayName: "New Tickets", yField: "new_tickets",
+      style: {color: 0xff0000, size: ${column_width}} },
+    { displayName: "Closed Tickets", yField: "closed",
+      style: {color: 0x00ff00, size:${column_width}} },
+    { type: "line", displayName: "Open Tickets", yField: "open",
+      style: {color: 0x0000ff} }
 ];
 
 var numtixAxis_$id = new YAHOO.widget.NumericAxis();
@@ -111,13 +115,14 @@ _time_starts = dict(
     minute=lambda now: now.replace(microsecond=0, second=0),
     hour=lambda now: now.replace(microsecond=0, second=0, minute=0),
     day=lambda now: now.replace(microsecond=0, second=0, minute=0, hour=0),
-    week=lambda now: now.replace(microsecond=0, second=0, minute=0, hour=0) \
-                     - timedelta(days=now.weekday()),
+    week=lambda now: now.replace(microsecond=0, second=0, minute=0, hour=0) -
+                     timedelta(days=now.weekday()),
     month=lambda now: now.replace(microsecond=0, second=0, minute=0, hour=0,
                                   day=1),
     year=lambda now: now.replace(microsecond=0, second=0, minute=0, hour=0,
-                                  day=1, month=1),
+                                 day=1, month=1),
 )
+
 
 def _parse_relative_time(text, tzinfo):
     now = datetime.now(tzinfo)
@@ -126,8 +131,8 @@ def _parse_relative_time(text, tzinfo):
     if text == 'today':
         return now.replace(microsecond=0, second=0, minute=0, hour=0)
     if text == 'yesterday':
-        return now.replace(microsecond=0, second=0, minute=0, hour=0) \
-               - timedelta(days=1)
+        return now.replace(microsecond=0, second=0, minute=0, hour=0) - \
+            timedelta(days=1)
     match = _REL_TIME_RE.match(text)
     if match:
         (value, interval) = match.groups()
@@ -147,13 +152,15 @@ def _parse_relative_time(text, tzinfo):
         return dt
     match = _ISO_DATE_RE.match(text)
     if match:
-        return datetime(int(text[:4]), int(text[5:7]), int(text[8:10]), tzinfo=tzinfo)
+        return datetime(int(text[:4]), int(text[5:7]), int(text[8:10]),
+                        tzinfo=tzinfo)
     return None
 # END - Stolen from trac/util/datefmt.py@8546 on trunk
 
 
-def daterange(begin, end, delta=timedelta(1)):
-    """Stolen from: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/574441
+def date_range(begin, end, delta=timedelta(1)):
+    """Stolen from:
+       http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/574441
 
     Form a range of dates and iterate over them.
 
@@ -185,37 +192,44 @@ def daterange(begin, end, delta=timedelta(1)):
         begin += delta
 
 
-def _parse_args(args, args_dict = None):
-    # The plugin of the args parser in not good enough because it doesn't strip white spaces.
-    # Since I didn't want to change the plugin itself, I'll do it here...
-    args_list, args_keys = parseargs.parse_args(args, strict = False) # Great function naming...
+def _parse_args(args, args_dict=None):
+    # The plugin of the args parser in not good enough because it doesn't strip
+    # white spaces. Since I didn't want to change the plugin itself, I'll do
+    # it here.
+
+    args_list, args_keys = parseargs.parse_args(args, strict=False)
 
     if args_dict is None:
         stripped_args = {}
     else:
-        stripped_args = args_dict     # This way we can use defaultdict
+        stripped_args = args_dict  # This way we can use defaultdict
 
     for key, value in args_keys.iteritems():
         stripped_args[key] = value.strip()
 
-    # I don't really need a list for arguments without values, I can make their values None...
+    # I don't really need a list for arguments without values, I can make their
+    # values None.
     for value in args_list:
         stripped_args[value.strip()] = None
 
     return stripped_args
 
+
 def _get_config_variable(env, varaible_name, default_value):
     return env.config.get(PLUGIN_CONFIG_NAME, varaible_name, default_value)
+
 
 def _get_args_defaults(env, args):
     """
     Fill the args dict with the default values for the keys that don't exist
     """
-    defaults = {'height' : _get_config_variable(env, 'height', 500),
-                'column_width' : _get_config_variable(env, 'column_width', 40),
-                'res_days' : _get_config_variable(env, 'res_days', 7),
-                'title': _get_config_variable(env, 'default_title', 'Tickets statistics'),
-                'daterange': _get_config_variable(env, 'default_daterange', '3m;'),
+    defaults = {'height': _get_config_variable(env, 'height', 500),
+                'column_width': _get_config_variable(env, 'column_width', 40),
+                'res_days': _get_config_variable(env, 'res_days', 7),
+                'title': _get_config_variable(env, 'default_title',
+                                              'Tickets statistics'),
+                'daterange': _get_config_variable(env, 'default_daterange',
+                                                  '3m;'),
                 }
     # Elegant :)
     defaults.update(args)
@@ -226,46 +240,51 @@ class TicketStatsMacro(WikiMacroBase):
 
     # ==[ Helper functions ]==
     def _get_num_closed_tix(self, from_date, at_date, req, ticketFilter=""):
-        '''
-        Returns an integer of the number of close ticket
-        events counted between from_date to at_date.
-        '''
-        status_map = {'new': 0,
-                  'reopened': 0,
-                  'assigned': 0,
-                  'closed': 1,
-                  'edit': 0}
+        """Returns an integer of the number of close ticket events counted
+        between from_date to at_date."""
+
+        status_map = {
+            'new': 0,
+            'reopened': 0,
+            'assigned': 0,
+            'closed': 1,
+            'edit': 0
+        }
 
         count = 0
 
         db = self.env.get_db_cnx()
         cursor = db.cursor()
 
-        cursor.execute("""SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority
+        cursor.execute("""
+            SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue,
+              t.priority
             FROM ticket_change tc
-                INNER JOIN ticket t ON t.id = tc.ticket
-                INNER JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+              INNER JOIN ticket t ON t.id = tc.ticket
+              INNER JOIN enum p ON p.name = t.priority AND p.type = 'priority'
             WHERE tc.time > %s AND tc.time <= %s %s
-            ORDER BY tc.time""" % (to_timestamp(from_date), to_timestamp(at_date), ticketFilter))
+            ORDER BY tc.time
+            """ % (to_timestamp(from_date), to_timestamp(at_date),
+                   ticketFilter))
 
-        for id, field, time, old, status, priority in cursor:
+        for tid, field, time, old, status, priority in cursor:
             if field == 'status':
                 if status in ('new', 'assigned', 'reopened', 'closed', 'edit'):
                     count += status_map[status]
 
         return count
 
-
     def _get_num_open_tix(self, at_date, req, ticketFilter=""):
-        '''
-        Returns an integer of the number of tickets
-        currently open on that date.
-        '''
-        status_map = {'new': 0,
-                  'reopened': 1,
-                  'assigned': 0,
-                  'closed': -1,
-                  'edit': 0}
+        """Returns an integer of the number of tickets currently open on that
+        date."""
+
+        status_map = {
+            'new': 0,
+            'reopened': 1,
+            'assigned': 0,
+            'closed': -1,
+            'edit': 0
+        }
 
         count = 0
 
@@ -273,38 +292,48 @@ class TicketStatsMacro(WikiMacroBase):
         cursor = db.cursor()
 
         # TODO clean up this query
-        cursor.execute("""SELECT t.type AS type, owner, status, time AS created
+        cursor.execute("""
+            SELECT t.type AS type, owner, status, time AS created
             FROM ticket t
-                INNER JOIN enum p ON p.name = t.priority
-            WHERE p.type = 'priority' AND time <= %s %s""" % (to_timestamp(at_date), ticketFilter))
+              INNER JOIN enum p ON p.name = t.priority
+            WHERE p.type = 'priority' AND time <= %s %s
+            """ % (to_timestamp(at_date), ticketFilter))
 
         for rows in cursor:
             count += 1
 
-        cursor.execute("""SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue, t.priority
+        cursor.execute("""
+            SELECT t.id, tc.field, tc.time, tc.oldvalue, tc.newvalue,
+              t.priority
             FROM ticket_change tc
-                INNER JOIN ticket t ON t.id = tc.ticket
-                INNER JOIN enum p ON p.name = t.priority AND p.type = 'priority'
+              INNER JOIN ticket t ON t.id = tc.ticket
+              INNER JOIN enum p ON p.name = t.priority AND p.type = 'priority'
             WHERE tc.time > 0 AND tc.time <= %s %s
             ORDER BY tc.time""" % (to_timestamp(at_date), ticketFilter))
 
-        for id, field, time, old, status, priority in cursor:
+        for tid, field, time, old, status, priority in cursor:
             if field == 'status':
                 if status in ('new', 'assigned', 'reopened', 'closed', 'edit'):
                     count += status_map[status]
 
         return count
 
-
     def expand_macro(self, formatter, name, args):
+        """
+
+        @param formatter: 
+        @param name: 
+        @param args: 
+        @return: 
+        """
         args = _parse_args(args)
         args = _get_args_defaults(formatter.env, args)
 
-        ddaterange = args["daterange"].split(";")
-        if len(ddaterange)==1:
-            ddaterange.append("")
-        from_date = _parse_relative_time(ddaterange[0] or "10y", utc)
-        at_date = _parse_relative_time(ddaterange[1] or "now", utc)
+        d_date_range = args["daterange"].split(";")
+        if len(d_date_range) == 1:
+            d_date_range.append("")
+        from_date = _parse_relative_time(d_date_range[0] or "10y", utc)
+        at_date = _parse_relative_time(d_date_range[1] or "now", utc)
 
         graph_res = int(args["res_days"])
         if "query" in args:
@@ -313,9 +342,12 @@ class TicketStatsMacro(WikiMacroBase):
             query_object = Query.from_string(self.env, query)
             sql_format_string, format_string_arguments = query_object.get_sql()
             # Hack to remove extra columns, I don't know another way to do it
-            sql_format_string = "SELECT t.id " + sql_format_string[sql_format_string.index("FROM ticket"):]
+            sql_format_string = "SELECT t.id " + \
+                                sql_format_string[
+                                    sql_format_string.index("FROM ticket"):]
 
-            ticketFilter = "AND t.id IN (%s)" % (sql_format_string % tuple(format_string_arguments))
+            ticketFilter = "AND t.id IN (%s)" % \
+                           (sql_format_string % tuple(format_string_arguments))
         else:
             ticketFilter = ""
 
@@ -330,29 +362,31 @@ class TicketStatsMacro(WikiMacroBase):
         last_num_open = self._get_num_open_tix(last_date, req, ticketFilter)
 
         # Calculate remaining points
-        for cur_date in daterange(from_date, at_date, graph_res):
+        for cur_date in date_range(from_date, at_date, graph_res):
             num_open = self._get_num_open_tix(cur_date, req, ticketFilter)
-            num_closed = self._get_num_closed_tix(last_date, cur_date, req, ticketFilter)
-            datestr = format_date(cur_date)
+            num_closed = self._get_num_closed_tix(last_date, cur_date, req,
+                                                  ticketFilter)
+            date = format_date(cur_date)
             if graph_res != 1:
-                datestr = "%s thru %s" % (format_date(last_date), datestr)
-            count.append( {'date'  : datestr,
-                       'new'   : num_open - last_num_open + num_closed,
-                       'closed': num_closed,
-                       'open'  : num_open })
+                date = "%s thru %s" % (format_date(last_date), date)
+            count.append({
+                'date': date,
+                'new': num_open - last_num_open + num_closed,
+                'closed': num_closed,
+                'open': num_open})
             last_num_open = num_open
             last_date = cur_date
 
-        chart_data = ", \n".join( [
-            '{date: "%(date)s", new_tickets: %(new)d, closed: %(closed)d, open: %(open)d}' % d
-            for d in count
-            ] )
-        return string.Template(graphTemplate).safe_substitute({"chart_title": chart_title,
-            "chart_data": chart_data,
-            "height": args["height"],
-            "column_width": args["column_width"],
-            "id": random.randint(1, 9999999),
-            } )
+        chart_data = ", \n".join(['{date: \'%(date)s\', new_tickets: %(new)d, '
+                                  'closed: %(closed)d, open: %(open)d}' % d
+                                  for d in count])
+
+        return string.Template(graphTemplate).safe_substitute({
+            'chart_title': chart_title,
+            'chart_data': chart_data,
+            'height': args['height'],
+            'column_width': args['column_width'],
+            'id': random.randint(1, 9999999)})
 
 ##             "chart_data": """
 ## {date: "from1to2", new_tickets:23, closed: 22, open:33 },
