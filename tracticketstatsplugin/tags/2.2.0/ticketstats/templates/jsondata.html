@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>  
+<xmldataset xmlns:py="http://genshi.edgewall.org/">
+	<py:for each="t in ticket_data">
+		<ChartData>
+			<date>${t['date']}</date>
+			<new_tickets>${t['new']}</new_tickets>
+			<open>${t['open']}</open>
+			<closed>${t['closed']}</closed>
+		</ChartData>
+	</py:for>
+</xmldataset>
