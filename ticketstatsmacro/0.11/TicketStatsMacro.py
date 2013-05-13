@@ -8,7 +8,7 @@ from trac.ticket.query import Query
 from trac.wiki.macros import WikiMacroBase
 from trac.util.datefmt import to_timestamp, utc, format_date
 
-revison="$Rev$"
+revision="$Rev$"
 url="$URL$"
 
 PLUGIN_CONFIG_NAME = 'ticketstatsmacro'
