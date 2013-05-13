@@ -24,19 +24,16 @@ graphTemplate = """
 #chart_$id { height: ${height}px }
 </style>
 
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/yahoo-dom-event/yahoo-dom-event.js">
-</script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/element/element-beta-min.js">
-</script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/datasource/datasource-beta-min.js">
-</script>
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/json/json-min.js"></script>
+<!-- Dependencies -->
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/element/element-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/datasource/datasource-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/json/json-min.js"></script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/swf/swf-min.js"></script>
 <!-- OPTIONAL: Connection (enables XHR) -->
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/connection/connection-min.js">
-</script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/connection/connection-min.js"></script>
 <!-- Source files -->
-<script type="text/javascript" src="http://yui.yahooapis.com/2.5.2/build/charts/charts-experimental-min.js">
-</script>
+<script type="text/javascript" src="http://yui.yahooapis.com/2.9.0/build/charts/charts-min.js"></script>
 <p>
 <span class="chart_title">
     <h3>$chart_title</h3>
@@ -44,7 +41,7 @@ graphTemplate = """
 <div id="chart_$id"></div>
 
 <script type = "text/javascript">
-YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.5.2/build/charts/assets/charts.swf";
+YAHOO.widget.Chart.SWFURL = "http://yui.yahooapis.com/2.9.0/build/charts/assets/charts.swf";
 
 
 var mychartdata_$id =
