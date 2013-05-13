@@ -5,7 +5,12 @@ from datetime import timedelta, datetime
 
 from trac.ticket.query import Query
 from trac.wiki.macros import WikiMacroBase
-from trac.util.datefmt import to_timestamp, utc, format_date
+from trac.util.datefmt import utc, format_date
+
+try:
+    from trac.util.datefmt import to_utimestamp as to_timestamp
+except ImportError:
+    from trac.util.datefmt import to_timestamp
 
 from tracadvparseargs import parseargs           # Trac plugin
 
