@@ -12,6 +12,7 @@ from pkg_resources import ResourceManager
 from trac.core import Component, implements, TracError
 from trac.ticket.api import TicketSystem
 from trac.ticket.query import Query
+from trac.util.translation import _
 from trac.web.chrome import add_script, ITemplateProvider, add_script_data
 from trac.wiki.api import IWikiMacroProvider
 import copy
@@ -195,12 +196,12 @@ class Macro(Component):
         # render for trac 1.0 or later
             add_script_data(formatter.req, {'statushistorychart_yaxis': map(after_AS, status_list)})
             add_script_data(formatter.req, {'statushistorychart_data': data})
-            return tag.a(query_href, href=query_href) \
+            return tag.a(_("Return to Last Query"), href=query_href) \
                  + tag.div(id="statushistorychart", style="width: 800px; height: 400px;")
         else:  # if trac < 1.0 or earlier
             from trac.util.presentation import to_json
             return tag.script("var statushistorychart_yaxis = %s; var statushistorychart_data = %s" \
                               % (to_json(map(after_AS, status_list)), to_json(data)),
                               type="text/javascript") \
-                 + tag.a(query_href, href=query_href) \
+                 + tag.a(_("Return to Last Query"), href=query_href) \
                  + tag.div(id="statushistorychart", style="width: 800px; height: 400px;")
