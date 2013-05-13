@@ -581,7 +581,7 @@ class GVRenderer(RenderImpl):
         v = self.macroenv.conf.get_map_val( colconfkey, k )
       else:
         v = '#FFFFFF'
-      if imageconfkey!=None:
+      if ( imageconfkey!=None ) and ( self.macroenv.conf.get_map_val( imageconfkey, k ) != "none" ):
         import os.path
         from ppenv import PPImageSelOption
         nodelabel='<TD COLOR="%s">%s</TD><TD BGCOLOR="%s"><IMG SRC="%s"></IMG></TD>' % (
@@ -799,7 +799,7 @@ class GVRenderer(RenderImpl):
       # reopen Client-Side Map file
       cmapxfile = open(self.cmapxgen.cmapxfile)
       # reparse the file and transform shapes to div sections
-      cmapxhtml = HTMLParser(source=cmapxfile)
+      cmapxhtml = HTMLParser(source=cmapxfile,encoding='utf-8')
       for elem in cmapxhtml:
         kind, data, pos = elem
         if kind == EventStream.START:

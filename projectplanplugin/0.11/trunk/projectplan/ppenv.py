@@ -374,9 +374,14 @@ class PPConvertTicketDependenciesOption(PPSingleSelOption):
       db = self.env.get_db_cnx()
       cursor = db.cursor()
 
-      sql="SELECT count(*) FROM mastertickets"
-      cursor.execute(sql)
-      mastertickets_count = cursor.fetchall()
+      try:
+        sql="SELECT count(*) FROM mastertickets"
+        cursor.execute(sql)
+        mastertickets_count = cursor.fetchall()
+      except Exception,e:
+        self.env.log.debug("mastertickets check failed with exception: %s, assuming mastertickets is not in use" % e);
+        mastertickets_count = ((0,),); # simply return a tuple 2 dim 1 element which allows [0][0] == 0 check
+        cursor = db.cursor(); # create new cursor, old one vanished with the exception
 
       sql="SELECT count(*) FROM ticket_custom WHERE name='%s'" % (ppenv.get("custom_dependency_field"),)
       cursor.execute(sql)
