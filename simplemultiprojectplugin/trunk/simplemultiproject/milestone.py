@@ -48,7 +48,17 @@ class SmpMilestoneProject(Component):
                             
                 elif action == 'delete':
                     self.__SmpModel.delete_milestone_project(milestone_id)
-        
+        elif req.path_info.startswith('/admin/ticket/milestones'):
+            if req.method == 'POST':
+                milestones = req.args.get('sel')
+                action = req.args.get('remove')
+                if not action is None and not milestones is None:
+                    if type(milestones) is list:
+                        for ms in milestones:
+                            self.__SmpModel.delete_milestone_project(ms)
+                    else:
+                        self.__SmpModel.delete_milestone_project(milestones) 
+
         return handler
         
     def post_process_request(self, req, template, data, content_type):

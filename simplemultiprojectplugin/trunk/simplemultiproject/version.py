@@ -131,6 +131,16 @@ class SmpVersionProject(Component):
     # IRequestFilter methods
 
     def pre_process_request(self, req, handler):
+        if req.path_info.startswith('/admin/ticket/versions'):
+            if req.method == 'POST':
+                versions = req.args.get('sel')
+                action = req.args.get('remove')
+                if not action is None and not versions is None:
+                    if type(versions) is list:
+                        for version in versions:
+                            self.__SmpModel.delete_version_project(version)
+                    else:
+                        self.__SmpModel.delete_version_project(versions) 
         return handler
         
     def post_process_request(self, req, template, data, content_type):
