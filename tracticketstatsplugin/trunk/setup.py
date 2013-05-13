@@ -13,16 +13,17 @@ from setuptools import find_packages, setup
 
 setup(
     name='Tracticketstats',
-    version='2.2.0',
+    version='3.0.0',
     author='Prentice Wongvibulsin',
     author_email='me@prenticew.com',
     maintainer='Ryan J Ollos',
     maintainer_email='ryan.j.ollos@gmail.com',
-    license='3-Clause BSD',
+    license='BSD 3-Clause',
     packages=find_packages(exclude=['*.tests']),
     entry_points="""
         [trac.plugins]
-        ticketstats = ticketstats
+        ticketstats.ticketstats = ticketstats.ticketstats
+        ticketstats.macro = ticketstats.macro
     """,
     install_requires=['Trac >= 0.12'],
     package_data={'ticketstats': ['templates/*.html']},

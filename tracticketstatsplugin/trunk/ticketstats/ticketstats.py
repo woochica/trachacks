@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2008-2009 Prentice Wongvibulsin <me@prenticew.com>
-# Copyright (c) 2010-2012 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# Copyright (c) 2010-2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -31,7 +31,7 @@ class TicketStatsPlugin(Component):
    implements(INavigationContributor, IRequestHandler, ITemplateProvider, IPermissionRequestor)
 
    yui_base_url = Option('ticketstats', 'yui_base_url',
-         default='http://yui.yahooapis.com/2.5.2',
+         default='http://yui.yahooapis.com/2.9.0',
          doc='Location of YUI API')
 
    default_days_back = IntOption('ticketstats', 'default_days_back',
