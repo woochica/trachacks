@@ -335,17 +335,17 @@ function removeRow( elem, n ){
 }
 
 function fillLines(o){
-  var line; o.lines=[];
-  while(o.text && o.text.length>0){
+  //console.log('fillLines', o);
+  var line, limit=100; o.lines=[];
+  while(o.text && o.text.length>=0 && (limit-- > 0)){
     line = "";
     var start, i = o.width;
     var nextLine = o.text.indexOf('\n');
     var explicitNewline = nextLine >= 0 && nextLine < i;
     var foundSpace=false;
     if(explicitNewline) i = nextLine;
-    else if(i >= o.text.length) i = o.text.length-1;
+    else if(i >= o.text.length) i = o.text.length;
     else{
-      if(!o.text[i]) console.log(i, o.text);
       start = i;
       while(i >= 0 && !o.text[i].match(/\s/i)) i--;
       if(i < 0) i = start; // no spaces in long word... overflow?
@@ -355,24 +355,26 @@ function fillLines(o){
     if(explicitNewline || foundSpace) i++;     // skip newlines/spaces that are now newlines
     o.text = o.text.substr(i);   // remove already process text
     // pad out to correct num of chars
-    while( line.length < o.width )
-      if (o.alignment == 'RIGHT') line = " "+line;
-      else line += " ";
 
+    line = fillwith(jQuery.extend({line:line}, o));
     o.lines.push(line);
   }
   return o;
-}
+};
 
-function fillwith (width, c){
-  var w,out="";
-  width=width||10;
-  c = c || " ";
-  for(w=0 ; w < width ; w++)out+=c;
+function fillwith (opts){
+  var defaults = {width:10, c:' ', line: "", alignment:"LEFT"};
+  opts = jQuery.extend({}, defaults, opts);
+  //console.log('fillwith', opts);
+  var w, out = opts.line, c = opts.c, align = opts.alignment;
+  for(w = out.length-1 ; w < opts.width ; w++)
+    if(align=='RIGHT') out = c+out;
+    else out += c;
   return out;
 }
 
 function fillTexts(texts, widths, alignments){
+  //console.log('fillTexts', texts, widths, alignments);
   var parts=[], lineCnt=0, i, o;
   for( i=0 , o={} ; o.text=texts[i] ; i++, o={} ){
     o.width = widths[i] || 10;
@@ -387,9 +389,10 @@ function fillTexts(texts, widths, alignments){
   while(more && (limit-- > 0)){
     more = false;
     for(i=0; part = parts[i]; i++){
-      line = part.lines.shift() || fillwith(o.width);
+      line = part.lines.shift() || fillwith({width:o.width});
       out +=  line + " | ";
       more |= part.lines.length > 0;
+      // console.log('fillTexts partsLeft:', part.lines.length > 0,' limit:', limit);
     }
     out+="\n";
   }
@@ -407,27 +410,27 @@ function prepareComment( ){
    var s = "\n";
    $('#estimateParams tr').each(function(){
        var texts = cellTexts($(this.cells));
-       var widths = [16, 44];
+       var widths = [16, 62];
        var alignments = ['RIGHT','LEFT'];
        s += fillTexts(texts, widths, alignments);
    });
-   s += fillwith(81, "_")+"\n";
+   s += fillwith({width:83, c:"_"})+"\n";
    var foundFoot = false;
    $('#estimateBody tbody tr').each(function(){
      var texts = cellTexts($(this.cells).not(':last-child'));
      var widths = [40, 10, 10, 10];
      var alignments = ['LEFT','RIGHT','RIGHT','RIGHT'];
      s += fillTexts(texts, widths, alignments);
-     s += fillwith(81, "-")+"\n";
+     s += fillwith({width:83, c:"-"})+"\n";
    });
-   s += fillwith(81, "_")+"\n";
+   s += fillwith({width:83, c:"_"})+"\n";
    $('#estimateBody tfoot tr').each(function(){
      var texts = cellTexts($(this.cells).not(':last-child'));
      var widths = [40, 10, 10, 10];
      var alignments = ['RIGHT','RIGHT','RIGHT','RIGHT'];
      s += fillTexts(texts, widths, alignments);
    });
-   s += fillwith(81, "_")+"\n";
+   s += fillwith({width:83, c:"_"})+"\n";
    return s;
 };
 
@@ -447,7 +450,7 @@ function preparePreview(){
   preview.empty().
     append(removeInputsAndIds(evenDeeperClone($$('estimateParams')))).
     append(linkifyTickets(removeInputsAndIds(evenDeeperClone($$('estimateBody')))));
-  var txtComment = prepareComment(preview[0]);
+  var txtComment = prepareComment();
   // console.log(txtComment);
   $('#diffcomment').val( txtComment );
   $('#comment').val( preview.html() );
@@ -484,4 +487,3 @@ $(function(){
       saveEstimate($('.estimate-form'));
     }
 });
-

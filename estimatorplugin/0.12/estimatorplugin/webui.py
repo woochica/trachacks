@@ -46,8 +46,12 @@ def convertfloat(x):
     return 0.0
 
 def convertint(x):
-    if type(x) == int : return x
-    return int(x.strip())
+    if x == None or type(x) == int : return x
+    x = str(x).strip()
+    try:
+        return int(x)
+    except:
+        return None
 
 def isint(t):
     try:
