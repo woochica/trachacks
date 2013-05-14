@@ -1,9 +1,0 @@
-setup.py
-TracHtGroupEditorPlugin.egg-info/PKG-INFO
-TracHtGroupEditorPlugin.egg-info/SOURCES.txt
-TracHtGroupEditorPlugin.egg-info/dependency_links.txt
-TracHtGroupEditorPlugin.egg-info/entry_points.txt
-TracHtGroupEditorPlugin.egg-info/requires.txt
-TracHtGroupEditorPlugin.egg-info/top_level.txt
-htgroupeditor/__init__.py
-htgroupeditor/htgroupeditor.py
