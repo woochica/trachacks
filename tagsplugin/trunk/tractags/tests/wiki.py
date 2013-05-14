@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011 Odd Simon Simonsen <oddsimons@gmail.com>
-# Copyright (C) 2012 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2012,2013 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -42,11 +42,11 @@ tag:a.really_&nbsp;\wild-thing!
 tag:single'quote
 ------------------------------
 <p>
-<a href="/tags?q=onetag">tag:onetag</a>
-<a href="/tags?q=2ndtag">tag:2ndtag</a> n' more
-<a href="/tags?q=a.really_%26nbsp%3B%5Cwild-thing!">tag:a.really_&amp;nbsp;\\wild-thing!</a>
+<a href="/tags/onetag">tag:onetag</a>
+<a href="/tags/2ndtag">tag:2ndtag</a> n' more
+<a href="/tags/a.really_%26nbsp%3B%5Cwild-thing!">tag:a.really_&amp;nbsp;\\wild-thing!</a>
 # regression test for ticket <tt>#9057</tt>
-<a href="/tags?q=single\'quote">tag:single\'quote</a>
+<a href="/tags/single\'quote">tag:single\'quote</a>
 </p>
 ------------------------------
 ============================== tagged: alternative link markup
@@ -54,8 +54,8 @@ tagged:onetag
 tagged:'onetag 2ndtag'
 ------------------------------
 <p>
-<a href="/tags?q=onetag">tagged:onetag</a>
-<a href="/tags?q=onetag+2ndtag">tagged:\'onetag 2ndtag\'</a>
+<a href="/tags/onetag">tagged:onetag</a>
+<a href="/tags/onetag%202ndtag">tagged:\'onetag 2ndtag\'</a>
 </p>
 ------------------------------
 ============================== query expression in tag: link resolver
@@ -64,9 +64,9 @@ tag:"onetag 2ndtag"
 tag:'"heavily quoted"'
 ------------------------------
 <p>
-<a href="/tags?q=onetag+2ndtag">tag:\'onetag 2ndtag\'</a>
-<a href="/tags?q=onetag+2ndtag">tag:\"onetag 2ndtag\"</a>
-<a href="/tags?q=heavily+quoted">tag:\'"heavily quoted"\'</a>
+<a href="/tags/onetag%202ndtag">tag:\'onetag 2ndtag\'</a>
+<a href="/tags/onetag%202ndtag">tag:\"onetag 2ndtag\"</a>
+<a href="/tags/heavily%20quoted">tag:\'"heavily quoted"\'</a>
 </p>
 ------------------------------
 ============================== tag cleanup and quoting in tag: link resolver
@@ -83,15 +83,15 @@ tag:onetag...
 ------------------------------
 <p>
 # Trailing non-letter character must be ignored.
-<a href="/tags?q=onetag">tag:onetag</a>,
-<a href="/tags?q=onetag">tag:onetag</a>.
-<a href="/tags?q=onetag">tag:onetag</a>;
-<a href="/tags?q=onetag">tag:onetag</a>:
-<a href="/tags?q=onetag">tag:onetag</a>!
-<a href="/tags?q=onetag">tag:onetag</a>?
+<a href="/tags/onetag">tag:onetag</a>,
+<a href="/tags/onetag">tag:onetag</a>.
+<a href="/tags/onetag">tag:onetag</a>;
+<a href="/tags/onetag">tag:onetag</a>:
+<a href="/tags/onetag">tag:onetag</a>!
+<a href="/tags/onetag">tag:onetag</a>?
 # Multiple trailing non-letter characters should be removed too.
-<a href="/tags?q=onetag">tag:onetag</a>..
-<a href="/tags?q=onetag">tag:onetag</a>...
+<a href="/tags/onetag">tag:onetag</a>..
+<a href="/tags/onetag">tag:onetag</a>...
 </p>
 ============================== tag: as bracketed TracWiki link
 [tag:onetag]
@@ -99,9 +99,9 @@ tag:onetag...
 [tagged:onetag multi-word tag: label]
 ------------------------------
 <p>
-<a href="/tags?q=onetag">onetag</a>
-<a href="/tags?q=onetag">label</a>
-<a href="/tags?q=onetag">multi-word tag: label</a>
+<a href="/tags/onetag">onetag</a>
+<a href="/tags/onetag">label</a>
+<a href="/tags/onetag">multi-word tag: label</a>
 </p>
 ------------------------------
 """

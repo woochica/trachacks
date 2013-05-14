@@ -52,10 +52,13 @@
           <h1 py:when="tag_query and tag_page and tag_page.exists and
                        'WIKI_VIEW' in perm('wiki', tag_page.resource)"
               i18n:msg="query">
-            Showing objects matching
+            Showing objects tagged with
             <a href="${href.wiki(tag_page.name)}" title="Go to wiki page">
               '${tag_query}'
             </a>
+          </h1>
+          <h1 py:when="tag_query and tag_page" i18n:msg="query">
+            Showing objects tagged with '${tag_query}'
           </h1>
           <h1 py:when="tag_query" i18n:msg="query">
             Showing objects matching '${tag_query}'
