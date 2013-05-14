@@ -869,7 +869,6 @@ class PPConfiguration():
      If any errors appear while saving dependencies, then disable this optimization.
       """ )
      
-     
     self.flatconf[ 'add_date_field_definition_at_url_pattern' ] = PPSingleValOption(
       self.env, 'add_date_field_definition_at_url_pattern', u'', catid='General', groupid='Compatibility', doc="""
       the (hidden) definition of the date fields will be included via PPTicketDateTweak on pages where the pattern /ticket/ or /newticket is matching. 
@@ -877,7 +876,14 @@ class PPConfiguration():
       the ticket field definition on extra pages, e.g., wiki pages.
       """ )
     
-    
+    self.flatconf[ 'enable_save_dependency_changes_to_ticket_comments' ] = PPBooleanSwitchOption(
+      self.env, 'enable_save_dependency_changes_to_ticket_comments', u'disabled', catid='General', groupid='Compatibility', doc="""
+        While activating mastertickets compatibility adding ticket dependencies might cause problems. 
+        I.e., a conflict is shown by Trac while editing dependencies AND another field at the same time. 
+        
+        If enabled, each change at a ticket dependency will create a new comment. Default: disabled. 
+      """ )
+
     # TODO: Add Configuration
     # Ticket Visualizations Options
     #self.flatconf[ 'custom_show_tickettype' ] = PPActivateColumnOption(
