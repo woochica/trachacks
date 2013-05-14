@@ -50,9 +50,9 @@ def get_tickets_for_any(env, db, any_name, any_value, field='component'):
     cursor = db.cursor()
     fields = TicketSystem(env).get_ticket_fields()
     if field in [f['name'] for f in fields if not f.get('custom')]:
-        cursor.execute("SELECT id,status,%s FROM ticket WHERE %s='%s' ORDER BY %s" % (field, any_name, any_value, field))
+        cursor.execute("""SELECT id,status,%s FROM ticket WHERE %s=%%s ORDER BY %s""" % (field, any_name, field), [any_value])
     else:
-        cursor.execute("SELECT id,status,value FROM ticket LEFT OUTER JOIN ticket_custom ON (id=ticket AND name=%s) WHERE %s='%s' ORDER BY value", (field, any_name, any_value))
+        cursor.execute("""SELECT id,status,value FROM ticket LEFT OUTER JOIN ticket_custom ON (id=ticket AND name=%%s) WHERE %s=%%s ORDER BY value""" % any_name, [field, any_value])
     tickets = []
     for tkt_id, status, fieldval in cursor:
         tickets.append({'id': tkt_id, 'status': status, field: fieldval})
@@ -400,7 +400,7 @@ class SmpVersionProject(Component):
                         cursor.execute("""
                             SELECT DISTINCT COALESCE(%s,'') FROM ticket
                             ORDER BY COALESCE(%s,'')
-                            """ % (by, by))
+                            """, [by, by])
                         groups = [row[0] for row in cursor]
 
             max_count = 0

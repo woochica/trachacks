@@ -69,8 +69,8 @@ class smpEnvironmentSetupParticipant(Component):
         # Get currently installed database schema version
         db_installed_version = 0
         try:
-            sqlGetInstalledVersion = "SELECT value FROM system WHERE name = '%s'" % db_version_key
-            cursor.execute(sqlGetInstalledVersion)
+            sqlGetInstalledVersion = """SELECT value FROM system WHERE name = %s"""
+            cursor.execute(sqlGetInstalledVersion, [db_version_key])
             db_installed_version = int(cursor.fetchone()[0])
         except:
             # No version currently, inserting new one.
@@ -96,8 +96,8 @@ class smpEnvironmentSetupParticipant(Component):
         cursor = db.cursor()
 
         db_installed_version = 0
-        sqlGetInstalledVersion = "SELECT value FROM system WHERE name = '%s'" % db_version_key
-        cursor.execute(sqlGetInstalledVersion)
+        sqlGetInstalledVersion = """SELECT value FROM system WHERE name = %s"""
+        cursor.execute(sqlGetInstalledVersion, [db_version_key])
         for row in cursor:
             db_installed_version = int(row[0])
         printout("SimpleMultiProject database schema version is %s, should be %s" %
@@ -111,8 +111,8 @@ class smpEnvironmentSetupParticipant(Component):
                 for statement in db_connector.to_sql(table):
                     cursor.execute(statement)
                     
-            sqlInsertVersion = "INSERT INTO system (name, value) VALUES ('%s','%s')" % (db_version_key, db_version)
-            cursor.execute(sqlInsertVersion)
+            sqlInsertVersion = """INSERT INTO system (name, value) VALUES (%s,%s)"""
+            cursor.execute(sqlInsertVersion, [db_version_key, db_version])
             db_installed_version = 1
             
         if db_installed_version < 2:
@@ -121,8 +121,8 @@ class smpEnvironmentSetupParticipant(Component):
                 for statement in db_connector.to_sql(table):
                     cursor.execute(statement)
                     
-            sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
-            cursor.execute(sqlInsertVersion)
+            sqlInsertVersion = """UPDATE system SET value=%s WHERE name=%s"""
+            cursor.execute(sqlInsertVersion, [db_version, db_version_key])
             db_installed_version = 2
 
         if db_installed_version < 3:
@@ -131,14 +131,14 @@ class smpEnvironmentSetupParticipant(Component):
                 for statement in db_connector.to_sql(table):
                     cursor.execute(statement)
                     
-            sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
-            cursor.execute(sqlInsertVersion)
+            sqlInsertVersion = """UPDATE system SET value=%s WHERE name=%s"""
+            cursor.execute(sqlInsertVersion, [db_version, db_version_key])
             db_installed_version = 3
 
         if db_installed_version < 4:
             # Insert new column
-            cursor.execute("ALTER TABLE smp_project ADD summary varchar(255)")
+            cursor.execute("""ALTER TABLE smp_project ADD summary varchar(255)""")
             
-            sqlInsertVersion = "UPDATE system SET value='%s' WHERE name='%s'" % (db_version, db_version_key)
-            cursor.execute(sqlInsertVersion)
+            sqlInsertVersion = """UPDATE system SET value=%s WHERE name=%s"""
+            cursor.execute(sqlInsertVersion, [db_version, db_version_key])
             db_installed_version = 4
