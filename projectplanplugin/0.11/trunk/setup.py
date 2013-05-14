@@ -30,7 +30,7 @@ pppackagedataglobs = pphtdocsglob + pptemplatesglob
 # create setup instance - done
 setup(
   name = u'ProjectPlan',
-  version = u'1.2.3', # semantic versioning, c.f. http://semver.org/
+  version = u'1.2.4', # semantic versioning, c.f. http://semver.org/
   description = u'ProjectPlanPlugin for Trac',
   long_description = u"""
     ProjectPlan Plugin basicaly adds the possibility for fast and

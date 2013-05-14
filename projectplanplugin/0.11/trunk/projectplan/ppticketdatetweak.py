@@ -66,8 +66,7 @@ class PPTicketDateTweak(Component):
         (Since Trac 0.11)
         """
     if self.is_active(req):
-      #add_script( req, 'projectplan/js/ticketdatepicker.js' )
-      add_script( req, 'http://code.jquery.com/ui/1.10.3/jquery-ui.js' ) # load from CDN
+      # add_script( req, 'http://code.jquery.com/ui/1.10.3/jquery-ui.js' ) # load from CDN
       add_stylesheet( req, 'http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css')
       add_script( req, 'projectplan/js/ticketdatepicker.js' )
     return template, data, content_type
