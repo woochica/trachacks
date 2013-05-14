@@ -1,98 +1,109 @@
-"""
-TicketChartsMacro - display ticket statistics charts.
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2009 Aviram C <aviramc@gmail.com>
+# Copyright (c) 2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
-Make various types of charts regarding the number of tickets using Open Flash Charts.
-Chart types:
-  * Pie charts.
-  * Bar charts.
-  * Stacked bar charts.
-
-The charts are created by the parameters that you give to the macro. See the examples below.
-
-All charts are clickable (see requirements) and will link to the query page of the graph.
-
-Requirements:
-  * [http://teethgrinder.co.uk/open-flash-chart-2/ Open Flash Charts] installed on your server - preferably [http://www.ofc2dz.com/ OFCDZ] to make the charts clickable.
-  * Advanced Argument Parser for Trac Macros (AdvParseArgsPlugin).
-  * Tested only on Trac 0.11.3.
-  * Tested only on Apache configuration, but with proper configuration (see configuration section) this should work with any http server (including tracd).
-
-Installation:
-  * Download the source.
-  * Copy the file TicketCharts.py to your project's plugins directory or to the global plugins directory, which is usually in:
-{{{
-/usr/share/trac/plugins
-}}}
-  * Enable TicketCharts plugin via the WebAdmin interface or by adding the following lines to the [components] section of trac.ini:
-  {{{
-  ticketcharts.* = enabled
-  }}}
-  * Install Open Flash Charts '''and its python bindings''' (everything can be downloaded from [http://teethgrinder.co.uk/open-flash-chart-2/ Open Flash Charts]).
-
-Configuration:
-  * The following configuration should appear in trac.ini:
-{{{
-[ticket-charts]
-height = 300
-width = 500
-js_dir = /js
-json_dir = /js/json
-ofc_file = /OFCDZ.swf
-}}}
-  * If this does not appear, default values will be used.
-  * ''js_dir'', ''jsor_dir'' and ''ofc_file'' are the location '''on the http server''' of the Open Flash Charts files.
-  * As you can see, the default '''ofc_file''' value is OFCDZ.swf, which is another implementation of Open Flash Charts, that make the bar charts clickable. You can download it from [http://www.ofc2dz.com/ OFCDZ].
-
-Examples:
-{{{
-Number of tickets per milestone:
-[[TicketChart(type = pie, factor = milestone)]]
-
-Number of tickets per status for milestone4:
-[[TicketChart(type = pie, factor = status, query = milestone="milestone4")]]
-
-Number of tickets by status and owners:
-[[TicketChart(type = stacked_bars, key = owner, x_axis = status, height = 400, width = 600)]]
- 
-Number of tickets by status and owner for milestone1:
-[[TicketChart(type = stacked_bars, key = owner, x_axis = status, query = milestone="milestone1", title = Tickets by status and owner for milestone1)]]
-
-Number of tickets by owner and type:
-[[TicketChart(type = stacked_bars, key = type, x_axis = owner)]]
-
-Number of tickets by status for milestone4:
-[[TicketChart(type = bars, x_axis = status, query = milestone="milestone4", title = Tickets by status for milestone4)]]
-}}}
-"""
-
-import string
 import random
-import openFlashChart
-from openFlashChart_varieties import (Bar_Stack,
-                                      bar_stack_value,
-                                      x_axis_labels,
-                                      pie_value,
-                                      Pie,
-                                     )
+import string
 from collections import defaultdict
 
-from tracadvparseargs import parseargs           # Trac plugin
-
-from trac.ticket.query import Query
-from trac.wiki.macros import WikiMacroBase
+from trac.core import implements
 from trac.db.api import get_column_names
+from trac.web.chrome import ITemplateProvider
 from trac.web.href import Href
+from trac.wiki.macros import WikiMacroBase
+from trac.ticket.query import Query
 
-revision = "$Rev$"
-url = "$URL$"
-
-PLUGIN_CONFIG_NAME = 'ticket-charts'
+import openFlashChart
+from openFlashChart_varieties import (
+    Bar_Stack, Pie, bar_stack_value, pie_value, x_axis_labels
+)
+from tracadvparseargs import parseargs
 
 # TODO: Fill more colours
-# Nice colours
 COLOURS = ['#356AA0', '#35a345', '#C711F0', '#C79810', '#D037fC', '#D01F3C', ]
 
 BASE_PATH = '/'
+
+
+class TicketChartMacro(WikiMacroBase):
+    """
+    !TicketChartsMacro - display ticket statistics charts.
+
+    Make various types of charts regarding the number of tickets using
+    !OpenFlashCharts.
+
+    Chart types:
+      * Pie charts.
+      * Bar charts.
+      * Stacked bar charts.
+
+    The charts are created by the parameters that you give to the macro. See
+    the examples below.
+
+    All charts are clickable (see requirements) and will link to the query page
+    of the graph.
+
+    Configuration:
+      * The following configuration should appear in trac.ini (default values are shown):
+    {{{
+    [ticket-charts]
+    height = 300
+    width = 500
+    }}}
+
+    Examples:
+    {{{
+    Number of tickets per milestone:
+    [[TicketChart(type = pie, factor = milestone)]]
+
+    Number of tickets per status for milestone4:
+    [[TicketChart(type = pie, factor = status, query = milestone="milestone4")]]
+
+    Number of tickets by status and owners:
+    [[TicketChart(type = stacked_bars, key = owner, x_axis = status,
+    height = 400, width = 600)]]
+
+    Number of tickets by status and owner for milestone1:
+    [[TicketChart(type = stacked_bars, key = owner, x_axis = status,
+    query = milestone="milestone1",
+    title = Tickets by status and owner for milestone1)]]
+
+    Number of tickets by owner and type:
+    [[TicketChart(type = stacked_bars, key = type, x_axis = owner)]]
+
+    Number of tickets by status for milestone4:
+    [[TicketChart(type = bars, x_axis = status, query = milestone="milestone4",
+    title = Tickets by status for milestone4)]]
+    }}}
+    """
+    implements(ITemplateProvider)
+
+    def expand_macro(self, formatter, name, args):
+        """Return some output that will be displayed in the Wiki content.
+
+        `name` is the actual name of the macro (no surprise, here it'll be
+        `'HelloWorld'`),
+        `args` is the text enclosed in parenthesis at the call of the macro.
+            Note that if there are ''no'' parenthesis (like in, e.g.
+            [[HelloWorld]]), then `args` is `None`.
+        """
+        _set_base_path(formatter.req)
+        return create_graph(formatter.req, formatter.env, args)
+
+    ### ITemplateProvider methods
+
+    def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
+        return [('ticketcharts', resource_filename(__name__, 'htdocs'))]
+
+    def get_templates_dirs(self):
+        return []
 
 
 def _parse_args(args, args_dict = None):
@@ -118,7 +129,7 @@ def _parse_args(args, args_dict = None):
 
 
 def _get_config_variable(env, variable_name, default_value):
-    return env.config.get(PLUGIN_CONFIG_NAME, variable_name, default_value)
+    return env.config.get('ticket-charts', variable_name, default_value)
 
 
 def _get_args_defaults(env, args):
@@ -126,11 +137,7 @@ def _get_args_defaults(env, args):
     Fill the args dict with the default values for the keys that don't exist
     """
     defaults = {'height': _get_config_variable(env, 'height', 300),
-                'width': _get_config_variable(env, 'width', 500),
-                'ofc_file': _get_config_variable(env, 'ofc_file', '/OFCDZ.swf'),
-                'js_dir': _get_config_variable(env, 'js_dir', '/js'),
-                'json_dir': _get_config_variable(env, 'json_dir', '/js/json'),
-                }
+                'width': _get_config_variable(env, 'width', 500)}
     # Elegant :)
     defaults.update(args)
     return defaults
@@ -143,7 +150,7 @@ def _create_chart(title, *elements):
     return chart
 
 
-def _safe_evaluate(string_object, mapping = None, **kw):
+def _safe_evaluate(string_object, mapping=None, **kw):
     if mapping is None:
         mapping = {}
     return string.Template(string_object).safe_substitute(mapping, **kw)
@@ -154,9 +161,7 @@ def _unique_list(iterable):
 
 
 def _javascript_code(code):
-    return """<script type="text/javascript">
-%s
-</script>""" % (code, )
+    return """<script type="text/javascript">%s</script>""" % (code, )
 
 
 def _create_javascript_array(array_name, values,
@@ -166,10 +171,9 @@ def _create_javascript_array(array_name, values,
 
 
 def _create_query_object(env, query, required_columns=None):
-    """
-    Create a query object from a query string.
-    If query is None, the default Query is returned.
-    required_columns - Columns that must be included in the query.
+    """Create a query object from a query string. If query is None, the default
+    Query is returned. required_columns - Columns that must be included in the
+    query.
     """
     if query is None:
         return Query(env, cols=required_columns)
@@ -448,9 +452,9 @@ def create_graph(req, env, args):
 
     # Using OFCDZ in order to enable links in Bar Stack chart.
     return additional_html + \
-           _get_chart_html(chart, chart_div_id, height=args['height'],
-                           width=args['width'], ofc_file=args['ofc_file'],
-                           js_dir=args['js_dir'], json_dir=args['json_dir'])
+           _get_chart_html(chart, chart_div_id,
+                           req.href.chrome(),
+                           height=args['height'], width=args['width'])
 
 
 def _get_random_string(length):
@@ -466,13 +470,18 @@ def _create_chart_div_id():
     return div_id_prefix + random_string
 
 
-def _get_chart_html(chart_object, chart_div_id, height=300, width=500,
-                    ofc_file='/OFC.swf', js_dir='/js', json_dir='/js/json'):
+def _get_chart_html(chart_object, chart_div_id, htdocs_dir, height=300,
+                    width=500):
     get_data_function = "get_%s" % (chart_div_id, )
-    chart_html = """<script type="text/javascript" src="$json_dir/json2.js"></script>
-<script type="text/javascript" src="$js_dir/swfobject.js"></script>
+    chart_html = """
+<script type="text/javascript" src="$htdocs_dir/ticketcharts/js/swfobject.js">
+</script>
+<script type="text/javascript" src="$htdocs_dir/ticketcharts/js/json/json2.js">
+</script>
 <script type="text/javascript">
-swfobject.embedSWF("$ofc_file", "$chart_div_id", "$width", "$height", "9.0.0", "blah.swf", {"get-data" : "$get_data_function"});
+swfobject.embedSWF("$htdocs_dir/ticketcharts/open-flash-chart.swf",
+                   "$chart_div_id", "$width", "$height", "9.0.0", "blah.swf",
+                   {"get-data" : "$get_data_function"});
 </script>
 
 <script type="text/javascript">
@@ -486,8 +495,8 @@ function $get_data_function()
 
 <div id="$chart_div_id"></div>
 """
-    return _safe_evaluate(chart_html, json_dir=json_dir, js_dir=js_dir,
-                          ofc_file=ofc_file, chart_div_id=chart_div_id,
+    return _safe_evaluate(chart_html, chart_div_id=chart_div_id,
+                          htdocs_dir=htdocs_dir,
                           width=width, height=height,
                           chart_data=chart_object.encode(),
                           get_data_function=get_data_function)
@@ -498,17 +507,3 @@ def _set_base_path(req):
     # dependent global.
     global BASE_PATH
     BASE_PATH = req.base_path
-
-
-class TicketChartMacro(WikiMacroBase):
-    def expand_macro(self, formatter, name, args):
-        """Return some output that will be displayed in the Wiki content.
-
-        `name` is the actual name of the macro (no surprise, here it'll be
-        `'HelloWorld'`),
-        `args` is the text enclosed in parenthesis at the call of the macro.
-            Note that if there are ''no'' parenthesis (like in, e.g.
-            [[HelloWorld]]), then `args` is `None`.
-        """
-        _set_base_path(formatter.req)
-        return create_graph(formatter.req, formatter.env, args)
