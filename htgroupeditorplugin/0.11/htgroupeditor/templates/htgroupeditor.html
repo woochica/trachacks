@@ -2,72 +2,67 @@
     PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
-        xmlns:py="http://genshi.edgewall.org/"
-        xmlns:xi="http://www.w3.org/2001/XInclude">
-    <xi:include href="admin.html" />
-    <head>
-        <title>Groups Editor</title>
-    </head>
-    
-    <body>        
-        <h2>Manage User Groups</h2>
-        <form class="groupslist" id="groupslist" method="post">
-            <fieldset>
-                <legend>
-                    Group
-                    <select name="group_name" onChange="submit();">
-                        <option py:for="group_name in groups_list">
-                            $group_name
-                        </option>
-                    </select>
-                </legend>
-                <!-- Only show the table if there is a group selected -->
-                <span py:if="group_name">
-                    <table class="listing">
-                        <thead>
-                            <tr>
-                                <th >User</th>
-                                <th class="sel">Delete</th>
-                            </tr>
-                        </thead>
-                        <tr py:for="(user) in users_list">
-                            <td>
-                                $user
-                            </td>
-                            <td>
-                                <input type="checkbox" name="deletions" value="$user" />
-                            </td>
-                        </tr>
-                    </table>
-                    <br/>
-                    <div>
-                        <h4>Username(s) to add:</h4>
-                            <select name="additional_names" multiple="multiple">
-                                <option py:for="user_name in addable_usernames">
-                                    $user_name
-                                </option>
-                            </select>
-                    </div>
-                    <br/>
-                    <legend py:if="finegrained">
-                        Update Finegrained Permissions?
-                         <input type="checkbox" name="finegrained_check" checked="checked" />
-                    </legend>
-                    <div class="buttons">
-                        <input type="submit" name="apply_changes" value="Apply changes"/>
-                        <input type="reset" name="reset" value="Reset" />
-                    </div>
-                </span>
-            </fieldset>
-        </form>
-    </body>
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="admin.html"/>
+  <head>
+    <title>Groups Editor</title>
+  </head>
+
+  <body>
+    <h2>Manage User Groups</h2>
+
+    <form class="groupslist" id="groupslist" method="post">
+      <fieldset>
+        <legend>
+          Group
+          <select name="group_name" onChange="submit();">
+            <option py:for="group_name in groups_list">
+              $group_name
+            </option>
+          </select>
+        </legend>
+        <!-- Only show the table if there is a group selected -->
+        <span py:if="group_name">
+            <table class="listing">
+              <thead>
+              <tr>
+                <th>User</th>
+                <th class="sel">Delete</th>
+              </tr>
+              </thead>
+              <tr py:for="(user) in users_list">
+                <td>
+                  $user
+                </td>
+                <td>
+                  <input type="checkbox" name="deletions"
+                         value="$user"/>
+                </td>
+              </tr>
+            </table>
+            <br/>
+            <div>
+              <h4>Username(s) to add:</h4>
+              <select name="additional_names" multiple="multiple">
+                <option py:for="user_name in addable_usernames">
+                  $user_name
+                </option>
+              </select>
+            </div>
+            <br/>
+            <legend py:if="finegrained">
+              Update Finegrained Permissions?
+              <input type="checkbox" name="finegrained_check"
+                     checked="checked"/>
+            </legend>
+            <div class="buttons">
+              <input type="submit" name="apply_changes"
+                     value="Apply changes"/>
+              <input type="reset" name="reset" value="Reset"/>
+            </div>
+        </span>
+      </fieldset>
+    </form>
+  </body>
 </html>
-<!--
-finegrained
-
-self._check_for_finegrained()
--->
-
-
-
-

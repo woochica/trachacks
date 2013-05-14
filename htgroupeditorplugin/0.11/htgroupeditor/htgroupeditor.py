@@ -1,87 +1,80 @@
 # -*- coding: utf-8 -*-
-""" Trac Groups Editor plugin
-  Edit the groups in the group file.
-  Select a group
-  Display it's contents
-  Delete or add listed members
-  If the fine grained page permissions plugine is enabled, then
-  as an option also update it.
-"""
-
-
-#def print_debug(s):
-    #f = open('/srv/trac/project2/log/debug', 'a')
-    #f.write(str(s) + '\n')
-    #f.close
-
+#
+# Copyright (C) 2009 Robert Martin <robert.martin@arqiva.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 import os
 from configobj import ConfigObj
 
-from acct_mgr.api import AccountManager
-
-from pkg_resources import resource_filename
-from trac.core import *
-from trac.util import translation
 from trac.admin.api import IAdminPanelProvider
+from trac.core import Component, TracError, implements
+from trac.util.translation import _
 from trac.web.chrome import ITemplateProvider, add_stylesheet
 
+from acct_mgr.api import AccountManager
+
+
 class GroupsEditorPlugin(Component):
+    """ Trac Groups Editor plugin
+      Edit the groups in the group file.
+      Select a group
+      Display it's contents
+      Delete or add listed members
+      If the fine grained page permissions plugine is enabled, then
+      as an option also update it.
+    """
     implements(IAdminPanelProvider, ITemplateProvider)
 
     def __init__(self):
         self.account_manager = AccountManager(self.env)
 
-    # ITemplateProvider methods
-    # Used to add the plugin's templates and htdocs 
+    ### ITemplateProvider methods
+
     def get_templates_dirs(self):
+        from pkg_resources import resource_filename
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
+        from pkg_resources import resource_filename
         return [('ge', resource_filename(__name__, 'htdocs'))]
 
+    ### IAdminPanelProvider methods
 
-    # IAdminPanelProvider methods
     def get_admin_panels(self, req):
-        """Return a list of available admin panels.
-            The items returned by this function must be tuples of the form
-            `(category, category_label, page, page_label)`.
-        """
         if 'TRAC_ADMIN' in req.perm:
-            # Simply put, it's what goes in the menu on the left!
-            # the page is the name of the page that will be called for the menu entry
-            # it will go ...../category/page
-            yield ('accounts', translation._('Accounts'), 'groups', translation._('Groups'))
-
+            yield ('accounts', _("Accounts"), 'groups', _("Groups"))
 
     def _get_filename(self, section, name):
         file_name = self.config.get(section, name)
         if len(file_name):
-            if (not file_name.startswith(os.path.sep)) and (not file_name[1] == (':')):
+            if not file_name.startswith(os.path.sep) and \
+                    not file_name[1] == ':':
                 file_name = os.path.join(self.env.path, file_name)
-            return(file_name)
+            return file_name
         else:
-            return(None)
+            return None
 
     def _group_filename(self):
         group_file_name = self._get_filename('account-manager', 'group_file')
         if not group_file_name:
             group_file_name = self._get_filename('htgroups', 'group_file')
         if not group_file_name:
-            raise TracError('Group filename not found in the config file. In neither sections\
-                                "account-manager" nor "htgroups" under the name "group_file".')
+            raise TracError("""Group filename not found in the config file. In
+                neither sections "account-manager" nor "htgroups" under the
+                name "group_file".""")
         if not os.path.exists(group_file_name):
             raise TracError('Group filename not found: %s.' % group_file_name)
-        return(group_file_name)
 
+        return group_file_name
 
     def _get_groups_and_members(self):
-        """
-        Get the groups and their members as a dictionary of
-        lists.
-        """
-        # could be in one of two places, depending if the 
-        # account-manager is installed or not
+        """Get the groups and their members as a dictionary of lists. """
+        # could be in one of two places, depending if the  account-manager
+        # is installed or not
         group_file_name = self._group_filename()
         groups_dict = dict()
         group_file = file(group_file_name)
@@ -92,7 +85,8 @@ class GroupsEditorPlugin(Component):
                 if group_line and not group_line.startswith('#'):
                     group_name = group_line.split(':', 1)[0]
                     group_members = group_line.split(':', 2)[1].split(' ')
-                    groups_dict[group_name] = [ x for x in [member.strip() for member in group_members] if x ]
+                    groups_dict[group_name] = [member.strip() for member in
+                                               group_members if member]
         finally:
             group_file.close()
         if len(groups_dict):
@@ -100,37 +94,33 @@ class GroupsEditorPlugin(Component):
         else:
             return None
 
-
     def _write_groups_file(self, entries):
         """
         Write the groups and members to the groups file
         """
         group_file = open(self._group_filename(), 'w')
         for group_name in entries.keys():
-            group_file.write(group_name + ': ' + ' '.join(entries[group_name]) + '\n')
+            group_file.write(group_name + ': ' +
+                             ' '.join(entries[group_name]) + '\n')
         group_file.close()
 
-
     def _check_for_finegrained(self):
-        """
-        Check if the fine grained permission system is installed
-        """
-        return (self.config.get('components', 'authzpolicy.authz_policy.authzpolicy') == 'enabled')
-
+        """Check if the fine grained permission system is enabled."""
+        component = self.config.get('components',
+                                    'authzpolicy.authz_policy.authzpolicy')
+        return component == 'enabled'
 
     def _update_fine_grained(self, group_details):
-        #import ConfigObj
-        authz_policy_file_name = self._get_filename('authz_policy', 'authz_file')
+        authz_policy_file_name = self._get_filename('authz_policy',
+                                                    'authz_file')
         authz_policy_dict = ConfigObj(authz_policy_file_name)
         # If there isn't a group file, don't destroy the existing entries
-        if (group_details):
+        if group_details:
             authz_policy_dict['groups'] = group_details
         authz_policy_dict.write()
 
-
     def render_admin_panel(self, req, cat, page, path_info):
-        """
-        Render up the panel.
+        """Render the panel.
         When applying deletions and additions, additions
         happen post deletions, so additions in effect have
         a higher precedence.  The way it is done, it shouldn't be
@@ -162,7 +152,6 @@ class GroupsEditorPlugin(Component):
 
             if req.args.get('deletions'):
                 deletions = req.args.get('deletions')
-                # if only on entry it will be a string, so need to make it a list
                 if not isinstance(deletions, list):
                     deletions = [deletions]
                 for deletion in deletions:
@@ -174,7 +163,7 @@ class GroupsEditorPlugin(Component):
                 additional_names = req.args.get('additional_names')
                 if not isinstance(additional_names, list):
                     additional_names = [additional_names]
-                #  If a reload is done after an add, a duplicate can be created.
+                #  If a reload is done after an add, a duplicate can be created
                 for name in additional_names:
                     if name not in group_details[group_name]:
                         group_details[group_name].append(name)
@@ -201,4 +190,3 @@ class GroupsEditorPlugin(Component):
                     self._update_fine_grained(group_details)
 
             return 'htgroupeditor.html', page_args
-
