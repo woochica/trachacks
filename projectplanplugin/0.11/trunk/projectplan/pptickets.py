@@ -760,8 +760,9 @@ class DataAccessDependencies(object):
       
     def savePostponedTicketComments( self ):
       flag = PPConfiguration( self.env ).get('enable_save_dependency_changes_to_ticket_comments')
+      self.env.log.debug("savePostponedTicketComments: %s" % (flag,))
       for tid in self.ticket_comments.keys():
-        if flag:
+        if flag == 'enabled':
           self.save_changes( tid, "Changed Dependencies:\n"+"\n".join(self.ticket_comments[tid]))
       self.reset_postponed_ticket_comments()
   
