@@ -51,6 +51,12 @@
 	    </div>
 	<table border="0" cellpadding="3" cellspacing="0" id="estimateParams" >
 	  <tr>
+	    <td class="fieldLabel" ><label for="summary">Summary:</label></td>
+	    <td><input id="summary" name="summary" type="text"
+		      value="${estimate.summary}"
+		      onkeydown="return enterMeansNothing(event)" /></td>
+	  </tr>
+	  <tr>
 	    <td class="fieldLabel" ><label for="tickets">Ticket Numbers:</label></td>
 	    <td><input id="tickets" name="tickets" type="text"
 		      value="${estimate.tickets}"

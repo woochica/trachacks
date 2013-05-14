@@ -117,6 +117,7 @@ class EstimationsPage(Component):
                 data["estimate"]["variability"] = estimate_rs.value("variability", 0)
                 data["estimate"]["communication"] = estimate_rs.value("communication", 0)
                 data["estimate"]["saveepoch"] = (estimate_rs.value("saveepoch", 0) or 0);
+                data["estimate"]["summary"] = (estimate_rs.value("summary", 0));
                 rs = getEstimateLineItemsResultSet(self.env, id)
                 if rs:
                     excluded = []
@@ -166,11 +167,12 @@ class EstimationsPage(Component):
             return None
                   
 
-    def create_ticket_for_lineitem (self, req, id, addMesage, lineitem):
+    def create_ticket_for_lineitem (self, req, id, addMesage, lineitem, summary=None):
         #skip line items that have a ticket
 
         if re.search('/ticket/\d+', lineitem.description): return
         compname = 'Estimate-'+str(id)
+        if summary: compname = summary
         ensure_component(self.env, compname, req.authname)
         t = Ticket(self.env)
         # try to split on a newline or space that is less than 80 chars into the string
@@ -192,8 +194,8 @@ class EstimationsPage(Component):
         return t
         
 
-    def create_tickets_for_lineitems (self, req, id, addMessage, lineitems):
-        return [self.create_ticket_for_lineitem(req, id, addMessage, item)
+    def create_tickets_for_lineitems (self, req, id, addMessage, lineitems, summary=None ):
+        return [self.create_ticket_for_lineitem(req, id, addMessage, item, summary)
                 for item in lineitems]
             
         
@@ -227,13 +229,12 @@ class EstimationsPage(Component):
             self.log.debug('Saving edited estimate')
             save_diffs = True
             sql = estimateUpdate
-
+        summary = args.get('summary', '').strip()
         save_epoch = to_timestamp(to_datetime(None))
         estimate_args = [args['rate'], args['variability'],
                          args['communication'], tickets,
-                         args['comment'], args['diffcomment'], save_epoch, id]
+                         args['comment'], args['diffcomment'], save_epoch, summary, id, ]
         #self.log.debug("Sql:%s\n\nArgs:%s\n\n" % (sql, estimate_args));
-
 
         saveEstimate = (sql, estimate_args)
 
@@ -276,7 +277,7 @@ class EstimationsPage(Component):
         if arg_is_true(req, "splitIntoTickets"):
             self.log.debug('Setting saveImmediately for estimate %s' % id)
             estData['saveImmediately'] = 'true';
-            sqlToRun.append(lambda:self.create_tickets_for_lineitems (req, id, addMessage, lineItems))
+            sqlToRun.append(lambda:self.create_tickets_for_lineitems (req, id, addMessage, lineItems, summary))
         sqlToRun.append(line_item_saver)
 
         result = dbhelper.execute_in_trans(self.env, *sqlToRun)

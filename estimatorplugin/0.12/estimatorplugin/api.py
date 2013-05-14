@@ -4,7 +4,7 @@ from trac.env import IEnvironmentSetupParticipant
 from estimatorplugin import dbhelper
 
 
-dbversion = 5
+dbversion = 6
 dbkey = 'EstimatorPluginDbVersion'
 
 
@@ -70,6 +70,12 @@ class EstimatorSetupParticipant(Component):
             self.log.debug("Adding ordinal column to estimate_line_item table.")
             success = success and dbhelper.execute_in_trans(self.env,
                                                             (""" ALTER TABLE estimate_line_item ADD COLUMN ordinal integer;""", []))
+
+        if ver < 6:
+            self.log.debug("Adding summary column to estimate table.")
+            success = success and dbhelper.execute_in_trans(self.env,
+                                                            (""" ALTER TABLE estimate ADD COLUMN summary varchar(512);""", []))
+
 
 
         # SHOULD BE LAST IN THIS FUNCTION

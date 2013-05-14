@@ -328,8 +328,9 @@ function removeInputsAndIds(parent){
    $(parent).removeAttr("id");
    return parent;
 }
-function removeFirstRow( elem ){
-  $(elem.rows[0]).remove();
+function removeRow( elem, n ){
+  if(!n) n = 0;
+  $(elem.rows[n]).remove();
   return elem;
 }
 
@@ -337,15 +338,18 @@ function fillLines(o){
   var line; o.lines=[];
   while(o.text && o.text.length>0){
     line = "";
-    var i = o.width;
+    var start, i = o.width;
     var nextLine = o.text.indexOf('\n');
     var explicitNewline = nextLine >= 0 && nextLine < i;
     var foundSpace=false;
     if(explicitNewline) i = nextLine;
-    else if(i>o.text.length) i = o.text.length;
+    else if(i >= o.text.length) i = o.text.length-1;
     else{
-      while(!o.text[i].match(/\s/i)) i--;
-      foundSpace=true;
+      if(!o.text[i]) console.log(i, o.text);
+      start = i;
+      while(i >= 0 && !o.text[i].match(/\s/i)) i--;
+      if(i < 0) i = start; // no spaces in long word... overflow?
+      else foundSpace=true;
     }
     line += o.text.substr(0,i);
     if(explicitNewline || foundSpace) i++;     // skip newlines/spaces that are now newlines
@@ -403,8 +407,8 @@ function prepareComment( ){
    var s = "\n";
    $('#estimateParams tr').each(function(){
        var texts = cellTexts($(this.cells));
-       var widths = [16, 8];
-       var alignments = ['RIGHT','RIGHT'];
+       var widths = [16, 44];
+       var alignments = ['RIGHT','LEFT'];
        s += fillTexts(texts, widths, alignments);
    });
    s += fillwith(81, "_")+"\n";
@@ -441,7 +445,7 @@ function linkifyTickets(estimateBody){
 function preparePreview(){
   var preview = $('#estimateoutput');
   preview.empty().
-    append(removeFirstRow(removeInputsAndIds(evenDeeperClone($$('estimateParams'))))).
+    append(removeInputsAndIds(evenDeeperClone($$('estimateParams')))).
     append(linkifyTickets(removeInputsAndIds(evenDeeperClone($$('estimateBody')))));
   var txtComment = prepareComment(preview[0]);
   // console.log(txtComment);
