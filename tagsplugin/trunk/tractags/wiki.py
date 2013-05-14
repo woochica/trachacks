@@ -211,7 +211,7 @@ class TagWikiSyntaxProvider(Component):
 
     # IWikiSyntaxProvider methods
     def get_wiki_syntax(self):
-        yield (r'''\[tag(?:ged)?:(?P<tlpexpr>(?:'.*?'|".*?"|\S)+)\s+(?P<tlptitle>.*?]*)\]''',
+        yield (r'''\[tag(?:ged)?:(?P<tlpexpr>'.*'|".*"|\S+)\s*(?P<tlptitle>[^\]]+)?\]''',
                lambda f, n, m: self._format_tagged(f,
                                     m.group('tlpexpr'),
                                     m.group('tlptitle')))
