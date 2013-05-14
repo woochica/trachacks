@@ -132,15 +132,18 @@ class GroupsEditorPlugin(Component):
         page_args = {}
 
         group_details = self._get_groups_and_members()
-        groups_list = group_details.keys()
+
         # For ease of understanding and future reading
         # being done in the ORDER displayed.
         if not req.method == 'POST':
-            page_args['groups_list'] = [''] + groups_list
-            return 'htgroupeditor.html', page_args
+            groups_list = ['']
+            if group_details is not None:
+                groups_list += group_details.keys()
+            page_args['groups_list'] = groups_list
         else:
             group_name = str(req.args.get('group_name'))
             # put the selected entry at the top of the list
+            groups_list = group_details.keys()
             groups_list.remove(group_name)
             groups_list.insert(0, group_name)
             # Get rid of duplicates
@@ -189,4 +192,4 @@ class GroupsEditorPlugin(Component):
                 if req.args.get('finegrained_check'):
                     self._update_fine_grained(group_details)
 
-            return 'htgroupeditor.html', page_args
+        return 'htgroupeditor.html', page_args
