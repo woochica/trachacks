@@ -83,14 +83,14 @@ class PPTicketDateTweak(Component):
     if self.is_active(req):
       self.env.log.debug("date field and format configuration ADDED: %s" % (req.path_info,) )
       # setting the values, s.t., they can be accessed by javascript code
-      stream |= Transformer('body/div[@id="main"]').prepend(
+      stream |= Transformer('body').prepend(
         tag.div( 
           tag.div( self.macroenv.conf.get("custom_due_assign_field"), id='custom_due_assign_field_id' ) ,
           tag.div( self.env.config.get("ticket-custom", "%s.value" % (self.macroenv.conf.get( 'custom_due_assign_field'),) ), id='custom_due_assign_field_format' ) ,
           tag.div( self.macroenv.conf.get("custom_due_close_field"), id='custom_due_close_field_id' ) ,
           tag.div( self.env.config.get("ticket-custom", "%s.value" % (self.macroenv.conf.get( 'custom_due_close_field'),) ), id='custom_due_close_field_format' ) ,
-          id='ppTicketViewTweakConf',
-          style='display:none'
+          id='ppTicketDateTweakConf',
+          style='display:none' # better: do not wait for CSS to be loaded
         )
       )
     

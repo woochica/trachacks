@@ -1015,11 +1015,8 @@ function ppAddTooltip( sel ){
 function ppAddTooltipWrapper(element_selector){
 	ppAddTooltip(element_selector+" .project_image .ticket_inner a"); // project image, @deprecated
 	ppAddTooltip(element_selector+" .projectplanrender .ticket_inner a"); // project plan general
-	// remove all title values
-//  	$(".project_image .ticket_inner a").each(function() { this.title = "";});
 	ppAddTooltip(element_selector+" .properties a.ticket_inner"); // ticket view
-	ppAddTooltip(element_selector+" .pptickettable a.ticket"); // ticket view in report table
- 
+	ppAddTooltip(element_selector+" .pptickettable a.ticket"); // ticket view in report table 
 }
 
 
@@ -1128,104 +1125,10 @@ $(document).ready(function () {
 	ppAddTicketListChecks("#ppDependenciesField");
 	ppAddTicketListChecks("#ppDependenciesReverseField");
 	
+	// TODO: integrate new, robust table sorter jQuery plugin
 	ppInitializeTablesorter();
 	$('.pptickettable .headerSortUp').click();
 	$('.pptickettable .headerSortDown').click().click(); // Hack: to ensure correct sortation
 	
-	console.log("init draggable");
-// 	$.getScript("http://code.jquery.com/ui/1.10.3/jquery-ui.js").done(function(){initDraggable();});
-	$.ajax({
-	  url: "http://code.jquery.com/ui/1.10.3/jquery-ui.js",
-	  dataType: "script",
-	  cache: true,
-	  success: function(){initDraggable();}
-	});
-	
 });
-
-function initDraggable(){
-  console.log("jquery UI loaded");
-}
-
-	
-function initDraggable(){
-	console.log("init draggable2");
-	$(".draggable").draggable({
-		
-		// Cursor ändern während der Bewegung
-		cursor : "move",
-
-		// Objekt auf Ursprung zurück setzen,
-		// falls Zielposition nicht valid ist bzw. kein valides Element
-		revert : "invalid",
-
-		// Deckkraft des Objektes während der Bewegung herabsetzen
-		opacity : 0.7
-	});
-	$(".droppable").droppable({
-		accept : ".draggable",
-
-		// Zusätzliche Klassennamen, um mögliche Zielfelder
-		// sowie aktuelles Zielfeld hervorzuheben
-		activeClass : "ui-state-hover",
-		hoverClass : "ui-state-active", // 
-
-		// Event, welches ausgelöst wird, wenn
-		// Element gedroppt wird
-		drop : function(event, ui) {
-
-			// gedropptes Element im DOM wirklich verschieben
-			// (jQuery UI passt nur die relative Position an)
-			var targetDroppable = $(this);
-			targetDroppable.append(ui.draggable);
-			ui.draggable.css({
-				left : "",
-				top : "",
-				border: "1px dotted #393"
-			});
-			// $("td.droppable").first().data("val")
-			console.log("drop: 1: foo="+targetDroppable.attr("data")+" ticket="+ui.draggable.attr("data"));
-			// console.log("drop: 2: "+targetDroppable.attr() );
-			// console.log("drop: 3: "+targetDroppable.data("val") );
-			// Funktion, um neue Daten per RPC zu speichern
-			// saveNewTicketData(newTicketData);
-		}
-	});
-});
-
-function saveNewTicketData(newTicketData) {
-	$.ajax({
-		url : '/login/rpc',
-		data : JSON.stringify({
-			method : 'ticket.update',
-			params : [ 11111, "KOMMENTAR", {
-				FIELDNAME : "WERT"
-			} ],
-			id : "jsonrpc"
-		}),
-		type : "POST",
-		dataType : "json",
-		contentType : "application/json",
-		success : function(result) {
-			console.log(result);
-		},
-		error : function(err, status, thrown) {
-			console.log(err);
-			console.log(status);
-			console.log(thrown);
-		},
-		complete : function(xhr, status) {
-			console.log(xhr);
-			console.log(status);
-		}
-	});
-}
-
-
-
-
-
-
-
-
 
