@@ -11,13 +11,100 @@ import shutil
 import tempfile
 import unittest
 
+try:
+    from babel import Locale
+except ImportError:
+    Locale = None
+
+from datetime import datetime
+
+from trac.db.api import DatabaseManager
+from trac.mimeview import Context
 from trac.perm import PermissionCache, PermissionError, PermissionSystem
 from trac.resource import Resource
-from trac.test import EnvironmentStub, Mock
+from trac.test import EnvironmentStub, Mock, MockPerm
+from trac.util.datefmt import utc
+from trac.web.href import Href
+from trac.wiki.model import WikiPage
 
 from tractags.api import TagSystem
 from tractags.db import TagSetup
+from tractags.tests import formatter
 from tractags.wiki import WikiTagProvider
+
+
+TEST_CASES = u"""
+============================== tag: link resolver for single tag
+tag:onetag
+tag:2ndtag n' more
+tag:a.really_&nbsp;\wild-thing!
+# regression test for ticket `#9057`
+tag:single'quote
+------------------------------
+<p>
+<a href="/tags?q=onetag">tag:onetag</a>
+<a href="/tags?q=2ndtag">tag:2ndtag</a> n' more
+<a href="/tags?q=a.really_%26nbsp%3B%5Cwild-thing!">tag:a.really_&amp;nbsp;\\wild-thing!</a>
+# regression test for ticket <tt>#9057</tt>
+<a href="/tags?q=single\'quote">tag:single\'quote</a>
+</p>
+------------------------------
+============================== tagged: alternative link markup
+tagged:onetag
+tagged:'onetag 2ndtag'
+------------------------------
+<p>
+<a href="/tags?q=onetag">tagged:onetag</a>
+<a href="/tags?q=onetag+2ndtag">tagged:\'onetag 2ndtag\'</a>
+</p>
+------------------------------
+============================== query expression in tag: link resolver
+tag:'onetag 2ndtag'
+tag:"onetag 2ndtag"
+tag:'"heavily quoted"'
+------------------------------
+<p>
+<a href="/tags?q=onetag+2ndtag">tag:\'onetag 2ndtag\'</a>
+<a href="/tags?q=onetag+2ndtag">tag:\"onetag 2ndtag\"</a>
+<a href="/tags?q=heavily+quoted">tag:\'"heavily quoted"\'</a>
+</p>
+------------------------------
+============================== tag cleanup and quoting in tag: link resolver
+# Trailing non-letter character must be ignored.
+tag:onetag,
+tag:onetag.
+tag:onetag;
+tag:onetag:
+tag:onetag!
+tag:onetag?
+# Multiple trailing non-letter characters should be removed too.
+tag:onetag..
+tag:onetag...
+------------------------------
+<p>
+# Trailing non-letter character must be ignored.
+<a href="/tags?q=onetag">tag:onetag</a>,
+<a href="/tags?q=onetag">tag:onetag</a>.
+<a href="/tags?q=onetag">tag:onetag</a>;
+<a href="/tags?q=onetag">tag:onetag</a>:
+<a href="/tags?q=onetag">tag:onetag</a>!
+<a href="/tags?q=onetag">tag:onetag</a>?
+# Multiple trailing non-letter characters should be removed too.
+<a href="/tags?q=onetag">tag:onetag</a>..
+<a href="/tags?q=onetag">tag:onetag</a>...
+</p>
+============================== tag: as bracketed TracWiki link
+[tag:onetag]
+[tag:onetag label]
+[tagged:onetag multi-word tag: label]
+------------------------------
+<p>
+<a href="/tags?q=onetag">onetag</a>
+<a href="/tags?q=onetag">label</a>
+<a href="/tags?q=onetag">multi-word tag: label</a>
+</p>
+------------------------------
+"""
 
 
 class WikiTagProviderTestCase(unittest.TestCase):
@@ -108,8 +195,43 @@ class WikiTagProviderTestCase(unittest.TestCase):
         self.tag_wp.set_resource_tags(self.req, resource, self.tags)
 
 
+def wiki_setup(tc):
+    tc.env = EnvironmentStub(default_data=True,
+                             enable=['trac.*', 'tractags.*'])
+    tc.env.path = tempfile.mkdtemp()
+    tc.db_mgr = DatabaseManager(tc.env)
+    tc.db = tc.env.get_db_cnx()
+
+    TagSetup(tc.env).upgrade_environment(tc.db)
+
+    now = datetime.now(utc)
+    wiki = WikiPage(tc.env)
+    wiki.name = 'TestPage'
+    wiki.text = '--'
+    wiki.save('joe', 'TagsPluginTestPage', '::1', now)
+
+    req = Mock(href=Href('/'), abs_href=Href('http://www.example.com/'),
+               authname='anonymous', perm=MockPerm(), tz=utc, args={},
+               locale=Locale.parse('en_US') if Locale else None)
+    tc.env.href = req.href
+    tc.env.abs_href = req.abs_href
+    tc.context = Context.from_request(req)
+    # Enable big diff output.
+    tc.maxDiff = None
+
+
+def wiki_teardown(tc):
+    tc.env.reset_db()
+    tc.db.close()
+    # Really close db connections.
+    tc.env.shutdown()
+    shutil.rmtree(tc.env.path)
+
+
 def test_suite():
     suite = unittest.TestSuite()
+    suite.addTest(formatter.suite(TEST_CASES, wiki_setup, __file__,
+                                  wiki_teardown))
     suite.addTest(unittest.makeSuite(WikiTagProviderTestCase, 'test'))
     return suite
 
