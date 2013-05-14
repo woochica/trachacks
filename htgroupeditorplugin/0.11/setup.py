@@ -24,7 +24,7 @@ setup(
     entry_points={
         'trac.plugins': ['HtGroupEditor = htgroupeditor.htgroupeditor']
     },
-    package_data={'HtGroupEditor': ['templates/*.html',
+    package_data={'htgroupeditor': ['templates/*.html',
                                     'htdocs/css/*.css']},
     install_requires=['Trac >=0.11', 'configobj'],
 )
