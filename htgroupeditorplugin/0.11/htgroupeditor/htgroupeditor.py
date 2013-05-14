@@ -172,7 +172,7 @@ class GroupsEditorPlugin(Component):
                         group_details[group_name].append(name)
 
             # get the list of users not in the group
-            addable_usernames = ['']
+            addable_usernames = []
             for username in self.account_manager.get_users():
                 username = username.strip()
                 if len(username) and not username in group_details[group_name]:

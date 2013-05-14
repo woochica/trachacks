@@ -42,13 +42,17 @@
               </tr>
             </table>
             <br/>
-            <div>
+            <div py:choose="">
               <h4>Username(s) to add:</h4>
-              <select name="additional_names" multiple="multiple">
+              <select py:when="len(addable_usernames) > 0"
+                      name="additional_names" multiple="multiple">
                 <option py:for="user_name in addable_usernames">
                   $user_name
                 </option>
               </select>
+              <span py:otherwise="">
+                <i>All users are in this group</i>
+              </span>
             </div>
             <br/>
             <legend py:if="finegrained">
