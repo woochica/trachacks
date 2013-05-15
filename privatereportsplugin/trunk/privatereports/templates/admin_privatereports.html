@@ -33,13 +33,14 @@
                     Permissions
                 </label>
             </legend>
-            <div class="field">
-                <label>
+            <div class="field" py:choose="">
+                <label py:when="report_permissions">
                     <select name="report_permissions" multiple="multiple" size="5">
                         <option py:for="report_permission in report_permissions" value='${report_permission}'>${report_permission}</option>
                     </select>
                     <input type="submit" name="remove" value="remove" />
                 </label>
+                <span py:otherwise="" style="font-style: italic">No permissions defined for this report</span>
             </div>
         </fieldset>
         <fieldset>
