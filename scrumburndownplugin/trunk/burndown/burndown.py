@@ -146,26 +146,21 @@ class BurndownComponent(Component):
             dbhelper.empty_db_for_testing(db)
 
         # expose display data to the templates
-        data = {}
-        data['milestones'] = req.hdf['milestones'] = milestones
-        data['components'] = req.hdf['components'] = components
-        data['selected_milestone'] = req.hdf[
-            'selected_milestone'] = selected_milestone
-        data['selected_component'] = req.hdf[
-            'selected_component'] = selected_component
-        data['draw_graph'] = req.hdf['draw_graph'] = False
-        data['start'] = req.hdf['start'] = False
-
-        if req.perm.has_permission("BURNDOWN_ADMIN"):
-            data['start'] = req.hdf['start'] = True
+        data = {
+            'milestones': milestones,
+            'components': components,
+            'selected_milestone': selected_milestone,
+            'selected_component': selected_component,
+            'draw_graph': True,
+            'start': req.perm.has_permission('BURNDOWN_ADMIN'),
+        }
 
         if 'start' in req.args:
             self.start_milestone(db, selected_milestone['name'])
 
-        data['draw_graph'] = req.hdf['draw_graph'] = True
         self.update_burndown_data()
 
-        data['burndown_data'] = req.hdf['burndown_data'] = \
+        data['burndown_data'] = \
             self.get_burndown_data(db, selected_milestone, components,
                                    selected_component)
 
