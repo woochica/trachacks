@@ -181,6 +181,10 @@ class PrivateReports(Component):
                     report_id = row[s+len('/report/'):e]
                     if self._has_permission(req.authname, report_id):
                         report_stream += row
+                    else:
+                        self.log.debug("Removing report %s from list because"
+                                       "%s doesn't have required permission" %
+                                       (report_id, req.authname))
                 elif 'View report' in row:
                     report_stream += row
             return HTML(report_stream)
@@ -259,15 +263,12 @@ class PrivateReports(Component):
             self._insert_report_permission(report_id, permission)
 
     def _get_report_permissions(self, report_id):
+        report_perms = []
         db = self.env.get_db_cnx()
         cursor = db.cursor()
         cursor.execute("""
             SELECT permission FROM private_report
             WHERE report_id=%s GROUP BY permission""", (int(report_id),))
-        report_perms = []
-        try:
-            for permission in cursor.fetchall():
-                report_perms.append(permission[0])
-        except:
-            pass
+        for perm in cursor.fetchall():
+            report_perms.append(perm[0])
         return report_perms
