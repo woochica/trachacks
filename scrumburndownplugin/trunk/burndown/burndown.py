@@ -1,18 +1,16 @@
+# -*- coding: utf-8 -*-
+#
 # Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
 # Copyright (C) 2006-2008 Daan van Etten <daan@stuq.nl>
 # All rights reserved.
-
-# This software may at some point consist of voluntary contributions made by
-# many individuals. For the exact contribution history, see the revision
-# history and logs, available at http://projects.edgewall.com/trac/.
 #
-# Author: Sam Bloomquist <spooninator@hotmail.com>
-# Author: Daan van Etten <daan@stuq.nl>
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 import time
 import sys
 
-from trac import __version__ as trac_version
 from trac.core import *
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import IPermissionRequestor
@@ -26,12 +24,10 @@ from trac.web.main import IRequestHandler
 import dbhelper
 
 
-class BurndownComponent(Component):
+class BurndownModule(Component):
     implements(IEnvironmentSetupParticipant, INavigationContributor,
                IRequestHandler, ITemplateProvider, IPermissionRequestor,
                ITicketChangeListener)
-
-    tracversion = trac_version[:4]
 
     ### IEnvironmentSetupParticipant methods
 
@@ -106,13 +102,9 @@ class BurndownComponent(Component):
         return "burndown"
 
     def get_navigation_items(self, req):
-        if req.perm.has_permission("BURNDOWN_VIEW"):
-            if self.tracversion == "0.10":
-                yield 'mainnav', 'burndown', Markup(
-                    '<a href="%s">Burndown</a>') % req.href.burndown()
-            else:
-                yield 'mainnav', 'burndown', Markup(
-                    '<a href="%s">Burndown</a>' % req.href.burndown())
+        if req.perm.has_permission('BURNDOWN_VIEW'):
+            yield 'mainnav', 'burndown', Markup(
+                '<a href="%s">Burndown</a>' % req.href.burndown())
 
     ### IPermissionRequestor methods
 
@@ -168,17 +160,12 @@ class BurndownComponent(Component):
 
         self.update_burndown_data()
 
-        if self.tracversion == "0.10":
+        data['library'] = ''
+        if data['library'] == 'flot':
+            add_script(req, 'hw/js/jquery.flot.js')
+        else:
             add_script(req, 'hw/js/line.js')
             add_script(req, 'hw/js/wz_jsgraphics.js')
-            return 'burndown.cs', None
-        else:
-            data['library'] = ''
-            if data['library'] == 'flot':
-                add_script(req, 'hw/js/jquery.flot.js')
-            else:
-                add_script(req, 'hw/js/line.js')
-                add_script(req, 'hw/js/wz_jsgraphics.js')
 
             return 'burndown.html', data, None
 
@@ -246,12 +233,10 @@ class BurndownComponent(Component):
 
     def get_templates_dirs(self):
         from pkg_resources import resource_filename
-
         return [resource_filename(__name__, 'templates')]
 
     def get_htdocs_dirs(self):
         from pkg_resources import resource_filename
-
         return [('hw', resource_filename(__name__, 'htdocs'))]
 
     #------------------------------------------------------------------------

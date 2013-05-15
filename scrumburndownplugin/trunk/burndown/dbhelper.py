@@ -1,3 +1,13 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
+# Copyright (C) 2006-2008 Daan van Etten <daan@stuq.nl>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from datetime import datetime
 import time
 

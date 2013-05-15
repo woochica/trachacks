@@ -1,23 +1,28 @@
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2006 Sam Bloomquist <spooninator@hotmail.com>
+# Copyright (C) 2006-2008 Daan van Etten <daan@stuq.nl>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
+from trac.admin import IAdminPanelProvider
 from trac.core import *
 from trac.util.datefmt import (
-    get_date_format_hint, get_datetime_format_hint, parse_date
+    get_date_format_hint, get_datetime_format_hint, parse_date, to_timestamp
 )
-
-try:  # Trac 0.11 only
-    from trac.admin import IAdminPanelProvider
-    from trac.util.datefmt import to_timestamp
-except ImportError:
-    IAdminPanelProvider = None
-    to_timestamp = None
 
 import dbhelper
 
 
-class BurndownMilestonesAdminPanel(Component):
+class BurndownAdminPanel(Component):
     if IAdminPanelProvider:
         implements(IAdminPanelProvider)
 
     ### IAdminPanelProvider methods
+
     def get_admin_panels(self, req):
         if req.perm.has_permission('BURNDOWN_ADMIN'):
             yield ('burndown', 'Scrum Burndown Plugin', 'settings', 'Settings')
