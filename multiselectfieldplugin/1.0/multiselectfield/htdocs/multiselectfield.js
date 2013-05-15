@@ -5,9 +5,6 @@ jQuery(document).ready(function($) {
 		var value = select.prev().attr('value');
 		var options = value.split(' ');
 
-		console.debug("value: '" + value + "'");
-		console.debug("options: '" + options + "'");
-
 		var length = options.length;
 		for (var optionIndex = 0; optionIndex < length; optionIndex++) {
 			if (options[optionIndex] == '') {
