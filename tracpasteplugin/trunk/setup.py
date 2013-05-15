@@ -18,10 +18,10 @@ setup(
     description='Pastebin plugin for Trac',
     author='Armin Ronacher',
     author_email='armin.ronacher@active-4.com',
-    maintainer='Michael Renzmann',
-    maintainer_email='mrenzmann@otaku42.de',
+    maintainer='Ryan J Ollos',
+    maintainer_email='ryan.j.ollos@gmail.com',
     url='http://trac-hacks.org/wiki/TracPastePlugin',
-    license='BSD',
+    license='BSD 3-clause',
     packages=['tracpaste'],
     classifiers=[
         'Framework :: Trac',
