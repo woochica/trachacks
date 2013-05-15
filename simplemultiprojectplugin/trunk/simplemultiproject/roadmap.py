@@ -105,7 +105,7 @@ class SmpRoadmapProject(Component):
         return handler
 
     def __extract_div_milestones_array(self,tag_milestone,stream_milestones):
-        html_milestones = str(stream_milestones)
+        html_milestones = stream_milestones.render()
         ini_index = html_milestones.find(tag_milestone)
         divarray = []
         ocurrencia = True
