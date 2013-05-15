@@ -77,6 +77,8 @@ class WorksheetWriter(object):
     def get_metrics(self, value):
         if not value:
             return 0, 1
+        if isinstance(value, str):
+            value = to_unicode(value)
         if value not in self._metrics_cache:
             lines = value.splitlines()
             doubles = ('WFA', 'WF')[self.ambiwidth == 1]
