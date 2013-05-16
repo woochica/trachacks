@@ -27,7 +27,7 @@ setup(
         ticketcharts = ticketcharts.TicketCharts
     """,
     install_requires=['Trac >= 0.11', 'TracAdvParseArgsPlugin'],
-    package_data={'ticketstats': [
+    package_data={'ticketcharts': [
         'htdocs/*.swf',
         'htdocs/js/*.js',
         'htdocs/json/*.js']
