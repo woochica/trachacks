@@ -65,4 +65,4 @@ class BurndownAdminPanel(Component):
             'datetime_hint': get_datetime_format_hint()
         })
 
-        return 'config.html', data
+        return 'admin_burndown.html', data
