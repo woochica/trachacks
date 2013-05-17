@@ -43,6 +43,8 @@ class PrivateReports(Component):
         if not report_id or self._has_permission(req.authname, report_id):
             return handler
         else:
+            self.log.debug("User %s doesn't have permission to view report %s "
+                           % (req.authname, report_id))
             raise TracError("You don't have permission to access this report",
                             "No Permission")
 
@@ -182,8 +184,8 @@ class PrivateReports(Component):
                     if self._has_permission(req.authname, report_id):
                         report_stream += row
                     else:
-                        self.log.debug("Removing report %s from list because"
-                                       "%s doesn't have required permission" %
+                        self.log.debug("Removing report %s from list because "
+                                       "%s doesn't have permission to view" %
                                        (report_id, req.authname))
                 elif 'View report' in row:
                     report_stream += row
