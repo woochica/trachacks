@@ -1,0 +1,21 @@
+<div xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:py="http://genshi.edgewall.org/"
+  xmlns:xi="http://www.w3.org/2001/XInclude"
+  xmlns:i18n="http://genshi.edgewall.org/i18n"
+  i18n:domain="ticketcalendar"
+  class="ticketcalendar ticket-detail">
+  <h1 id="trac-ticket-title" py:choose="">
+    <py:when test="ticket.exists">
+    <a href="${href.ticket(ticket.id)}" i18n:msg="id">Ticket #${ticket.id}</a>
+    <span class="status">(${ticket.status}<py:if
+      test="ticket.type"> ${ticket.type}</py:if><py:if
+      test="ticket.resolution">: ${ticket.resolution}</py:if>)</span>
+    </py:when>
+  </h1>
+  <xi:include href="ticket_box.html" />
+  <div class="edit-ticket" py:choose="">
+    <py:when test="writable">
+      <a href="${href.ticket(ticket.id)}#propertyform">Edit this ticket</a>
+    </py:when>
+  </div>
+</div>

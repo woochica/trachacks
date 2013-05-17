@@ -1,0 +1,46 @@
+<form id="query" method="post"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
+      i18n:domain="ticketcalendar">
+  ${query_form_filters}
+  <fieldset id="sort">
+    <legend class="foldable">Sort</legend>
+    <table summary="Query filters">
+      <tbody>
+        <tr>
+          <td>
+            <select name="order" id="sort-selecter"
+                    py:with="field_names = sorted(fields.iterkeys(),
+                                                  key=lambda name: fields[name].label.lower())">
+              <option></option>
+              <option py:for="field_name in field_names" py:with="field = fields[field_name]"
+                      value="$field_name"
+                      selected="${query.order == field_name and 'selected' or None}">${field.label}</option>
+            </select>
+          </td>
+          <td>
+            <label for="sort-desc-off">
+              <input type="radio" name="desc" value="" id="sort-desc-off"
+                     checked="${not query.desc and 'checked' or None}" />
+              Asc
+            </label>
+            &nbsp;/&nbsp;
+            <label for="sort-desc-on">
+              <input type="radio" name="desc" value="1" id="sort-desc-on"
+                     checked="${query.desc and 'checked' or None}" />
+              Desc
+            </label>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </fieldset>
+
+  <div class="buttons">
+    <input type="hidden" name="month" value="$month" />
+    <input type="submit" name="update" value="${_('Update')}" />
+  </div>
+  <hr />
+</form>

@@ -1,0 +1,238 @@
+.ticketcalendar {
+  margin: 2em 1em;
+}
+
+.ticketcalendar-header {
+ clear: both;
+}
+.ticketcalendar h4 {
+  font-size: 140%;
+  margin: 0.5em 0;
+}
+.ticketcalendar-nav {
+ display: inline-block;
+ float: right;
+}
+.ticketcalendar-macro {
+ display: inline-block;
+ margin: 0 0.5em 0 0;
+ cursor: pointer;
+}
+.ticketcalendar-macro input {
+ font-size: 92.5%;
+ padding: 1px 2px;
+ vertical-align: baseline;
+ transition: width 0.2s linear 0s;
+ resize: none;
+}
+.ticketcalendar-pager {
+ display: inline-block;
+ -moz-border-radius: 0.3em;
+ -webkit-border-radius: 0.3em;
+ border-radius: 0.3em;
+ border: solid #aaa 1px;
+ background-color: #f7f7f7;
+}
+.ticketcalendar-pager a {
+ display: inline-block;
+ color: inherit;
+ height: 1.5em;
+ line-height: 1.5em;
+ padding: 0.1em 0.7em;
+ vertical-align: middle;
+ border-style: none none none solid;
+ border-width: 1px;
+ border-color: #aaa;
+}
+.ticketcalendar-pager a:first-child {
+ border-style: none;
+ -moz-border-radius: 0.3em 0 0 0.3em;
+ -webkit-border-radius: 0.3em 0 0 0.3em;
+ border-radius: 0.3em 0 0 0.3em;
+}
+.ticketcalendar-pager a:last-child {
+ -moz-border-radius: 0 0.3em 0.3em 0;
+ -webkit-border-radius: 0 0.3em 0.3em 0;
+ border-radius: 0 0.3em 0.3em 0;
+}
+.ticketcalendar-pager a:hover {
+ background-color: #fff;
+}
+
+.ticketcalendar-can-create > table td { cursor: pointer }
+
+.ticketcalendar > table {
+ width: 100%;
+ table-layout:fixed;
+ border-collapse:collapse;
+}
+.ticketcalendar > table td {
+ border: solid 1px #ccc;
+ vertical-align: top;
+ height: 10em;
+}
+.ticketcalendar > table td.weekend { background-color: #f7f7f7 }
+.ticketcalendar > table td.today { background-color: #e7e7f7 }
+.ticketcalendar > table td div {
+ clear: both;
+ width: 100%;
+}
+.ticketcalendar > table td div span { display: inline-block }
+.ticketcalendar > table td div span.day {
+ text-align: right;
+ width: 50%;
+}
+.ticketcalendar > table td div span.day.normal { width: 100% }
+.ticketcalendar > table td div span.today { width: 50% }
+.ticketcalendar > table td ul,
+.ticketcalendar > dl ul,
+.ticketcalendar-popup-list ul {
+ margin: 0;
+ padding: 0;
+}
+.ticketcalendar > table td ul li,
+.ticketcalendar > dl dd ul li,
+.ticketcalendar-popup-list ul li {
+ list-style-type: none;
+ overflow: hidden;
+ white-space: nowrap;
+ width: 100%;
+ /*border: solid #00f 1px;*/
+ margin: 0.1em 0;
+ height: 1.6em;
+ filter:alpha(opacity=85);
+ -moz-opacity:0.85;
+ -khtml-opacity: 0.85;
+ opacity: 0.85;
+}
+.ticketcalendar > table td ul li { cursor: pointer }
+
+.ticketcalendar > dl { }
+.ticketcalendar > dl dt {
+ margin: 0;
+ border-bottom: 2px solid #444;
+}
+.ticketcalendar > dl dd { margin: 0.3em 0px 1.5em 4em }
+.ticketcalendar > dl dd ul li { cursor: pointer }
+.ticketcalendar-popup-list ul li {
+  min-width: 12em;
+  margin: 0.1em 0;
+}
+
+/*
+.ticketcalendar > table.calendar td ul li:hover,
+.ticketcalendar-popup-list ul li:hover {
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
+.ticketcalendar > table.calendar td ul li:hover span,
+.ticketcalendar-popup-list ul li:hover span {
+  background-color: #fff;
+}
+*/
+
+.ticketcalendar.ticket-detail {
+  margin: 2em;
+  width: auto;
+  max-width: 50em;
+}
+
+.ticketcalendar-popup-list {
+  padding: 1em;
+}
+
+.ticketcalendar-popup-list h4,
+.ticketcalendar-newticket-box h4 {
+  margin: 0.5em 0;
+}
+
+.ticketcalendar-list dl {
+  margin: auto;
+  width: 95%;
+}
+
+.ticketcalendar-list dl dt {
+  font-size: 110%;
+  padding: 0.3em;
+  border-radius: 0.4em;
+  border: solid #000 2px;
+  clear: both;
+  margin-top: 1em;
+}
+
+.ticketcalendar-list dl dt:nth-child(1) {
+  margin-top: 0;
+}
+
+.ticketcalendar-list dl dt span {
+  display: inline-block;
+}
+
+.ticketcalendar-list dl dt span:nth-child(2) {
+  float: right;
+}
+
+.ticketcalendar-list dl dd {
+  margin: 0.5em 1em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 0.5em;
+}
+
+.ticketcalendar-list dl dd span {
+}
+
+.ticketcalendar-list dl dd span.milestone-dot {
+  color: rgba(255, 255, 255, 0);
+  height: 0.8em;
+  width: 0.8em;
+  border-radius: 0.4em;
+  position: relative;
+  top: 0.2em;
+  margin: 0 0.4em 0 0.2em;
+  display: inline-block;
+}
+
+.ticketcalendar-list dl dd span.type {
+  margin: 0 1em;
+  padding: 0.1em 0.5em;
+  text-align: center;
+  border: solid #ddd 1px;
+  border-radius: 0.3em;
+  display: inline-block;
+  width: 10em;
+  filter:alpha(opacity=85);
+  -moz-opacity:0.85;
+  -khtml-opacity: 0.85;
+  opacity: 0.85;
+}
+
+.ticketcalendar-show-a-month-d {
+  margin: 1em 3em;
+}
+
+.ticketcalendar-newticket-box {
+  padding: 0.3em 1.2em;
+}
+
+.ticketcalendar-newticket-box ul {
+  padding-left: 1em;
+}
+
+.ticketcalendar-newticket-box li {
+  padding: 0;
+  margin: 0.2em 0;
+}
+
+.edit-ticket {
+  text-align: right;
+}
+
+.ui-icon-w {
+  display: inline-block;
+  position: relative;
+  top: 0.2em;
+}

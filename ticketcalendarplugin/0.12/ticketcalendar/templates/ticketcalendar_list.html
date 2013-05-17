@@ -1,0 +1,33 @@
+<div xmlns="http://www.w3.org/1999/xhtml"
+     xmlns:py="http://genshi.edgewall.org/"
+     xmlns:i18n="http://genshi.edgewall.org/i18n"
+     i18n:domain="ticketcalendar"
+     class="ticketcalendar">
+  <div class="ticketcalendar-nav" py:if="macro">
+    <span class="ticketcalendar-macro">
+      Macro
+      <input type="text" readonly="readonly" size="80" value="$macro"
+             style="display:none;width:0" />
+    </span>
+  </div>
+  <p>
+    <a py:if="ticketcalendar.last_week" href="${ticketcalendar.last_week}"
+      >View tickets in last week</a>
+  </p>
+  <dl>
+    <py:for each="day in ticketcalendar.events">
+      <dt>${day.formatted_date}</dt>
+      <dd py:choose="">
+        <ul py:when="day.tickets or day.milestones">
+          <py:for each="milestone in day.milestones">${ticketcalendar.create_milestone(milestone)}</py:for>
+          <py:for each="ticket in day.tickets">${ticketcalendar.create_ticket(ticket)}</py:for>
+        </ul>
+        <py:otherwise>No tickets and no milestones</py:otherwise>
+      </dd>
+    </py:for>
+  </dl>
+  <p>
+    <a py:if="ticketcalendar.next_week" href="${ticketcalendar.next_week}"
+      >View tickets in next week</a>
+  </p>
+</div>
