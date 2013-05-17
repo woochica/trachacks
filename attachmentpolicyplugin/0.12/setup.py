@@ -1,20 +1,29 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2011 Gefasoft AG
+# Copyright (C) 2011 Franz Mayer <franz.mayer@gefasoft.de>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
+
 from setuptools import find_packages, setup
 
-# name can be any name.  This name will be used to create the .egg file.
-# name that is used in packages is the one that is used in the trac.ini file.
-# use package name as entry_points
 setup(
-    name='Attachment Policy Plugin', 
+    name='AttachmentPolicyPlugin',
     version='0.1.0',
-    author = 'Gefasoft AG, Franz Mayer',
-    author_email = 'franz.mayer@gefasoft.de', 
-    description = 'Adds permission TICKET_ATTACHMENT_DELETE, so deleting attachments can be done without giving permission TICKET_ADMIN',
-    url = 'http://www.gefasoft-muenchen.de',
-#    download_url = 'https://trac-hacks.org/wiki/BudgetingPlugin',
+    author='Gefasoft AG, Franz Mayer',
+    author_email='franz.mayer@gefasoft.de',
+    description="""Adds permission TICKET_ATTACHMENT_DELETE, so deleting
+        attachments can be done without granting the TICKET_ADMIN
+        permission""",
+    url='https://trac-hacks.org/wiki/AttachmentPolicyPlugin',
+    license='BSD 3-Clause',
     packages=find_packages(exclude=['*.tests*']),
-    entry_points = """
+    entry_points="""
         [trac.plugins]
         attachmentpolicy = attachmentpolicy
-    """
+    """,
 )
-
