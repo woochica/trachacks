@@ -177,19 +177,17 @@ def _create_query_object(env, query, required_columns=None):
 
     :param required_columns: Columns that must be included in the query.
     """
+
     if query is None:
         return Query(env, cols=required_columns)
-
-    if required_columns is None:
-        required_columns = []
 
     query_object = Query.from_string(env, query)
 
     # Add the required_columns
-    for column in required_columns:
+    for column in required_columns or []:
         if column not in query_object.cols:
             query_object.cols.append(column)
-            
+
     return query_object
 
 
