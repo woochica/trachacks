@@ -54,10 +54,12 @@ class TicketTagProvider(DefaultTagProvider):
 
     def __init__(self):
         self._fetch_tkt_tags()
+        self.fast_permcheck = self.config.getbool('tags',
+                                                  'ticket_fast_permcheck')
 
     def _check_permission(self, req, resource, action):
         """Optionally coarse-grained permission check."""
-        if self.fast_permission_check or not (resource and resource.id):
+        if self.fast_permcheck or not (resource and resource.id):
             perm = req.perm('ticket')
         else:
             perm = req.perm(resource)
@@ -71,7 +73,7 @@ class TicketTagProvider(DefaultTagProvider):
         if not tags:
             # Cache 'all tagged resources' for better performance.
             for resource, tags in self._tagged_resources:
-                if self.fast_permission_check or \
+                if self.fast_permcheck or \
                         self._check_permission(req, resource, 'view'):
                     yield resource, tags
         else:
@@ -87,7 +89,7 @@ class TicketTagProvider(DefaultTagProvider):
             args = [self.realm] + list(tags)
             cursor.execute(sql, args)
             for name, tags in groupby(cursor, lambda row: row[0]):
-                if self.fast_permission_check or \
+                if self.fast_permcheck or \
                         self._check_permission(req, name, 'view'):
                     resource = Resource(self.realm, name)
                     yield resource, set([tag[1] for tag in tags])
