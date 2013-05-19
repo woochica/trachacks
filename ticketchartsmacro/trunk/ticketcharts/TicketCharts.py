@@ -165,10 +165,6 @@ def _unique_list(iterable):
     return list(set(iterable))
 
 
-def _javascript_code(code):
-    return """<script type="text/javascript">%s</script>""" % (code, )
-
-
 def _create_javascript_array(array_name, values,
                              function=lambda x: repr(str(x))):
     array_values = ", ".join([function(value) for value in values])
@@ -278,12 +274,14 @@ def _create_stacked_bar_on_click_html(env, key, x_axis, ticket_stats, query,
         key_query_string = ''
     
     on_click_code = _safe_evaluate("""
+<script type="text/javascript">
 $array_code;
 
 function $function_name(index, text)
 {
    document.location = "$query_link&$x_axis=" + $array_name[index] $key_query_string;
 }
+</script>
 """, {'array_code': _create_javascript_array(array_name,
                                              ticket_stats.iterkeys()),
       'function_name': function_name,
@@ -291,7 +289,7 @@ function $function_name(index, text)
       'x_axis': x_axis,
       'array_name': array_name,
       'key_query_string': key_query_string})
-    return _javascript_code(on_click_code)
+    return on_click_code
 
 
 def _get_stacked_bar_tooltip(key, key_value):
@@ -387,12 +385,14 @@ def _create_pie_graph_on_click_html(env, ticket_stats, factor, query,
     array_name = 'array_%s' % (function_name, )
     
     on_click_code = _safe_evaluate("""
+<script type="text/javascript">
 $array_code;
 
 function $function_name(index)
 {
     document.location = '$query_link&$factor=' + $array_name[index]
 }
+</script>
 """, {'array_code': _create_javascript_array(array_name,
                                              ticket_stats.iterkeys()),
       'function_name': function_name,
@@ -400,7 +400,7 @@ function $function_name(index)
       'factor': factor,
       'array_name': array_name})
 
-    return _javascript_code(on_click_code)
+    return on_click_code
 
 
 def _pie_graph(env, factor, query=None, title=None):
@@ -467,17 +467,11 @@ def _get_chart_html(chart_object, chart_div_id, htdocs_dir, height=300,
 swfobject.embedSWF("$htdocs_dir/ticketcharts/open-flash-chart.swf",
                    "$chart_div_id", "$width", "$height", "9.0.0", "blah.swf",
                    {"get-data" : "$get_data_function"});
-</script>
-
-<script type="text/javascript">
-
 function $get_data_function()
 {
-    return JSON.stringify($chart_data);
+  return JSON.stringify($chart_data);
 }
-
 </script>
-
 <div id="$chart_div_id"></div>
 """
     return _safe_evaluate(chart_html, chart_div_id=chart_div_id,
