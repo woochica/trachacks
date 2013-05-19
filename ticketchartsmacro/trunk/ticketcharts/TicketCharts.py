@@ -12,6 +12,7 @@ import random
 import string
 from collections import defaultdict
 
+from trac.config import IntOption
 from trac.core import implements
 from trac.db.api import get_column_names
 from trac.web.chrome import ITemplateProvider
@@ -81,6 +82,12 @@ class TicketChartMacro(WikiMacroBase):
     """
     implements(ITemplateProvider)
 
+    height = IntOption('ticket-charts', 'height', 300,
+                       doc="Default chart height.")
+
+    width = IntOption('ticket-charts', 'width', 500,
+                      doc="Default chart width.")
+
     def expand_macro(self, formatter, name, args):
         """Return some output that will be displayed in the Wiki content.
 
@@ -92,7 +99,9 @@ class TicketChartMacro(WikiMacroBase):
         """
 
         args = _parse_args(args)
-        args = _get_args_defaults(formatter.env, args)
+
+        height = args.get('height') or self.height
+        width = args.get('width') or self.width
 
         chart_creation = {'stacked_bars': stacked_bars_graph,
                           'bars': bars_graph,
@@ -106,7 +115,7 @@ class TicketChartMacro(WikiMacroBase):
         return additional_html + \
                _get_chart_html(chart, chart_div_id,
                                formatter.req.href.chrome(),
-                               height=args['height'], width=args['width'])
+                               height=height, width=width)
 
     ### ITemplateProvider methods
 
@@ -138,21 +147,6 @@ def _parse_args(args, args_dict = None):
         stripped_args[value.strip()] = None
 
     return stripped_args
-
-
-def _get_config_variable(env, variable_name, default_value):
-    return env.config.get('ticket-charts', variable_name, default_value)
-
-
-def _get_args_defaults(env, args):
-    """
-    Fill the args dict with the default values for the keys that don't exist
-    """
-    defaults = {'height': _get_config_variable(env, 'height', 300),
-                'width': _get_config_variable(env, 'width', 500)}
-    # Elegant :)
-    defaults.update(args)
-    return defaults
 
 
 def _create_chart(title, *elements):
