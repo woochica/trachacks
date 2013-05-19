@@ -280,16 +280,16 @@ class TagSystem(Component):
             for resource, tags in \
                     resource_provider.get_tagged_resources(req, old_tags):
                 old_tags = set(old_tags)
-                tags = set(tags)
-                if old_tags >= tags and not new_tag:
+                if old_tags.issuperset(tags) and not new_tag:
                     if allow_delete:
                         self.delete_tags(req, resource, None, comment)
                 else:
-                    eff_tags = tags - old_tags
+                    s_tags = set(tags)
+                    eff_tags = s_tag - old_tags
                     if new_tag:
                         eff_tags.add(new_tag)
                     # Prevent to touch resources without effective change.
-                    if not eff_tags == tags and (allow_delete or new_tag):
+                    if eff_tags != s_tags and (allow_delete or new_tag):
                         self.set_tags(req, resource, eff_tags, comment)
 
     def delete_tags(self, req, resource, tags=None, comment=u''):
@@ -305,7 +305,6 @@ class TagSystem(Component):
                  # Handle old style tag providers gracefully.
                 provider.remove_resource_tags(req, resource)
         else:
-            tags = set(tags)
             current_tags = set(provider.get_resource_tags(req, resource))
             current_tags.difference_update(tags)
             try:

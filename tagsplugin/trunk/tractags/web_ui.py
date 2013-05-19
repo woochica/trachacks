@@ -17,7 +17,6 @@ from trac.core import ExtensionPoint, implements
 from trac.mimeview import Context
 from trac.resource import Resource
 from trac.util import to_unicode
-from trac.util.compat import sorted, set, any
 from trac.util.text import CRLF
 from trac.web.api import IRequestHandler
 from trac.web.chrome import INavigationContributor, \
