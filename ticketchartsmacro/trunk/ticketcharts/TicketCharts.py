@@ -107,9 +107,8 @@ class TicketChartMacro(WikiMacroBase):
                           'bars': bars_graph,
                           'pie': pie_graph}
 
-        db = formatter.env.get_db_cnx()
         chart, chart_div_id, additional_html = \
-            chart_creation[args['type']](formatter.env, db, args)
+            chart_creation[args['type']](formatter.env, args)
 
         # Using OFCDZ in order to enable links in Bar Stack chart.
         return additional_html + \
@@ -203,8 +202,9 @@ def _get_query_sql(env, query, required_columns=None):
     return query_object.get_sql()
 
 
-def _get_stacked_bar_chart_stats(env, db, key, x_axis, query):
+def _get_stacked_bar_chart_stats(env, key, x_axis, query):
     sql, args = _get_query_sql(env, query, required_columns=[key, x_axis])
+    db = env.get_db_cnx()
     cursor = db.cursor()
     cursor.execute(sql, args)
 
@@ -302,9 +302,8 @@ def _get_stacked_bar_tooltip(key, key_value):
     return '#val# #x_label# tickets%s' % (key_string, )
 
 
-def _stacked_bars_graph(env, db, key, x_axis, query=None, title=None):
-    ticket_stats, keys = _get_stacked_bar_chart_stats(env, db, key, x_axis,
-                                                      query)
+def _stacked_bars_graph(env, key, x_axis, query=None, title=None):
+    ticket_stats, keys = _get_stacked_bar_chart_stats(env, key, x_axis, query)
 
     plot = Bar_Stack()
 
@@ -340,33 +339,34 @@ def _stacked_bars_graph(env, db, key, x_axis, query=None, title=None):
                                              query, on_click_function_name)
 
 
-def stacked_bars_graph(env, db, args):
+def stacked_bars_graph(env, args):
     # Using **args here would be useful, but I want to be more precise
-    return _stacked_bars_graph(env, db, key=args['key'], x_axis=args['x_axis'],
+    return _stacked_bars_graph(env, key=args['key'], x_axis=args['x_axis'],
                                query=args.get('query'),
                                title=args.get('title'))
 
 
-def bars_graph(env, db, args):
+def bars_graph(env, args):
     # I don't want code repetition, so we'll simply use stacked bars chart
     # without keys. This is kind of a hack, but it's better than copy-paste.
-    return _stacked_bars_graph(env, db, key=None, x_axis=args['x_axis'],
+    return _stacked_bars_graph(env, key=None, x_axis=args['x_axis'],
                                query=args.get('query'),
                                title=args.get('title'))
 
 
-def _get_pie_graph_stats(env, db, factor, query=None):
+def _get_pie_graph_stats(env, factor, query=None):
     """
     Return a dict in which the keys are the factors and the values are the
     number of tickets of each factor.
     Example:
 
-    >>> _get_pie_graph_stats(env, db, 'milestone')
+    >>> _get_pie_graph_stats(env, 'milestone')
     {'milestone1' : 20,
      'milestone2' : 12,
     }
     """
     sql, args = _get_query_sql(env, query, required_columns=[factor, ])
+    db = env.get_db_cnx()
     cursor = db.cursor()
     cursor.execute(sql, args)
 
@@ -403,13 +403,13 @@ function $function_name(index)
     return _javascript_code(on_click_code)
 
 
-def _pie_graph(env, db, factor, query=None, title=None):
+def _pie_graph(env, factor, query=None, title=None):
     """
     Create a pie graph of the number of tickets as a function of the factor.
     factor is a name of a field by which the tickets are counted.
     query can be None or any Trac query by which the data will be collected.
     """
-    ticket_stats = _get_pie_graph_stats(env, db, factor, query)
+    ticket_stats = _get_pie_graph_stats(env, factor, query)
 
     pie_values = []
     for factor_value, number_of_tickets in ticket_stats.iteritems():
@@ -437,8 +437,8 @@ def _pie_graph(env, db, factor, query=None, title=None):
     return chart, chart_div_id, on_click_html
 
 
-def pie_graph(env, db, args):
-    return _pie_graph(env, db, args['factor'], query=args.get('query'),
+def pie_graph(env, args):
+    return _pie_graph(env, args['factor'], query=args.get('query'),
                       title=args.get('title'))
 
 
