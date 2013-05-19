@@ -197,7 +197,10 @@ def _get_query_sql(env, query, required_columns=None):
 
 
 def _get_stacked_bar_chart_stats(env, key, x_axis, query):
-    sql, args = _get_query_sql(env, query, required_columns=[key, x_axis])
+    required_columns = [x_axis]
+    if key is not None:
+        required_columns.append(key)
+    sql, args = _get_query_sql(env, query, required_columns)
     db = env.get_db_cnx()
     cursor = db.cursor()
     cursor.execute(sql, args)
