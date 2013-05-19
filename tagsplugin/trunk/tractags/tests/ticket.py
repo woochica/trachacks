@@ -33,6 +33,9 @@ class TicketTagProviderTestCase(unittest.TestCase):
 
         self.db = self.env.get_db_cnx()
         setup = TagSetup(self.env)
+        # Current tractags schema is setup with enabled component anyway.
+        #   Revert these changes for getting default permissions inserted.
+        self._revert_tractags_schema_init()
         setup.upgrade_environment(self.db)
 
         self.provider = TicketTagProvider(self.env)
@@ -66,6 +69,13 @@ class TicketTagProviderTestCase(unittest.TestCase):
         ticket['keywords'] = u' '.join(sorted(map(to_unicode, tags)))
         ticket['summary'] = 'summary'
         ticket.insert()
+
+    def _revert_tractags_schema_init(self):
+        cursor = self.db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS tags")
+        cursor.execute("DELETE FROM system WHERE name='tags_version'")
+        cursor.execute("DELETE FROM permission WHERE action %s"
+                       % self.db.like(), ('TAGS_%',))
 
     def _tags(self):
         tags = {}
