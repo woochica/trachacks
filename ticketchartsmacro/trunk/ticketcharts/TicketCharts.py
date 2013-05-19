@@ -328,9 +328,12 @@ def _stacked_bars_graph(env, key, x_axis, query=None, title=None):
         if key:
             key_string = ' and %s' % (key, )
         title = 'Tickets by %s%s' % (x_axis, key_string)
+
     chart = _create_chart(title, plot)
-    chart.set_x_axis(labels = x_axis_labels(labels=ticket_stats.keys(), size=13))
-    chart.set_y_axis(min = 0, max = _get_stacked_bar_max_y_value(ticket_stats))
+    if ticket_stats.keys():
+        chart.set_x_axis(labels=x_axis_labels(labels=ticket_stats.keys(),
+                                              size=13))
+        chart.set_y_axis(min=0, max=_get_stacked_bar_max_y_value(ticket_stats))
 
     return chart, chart_div_id, \
            _create_stacked_bar_on_click_html(env, key, x_axis, ticket_stats,
