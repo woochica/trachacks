@@ -22,6 +22,9 @@ tractags-0.7 (not yet released)
  * #4164: Wiki pages without tags have no tag styles
  * #4223: Bad CSS interpretation with IE
  * #4277: Support for MySQL
+ * #4503: Performance issues
+   mitigated by
+   * mirroring ticket tags into normalized `tags` db table
  * #4996: TagsPlugin fails on upgrading
  * #5345: TracError: The Trac Environment needs to be upgraded
  * #5575: UnicodeEncodeError on Japanese tag
@@ -38,6 +41,7 @@ tractags-0.7 (not yet released)
  * #9210: /tags page should not have a contextual navigation link 'Cloud'
  * #9521: New install impossible on Trac 0.13dev
    by adding generic db schema upgrade support
+ * #11096: Avoid an `OperationalError: too many SQL variables`
  * TagsQuery now supports a context object
  * refactor cloud rendering so it can be used by other plugins
  * fix regression related to missing IWikiChangeListener
@@ -48,7 +52,7 @@ tractags-0.7 (not yet released)
  * fix an Error for `TagCloud` macro when being called without arguments
  * improve formatting of header for `tag_view.html` page template
  * do TagSystem class API cleanup by moving db access to model layer
- 
+
  new features
  * #2509: Create wiki page from /tags/<tag> page
  * #2708: Add rel-tag microformat to tags list

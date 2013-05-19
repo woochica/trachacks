@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2006 Alec Thomas <alec@swapoff.org>
-# Copyright (C) 2011 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2011-2013 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -13,10 +13,11 @@ from trac.config import BoolOption, ListOption
 from trac.core import Component, implements
 from trac.perm import PermissionError
 from trac.resource import Resource
-from trac.ticket.api import TicketSystem
+from trac.test import Mock, MockPerm
+from trac.ticket.api import ITicketChangeListener, TicketSystem
 from trac.ticket.model import Ticket
 from trac.util import get_reporter_id
-from trac.util.compat import set, sorted
+from trac.util.compat import any, groupby
 from trac.util.text import to_unicode
 
 from tractags.api import DefaultTagProvider, ITagProvider, TagSystem, _
@@ -25,8 +26,17 @@ from tractags.api import DefaultTagProvider, ITagProvider, TagSystem, _
 class TicketTagProvider(DefaultTagProvider):
     """A tag provider using ticket fields as sources of tags.
 
+    Relevant ticket data is initially copied to plugin's own tag db store for
+    more efficient regular access, that matters especially when working with
+    large ticket quantities, kept current using ticket change listener events.
+
     Currently does NOT support custom fields.
     """
+
+    implements(ITicketChangeListener)
+
+#    custom_fields = ListOption('tags', 'custom_ticket_fields',
+#        doc=_("List of custom ticket fields to expose as tags."))
 
     fields = ListOption('tags', 'ticket_fields', 'keywords',
         doc=_("List of ticket fields to expose as tags."))
@@ -34,20 +44,134 @@ class TicketTagProvider(DefaultTagProvider):
     ignore_closed_tickets = BoolOption('tags', 'ignore_closed_tickets', True,
         _("Do not collect tags from closed tickets."))
 
-#    custom_fields = ListOption('tags', 'custom_ticket_fields',
-#        doc=_("List of custom ticket fields to expose as tags."))
-
+    map = {'view': 'TICKET_VIEW', 'modify': 'TICKET_CHGPROP'}
     realm = 'ticket'
 
-    def check_permission(self, perm, action):
-        map = {'view': 'TICKET_VIEW', 'modify': 'TICKET_CHGPROP'}
-        return super(TicketTagProvider, self).check_permission(perm, action) \
-            and map[action] in perm
+    def __init__(self):
+        self._fetch_tkt_tags()
 
-    # ITagProvider methods
+    def _check_permission(self, req, id, action):
+        """Fine-grained permission check."""
+        if not id:
+            perm = req.perm('ticket')
+        else:
+            perm = req.perm('ticket', id)
+        return self.check_permission(perm, action) and \
+               self.map[action] in perm
+
     def get_tagged_resources(self, req, tags):
-        if not self.check_permission(req.perm, 'view'):
+        if not self._check_permission(req, None, 'view'):
             return
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+
+        args = [self.realm]
+        # DEVEL: Cache 'all resources' query for even better performance.
+        sql = """
+            SELECT name, tag
+              FROM tags
+             WHERE tagspace=%s
+        """
+        if tags:
+            sql += " AND tags.tag IN (%s)" % ', '.join(['%s' for t in tags])
+            args += list(tags)
+        sql += " ORDER by name"
+        cursor.execute(sql, args)
+        for name, tags in groupby(cursor, lambda row: row[0]):
+            if self._check_permission(req, name, 'view'):
+                resource = Resource(self.realm, name)
+                yield resource, set([tag[1] for tag in tags])
+
+    def get_resource_tags(self, req, resource):
+        assert resource.realm == self.realm
+        ticket = Ticket(self.env, resource.id)
+        if not self._check_permission(req, ticket.id, 'view'):
+            return
+        return self._ticket_tags(ticket)
+
+    def set_resource_tags(self, req, ticket_or_resource, tags, comment=u''):
+        try:
+            resource = ticket_or_resource.resource
+        except AttributeError:
+            resource = ticket_or_resource
+            assert resource.realm == self.realm
+            if not self._check_permission(req, resource.id, 'modify'):
+                raise PermissionError(resource=resource, env=self.env)
+            tag_set = set(tags)
+            # Processing a call from TracTags, try to alter the ticket.
+            tkt = Ticket(self.env, resource.id)
+            all = self._ticket_tags(tkt)
+            # Avoid unnecessary ticket changes, considering comments below.
+            if tag_set != all:
+                # Will only alter tags in 'keywords' ticket field.
+                split_into_tags = TagSystem(self.env).split_into_tags
+                keywords = split_into_tags(tkt['keywords'])
+                # Assume, that duplication is depreciated and consolitation
+                # wanted to primarily affect 'keywords' ticket field.
+                # Consequently updating ticket tags and reducing (tag)
+                # 'ticket_fields' afterwards may result in undesired tag loss.
+                tag_set.difference_update(all.difference(keywords))
+                tkt['keywords'] = u' '.join(sorted(map(to_unicode, tag_set)))
+                tkt.save_changes(get_reporter_id(req), comment)
+        else:
+            # Processing a change listener event.
+            tags = self._ticket_tags(ticket_or_resource)
+            super(TicketTagProvider,
+                  self).set_resource_tags(req, resource, tags)
+
+    def remove_resource_tags(self, req, ticket_or_resource, comment=u''):
+        try:
+            resource = ticket_or_resource.resource
+        except AttributeError:
+            resource = ticket_or_resource
+            assert resource.realm == self.realm
+            if not self._check_permission(req, resource.id, 'modify'):
+                raise PermissionError(resource=resource, env=self.env)
+            # Processing a call from TracTags, try to alter the ticket.
+            ticket = Ticket(self.env, resource.id)
+            # Can only alter tags in 'keywords' ticket field.
+            # DEVEL: Time to differentiate managed and sticky/unmanaged tags?
+            ticket['keywords'] = u''
+            ticket.save_changes(get_reporter_id(req), comment)
+        else:
+            # Processing a change listener event.
+            super(TicketTagProvider, self).remove_resource_tags(req, resource)
+
+    def describe_tagged_resource(self, req, resource):
+        if not self.check_permission(req.perm, 'view'):
+            return ''
+        ticket = Ticket(self.env, resource.id)
+        if ticket.exists:
+            # Use the corresponding IResourceManager.
+            ticket_system = TicketSystem(self.env)
+            return ticket_system.get_resource_description(ticket.resource,
+                                                          format='summary')
+        else:
+            return ''
+
+    # ITicketChangeListener methods
+
+    def ticket_created(self, ticket):
+        """Called when a ticket is created."""
+        # Add any tags unconditionally.
+        self.set_resource_tags(Mock(perm=MockPerm()), ticket, None)
+
+    def ticket_changed(self, ticket, comment, author, old_values):
+        """Called when a ticket is modified."""
+        # Sync only on change of ticket fields, that are exposed as tags.
+        if any(f in self.fields for f in old_values.keys()):
+            self.set_resource_tags(Mock(perm=MockPerm()), ticket, None)
+
+    def ticket_deleted(self, ticket):
+        """Called when a ticket is deleted."""
+        self.remove_resource_tags(Mock(perm=MockPerm()), ticket)
+
+    # Private methods
+
+    def _fetch_tkt_tags(self):
+        """Transfer all relevant ticket attributes to tags db table."""
+        # Initial sync is done by forced, stupid one-way mirroring.
+        # Data aquisition for this utilizes the known ticket tags query.
         db = self.env.get_db_cnx()
         fields = ["COALESCE(%s, '')" % f for f in self.fields]
         ignore = ''
@@ -58,72 +182,33 @@ class TicketTagProvider(DefaultTagProvider):
               FROM (SELECT id, %s, %s AS std_fields
                       FROM ticket%s) s
             """ % (','.join(self.fields), db.concat(*fields), ignore)
-        args = []
-        constraints = []
-        if tags:
-            for tag in tags:
-                constraints.append("std_fields %s" % db.like())
-                args.append('%' + db.like_escape(tag) + '%')
-        else:
-            constraints.append("std_fields != ''")
-
-        if constraints:
-            sql += " WHERE " + '(' + ' OR '.join(constraints) + ')'
-        sql += " ORDER BY id"
+        sql += " WHERE std_fields != '' ORDER BY id"
         self.env.log.debug(sql)
-        cursor = db.cursor()
-        cursor.execute(sql, args)
-        for row in cursor:
-            id, ttags = row[0], ' '.join([f for f in row[1:-1] if f])
-            perm = req.perm('ticket', id)
-            if 'TICKET_VIEW' not in perm or 'TAGS_VIEW' not in perm:
-                continue
-            ticket_tags = TagSystem(self.env).split_into_tags(ttags)
-            tags = set([to_unicode(x) for x in tags])
-            if (not tags or ticket_tags.intersection(tags)):
-                yield Resource('ticket', id), ticket_tags
+        # Obtain cursors for reading tickets and altering tags db table.
+        # DEVEL: Use appropriate cursor typs from Trac 1.0 db API.
+        ro_cursor = db.cursor()
+        rw_cursor = db.cursor()
+        # Delete all previous entries for 'ticket' tagspace.
+        rw_cursor.execute('DELETE FROM tags WHERE tagspace=%s', (self.realm,))
 
-    def get_resource_tags(self, req, resource):
-        assert resource.realm == self.realm
-        if not self.check_permission(req.perm, 'view'):
-            return
-        ticket = Ticket(self.env, resource.id)
-        return self._ticket_tags(ticket)
-
-    def set_resource_tags(self, req, resource, tags, comment=u''):
-        assert resource.realm == self.realm
-        if not self.check_permission(req.perm(resource), 'modify'):
-            raise PermissionError(resource=resource, env=self.env)
+        self.log.debug('ENTER_TAG_DB_CHECKOUT')
+        ro_cursor.execute(sql)
+        self.log.debug('EXIT_TAG_DB_CHECKOUT')
         split_into_tags = TagSystem(self.env).split_into_tags
-        ticket = Ticket(self.env, resource.id)
-        all = self._ticket_tags(ticket)
-        keywords = split_into_tags(ticket['keywords'])
-        tags.difference_update(all.difference(keywords))
-        ticket['keywords'] = u' '.join(sorted(map(to_unicode, tags)))
-        ticket.save_changes(get_reporter_id(req), comment)
+        self.log.debug('ENTER_TAG_SYNC')
 
-    def remove_resource_tags(self, req, resource, comment=u''):
-        assert resource.realm == self.realm
-        if not self.check_permission(req.perm(resource), 'modify'):
-            raise PermissionError(resource=resource, env=self.env)
-        ticket = Ticket(self.env, resource.id)
-        ticket['keywords'] = u''
-        ticket.save_changes(get_reporter_id(req), comment)
+        for row in ro_cursor:
+            tkt_id, ttags = row[0], ' '.join([f for f in row[1:-1] if f])
+            ticket_tags = split_into_tags(ttags)
+            rw_cursor.executemany("""
+                INSERT INTO tags
+                       (tagspace, name, tag)
+                VALUES (%s, %s, %s)
+                """, [(self.realm, str(tkt_id), tag) for tag in ticket_tags])
+        db.commit()
+        self.log.debug('EXIT_TAG_SYNC')
 
-    def describe_tagged_resource(self, req, resource):
-        if not self.check_permission(req.perm, 'view'):
-            return ''
-        ticket = Ticket(self.env, resource.id)
-        if ticket.exists:
-            ticket_system = TicketSystem(self.env)
-            return ticket_system.get_resource_description(ticket.resource,
-                                                          format='summary')
-        else:
-            return ''
-
-    # Private methods
     def _ticket_tags(self, ticket):
         split_into_tags = TagSystem(self.env).split_into_tags
         return split_into_tags(
             ' '.join(filter(None, [ticket[f] for f in self.fields])))
-

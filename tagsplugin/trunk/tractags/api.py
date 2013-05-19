@@ -142,7 +142,7 @@ class DefaultTagProvider(Component):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
-        tag_resource(self.env, self.realm, resource.id, tags=tags)
+        tag_resource(self.env, self.realm, to_unicode(resource.id), tags=tags)
 
     def reparent_resource_tags(self, req, old_resource, resource,
                                comment=u''):
@@ -152,13 +152,14 @@ class DefaultTagProvider(Component):
             raise PermissionError(resource=old_resource, env=self.env)
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
-        tag_resource(self.env, self.realm, old_resource.id, resource.id)
+        tag_resource(self.env, self.realm, to_unicode(old_resource.id),
+                     to_unicode(resource.id))
 
     def remove_resource_tags(self, req, resource, comment=u''):
         assert resource.realm == self.realm
         if not self.check_permission(req.perm(resource), 'modify'):
             raise PermissionError(resource=resource, env=self.env)
-        tag_resource(self.env, self.realm, resource.id)
+        tag_resource(self.env, self.realm, to_unicode(resource.id))
 
     def describe_tagged_resource(self, req, resource):
         return ''

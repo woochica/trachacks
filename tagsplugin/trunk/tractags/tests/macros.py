@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (C) 2011 Odd Simon Simonsen <oddsimons@gmail.com>
-# Copyright (C) 2012 Steffen Hoffmann <hoff.st@web.de>
+# Copyright (C) 2012,2013 Steffen Hoffmann <hoff.st@web.de>
 #
 # This software is licensed as described in the file COPYING, which
 # you should have received as part of this distribution.
@@ -15,6 +15,7 @@ from trac.test import EnvironmentStub, Mock
 from trac.perm import PermissionCache, PermissionSystem
 from trac.web.href import Href
 
+from tractags.db import TagSetup
 from tractags.macros import TagTemplateProvider, TagWikiMacros
 
 
@@ -43,6 +44,9 @@ class ListTaggedMacroTestCase(unittest.TestCase):
                 enable=['trac.*', 'tractags.*'])
         self.env.path = tempfile.mkdtemp()
 
+        self.db = self.env.get_db_cnx()
+        setup = TagSetup(self.env)
+        setup.upgrade_environment(self.db)
         self.tag_twm = TagWikiMacros(self.env)
 
     def tearDown(self):
