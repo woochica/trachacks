@@ -88,9 +88,25 @@ class TicketChartMacro(WikiMacroBase):
         `'HelloWorld'`),
         `args` is the text enclosed in parenthesis at the call of the macro.
             Note that if there are ''no'' parenthesis (like in, e.g.
-            [[HelloWorld]]), then `args` is `None`.
+            [[HelloWorld]]), then `args` is `None`..
         """
-        return create_graph(formatter.req, formatter.env, args)
+
+        args = _parse_args(args)
+        args = _get_args_defaults(formatter.env, args)
+
+        chart_creation = {'stacked_bars': stacked_bars_graph,
+                          'bars': bars_graph,
+                          'pie': pie_graph}
+
+        db = formatter.env.get_db_cnx()
+        chart, chart_div_id, additional_html = \
+            chart_creation[args['type']](formatter.env, db, args)
+
+        # Using OFCDZ in order to enable links in Bar Stack chart.
+        return additional_html + \
+               _get_chart_html(chart, chart_div_id,
+                               formatter.req.href.chrome(),
+                               height=args['height'], width=args['width'])
 
     ### ITemplateProvider methods
 
@@ -430,27 +446,6 @@ def _pie_graph(env, db, factor, query=None, title=None):
 def pie_graph(env, db, args):
     return _pie_graph(env, db, args['factor'], query=args.get('query'),
                       title=args.get('title'))
-
-
-def create_graph(req, env, args):
-    db = env.get_db_cnx()
-
-    args = _parse_args(args)
-    args = _get_args_defaults(env, args)
-    
-    chart_creation = {'stacked_bars': stacked_bars_graph,
-                      'bars': bars_graph,
-                      'pie': pie_graph}
-
-    chart, chart_div_id, additional_html = chart_creation[args['type']](env,
-                                                                        db,
-                                                                        args)
-
-    # Using OFCDZ in order to enable links in Bar Stack chart.
-    return additional_html + \
-           _get_chart_html(chart, chart_div_id,
-                           req.href.chrome(),
-                           height=args['height'], width=args['width'])
 
 
 def _get_random_string(length):
