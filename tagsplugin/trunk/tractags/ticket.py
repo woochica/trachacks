@@ -35,6 +35,10 @@ class TicketTagProvider(DefaultTagProvider):
 
     implements(ITicketChangeListener)
 
+    fast_permission_check = BoolOption('tags', 'ticket_fast_permcheck', False,
+        _("Skip per-ticket permission checks, assuming identical permissions "
+          "for all tickets. Overrules fine grained permission policies."))
+
 #    custom_fields = ListOption('tags', 'custom_ticket_fields',
 #        doc=_("List of custom ticket fields to expose as tags."))
 
@@ -52,8 +56,8 @@ class TicketTagProvider(DefaultTagProvider):
         self._fetch_tkt_tags()
 
     def _check_permission(self, req, resource, action):
-        """Fine-grained permission check."""
-        if not resource:
+        """Optionally coarse-grained permission check."""
+        if self.fast_permission_check or not (resource and resource.id):
             perm = req.perm('ticket')
         else:
             perm = req.perm(resource)
@@ -67,7 +71,8 @@ class TicketTagProvider(DefaultTagProvider):
         if not tags:
             # Cache 'all tagged resources' for better performance.
             for resource, tags in self._tagged_resources:
-                if self._check_permission(req, resource, 'view'):
+                if self.fast_permission_check or \
+                        self._check_permission(req, resource, 'view'):
                     yield resource, tags
         else:
             db = self.env.get_db_cnx()
@@ -82,7 +87,8 @@ class TicketTagProvider(DefaultTagProvider):
             args = [self.realm] + list(tags)
             cursor.execute(sql, args)
             for name, tags in groupby(cursor, lambda row: row[0]):
-                if self._check_permission(req, name, 'view'):
+                if self.fast_permission_check or \
+                        self._check_permission(req, name, 'view'):
                     resource = Resource(self.realm, name)
                     yield resource, set([tag[1] for tag in tags])
 
