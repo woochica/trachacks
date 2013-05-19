@@ -15,7 +15,6 @@ from collections import defaultdict
 from trac.core import implements
 from trac.db.api import get_column_names
 from trac.web.chrome import ITemplateProvider
-from trac.web.href import Href
 from trac.wiki.macros import WikiMacroBase
 from trac.ticket.query import Query
 
@@ -27,8 +26,6 @@ from tracadvparseargs import parseargs
 
 # TODO: Fill more colours
 COLOURS = ['#356AA0', '#35a345', '#C711F0', '#C79810', '#D037fC', '#D01F3C', ]
-
-BASE_PATH = '/'
 
 
 class TicketChartMacro(WikiMacroBase):
@@ -93,7 +90,6 @@ class TicketChartMacro(WikiMacroBase):
             Note that if there are ''no'' parenthesis (like in, e.g.
             [[HelloWorld]]), then `args` is `None`.
         """
-        _set_base_path(formatter.req)
         return create_graph(formatter.req, formatter.env, args)
 
     ### ITemplateProvider methods
@@ -172,15 +168,16 @@ def _create_javascript_array(array_name, values,
 
 def _create_query_object(env, query, required_columns=None):
     """Create a query object from a query string. If query is None, the default
-    Query is returned. required_columns - Columns that must be included in the
-    query.
+    Query is returned
+
+    :param required_columns: Columns that must be included in the query.
     """
     if query is None:
         return Query(env, cols=required_columns)
 
     if required_columns is None:
         required_columns = []
-        
+
     query_object = Query.from_string(env, query)
 
     # Add the required_columns
@@ -250,12 +247,11 @@ def _get_query_link(env, query):
     """
     Get a query in a string format, and return a link to the query
     """
-    href = Href(BASE_PATH)
     if query:
         query = _remove_query_special_characters(query)
     query_object = _create_query_object(env, query)
 
-    return query_object.get_href(href)
+    return query_object.get_href(env.href)
 
 
 def _create_stacked_bar_on_click_html(env, key, x_axis, ticket_stats, query,
@@ -500,10 +496,3 @@ function $get_data_function()
                           width=width, height=height,
                           chart_data=chart_object.encode(),
                           get_data_function=get_data_function)
-
-
-def _set_base_path(req):
-    # This is something better used as global, since it is a configuration
-    # dependent global.
-    global BASE_PATH
-    BASE_PATH = req.base_path
