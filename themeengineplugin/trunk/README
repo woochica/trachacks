@@ -127,17 +127,40 @@ For more advanced control you can implement ``IThemeProvider`` from
         def get_theme_names():
             """Return an iterable of names."""
         
+        def get_template_overrides(name):
+            """(Optional) local changes to specific templates 
+    
+            Return a sequence of tuples (old_html, new_html, function) where
+    
+             old_html::
+               The name of the template overriden by this theme.
+             new_html::
+               The name of the template file replacing the former. 
+             function::
+               Optional callback (or None) to add further data . Signature:
+                       req::
+                           Request object
+                       template::
+                           The value of `old_html` above
+                       data::
+                           Template data, may be modified
+                       content_type::
+                           Reported MIME type
+    
+            since 2.2.0
+            """
+
         def get_theme_info(name):
             """Return a dict containing 0 or more of the following pairs:
         
              description::
-               A breif description of the theme.
+               A brief description of the theme.
              template::
                The name of the theme template file. 
              css::
                The filename of the CSS file.
              htdocs::
-               The folder containg the static content.
+               The folder containing the static content.
              screenshot::
                The name of the screenshot file.
              colors::
@@ -148,3 +171,26 @@ For more advanced control you can implement ``IThemeProvider`` from
 
 Most of these are the same as the simple API above, except ``description``
 is explicit.
+
+Customizing specific views
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Since version 2.2.0 it is possible to customize specific views by implementing
+(optional) ``get_template_overrides`` method then . For instance
+the following sample code will change ticket and wiki views using
+custom Genshi templates
+
+    class CustomTheme(...):
+
+        #------8<------ Code omitted ------8<------
+
+        def get_template_overrides(self, name):
+            """Override ticket and wiki templates using custom templates
+            """
+            yield ('ticket.html', 'custom_ticket.html', None)
+            yield ('wiki.html', 'custom_wiki.html', self._modify_wiki)
+
+        def _modify_wiki(self, req, template, data, content_type): 
+            data['var'] = 'value'
+
+Notice that, in sample code, new data will added to render wiki pages. 

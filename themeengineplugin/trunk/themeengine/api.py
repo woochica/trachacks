@@ -31,6 +31,29 @@ class IThemeProvider(Interface):
     def get_theme_names():
         """Return an iterable of names."""
         
+    def get_template_overrides(name):
+        """(Optional) local changes to specific templates 
+
+        Return a sequence of tuples (old_html, new_html, function) where
+
+         old_html::
+           The name of the template overriden by this theme.
+         new_html::
+           The name of the template file replacing the former. 
+         function::
+           Optional callback (or None) to add further data . Signature:
+                   req::
+                       Request object
+                   template::
+                       The value of `old_html` above
+                   data::
+                       Template data, may be modified
+                   content_type::
+                       Reported MIME type
+
+        since 2.2.0
+        """
+
     def get_theme_info(name):
         """Return a dict containing 0 or more of the following pairs:
         

@@ -15,6 +15,7 @@ from pkg_resources import resource_filename
 from trac.core import *
 from trac.core import ComponentMeta
 from trac.config import BoolOption
+from trac.util.text import exception_to_unicode
 from trac.web.chrome import ITemplateProvider, add_stylesheet, Chrome, add_warning
 from trac.web.api import IRequestFilter
 
@@ -74,8 +75,32 @@ class ThemeEngineModule(Component):
                                     .endswith('common/css/trac.css'):
                                 del links['stylesheet'][i]
                                 break
+                if theme:
+                    # Template overrides (since 2.2.0)
+                    overrides = self._get_template_overrides(theme)
+                    template, modifier = overrides.get(template, 
+                                                       (template, None))
+                    if modifier is not None:
+                        modifier(req, template, data, content_type)
             if self.custom_css:
                 add_stylesheet(req, '/themeengine/theme.css')
 
         return template, data, content_type
 
+    # Protected methods
+    def _get_template_overrides(self, theme):
+        overrides = theme.get('template_overrides')
+        if overrides is None:
+            try:
+                overrides = theme['provider'].get_template_overrides(
+                                                    theme['name'])
+            except Exception, e:
+                overrides = {}
+                self.log.warning('Theme %s template overrides : %s',
+                                 theme['name'], 
+                                 exception_to_unicode(e))
+            else:
+                overrides = dict([old, (new, callback)]
+                                 for old, new, callback in overrides)
+            theme['template_overrides'] = overrides
+        return overrides
