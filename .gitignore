@@ -4,3 +4,8 @@
 .project
 .pydevproject
 .settings
+*.patch
+*.orig
+*.rej
+build
+dist
