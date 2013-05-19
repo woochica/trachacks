@@ -46,46 +46,50 @@ class TicketTagProvider(DefaultTagProvider):
 
     map = {'view': 'TICKET_VIEW', 'modify': 'TICKET_CHGPROP'}
     realm = 'ticket'
+    use_cache = False
 
     def __init__(self):
         self._fetch_tkt_tags()
 
-    def _check_permission(self, req, id, action):
+    def _check_permission(self, req, resource, action):
         """Fine-grained permission check."""
-        if not id:
+        if not resource:
             perm = req.perm('ticket')
         else:
-            perm = req.perm('ticket', id)
+            perm = req.perm(resource)
         return self.check_permission(perm, action) and \
                self.map[action] in perm
 
     def get_tagged_resources(self, req, tags):
         if not self._check_permission(req, None, 'view'):
             return
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
 
-        args = [self.realm]
-        # DEVEL: Cache 'all resources' query for even better performance.
-        sql = """
-            SELECT name, tag
-              FROM tags
-             WHERE tagspace=%s
-        """
-        if tags:
-            sql += " AND tags.tag IN (%s)" % ', '.join(['%s' for t in tags])
-            args += list(tags)
-        sql += " ORDER by name"
-        cursor.execute(sql, args)
-        for name, tags in groupby(cursor, lambda row: row[0]):
-            if self._check_permission(req, name, 'view'):
-                resource = Resource(self.realm, name)
-                yield resource, set([tag[1] for tag in tags])
+        if not tags:
+            # Cache 'all tagged resources' for better performance.
+            for resource, tags in self._tagged_resources:
+                if self._check_permission(req, resource, 'view'):
+                    yield resource, tags
+        else:
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            sql = """
+                SELECT name, tag
+                  FROM tags
+                 WHERE tagspace=%%s
+                   AND tags.tag IN (%s)
+                 ORDER by name
+            """ % ', '.join(['%s' for t in tags])
+            args = [self.realm] + list(tags)
+            cursor.execute(sql, args)
+            for name, tags in groupby(cursor, lambda row: row[0]):
+                if self._check_permission(req, name, 'view'):
+                    resource = Resource(self.realm, name)
+                    yield resource, set([tag[1] for tag in tags])
 
     def get_resource_tags(self, req, resource):
         assert resource.realm == self.realm
         ticket = Ticket(self.env, resource.id)
-        if not self._check_permission(req, ticket.id, 'view'):
+        if not self._check_permission(req, ticket.resource, 'view'):
             return
         return self._ticket_tags(ticket)
 
@@ -95,7 +99,7 @@ class TicketTagProvider(DefaultTagProvider):
         except AttributeError:
             resource = ticket_or_resource
             assert resource.realm == self.realm
-            if not self._check_permission(req, resource.id, 'modify'):
+            if not self._check_permission(req, resource, 'modify'):
                 raise PermissionError(resource=resource, env=self.env)
             tag_set = set(tags)
             # Processing a call from TracTags, try to alter the ticket.
@@ -125,7 +129,7 @@ class TicketTagProvider(DefaultTagProvider):
         except AttributeError:
             resource = ticket_or_resource
             assert resource.realm == self.realm
-            if not self._check_permission(req, resource.id, 'modify'):
+            if not self._check_permission(req, resource, 'modify'):
                 raise PermissionError(resource=resource, env=self.env)
             # Processing a call from TracTags, try to alter the ticket.
             ticket = Ticket(self.env, resource.id)
@@ -155,16 +159,25 @@ class TicketTagProvider(DefaultTagProvider):
         """Called when a ticket is created."""
         # Add any tags unconditionally.
         self.set_resource_tags(Mock(perm=MockPerm()), ticket, None)
+        if self.use_cache:
+            # Invalidate resource cache.
+            del self._tagged_resources
 
     def ticket_changed(self, ticket, comment, author, old_values):
         """Called when a ticket is modified."""
         # Sync only on change of ticket fields, that are exposed as tags.
         if any(f in self.fields for f in old_values.keys()):
             self.set_resource_tags(Mock(perm=MockPerm()), ticket, None)
+            if self.use_cache:
+                # Invalidate resource cache.
+                del self._tagged_resources
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
         self.remove_resource_tags(Mock(perm=MockPerm()), ticket)
+        if self.use_cache:
+            # Invalidate resource cache.
+            del self._tagged_resources
 
     # Private methods
 
@@ -207,6 +220,58 @@ class TicketTagProvider(DefaultTagProvider):
                 """, [(self.realm, str(tkt_id), tag) for tag in ticket_tags])
         db.commit()
         self.log.debug('EXIT_TAG_SYNC')
+
+    try:
+        from trac.cache import cached
+        use_cache = True
+
+        @cached
+        def _tagged_resources(self, db=None):
+            """Cached version."""
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            sql = """
+                SELECT name, tag
+                  FROM tags
+                 WHERE tagspace=%s
+                 ORDER by name
+            """
+            self.log.debug('ENTER_TAG_DB_CHECKOUT')
+            cursor.execute(sql, (self.realm,))
+            self.log.debug('EXIT_TAG_DB_CHECKOUT')
+
+            resources = []
+            self.log.debug('ENTER_TAG_GRID_MAKER')
+            counter = 0
+            for name, tags in groupby(cursor, lambda row: row[0]):
+                resource = Resource(self.realm, name)
+                resources.append((resource, set([tag[1] for tag in tags])))
+                counter += 1
+            self.log.debug('TAG_GRID_COUNTER: ' + str(counter))
+            self.log.debug('EXIT_TAG_GRID_MAKER')
+            return resources
+
+    except ImportError:
+        @property
+        def _tagged_resources(self, db=None):
+            """The old, uncached method."""
+            db = self.env.get_db_cnx()
+            cursor = db.cursor()
+            sql = """
+                SELECT name, tag
+                  FROM tags
+                 WHERE tagspace=%s
+                 ORDER by name
+            """
+            self.log.debug('ENTER_PER_REQ_TAG_DB_CHECKOUT')
+            cursor.execute(sql, (self.realm,))
+            self.log.debug('EXIT_PER_REQ_TAG_DB_CHECKOUT')
+
+            self.log.debug('ENTER_TAG_GRID_MAKER_UNCACHED')
+            for name, tags in groupby(cursor, lambda row: row[0]):
+                resource = Resource(self.realm, name)
+                yield resource, set([tag[1] for tag in tags])
+            self.log.debug('EXIT_TAG_GRID_MAKER_UNCACHED')
 
     def _ticket_tags(self, ticket):
         split_into_tags = TagSystem(self.env).split_into_tags
