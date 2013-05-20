@@ -109,7 +109,7 @@ The plug uses external commands to:
    ....
    searchattachments.* = enabled
 
-   [attachments]
+   [attachment]
    ...
    # This is the path to the swish-e command on your system
    swish = /usr/local/bin/swish-e
