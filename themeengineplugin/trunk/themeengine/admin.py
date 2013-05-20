@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright (c) 2006-2010 Noah Kantrowitz <noah@coderanger.net>
+# Copyright (c) 2013      Olemis Lang <olemis+trac@gmail.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -17,7 +18,7 @@ from trac.web.api import IRequestHandler, HTTPNotFound
 from trac.perm import IPermissionRequestor
 from trac.admin.api import IAdminPanelProvider
 
-from themeengine.api import ThemeEngineSystem
+from themeengine.api import ThemeEngineSystem, ThemeNotFound
 
 class SimpleThemeAdminModule(Component):
     """An admin panel for ThemeEngine."""
@@ -45,7 +46,11 @@ class SimpleThemeAdminModule(Component):
             },
         }
 
-        theme_name = self.system.theme and self.system.theme['name'] or 'default'
+        try:
+            theme_name = self.system.theme and self.system.theme['name'] \
+                                           or 'default'
+        except ThemeNotFound:
+            theme_name = 'default'
         theme_name = theme_name.islower() and theme_name.title() or theme_name
         data['themeengine']['current'] = theme_name
         index = 0
