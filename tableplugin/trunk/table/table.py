@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# Copyright (C) 2012-2013 author <author_email>
+# Copyright (C) 2012-2013 Jonny Weir <jonnyweir@jonnyweir.entadsl.com>
 # All rights reserved.
 #
 # This software is licensed as described in the file COPYING, which
@@ -18,7 +18,6 @@ from trac.util.html import Markup
 from trac.wiki import format_to_html, format_to_oneliner
 from trac.wiki import WikiPage
 from trac.wiki.api import IWikiMacroProvider
-from trac.wiki.parser import WikiParser
 
 # genshi imports
 from genshi.builder import tag
