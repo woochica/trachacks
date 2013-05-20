@@ -4,7 +4,7 @@
 .clearFix {zoom: 1} 
 
 .invisible {
-  display:none;
+  display:none !important;
 }
 
 
@@ -506,4 +506,59 @@ table.pplisting tbody td.ppimagecol {
 
 
 
+/* ***************** drag and drop ***************** */
 
+.pp-draggable-ui-state-hover {
+  background-color:#DD9;
+}
+
+.pp-draggable-ui-state-active {
+  background-color:#CCC;
+}
+
+#pp-event-history-list {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: auto;
+  border: 2px dotted #CCC;
+  padding: 1ex;
+  background-color:#EEE;
+}
+
+#pp-event-history-list .undo {
+  font-size:85%;
+  padding-right:18px;
+  padding-left:18px;
+  min-height:18px;
+  background-position: center right; 
+  background-repeat: no-repeat; 
+}
+
+#pp-event-history-list .pp-droppableLoading {
+  background-image: url(../images/loading.gif);
+}
+
+#pp-event-history-list .pp-droppableError, #pp-event-history-list .pp-droppableSuccess {
+  background-image: none;
+}
+
+.pp-droppableLoading, #pp-event-history-list .pp-droppableLoading {
+  border-color: #FF0;
+}
+.pp-droppableError, #pp-event-history-list .pp-droppableError {
+  border-color: #F00;
+}
+.pp-droppableSuccess, #pp-event-history-list .pp-droppableSuccess {  
+  border-color: #0F0;
+}
+
+.pp-droppableLoading, .pp-droppableError, .pp-droppableSuccess {
+  border-width: 2px;
+  border-style: solid;
+}
+
+.pp-ui-droppable {
+  border:#FF0 1px dotted !important;
+  background-image:url(hatch5x5yellow_flip.gif) !important;
+}

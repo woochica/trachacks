@@ -141,7 +141,7 @@ class RenderImpl():
     else:
       return mydatetime.strftime('%Y-%m-%d %H:%M:%S')
 
-  def createTicketLink(self, ticket):
+  def createTicketLink(self, ticket, markupOn = True):
     '''
       create a link to a ticket
     '''
@@ -150,23 +150,26 @@ class RenderImpl():
     priority = ticket.getfield('priority')
     white = '#FFFFFF' # fallback color
     
-    cssclass = 'ticket ticket_inner'
-    if status == 'closed':
-      cssclass += ' closed'
-    elif status == 'in_QA': # enterprise workflow
-      cssclass += ' in_QA'
-    
+    cssclass = 'ticket ticket_inner draggable'
     cssclassouter = ''
     style = ''
-    if self.macroenv.get_bool_arg('useimages', False ):
-      cssclassouter += 'ppuseimages '
-      img = os.path.join( self.macroenv.tracreq.href.chrome( 'projectplan', self.macroenv.PPConstant.RelDocPath ), self.macroenv.conf.get_map_val('ImageForStatus', status) )
-      #self.macroenv.tracenv.log.debug('ppuseimages: '+repr(img)+' '+repr(status) )
-      style += 'background-image:url('+img+');'
-    if self.macroenv.get_bool_arg('usecolors', False ):
-      cssclassouter += 'ppusecolors '
-      #style += 'background-color: '+self.macroenv.conf.get_map_defaults('ColorForPriority', priority, white)
-      style += 'background-color: '+self.macroenv.conf.get_map_val('ColorForPriority', priority )
+
+    if markupOn:
+      if status == 'closed':
+	cssclass += ' closed'
+      elif status == 'in_QA': # enterprise workflow
+	cssclass += ' in_QA'
+
+      if self.macroenv.get_bool_arg('useimages', False ):
+        cssclassouter += 'ppuseimages '
+        img = os.path.join( self.macroenv.tracreq.href.chrome( 'projectplan', self.macroenv.PPConstant.RelDocPath ), self.macroenv.conf.get_map_val('ImageForStatus', status) )
+        #self.macroenv.tracenv.log.debug('ppuseimages: '+repr(img)+' '+repr(status) )
+        style += 'background-image:url('+img+');'
+      if self.macroenv.get_bool_arg('usecolors', False ):
+        cssclassouter += 'ppusecolors '
+        #style += 'background-color: '+self.macroenv.conf.get_map_defaults('ColorForPriority', priority, white)
+        style += 'background-color: '+self.macroenv.conf.get_map_val('ColorForPriority', priority )
+    
     return tag.span( tag.span( tag.a(tag.span('#%s'%(tid,), class_='ticketnr'), href=self.macroenv.tracenv.href.ticket(tid), class_ = cssclass, style = style ), class_ = cssclassouter ), class_ = 'ppticket' )
   
   def createGoogleChartFromDict( self, colorschema, mydict, title='', width=170, height=50 ):

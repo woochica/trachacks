@@ -297,7 +297,7 @@ class TicketsPerUserDay(RenderImpl):
         
         #tr(tag.td( tag.div( td_div, style = 'border-left:3px solid %s;' % (color) ) ) )
         tr(tag.td( tag.div( td_div ), self.render_statistics(orderedtickets[segment][o]), class_ = 'droppable %s %s %s' % (color_class, class_, self.statistics_class), 
-          data="{ %s:\"%s\", %s:\"%s\" }" % (self.rowtype, o, field, segment )   ) 
+          data="{ \"%s\":\"%s\", \"%s\":\"%s\", \"%s\":\"%s\" }" % (self.rowtype, o, field, segment, "action", "leave" )   ) 
         )
       if self.showsummarypiechart:
         tr(tag.td(tag.img(src=self.createGoogleChartFromDict('ColorForStatus', countStatus)))) # Summary

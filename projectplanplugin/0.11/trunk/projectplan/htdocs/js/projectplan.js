@@ -984,6 +984,7 @@ function hideIfShown(){
  * add an AJAX tooltip to each ticket ref
  */
 function ppAddTooltip( sel ){
+	// TODO: replace by jquery UI tooltip
 	$(sel).tooltip({
  		bodyHandler: function() { 
 			$("#tooltip div.ticketcache").each(function(i){ $(this).hide();} ); // hide all
@@ -999,7 +1000,6 @@ function ppAddTooltip( sel ){
 			  $("#"+myid).load(this.href+" #ticket"); // works on Trac 0.12, Trac 1.0
 			  $("#tooltip .url").fadeOut();
 			}
-			
  			return ""; 
  		}, 
 		track: false, 
@@ -1120,7 +1120,7 @@ var ppStore = new Array();
 
 
 $(document).ready(function () {
-	ppAddTooltipWrapper("body");
+	ppAddTooltipWrapper("body"); // TODO JUST DEBUG
 	// normalize the ticket fields; ids are published by the ppticketviewtweak component
 	ppAddTicketListChecks("#ppDependenciesField");
 	ppAddTicketListChecks("#ppDependenciesReverseField");
@@ -1129,6 +1129,156 @@ $(document).ready(function () {
 	ppInitializeTablesorter();
 	$('.pptickettable .headerSortUp').click();
 	$('.pptickettable .headerSortDown').click().click(); // Hack: to ensure correct sortation
-	
+
+// 	$.getScript("http://code.jquery.com/ui/1.10.3/jquery-ui.js").done(function(){initDraggable();});
+	$.ajax({
+	  url: "http://code.jquery.com/ui/1.10.3/jquery-ui.js",
+	  dataType: "script",
+	  cache: true,
+	  success: function(){ppInitDraggable();}
+	});
+
 });
+
+
+
+/* ************************  BETA:  drag and drop  ************************ */
+
+function markDroppedElement(dragged_element, ppEventHistoryElement, state){
+  var droppableStates = {
+    "loading": "pp-droppableLoading", 
+    "error":   "pp-droppableError", 
+    "success": "pp-droppableSuccess", 
+   };
+  // console.log("markDroppedElement");
+  // console.log(droppableStates);
+  // console.log(state);
+  // console.log(droppableStates[state]);
+  // remove all possible earlier states and add the new one
+  dragged_element.find(".ticket_inner").last()
+    .removeClass("pp-droppableLoading pp-droppableError pp-droppableSuccess")
+    .addClass(droppableStates[state]); 
+  ppEventHistoryElement.find(".droppedTicket")
+    .removeClass("pp-droppableLoading pp-droppableError pp-droppableSuccess")
+    .addClass(droppableStates[state]); 
+}
+
+function moveDroppedElement(targetDroppable, droppedElement) {
+	targetDroppable.append(droppedElement);
+	droppedElement.css({
+		left : "",
+		top : "",
+		border : "1px dotted #393"
+	});
+}
+
+/**
+ * BETA: implements drag and drop functionality (e.g., at renderer "tableticketperuserday")
+ * requires XML-RPC plugin: http://trac-hacks.org/wiki/XmlRpcPlugin#Installation
+ */
+function ppInitDraggable(){
+	var RPCURL = $("#mainnav .first a").attr("href")+"/../login/rpc";
+	console.log("init draggable to "+RPCURL);
+	$("body").append($("<div id='pp-event-history-list'>").append($("<h5>Drag & Drop History</h5>")).hide());
+	$(".draggable").draggable({
+		cursor : "move", // cursor change
+		revert : "invalid", // revert if invalid drop zone
+		zIndex : 10000,
+		drag   : function(){ 
+			    $("#tooltip").addClass("invisible");  // make tooltip invisible
+			    $(".droppable").addClass("pp-ui-droppable"); // make drop zone visible
+			 } 
+	});
+	$(".droppable").droppable({
+		accept : ".draggable",
+		activeClass : ".pp-draggable-ui-state-active",
+		hoverClass : "pp-draggable-ui-state-hover", 
+		deactivate : function(event, ui) {
+			       ppResetDroppable();
+			     },
+		drop : function(event, ui) {
+			ppResetDroppable();
+
+			var sourceDroppable = ui.draggable.closest(".droppable");
+			var targetDroppable = $(this);
+			
+			// console.log("drop: target="+targetDroppable.attr("data"));
+			// console.log("drop: source="+sourceDroppable.attr("data"));
+			
+			if ($.trim(sourceDroppable.attr("data")) != $.trim(targetDroppable.attr("data"))) {
+				moveDroppedElement(targetDroppable, ui.draggable);
+				
+				// add element to event history
+				var newEventItem = $("<div>").addClass("pp-event-history-item");
+				var undoButton = $("<input type='button' value='undo #" + ui.draggable.attr("data")+"' class='undo droppedTicket'>")
+				  .click(function() {
+					console.log("moveDroppedElement: revert");
+					moveDroppedElement(sourceDroppable, ui.draggable);
+					newEventItem.fadeOut();
+					// newEventItem.remove();
+				  }).hide();
+				$("#pp-event-history-list").fadeIn().append(newEventItem.append(undoButton));
+				undoButton.delay(1000).fadeIn(1000);
+
+				markDroppedElement(ui.draggable, newEventItem, "loading"); // mark as in work
+				ppSaveNewTicketDataViaRPC(
+				  ui.draggable, // element
+				  ui.draggable.attr("data"), // ticket id
+				  targetDroppable.attr("data"), // new field data
+				  newEventItem, // ppEventHistoryElement
+				  RPCURL // url to RPC API
+				);
+			}
+			
+		}
+	});
+};
+
+function ppResetDroppable(){
+  $("#tooltip").removeClass("invisible"); 
+  $(".droppable").removeClass("pp-ui-droppable"); 
+}
+
+function ppSaveNewTicketDataViaRPC(dropped_element, ticket_id, new_ticket_data, ppEventHistoryElement, RPCURL) {
+	console.log("ppSaveNewTicketDataViaRPC: new_ticket_data: "+parseInt(ticket_id)+" --> "+new_ticket_data);
+	$.ajax({
+		url : RPCURL,
+		data : JSON.stringify({
+			method : "ticket.update",
+			params : [ parseInt(ticket_id), "KOMMENTAR", 
+				      $.parseJSON(new_ticket_data)
+			],
+			id : "jsonrpc"
+		}),
+		type : "POST",
+		dataType : "json",
+		contentType : "application/json",
+		success : function(result) {
+			// console.log("ppSaveNewTicketDataViaRPC: success");
+			// console.log(result);
+			if ( !(result.error === null) && !(result.error.name === null) && result.error.name == "JSONRPCError" ){
+			  // an error has happened
+			  markDroppedElement(dropped_element, ppEventHistoryElement, "error"); // mark as error
+			  console.log("ppSaveNewTicketDataViaRPC: onsuccess: ERROR");
+			} else {
+			  markDroppedElement(dropped_element, ppEventHistoryElement, "success"); // mark as success
+			  // console.log("ppSaveNewTicketDataViaRPC: onsuccess: NO error");
+			}
+		},
+		error : function(err, status, thrown) {
+			console.log("ppSaveNewTicketDataViaRPC: onerror");
+			console.log(err);
+			console.log(status);
+			console.log(thrown);
+			markDroppedElement(dropped_element, ppEventHistoryElement, "error"); // mark as error
+		}
+		/*
+		,complete : function(xhr, status) {
+			console.log("ppSaveNewTicketDataViaRPC: oncomplete");
+			console.log(xhr);
+			console.log(status);
+		}
+		*/
+	});
+}
 
