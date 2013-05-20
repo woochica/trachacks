@@ -465,7 +465,7 @@ def _get_chart_html(chart_object, chart_div_id, htdocs_dir, height=300,
     chart_html = """
 <script type="text/javascript" src="$htdocs_dir/ticketcharts/js/swfobject.js">
 </script>
-<script type="text/javascript" src="$htdocs_dir/ticketcharts/js/json/json2.js">
+<script type="text/javascript" src="$htdocs_dir/ticketcharts/js/json2.js">
 </script>
 <script type="text/javascript">
 swfobject.embedSWF("$htdocs_dir/ticketcharts/open-flash-chart.swf",
