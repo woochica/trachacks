@@ -57,7 +57,7 @@ class FieldGroups(Component):
     def get_field_groups(self):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT id AS "name", label, priority AS "order", fields FROM field_groups ORDER BY priority,label ASC'
+        sql = 'SELECT id AS "name", label, priority AS "order", fields FROM field_groups ORDER BY priority, label ASC'
         groups = []
         cursor.execute(sql)
         rows = cursor.fetchall()
@@ -78,8 +78,10 @@ class FieldGroups(Component):
         # names should always be of the form 'fieldgroup_'+id
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT id AS "name", label, priority AS "order", fields FROM field_groups WHERE id=%s ORDER BY priority,label ASC' % int(name[11:])
-        cursor.execute(sql)
+        cursor.execute("""
+            SELECT id AS "name", label, priority AS "order", fields
+            FROM field_groups WHERE id=%s ORDER BY priority, label ASC
+            """, (int(name[11:]),))
         row = cursor.fetchone()
         if row:
             cols = get_column_names(cursor)
@@ -96,8 +98,8 @@ class FieldGroups(Component):
     def insert(self, group):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT * FROM field_groups WHERE label="%s"' % group['label']
-        cursor.execute(sql)
+        cursor.execute("""
+            SELECT * FROM field_groups WHERE label=%s""", (group['label'],))
         row = cursor.fetchone()
         if row: 
             return {'status': False, 'msg': 'Field Group %s already exists!' % group['label']}
@@ -116,8 +118,9 @@ class FieldGroups(Component):
     def update(self, group):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'SELECT id FROM field_groups WHERE id=%s' % int(group['name'][11:])
-        cursor.execute(sql)
+        cursor.execute("""
+            SELECT id FROM field_groups WHERE id=%s
+            """, (int(group['name'][11:]),))
         id = cursor.fetchone()
         if not id: 
             return {'status': False, 'msg': 'Cannot modify Field Group %s because it does not exist!' % group['label']}
@@ -128,9 +131,10 @@ class FieldGroups(Component):
             group['fields'] = ','.join(group['fields'])
         try:
             for k,v in group.iteritems():
-                sql = 'UPDATE field_groups SET %s="%s" WHERE id="%s"' % (k, v or '', id[0])
                 if k != 'name':
-                    cursor.execute(sql)
+                    cursor.execute("""
+                        UPDATE field_groups SET %s=%%s WHERE id=%%s
+                        """ % k, (v or '', id[0]))
         except Exception, e:
             self.rollback()
             return {'status': False, 'msg': e}
@@ -141,9 +145,10 @@ class FieldGroups(Component):
     def delete(self, group):
         db = self.env.get_db_cnx()
         cursor = db.cursor()
-        sql = 'DELETE FROM field_groups WHERE id=%s' % int(group['name'][11:])
         try:
-            cursor.execute(sql)
+            cursor.execute("""
+                DELETE FROM field_groups WHERE id=%s
+                """, (int(group['name'][11:]),))
         except Exception, e:
             self.rollback()
             return {'status': False, 'msg': e}
