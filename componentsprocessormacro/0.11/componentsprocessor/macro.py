@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Adds a wiki macro [[Components(pattern)]] which lists and describes the project's components, and links to wiki pages describing the components in more detail, and any tickets for the components.  The optional pattern parameter is a regex that can be used to filter components.
+"""Adds a wiki macro [[Components(pattern)]] which lists and describes the
+project's components, and links to wiki pages describing the components in
+more detail, and any tickets for the components.  The optional pattern
+parameter is a regex that can be used to filter components.
 
 terry_n_brown@yahoo.com
 """
@@ -12,8 +15,6 @@ from trac.core import Component, implements
 from trac.wiki.api import IWikiMacroProvider
 from trac.wiki import format_to_html
 
-revision="$Rev$"
-url="$URL$"
 
 class ComponentsProcessor(Component):
     implements(IWikiMacroProvider)
@@ -57,7 +58,7 @@ class ComponentsProcessor(Component):
             ticket_str = p.sub('+',name)
             dt = ' [wiki:%s %s]' % (wiki_str, name)
             if name in tickets:
-                dt += ' ([query:component=%s %d tickets])' % (ticket_str,count)
+                dt += ' ([query:component=%s %d tickets])' % (ticket_str, count)
             dt += '::'
             content.append(dt)
             if descrip != None and descrip.strip() != '':
