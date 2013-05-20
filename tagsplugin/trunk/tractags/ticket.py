@@ -17,7 +17,7 @@ from trac.test import Mock, MockPerm
 from trac.ticket.api import ITicketChangeListener, TicketSystem
 from trac.ticket.model import Ticket
 from trac.util import get_reporter_id
-from trac.util.compat import any, groupby
+from trac.util.compat import all, any, groupby
 from trac.util.text import to_unicode
 
 from tractags.api import DefaultTagProvider, ITagProvider, TagSystem, _
@@ -35,10 +35,6 @@ class TicketTagProvider(DefaultTagProvider):
 
     implements(ITicketChangeListener)
 
-    fast_permission_check = BoolOption('tags', 'ticket_fast_permcheck', False,
-        _("Skip per-ticket permission checks, assuming identical permissions "
-          "for all tickets. Overrules fine grained permission policies."))
-
 #    custom_fields = ListOption('tags', 'custom_ticket_fields',
 #        doc=_("List of custom ticket fields to expose as tags."))
 
@@ -54,8 +50,11 @@ class TicketTagProvider(DefaultTagProvider):
 
     def __init__(self):
         self._fetch_tkt_tags()
-        self.fast_permcheck = self.config.getbool('tags',
-                                                  'ticket_fast_permcheck')
+        cfg = self.config
+        cfg_key = 'permission_policies'
+        default_policies = cfg.defaults().get('trac', {}).get(cfg_key)
+        self.fast_permcheck = all(p in default_policies for
+                                  p in cfg.get('trac', cfg_key))
 
     def _check_permission(self, req, resource, action):
         """Optionally coarse-grained permission check."""
