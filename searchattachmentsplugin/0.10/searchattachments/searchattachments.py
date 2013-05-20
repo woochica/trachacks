@@ -10,7 +10,7 @@ import string, time
 
 from trac.core import *
 from trac.config import Option, Section , Configuration
-from trac.Search import ISearchSource
+from trac.search import ISearchSource
 from trac.attachment import IAttachmentChangeListener
 
 class AttachmentSearchPlugin(Component): 
