@@ -152,6 +152,27 @@ else:
                     result['result']['__jsonclass__'][1].decode("base64"))
             self.assertEquals(image_in.getvalue(), image_out.getvalue())
 
+        def test_fragment(self):
+            data = {'method': 'ticket.create',
+                    'params': ['ticket10786', '',
+                               {'type': 'enhancement', 'owner': 'A'}]}
+            result = self._auth_req(data, user='admin')
+            self.assertEquals(None, result['error'])
+            tktid = result['result']
+
+            data = {'method': 'search.performSearch',
+                    'params': ['ticket10786']}
+            result = self._auth_req(data, user='admin')
+            self.assertEquals(None, result['error'])
+            self.assertEquals('<span class="new">#%d</span>: enhancement: '
+                              'ticket10786 (new)' % tktid,
+                              result['result'][0][1])
+            self.assertEquals(1, len(result['result']))
+
+            data = {'method': 'ticket.delete', 'params': [tktid]}
+            result = self._auth_req(data, user='admin')
+            self.assertEquals(None, result['error'])
+
         def test_xmlrpc_permission(self):
             # Test returned response if not XML_RPC permission
             rpc_testenv._tracadmin('permission', 'remove', 'anonymous',

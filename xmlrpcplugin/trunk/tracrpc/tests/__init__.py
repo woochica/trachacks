@@ -76,6 +76,8 @@ try:
         suite.addTest(tracrpc.tests.wiki.test_suite())
         import tracrpc.tests.web_ui
         suite.addTest(tracrpc.tests.web_ui.test_suite())
+        import tracrpc.tests.search
+        suite.addTest(tracrpc.tests.search.test_suite())
         return suite
 
 except Exception, e:

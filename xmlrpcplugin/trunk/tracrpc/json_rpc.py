@@ -10,6 +10,12 @@ from itertools import izip
 import re
 from types import GeneratorType
 
+try:
+    import babel
+except ImportError:
+    babel = None
+import genshi
+
 from trac.core import *
 from trac.perm import PermissionError
 from trac.resource import ResourceNotFound
@@ -40,7 +46,10 @@ if json:
         """ Extending the JSON encoder to support some additional types:
         1. datetime.datetime => {'__jsonclass__': ["datetime", "<rfc3339str>"]}
         2. tracrpc.api.Binary => {'__jsonclass__': ["binary", "<base64str>"]}
-        3. empty => '' """
+        3. empty => ''
+        4. genshi.builder.Fragment|genshi.core.Markup => unicode
+        5. babel.support.LazyProxy => unicode
+        """
 
         def default(self, obj):
             if isinstance(obj, datetime.datetime):
@@ -52,6 +61,11 @@ if json:
                                 obj.data.encode("base64")]}
             elif obj is empty:
                 return ''
+            elif isinstance(obj, (genshi.builder.Fragment,
+                                  genshi.core.Markup)):
+                return unicode(obj)
+            elif babel and isinstance(obj, babel.support.LazyProxy):
+                return unicode(obj)
             else:
                 return json.JSONEncoder(self, obj)
 

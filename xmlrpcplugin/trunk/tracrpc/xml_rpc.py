@@ -10,6 +10,10 @@ import datetime
 import time
 import xmlrpclib
 
+try:
+    import babel
+except ImportError:
+    babel = None
 import genshi
 
 from trac.core import *
@@ -193,6 +197,8 @@ class XmlRpcProtocol(Component):
                 new_result.append('')
             elif isinstance(res, (genshi.builder.Fragment, \
                                   genshi.core.Markup)):
+                new_result.append(to_unicode(res))
+            elif babel and isinstance(res, babel.support.LazyProxy):
                 new_result.append(to_unicode(res))
             elif isinstance(res, dict):
                 for key, val in res.items():
