@@ -3,145 +3,151 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
+      xmlns:i18n="http://genshi.edgewall.org/i18n"
       xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="layout.html" />
-  <xi:include href="macros.html" />
   <head>
-
-  <style type="text/css">#chart { height: 500px }</style>
-  <script type="text/javascript" src="${yui_base_url}/build/yahoo-dom-event/yahoo-dom-event.js"></script>
-  <script type="text/javascript" src="${yui_base_url}/build/element/element-min.js"></script>
-  <script type="text/javascript" src="${yui_base_url}/build/datasource/datasource-min.js"></script>
-  <script type="text/javascript" src="${yui_base_url}/build/json/json-min.js"></script>
-    <script type="text/javascript" src="${yui_base_url}/build/swf/swf-min.js"></script>
-    <script type="text/javascript" src="${yui_base_url}/build/logger/logger-min.js"></script>
-  <!-- OPTIONAL: Connection (enables XHR) -->
-  <script type="text/javascript" src="${yui_base_url}/build/connection/connection-min.js"></script>
-  <!-- Source files -->
-  <script type="text/javascript" src="${yui_base_url}/build/charts/charts-min.js"></script>
-
+    <title>Ticket Statistics</title>
+    <style type="text/css">#chart {
+      height: 500px
+    }</style>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/element/element-min.js"></script>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/datasource/datasource-min.js"></script>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/json/json-min.js"></script>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/swf/swf-min.js"></script>
+    <script type="text/javascript"
+            src="${yui_base_url}/build/logger/logger-min.js"></script>
+    <!-- OPTIONAL: Connection (enables XHR) -->
+    <script type="text/javascript"
+            src="${yui_base_url}/build/connection/connection-min.js"></script>
+    <!-- Source files -->
+    <script type="text/javascript"
+            src="${yui_base_url}/build/charts/charts-min.js"></script>
   </head>
-<body class="yui-skin-sam">
 
+  <body class="yui-skin-sam">
+    <h1 class="chart_title">Ticket Statistics</h1>
 
-<p/>
-<span class="chart_title">
-<h1>Ticket Statistics</h1>
-</span>
-<div id="content">
-<div id="chart"></div>
+    <div id="content">
+      <div id="chart"></div>
 
-<fieldset id="Settings">
-<legend>Settings</legend>
-<form method="post" id="dt_frm" action="javascript:doRequestData()">
-  <label for="start_date">Start Date: </label>
-  <input type="text" name="start_date" id="start_date" value="${start_date}" size="10"/>
-  <label for="end_date">End Date: </label>
-  <input type="text" name="end_date" id="end_date" value="${end_date}" size="10"/>
-  <label for="resolution">Resolution: </label>
-  <!--input type="text" name="resolution" id="resolution" value="${resolution}" size="5"/-->
-   <select name="resolution" id="resolution">
-      <option value="1">1 Day</option>
-      <option value="7">1 Week</option>
-      <option value="14">2 Weeks</option>
-      <option value="30">1 Month</option>
-      <option value="60">2 Months</option>
-      <option value="90">3 Months</option>
-      <option value="180">6 Months</option>
-      <option value="360">1 Year</option>
-   </select>
-  <label for="milestone">Milestone: </label>
-  <select name="milestone" id="milestone">
-    <option value="__all">All Milestones</option>
-    <py:for each="m in milestones">
-    <option value="${m}">${m}</option>
-    </py:for>
-  </select>
+      <fieldset id="Settings">
+        <legend>Settings</legend>
+        <form method="post" id="dt_frm" action="javascript:doRequestData()">
+          <label for="start_date">Start Date: </label>
+          <input type="text" name="start_date" id="start_date" value="${start_date}"
+                 size="10"/>
+          <label for="end_date">End Date: </label>
+          <input type="text" name="end_date" id="end_date" value="${end_date}"
+                 size="10"/>
+          <label for="resolution">Resolution: </label>
+          <!--input type="text" name="resolution" id="resolution" value="${resolution}" size="5"/-->
+          <select name="resolution" id="resolution">
+            <option value="1">1 Day</option>
+            <option value="7">1 Week</option>
+            <option value="14">2 Weeks</option>
+            <option value="30">1 Month</option>
+            <option value="60">2 Months</option>
+            <option value="90">3 Months</option>
+            <option value="180">6 Months</option>
+            <option value="360">1 Year</option>
+          </select>
+          <label for="milestone">Milestone: </label>
+          <select name="milestone" id="milestone">
+            <option value="__all">All Milestones</option>
+            <py:for each="m in milestones">
+              <option value="${m}">${m}</option>
+            </py:for>
+          </select>
 
-  <input type="submit" name="Update Chart" value="Update Chart" />
-</form>
-<p />
-<div class="help"><small>
-<b>Static URL:</b> <span id="static_url"></span>
-</small></div>
-</fieldset>
-</div>
+          <input type="submit" name="Update Chart" value="Update Chart"/>
+        </form>
+        <br />
+        <div class="help">
+          <small>
+            <b>Static URL:</b> <span id="static_url"></span>
+          </small>
+        </div>
+      </fieldset>
+    </div>
 
-<script type = "text/javascript">
-function rqstr(){
-  return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value +
-    "&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
-    "&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
-    "&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
-}
-function doRequestData(){
-  myCChart.set("request",rqstr());
-  updateStaticURL();
-}
-function updateStaticURL(){
-  document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
-}
-function setProvided(res, mile){
-  if (!res)
-     res=${resolution};
-  document.getElementById("resolution").selectedIndex = {1:0, 7:1, 14:2, 30:3, 60:4, 90:5, 180:6, 360:7}[res];
-  if (!mile)
-     mile=${cmilestone};
-  document.getElementById("milestone").selectedIndex = mile;
-}
+    <script type="text/javascript">
+      function rqstr() {
+        return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value +
+            "&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
+            "&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
+            "&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
+      }
+      function doRequestData() {
+        myCChart.set("request", rqstr());
+        updateStaticURL();
+      }
+      function updateStaticURL() {
+        document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
+      }
+      function setProvided(res, mile) {
+        if (!res)
+          res = ${resolution};
+        document.getElementById("resolution").selectedIndex = {1: 0, 7: 1, 14: 2, 30: 3, 60: 4, 90: 5, 180: 6, 360: 7}[res];
+        if (!mile)
+          mile = ${cmilestone};
+        document.getElementById("milestone").selectedIndex = mile;
+      }
 
-setProvided();
-updateStaticURL();
+      setProvided();
+      updateStaticURL();
 
-YAHOO.widget.Chart.SWFURL = "${yui_base_url}/build/charts/assets/charts.swf";
+      YAHOO.widget.Chart.SWFURL = "${yui_base_url}/build/charts/assets/charts.swf";
 
-var myDataSource = new YAHOO.util.DataSource( "?content=chartdata" );
+      var myDataSource = new YAHOO.util.DataSource("?content=chartdata");
 
-myDataSource.connMethodPost = false;
-myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
-myDataSource.responseSchema = { 
-  resultsList : "chartdata",
-  fields : [
-    {key: "date"},
-    {key: "new_tickets"},
-    {key: "open"},
-    {key: "closed"}
-    ]
-};
+      myDataSource.connMethodPost = false;
+      myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
+      myDataSource.responseSchema = {
+        resultsList: "chartdata",
+        fields: [
+          {key: "date"},
+          {key: "new_tickets"},
+          {key: "open"},
+          {key: "closed"}
+        ]
+      };
 
-var seriesDef =
-[
-  { displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: 40} },
-  { displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size:40} },
-  { type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
-];
+      var seriesDef = [
+        { displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: 40} },
+        { displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size: 40} },
+        { type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
+      ];
 
-var numtixAxis = new YAHOO.widget.NumericAxis();
-numtixAxis.minimum = 0;
+      var numtixAxis = new YAHOO.widget.NumericAxis();
+      numtixAxis.minimum = 0;
 
-YAHOO.example.getDataTipText = function( item, index, series )
-{
-  var toolTipText = series.displayName + " for " + item.date;
-  toolTipText += "\n" + item[series.yField] ;
-  return toolTipText;
-};
+      YAHOO.example.getDataTipText = function (item, index, series) {
+        var toolTipText = series.displayName + " for " + item.date;
+        toolTipText += "\n" + item[series.yField];
+        return toolTipText;
+      };
 
-var myCChart = new YAHOO.widget.ColumnChart( "chart", myDataSource,
-{
-  xField: "date",
-  series: seriesDef,
-  yAxis: numtixAxis,
-  dataTipFunction: YAHOO.example.getDataTipText,
-  style: {legend: {display: "bottom"}},
-  request: rqstr(),
-});
+      var myCChart = new YAHOO.widget.ColumnChart("chart", myDataSource, {
+        xField: "date",
+        series: seriesDef,
+        yAxis: numtixAxis,
+        dataTipFunction: YAHOO.example.getDataTipText,
+        style: {legend: {display: "bottom"}},
+        request: rqstr()
+      });
+    </script>
 
-
-</script>
-<div id="myLogger"></div>
-<script type="text/javascript">
-var myLogReader = new YAHOO.widget.LogReader("myLogger");
-</script>
+    <div id="myLogger"></div>
+    <script type="text/javascript">
+      var myLogReader = new YAHOO.widget.LogReader("myLogger");
+    </script>
 
   </body>
 </html>
