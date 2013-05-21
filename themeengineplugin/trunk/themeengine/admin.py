@@ -130,7 +130,7 @@ class CustomThemeAdminModule(Component):
         theme_name = self.system.theme_name or 'Default'
         data['current'] = theme_name
         index = 0
-        curtheme = None
+        curtheme = {}
         for i, (k, v) in enumerate(data['themes']):
             if k == theme_name:
                 index = i

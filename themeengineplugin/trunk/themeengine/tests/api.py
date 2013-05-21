@@ -22,7 +22,7 @@ class FullTheme(Component):
     def get_theme_names(self):
         yield 'full'
         yield 'quick'
-        
+
     def get_theme_info(self, name):
         return dict(disable_trac_css=True)
 
@@ -57,6 +57,19 @@ class ThemeSystemTestCase(unittest.TestCase):
         self.assertTrue(self.themesys.is_active_theme('default'))
         self.assertFalse(self.themesys.is_active_theme('full'))
         self.assertFalse(self.themesys.is_active_theme('quick'))
+
+    def test_theme_misconfiguration(self):
+        """Fall back to default theme on misconfiguration
+        """
+        env = self.env
+
+        env.config.set('theme', 'theme', 'wrong')
+        self.assertTrue(self.themesys.is_active_theme('default'))
+        self.assertTrue(self.themesys.is_active_theme('default', 
+                                                      self.themesys))
+        self.assertFalse(self.themesys.is_active_theme('full'))
+        self.assertFalse(self.themesys.is_active_theme('quick'))
+        self.assertFalse(QuickTheme(env).is_active_theme)
 
     def test_custom_theme_active(self):
         """Test theme and is_active_theme for custom theme

@@ -187,7 +187,11 @@ class ThemeBase(Component):
         themesys = self.env[ThemeEngineSystem]
         if themesys is None:
             return False
-        active_theme = themesys.theme
+        try:
+            active_theme = themesys.theme
+        except ThemeNotFound:
+            # There is no way this component can be the active theme
+            return False
         if active_theme is None:
             return False
         return active_theme.get('provider') is self
