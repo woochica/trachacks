@@ -19,6 +19,8 @@ setup(
     maintainer='Ryan J Ollos',
     maintainer_email='ryan.j.ollos@gmail.com',
     license='BSD 3-Clause',
+    url='http://trac-hacks.org/wiki/TracTicketStatsPlugin',
+    description='Visualize ticket statistics',
     packages=find_packages(exclude=['*.tests']),
     entry_points="""
         [trac.plugins]
