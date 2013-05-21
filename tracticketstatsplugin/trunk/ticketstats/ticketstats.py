@@ -151,7 +151,7 @@ class TicketStatsPlugin(Component):
             if milestone is None:
                 milestone_num = 0
             elif milestone in milestone_list:
-                milestone_num = milestone_list.find(milestone)
+                milestone_num = milestone_list.index(milestone) + 1
             else:
                 milestone_num = 0
 

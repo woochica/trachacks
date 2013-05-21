@@ -89,7 +89,7 @@
         updateStaticURL();
       }
       function updateStaticURL() {
-        document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
+        document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + encodeURI(rqstr());
       }
       function setProvided(res, mile) {
         if (!res)
