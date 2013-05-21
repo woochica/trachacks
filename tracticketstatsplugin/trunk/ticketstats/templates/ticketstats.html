@@ -29,6 +29,14 @@
     <!-- Source files -->
     <script type="text/javascript"
             src="${yui_base_url}/build/charts/charts-min.js"></script>
+    <script type="text/javascript">
+      jQuery(document).ready(function($) {
+        if ('datepicker' in $) {
+          $("#start_date").datepicker();
+          $("#end_date").datepicker();
+        }
+      });
+    </script>
   </head>
 
   <body class="yui-skin-sam">
@@ -138,7 +146,8 @@
         yAxis: numtixAxis,
         dataTipFunction: YAHOO.example.getDataTipText,
         style: {legend: {display: "bottom"}},
-        request: rqstr()
+        request: rqstr(),
+        wmode: "transparent"
       });
     </script>
 

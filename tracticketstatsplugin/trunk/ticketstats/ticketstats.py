@@ -17,7 +17,7 @@ from trac.core import *
 from trac.ticket import Milestone
 from trac.util.datefmt import format_date, parse_date, utc
 from trac.web.api import IRequestHandler
-from trac.web.chrome import INavigationContributor, ITemplateProvider
+from trac.web.chrome import Chrome, INavigationContributor, ITemplateProvider
 
 try:
     from trac.util.datefmt import to_utimestamp as to_timestamp
@@ -164,6 +164,9 @@ class TicketStatsPlugin(Component):
                 'yui_base_url': self.yui_base_url,
                 'debug': 'debug' in req.args
             }
+
+            if hasattr(Chrome, 'add_jquery_ui'):
+                Chrome(self.env).add_jquery_ui(req)
 
             return 'ticketstats.html', data, None
 
