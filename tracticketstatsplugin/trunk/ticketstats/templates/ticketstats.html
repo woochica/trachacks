@@ -61,9 +61,7 @@
           <label for="milestone">Milestone: </label>
           <select name="milestone" id="milestone">
             <option value="__all">All Milestones</option>
-            <py:for each="m in milestones">
-              <option value="${m}">${m}</option>
-            </py:for>
+            <option py:for="m in milestones" value="$m">$m</option>
           </select>
 
           <input type="submit" name="Update Chart" value="Update Chart"/>
@@ -144,10 +142,14 @@
       });
     </script>
 
-    <div id="myLogger"></div>
-    <script type="text/javascript">
-      var myLogReader = new YAHOO.widget.LogReader("myLogger");
-    </script>
+    <!-- Pass "debug" as a parameter argument to enable debugging -->
+    <py:if test="debug">
+      <div id="myLogger"></div>
+      <script type="text/javascript">
+        var myLogReader = new YAHOO.widget.LogReader("myLogger");
+      </script>
+    </py:if>
+    <br />
 
   </body>
 </html>

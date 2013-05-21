@@ -147,10 +147,8 @@ class TicketStatsPlugin(Component):
         else:
             show_all = req.args.get('show') == 'all'
             milestone_list = [m.name for m in
-                              Milestone.select(self.env, show_all, db)]
-            if milestone is None:
-                milestone_num = 0
-            elif milestone in milestone_list:
+                              Milestone.select(self.env, show_all)]
+            if milestone in milestone_list:
                 milestone_num = milestone_list.index(milestone) + 1
             else:
                 milestone_num = 0
@@ -163,7 +161,8 @@ class TicketStatsPlugin(Component):
                 'baseurl': req.base_url,
                 'milestones': milestone_list,
                 'cmilestone': milestone_num,
-                'yui_base_url': self.yui_base_url
+                'yui_base_url': self.yui_base_url,
+                'debug': 'debug' in req.args
             }
 
             return 'ticketstats.html', data, None
