@@ -8,17 +8,17 @@
   <xi:include href="macros.html" />
   <head>
 
-	<style type="text/css">#chart { height: 500px }</style>
-	<script type="text/javascript" src="${yui_base_url}/build/yahoo-dom-event/yahoo-dom-event.js"></script>
-	<script type="text/javascript" src="${yui_base_url}/build/element/element-min.js"></script>
-	<script type="text/javascript" src="${yui_base_url}/build/datasource/datasource-min.js"></script>
-	<script type="text/javascript" src="${yui_base_url}/build/json/json-min.js"></script>
+  <style type="text/css">#chart { height: 500px }</style>
+  <script type="text/javascript" src="${yui_base_url}/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+  <script type="text/javascript" src="${yui_base_url}/build/element/element-min.js"></script>
+  <script type="text/javascript" src="${yui_base_url}/build/datasource/datasource-min.js"></script>
+  <script type="text/javascript" src="${yui_base_url}/build/json/json-min.js"></script>
     <script type="text/javascript" src="${yui_base_url}/build/swf/swf-min.js"></script>
     <script type="text/javascript" src="${yui_base_url}/build/logger/logger-min.js"></script>
-	<!-- OPTIONAL: Connection (enables XHR) -->
-	<script type="text/javascript" src="${yui_base_url}/build/connection/connection-min.js"></script>
-	<!-- Source files -->
-	<script type="text/javascript" src="${yui_base_url}/build/charts/charts-min.js"></script>
+  <!-- OPTIONAL: Connection (enables XHR) -->
+  <script type="text/javascript" src="${yui_base_url}/build/connection/connection-min.js"></script>
+  <!-- Source files -->
+  <script type="text/javascript" src="${yui_base_url}/build/charts/charts-min.js"></script>
 
   </head>
 <body class="yui-skin-sam">
@@ -32,26 +32,26 @@
 <div id="chart"></div>
 <script type = "text/javascript">
 
-	function rqstr(){
-		return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value + 
-			"&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
-			"&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
-			"&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
-	}
-	function doRequestData(){
-		myCChart.set("request",rqstr());
-		updateStaticURL();
-	}
-	function updateStaticURL(){
-		document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
-	}
+  function rqstr(){
+    return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value +
+      "&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
+      "&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
+      "&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
+  }
+  function doRequestData(){
+    myCChart.set("request",rqstr());
+    updateStaticURL();
+  }
+  function updateStaticURL(){
+    document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
+  }
    function setProvided(res, mile){
       if (!res)
          res=${resolution};
       document.getElementById("resolution").selectedIndex = {1:0, 7:1, 14:2, 30:3, 60:4, 90:5, 180:6, 360:7}[res];
       if (!mile)
          mile=${cmilestone};
-      document.getElementById("milestone").selectedIndex = mile; 
+      document.getElementById("milestone").selectedIndex = mile;
    }
 
 </script>
@@ -59,12 +59,12 @@
 <fieldset id="Settings">
 <legend>Settings</legend>
 <form method="post" id="dt_frm" action="javascript:doRequestData()">
-	<label for="start_date">Start Date: </label>
-	<input type="text" name="start_date" id="start_date" value="${start_date}" size="10"/>
-	<label for="end_date">End Date: </label>
-	<input type="text" name="end_date" id="end_date" value="${end_date}" size="10"/>
-	<label for="resolution">Resolution: </label>
-	<!--input type="text" name="resolution" id="resolution" value="${resolution}" size="5"/-->
+  <label for="start_date">Start Date: </label>
+  <input type="text" name="start_date" id="start_date" value="${start_date}" size="10"/>
+  <label for="end_date">End Date: </label>
+  <input type="text" name="end_date" id="end_date" value="${end_date}" size="10"/>
+  <label for="resolution">Resolution: </label>
+  <!--input type="text" name="resolution" id="resolution" value="${resolution}" size="5"/-->
    <select name="resolution" id="resolution">
       <option value="1">1 Day</option>
       <option value="7">1 Week</option>
@@ -75,15 +75,15 @@
       <option value="180">6 Months</option>
       <option value="360">1 Year</option>
    </select>
-	<label for="milestone">Milestone: </label>
-	<select name="milestone" id="milestone">
-		<option value="__all">All Milestones</option>
-		<py:for each="m in milestones">
-		<option value="${m}">${m}</option>
-		</py:for> 
-	</select>
-		
-	<input type="submit" name="Update Chart" value="Update Chart" />
+  <label for="milestone">Milestone: </label>
+  <select name="milestone" id="milestone">
+    <option value="__all">All Milestones</option>
+    <py:for each="m in milestones">
+    <option value="${m}">${m}</option>
+    </py:for>
+  </select>
+
+  <input type="submit" name="Update Chart" value="Update Chart" />
 </form>
 <p />
 <div class="help"><small>
@@ -103,20 +103,20 @@ var myDataSource = new YAHOO.util.DataSource( "?content=chartdata" );
 myDataSource.connMethodPost = false;
 myDataSource.responseType = YAHOO.util.DataSource.TYPE_JSON;
 myDataSource.responseSchema = { 
-	resultsList : "chartdata", 
-	fields : [
-		{key: "date"}, 
-		{key: "new_tickets"}, 
-		{key: "open"}, 
-		{key: "closed"}
-		] 
+  resultsList : "chartdata",
+  fields : [
+    {key: "date"},
+    {key: "new_tickets"},
+    {key: "open"},
+    {key: "closed"}
+    ]
 };
 
 var seriesDef =
 [
-	{ displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: 40} },
-	{ displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size:40} },
-	{ type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
+  { displayName: "New Tickets", yField: "new_tickets", style: {color: 0xff0000, size: 40} },
+  { displayName: "Closed Tickets", yField: "closed", style: {color: 0x00ff00, size:40} },
+  { type: "line", displayName: "Open Tickets", yField: "open", style: {color: 0x0000ff} }
 ];
 
 var numtixAxis = new YAHOO.widget.NumericAxis();
@@ -124,19 +124,19 @@ numtixAxis.minimum = 0;
 
 YAHOO.example.getDataTipText = function( item, index, series )
 {
-	var toolTipText = series.displayName + " for " + item.date;
-	toolTipText += "\n" + item[series.yField] ;
-	return toolTipText;
+  var toolTipText = series.displayName + " for " + item.date;
+  toolTipText += "\n" + item[series.yField] ;
+  return toolTipText;
 };
 
 var myCChart = new YAHOO.widget.ColumnChart( "chart", myDataSource,
 {
-	xField: "date",
-	series: seriesDef,
-	yAxis: numtixAxis,
-	dataTipFunction: YAHOO.example.getDataTipText,
-	style: {legend: {display: "bottom"}},
-	request: rqstr(),
+  xField: "date",
+  series: seriesDef,
+  yAxis: numtixAxis,
+  dataTipFunction: YAHOO.example.getDataTipText,
+  style: {legend: {display: "bottom"}},
+  request: rqstr(),
 });
 
 
