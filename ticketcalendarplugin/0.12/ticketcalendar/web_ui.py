@@ -33,20 +33,19 @@ try:
     from babel.dates import get_day_names, get_month_names, format_date
 except ImportError:
     LOCALE_ALIASES = {}
-    def get_day_names(*args):
-        """cheap replacement for the identically named babel function."""
+    def get_day_names(width=None, context=None, locale=None):
         names = dict()
-        for day in range(0,7):
+        for day in range(0, 7):
             dt = datetime(2001, 1, day + 1)
             names[day] = dt.strftime('%a')
         return names
-    def get_month_names(*args, **kargs):
+    def get_month_names(width=None, context=None, locale=None):
         names = dict()
         for m in range(1, 13):
             dt = datetime(2001, m, 1)
             names[m] = dt.strftime('%B')
         return names
-    def format_date(date, **kargs):
+    def format_date(date=None, format=None, locale=None):
         return str(date)
 
 
@@ -60,11 +59,7 @@ from ticketcalendar.api import (
 
 def _get_month_name(date, loc):
     m = date.month
-    return get_month_names('wide', locale = loc)[m]
-
-def _get_day_name(date, loc, width = 'abbreviated'):
-    d = date.weekday()
-    return get_day_names(width, locale = loc)[d]
+    return get_month_names('wide', locale=loc)[m]
 
 def _getdate(d, tz):
     try:
@@ -327,7 +322,7 @@ class TicketCalendar(object):
 
         req = self.req
         locale = self._get_locale()
-        first_week_day = self.mod.first_week_day
+        first_week_day = self._get_first_week_day(locale)
         start_date_format = self.mod.start_date_format
         due_date_format = self.mod.due_date_format
 
@@ -545,7 +540,10 @@ class TicketCalendar(object):
 
     def _get_locale(self):
         locale = self.req.locale
-        if locale and not locale.territory:
+        if not locale:
+            return locale
+
+        if not locale.territory:
             # search first locale which has the same `langauge` and territory
             # in preferred languages
             for l in self.req.languages:
@@ -563,13 +561,16 @@ class TicketCalendar(object):
 
         return locale or Locale('en', 'US')
 
-    def _get_month_calendar(self, year, month, first_week_day, locale):
-        if first_week_day not in xrange(0, 7):
+    def _get_first_week_day(self, locale):
+        first = self.mod.first_week_day
+        if first not in xrange(0, 7):
             if locale:
-                first_week_day = locale.first_week_day
+                first = locale.first_week_day
             else:
-                first_week_day = 0  # Monday
+                first = 0  # Monday
+        return first
 
+    def _get_month_calendar(self, year, month, first_week_day, locale):
         base = date(year, month, 1)
         base -= timedelta(days=(base.weekday() - first_week_day) % 7)
         days = []
