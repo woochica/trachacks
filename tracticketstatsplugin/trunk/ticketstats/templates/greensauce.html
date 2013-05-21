@@ -30,31 +30,6 @@
 </span>
 <div id="content">
 <div id="chart"></div>
-<script type = "text/javascript">
-
-  function rqstr(){
-    return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value +
-      "&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
-      "&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
-      "&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
-  }
-  function doRequestData(){
-    myCChart.set("request",rqstr());
-    updateStaticURL();
-  }
-  function updateStaticURL(){
-    document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
-  }
-   function setProvided(res, mile){
-      if (!res)
-         res=${resolution};
-      document.getElementById("resolution").selectedIndex = {1:0, 7:1, 14:2, 30:3, 60:4, 90:5, 180:6, 360:7}[res];
-      if (!mile)
-         mile=${cmilestone};
-      document.getElementById("milestone").selectedIndex = mile;
-   }
-
-</script>
 
 <fieldset id="Settings">
 <legend>Settings</legend>
@@ -93,6 +68,28 @@
 </div>
 
 <script type = "text/javascript">
+function rqstr(){
+  return  "&#38;start_date=" + document.getElementById("dt_frm").start_date.value +
+    "&#38;end_date=" + document.getElementById("dt_frm").end_date.value +
+    "&#38;resolution=" + document.getElementById("dt_frm").resolution.value +
+    "&#38;milestone=" + document.getElementById("dt_frm").milestone.value;
+}
+function doRequestData(){
+  myCChart.set("request",rqstr());
+  updateStaticURL();
+}
+function updateStaticURL(){
+  document.getElementById("static_url").innerHTML = "${baseurl}" + "/ticketstats?content=render" + rqstr();
+}
+function setProvided(res, mile){
+  if (!res)
+     res=${resolution};
+  document.getElementById("resolution").selectedIndex = {1:0, 7:1, 14:2, 30:3, 60:4, 90:5, 180:6, 360:7}[res];
+  if (!mile)
+     mile=${cmilestone};
+  document.getElementById("milestone").selectedIndex = mile;
+}
+
 setProvided();
 updateStaticURL();
 
