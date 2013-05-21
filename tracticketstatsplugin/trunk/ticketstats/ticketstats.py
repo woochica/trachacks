@@ -166,7 +166,7 @@ class TicketStatsPlugin(Component):
                 'yui_base_url': self.yui_base_url
             }
 
-            return 'greensauce.html', data, None
+            return 'ticketstats.html', data, None
 
     ### ITemplateProvider methods
 
