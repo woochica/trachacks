@@ -1025,11 +1025,15 @@ class TracHoursPlugin(Component):
 
         for groupname, results in data['groups']:
             if groupname:
-                writer.writerow(groupname)
-            writer.writerow([header['label'] for header in data['headers']])
+                writer.writerow(unicode(groupname))
+            writer.writerow([unicode(header['label'])
+                             for header in data['headers']])
             for result in results:
-                writer.writerow([result[header['name']] 
-                                 for header in data['headers']])
+                row = []
+                for header in data['headers']:
+                    value = result[header['name']]
+                    row.append(unicode(value).encode('utf-8'))
+                writer.writerow(row)
             writer.writerow([])
 
         req.send(buffer.getvalue(), "text/csv")
