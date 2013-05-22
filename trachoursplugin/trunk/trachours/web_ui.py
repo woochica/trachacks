@@ -283,24 +283,8 @@ class TracUserHours(Component):
         data['worker_hours'] = worker_hours
 
         if req.args.get('format') == 'csv':
-            buffer = StringIO()
-            writer = csv.writer(buffer)
-            format = '%B %d, %Y'
-            title = "Hours for %s" % self.env.project_name
-            writer.writerow([title, req.abs_href()])
-            writer.writerow([])
-            writer.writerow(['From', 'To'])
-            writer.writerow([data[i].strftime(format) 
-                             for i in 'from_date', 'to_date'])
-            if milestone:
-                writer.writerow(['Milestone', milestone])
-            writer.writerow([])
-            writer.writerow(['Worker', 'Hours'])
-            for worker, hours in worker_hours:
-                writer.writerow([worker, hours])
-            
-            req.send(buffer.getvalue(), "text/csv")
-            
+            req.send(self.export_csv(req, data))
+
         #add_link(req, 'prev', self.get_href(query, args, context.href),
         #         _('Prev Week'))
         #add_link(req, 'next', self.get_href(query, args, context.href),
@@ -357,3 +341,23 @@ class TracUserHours(Component):
             req.send(buffer.getvalue(), 'text/csv')
 
         return 'hours_user.html', data, 'text/html'
+
+    def export_csv(self, req, data, sep=',', mimetype='text/csv'):
+        content = StringIO()
+        content.write('\xef\xbb\xbf')  # BOM
+        writer = csv.writer(content, delimiter=sep, quoting=csv.QUOTE_MINIMAL)
+
+        title = "Hours for %s" % self.env.project_name
+        writer.writerow([title, req.abs_href()])
+        writer.writerow([])
+        writer.writerow(['From', 'To'])
+        writer.writerow([data[i].strftime('%B %d, %Y')
+                         for i in 'from_date', 'to_date'])
+        if data['milestone']:
+            writer.writerow(['Milestone', data['milestone']])
+        writer.writerow([])
+        writer.writerow(['Worker', 'Hours'])
+        for worker, hours in data['worker_hours']:
+            writer.writerow([worker, hours])
+
+        return content.getvalue(), '%s;text/csv' % mimetype
