@@ -154,6 +154,9 @@ class TracHoursPlugin(Component):
             submitter = worker
         if time_started is None:
             time_started = datetime.now()
+            # FIXME: timestamps should be in UTC
+            #time_started = datetime.now(utc)
+        #time_started = to_utimestamp(time_started)
         time_started = int(time.mktime(time_started.timetuple()))
         comments = comments.strip()
 

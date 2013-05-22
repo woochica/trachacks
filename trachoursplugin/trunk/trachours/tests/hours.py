@@ -9,6 +9,7 @@
 import shutil
 import tempfile
 import unittest
+from datetime import datetime
 
 from trac.test import EnvironmentStub, Mock
 from trac.ticket.model import Ticket
@@ -38,6 +39,25 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         cursor.execute("DROP TABLE IF EXISTS ticket_time")
         cursor.execute("DROP TABLE IF EXISTS ticket_time_query")
         cursor.execute("DELETE FROM system WHERE name='trachours.db_version'")
+
+    def test_add_ticket_hours(self):
+        tid = 1
+        worker = 'joe'
+        seconds_worked = 120
+        #when = datetime.now(utc)
+        when = datetime.now()
+        comment = "joe's hours"
+        self.hours_thp.add_ticket_hours(tid, worker, seconds_worked, None,
+                                        when, comment)
+        hours = self.hours_thp.get_ticket_hours(tid)
+        self.assertEqual(tid, hours[0]['id'])
+        self.assertEqual(tid, hours[0]['ticket'])
+        self.assertEqual(worker, hours[0]['worker'])
+        self.assertEqual(seconds_worked, hours[0]['seconds_worked'])
+        self.assertEqual(worker, hours[0]['submitter'])
+        # FIXME: See FIXME in add_ticket_hours
+        #self.assertEqual(to_timestamp(when), hours[0]['time_started'])
+        self.assertEqual(comment, hours[0]['comments'])
 
     def test_prepare_ticket_exists(self):
         req = ticket = fields = actions = {}
