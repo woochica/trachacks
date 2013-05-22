@@ -48,10 +48,17 @@ class RpcTicketTestCase(TracRpcTestCase):
                   [['action_reassign_reassign_owner', 'admin', []]]],
                   ['accept', 'accept',
                   "The owner will change from (none) to admin. Next status will be 'accepted'.", []]]
-        # Some action text was changed in trac:changeset:9041 - adjust default for test
+        # Adjust for trac:changeset:9041
         if 'will be changed' in actions[2][2]:
             default[2][2] = default[2][2].replace('will change', 'will be changed')
             default[3][2] = default[3][2].replace('will change', 'will be changed')
+        # Adjust for trac:changeset:11777
+        if not 'from (none).' in actions[2][2]:
+            default[2][2] = default[2][2].replace('from (none).',
+                    'from (none) to the specified user.')
+        # Adjust for trac:changeset:11778
+        if actions[0][2] != '.':
+            default[0][2] = 'The ticket will remain with no owner.'
         self.assertEquals(actions, default)
         self.admin.ticket.delete(tid)
 
