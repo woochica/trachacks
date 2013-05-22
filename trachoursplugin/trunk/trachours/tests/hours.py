@@ -50,7 +50,7 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         self.hours_thp.add_ticket_hours(tid, worker, seconds_worked, None,
                                         when, comment)
         hours = self.hours_thp.get_ticket_hours(tid)
-        self.assertEqual(tid, hours[0]['id'])
+        self.assertEqual(1, hours[0]['id'])
         self.assertEqual(tid, hours[0]['ticket'])
         self.assertEqual(worker, hours[0]['worker'])
         self.assertEqual(seconds_worked, hours[0]['seconds_worked'])
@@ -58,6 +58,14 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
         # FIXME: See FIXME in add_ticket_hours
         #self.assertEqual(to_timestamp(when), hours[0]['time_started'])
         self.assertEqual(comment, hours[0]['comments'])
+
+    def test_delete_ticket_hours(self):
+        tid = 1
+        self.hours_thp.add_ticket_hours(tid, 'joe', 180)
+        self.hours_thp.add_ticket_hours(tid, 'jim', 600)
+        self.hours_thp.delete_ticket_hours(tid)
+        hours = self.hours_thp.get_ticket_hours(tid)
+        self.assertEqual([], hours)
 
     def test_prepare_ticket_exists(self):
         req = ticket = fields = actions = {}

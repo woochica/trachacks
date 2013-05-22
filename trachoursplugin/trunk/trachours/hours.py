@@ -176,6 +176,14 @@ class TracHoursPlugin(Component):
         # update the hours on the ticket
         self.update_ticket_hours([tid])
 
+    def delete_ticket_hours(self, tid):
+        """Delete hours for a ticket.
+
+        :param tid: id of the ticket
+        """
+        execute_non_query(self.env, """
+            DELETE FROM ticket_time WHERE ticket=%s""", tid)
+
     ###### methods and attributes for trac Interfaces
 
     ### method for IRequireComponents

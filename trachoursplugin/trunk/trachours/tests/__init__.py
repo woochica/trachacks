@@ -8,10 +8,13 @@
 
 from unittest import TestSuite
 
+
 def test_suite():
     suite = TestSuite()
     
     import trachours.tests.hours
     suite.addTest(trachours.tests.hours.test_suite())
+    import trachours.tests.ticket
+    suite.addTest(trachours.tests.ticket.test_suite())
     
     return suite

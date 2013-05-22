@@ -115,7 +115,7 @@ class TracHoursByComment(Component):
 
     def ticket_deleted(self, ticket):
         """Called when a ticket is deleted."""
-        # TODO: delete hours for this ticket
+        TracHoursPlugin(self.env).delete_ticket_hours(ticket.id)
 
     ### internal method
     def add_hours_by_comment(self, comment, ticket, worker):
