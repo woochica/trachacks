@@ -21,12 +21,6 @@ try:
 
     class RpcTestEnvironment(SvnFunctionalTestEnvironment):
 
-        def __del__(self):
-            print "\nStopping web server...\n"
-            self.stop()
-            if hasattr(SvnFunctionalTestEnvironment, '__del__'):
-                SvnFunctionalTestEnvironment.__del__(self)
-
         def init(self):
             self.trac_src = os.path.realpath(os.path.join( 
                     __import__('trac', []).__file__, '..' , '..'))
@@ -63,6 +57,9 @@ try:
     rpc_testenv = RpcTestEnvironment(os.path.realpath(os.path.join(
                 os.path.realpath(__file__), '..', '..', '..', 'rpctestenv')),
                 '8765', 'http://127.0.0.1')
+
+    import atexit
+    atexit.register(rpc_testenv.stop)
 
     def test_suite():
         suite = unittest.TestSuite()
