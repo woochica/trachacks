@@ -18,3 +18,10 @@ def test_suite():
     suite.addTest(trachours.tests.ticket.test_suite())
     
     return suite
+
+
+def revert_trachours_schema_init(db):
+    cursor = db.cursor()
+    cursor.execute("DROP TABLE IF EXISTS ticket_time")
+    cursor.execute("DROP TABLE IF EXISTS ticket_time_query")
+    cursor.execute("DELETE FROM system WHERE name='trachours.db_version'")

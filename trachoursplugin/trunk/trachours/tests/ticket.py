@@ -18,6 +18,8 @@ from trachours.hours import TracHoursPlugin
 from trachours.setup import SetupTracHours
 from trachours.ticket import TracHoursByComment
 
+from trachours.tests import revert_trachours_schema_init
+
 
 class TracHoursByCommentTestCase(unittest.TestCase):
 
@@ -33,15 +35,8 @@ class TracHoursByCommentTestCase(unittest.TestCase):
 
     def tearDown(self):
         self.env.reset_db()
-        self._revert_trachours_schema_init()
+        revert_trachours_schema_init(db=self.env.get_db_cnx())
         shutil.rmtree(self.env.path)
-
-    def _revert_trachours_schema_init(self):
-        db = self.env.get_db_cnx()
-        cursor = db.cursor()
-        cursor.execute("DROP TABLE IF EXISTS ticket_time")
-        cursor.execute("DROP TABLE IF EXISTS ticket_time_query")
-        cursor.execute("DELETE FROM system WHERE name='trachours.db_version'")
 
     def test_ticket_delete(self):
         ticket = Ticket(self.env)
