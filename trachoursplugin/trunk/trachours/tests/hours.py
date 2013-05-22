@@ -6,6 +6,8 @@
 # you should have received as part of this distribution.
 #
 
+import shutil
+import tempfile
 import unittest
 
 from trac.test import EnvironmentStub, Mock
@@ -13,16 +15,29 @@ from trac.ticket.model import Ticket
 from trac.util.translation import _
 
 from trachours.hours import TracHoursPlugin
+from trachours.setup import SetupTracHours
 
 class HoursTicketManipulatorTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.env = EnvironmentStub(
-            enable=['trac.*', 'trachours.*'])
+        self.env = EnvironmentStub(default_data=True,
+                                   enable=['trac.*', 'trachours.*'])
+        self.env.path = tempfile.mkdtemp()
+        setup = SetupTracHours(self.env)
+        setup.upgrade_environment(db=self.env.get_db_cnx())
         self.hours_thp = TracHoursPlugin(self.env)
 
     def tearDown(self):
-        pass
+        self.env.reset_db()
+        self._revert_trachours_schema_init()
+        shutil.rmtree(self.env.path)
+
+    def _revert_trachours_schema_init(self):
+        db = self.env.get_db_cnx()
+        cursor = db.cursor()
+        cursor.execute("DROP TABLE IF EXISTS ticket_time")
+        cursor.execute("DROP TABLE IF EXISTS ticket_time_query")
+        cursor.execute("DELETE FROM system WHERE name='trachours.db_version'")
 
     def test_prepare_ticket_exists(self):
         req = ticket = fields = actions = {}
@@ -31,7 +46,6 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
 
     def test_validate_ticket_negativevalue_returnstuple(self):
         req = {}
-        self.env.config.set('ticket-custom', 'estimatedhours', 'text')
         ticket = Ticket(self.env)
         ticket['estimatedhours'] = '-1'
         self.assertTrue(ticket.get_value_or_default('estimatedhours'))
@@ -40,7 +54,6 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
 
     def test_validate_ticket_notanumber_returnstuple(self):
         req = {}
-        self.env.config.set('ticket-custom', 'estimatedhours', 'text')
         ticket = Ticket(self.env)
         ticket['estimatedhours'] = 'a'
         msg = _("Please enter a number for Estimated Hours")
@@ -48,7 +61,6 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
 
     def test_validate_ticket_empty_setstozero(self):
         req = {}
-        self.env.config.set('ticket-custom', 'estimatedhours', 'text')
         ticket = Ticket(self.env)
         ticket['estimatedhours'] = ''
         self.hours_thp.validate_ticket(req, ticket)
@@ -56,6 +68,8 @@ class HoursTicketManipulatorTestCase(unittest.TestCase):
 
     def test_validate_ticket_fielddoesnotexist_returnstuple(self):
         req = {}
+        self.env.config.remove('ticket-custom', 'estimatedhours')
+        self.env.config.save()
         ticket = Ticket(self.env)
         msg = _("""The field is not defined. Please check your configuration.""")
         self.assertEquals(msg, self.hours_thp.validate_ticket(req, ticket)[0][1])
