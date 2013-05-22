@@ -139,10 +139,10 @@ class TracHoursPlugin(Component):
         return sum([hour['seconds_worked'] for hour in self.get_ticket_hours(int(ticket_id))])
 
 
-    def add_ticket_hours(self, ticket, worker, seconds_worked, submitter=None, time_started=None, comments=''):
+    def add_ticket_hours(self, tid, worker, seconds_worked, submitter=None, time_started=None, comments=''):
         """
         add hours to a ticket:
-        * ticket : id of the ticket 
+        * tid : id of the ticket
         * worker : who did the work on the ticket
         * seconds_worked : how much work was done, in seconds
         * submitter : who recorded the work, if different from the worker
@@ -167,12 +167,12 @@ class TracHoursPlugin(Component):
                                          seconds_worked,
                                          comments) values 
 (%s, %s, %s, %s, %s, %s, %s)"""
-        execute_non_query(self.env, sql, ticket, int(time.time()),
+        execute_non_query(self.env, sql, tid, int(time.time()),
                           worker, submitter, time_started,
                           seconds_worked, comments)
 
         # update the hours on the ticket
-        self.update_ticket_hours([ticket])
+        self.update_ticket_hours([tid])
 
     ###### methods and attributes for trac Interfaces
 
