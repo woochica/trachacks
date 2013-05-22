@@ -969,7 +969,7 @@ class TracHoursPlugin(Component):
     def tickethours2rss(self, req, data):
         """adapt data for /hours/<ticket number> to RSS"""
         adapted = {}
-        adapted['title'] = 'Hours worked for ticket %s' % data['ticket_id']
+        adapted['title'] = 'Hours worked for ticket %s' % data['ticket']
 
         # could put more information in the description
         adapted['description'] = data['ticket']['summary']
@@ -992,7 +992,7 @@ class TracHoursPlugin(Component):
             # could add these links to the template
             item['guid'] = '%s#%s' % (link, record['id'])
             item['url'] = item['guid']
-            item['comments'] = req.abs_href('ticket', data['ticket_id'])
+            item['comments'] = req.abs_href('ticket', data['ticket'])
 
             items.append(item)
         adapted['items'] = items
