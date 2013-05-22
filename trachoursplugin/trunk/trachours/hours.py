@@ -9,9 +9,8 @@
 
 from genshi.builder import tag
 from genshi.filters import Transformer
-from genshi.filters.transform import StreamBuffer
 from trac.core import *
-from trac.mimeview.api import Mimeview, IContentConverter, Context
+from trac.mimeview.api import Context
 from trac.perm import IPermissionRequestor
 from trac.ticket import Ticket
 from trac.ticket.api import ITicketManipulator, TicketSystem
@@ -20,7 +19,7 @@ from trac.util.datefmt import to_timestamp, utc
 from trac.util.translation import _
 from trac.web.api import IRequestHandler, ITemplateStreamFilter
 from trac.web.chrome import (
-    Chrome, INavigationContributor, ITemplateProvider, add_ctxtnav,
+    INavigationContributor, ITemplateProvider, add_ctxtnav,
     add_link, add_script, add_stylesheet, add_warning, prevnext_nav
 )
 
@@ -28,7 +27,7 @@ from componentdependencies.interface import IRequireComponents
 from tracsqlhelper import *
 from multiproject import MultiprojectHours
 from setup import SetupTracHours
-from utils import get_all_users, get_date, hours_format, truncate_to_month
+from utils import get_all_users, get_date
 
 from StringIO import StringIO
 from datetime import datetime, timedelta
@@ -1038,7 +1037,7 @@ class TracHoursPlugin(Component):
         logged_in_user = req.authname
         worker = req.args.get('worker', logged_in_user)
         if not worker == logged_in_user:
-            assert req.perm.has_permission('TICKET_ADMIN')        
+            assert req.perm.has_permission('TICKET_ADMIN')
 
         # when the work was done
         if 'year' in req.args: # assume month and day are provided
@@ -1072,8 +1071,8 @@ class TracHoursPlugin(Component):
 
         # if comments are made, anote the ticket
         if comments:
-            comment = "[%s %s\thours] logged for %s: ''%s''" % ('/hours/%s' % ticket.id, 
-                                                           self.format_hours(seconds_worked), 
+            comment = "[%s %s\thours] logged for %s: ''%s''" % ('/hours/%s' % ticket.id,
+                                                           self.format_hours(seconds_worked),
                                                            worker,
                                                            comments)
 
