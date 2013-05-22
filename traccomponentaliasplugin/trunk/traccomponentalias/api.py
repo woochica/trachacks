@@ -27,9 +27,8 @@ class TracComponentAlias(Component):
         return False
         
     def _update_component(self, ticket, calias):
-        if self._validate(calias['custom_field'], ticket, calias):
-            if calias['custom_field'] in ticket._old \
-            and ticket._old[calias['custom_field']] != None:
+        if not ticket.exists:
+            if self._validate(calias['custom_field'], ticket, calias):
                 ticket.values['component'] = calias['alias']
 
     def prepare_ticket(self, req, ticket, fields, actions):
