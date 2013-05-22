@@ -2,7 +2,7 @@
 """
 License: BSD
 
-(c) 2009-2012 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2009-2013 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import unittest
@@ -13,6 +13,7 @@ import shutil
 import datetime
 import time
 
+from tracrpc.xml_rpc import to_xmlrpc_datetime
 from tracrpc.tests import rpc_testenv, TracRpcTestCase
 
 class RpcTicketTestCase(TracRpcTestCase):
@@ -205,14 +206,14 @@ class RpcTicketTestCase(TracRpcTestCase):
         self.admin.ticket.delete(tid)
 
     def test_create_at_time(self):
-        from trac.util.datefmt import to_datetime, utc
+        from tracrpc.util import to_datetime, utc
         now = to_datetime(None, utc)
-        minus1 = now - datetime.timedelta(days=1)
+        minus1 = to_xmlrpc_datetime(now - datetime.timedelta(days=1))
         # create the tickets (user ticket will not be permitted to change time)
         one = self.admin.ticket.create("create_at_time1", "ok", {}, False,
-                                        xmlrpclib.DateTime(minus1))
+                                        minus1)
         two = self.user.ticket.create("create_at_time3", "ok", {}, False,
-                                        xmlrpclib.DateTime(minus1))
+                                        minus1)
         # get the tickets
         t1 = self.admin.ticket.get(one)
         t2 = self.admin.ticket.get(two)
@@ -222,14 +223,14 @@ class RpcTicketTestCase(TracRpcTestCase):
         self.admin.ticket.delete(two)
 
     def test_update_at_time(self):
-        from trac.util.datefmt import to_datetime, utc
+        from tracrpc.util import to_datetime, utc
         now = to_datetime(None, utc)
-        minus1 = now - datetime.timedelta(hours=1)
-        minus2 = now - datetime.timedelta(hours=2)
+        minus1 = to_xmlrpc_datetime(now - datetime.timedelta(hours=1))
+        minus2 = to_xmlrpc_datetime(now - datetime.timedelta(hours=2))
         tid = self.admin.ticket.create("ticket_update_at_time", "ok", {})
-        self.admin.ticket.update(tid, 'one', {}, False, '', xmlrpclib.DateTime(minus2))
-        self.admin.ticket.update(tid, 'two', {}, False, '', xmlrpclib.DateTime(minus1))
-        self.user.ticket.update(tid, 'three', {}, False, '', xmlrpclib.DateTime(minus1))
+        self.admin.ticket.update(tid, 'one', {}, False, '', minus2)
+        self.admin.ticket.update(tid, 'two', {}, False, '', minus1)
+        self.user.ticket.update(tid, 'three', {}, False, '', minus1)
         time.sleep(1)
         self.user.ticket.update(tid, 'four', {})
         changes = self.admin.ticket.changeLog(tid)
@@ -237,7 +238,7 @@ class RpcTicketTestCase(TracRpcTestCase):
         # quick test to make sure each is older than previous
         self.assertTrue(changes[0][0] < changes[1][0] < changes[2][0])
         # margin of 2 seconds for tests
-        justnow = xmlrpclib.DateTime(now - datetime.timedelta(seconds=1))
+        justnow = to_xmlrpc_datetime(now - datetime.timedelta(seconds=1))
         self.assertTrue(justnow <= changes[2][0])
         self.assertTrue(justnow <= changes[3][0])
         self.admin.ticket.delete(tid)
@@ -377,7 +378,8 @@ class RpcTicketVersionTestCase(TracRpcTestCase):
         TracRpcTestCase.tearDown(self)
 
     def test_create(self):
-        dt = xmlrpclib.DateTime(datetime.datetime.utcnow())
+        from tracrpc.util import to_datetime, utc
+        dt = to_xmlrpc_datetime(to_datetime(None, utc))
         desc = "test version"
         v = self.admin.ticket.version.create('9.99',
                             {'time': dt, 'description': desc})

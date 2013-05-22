@@ -2,13 +2,15 @@
 """
 License: BSD
 
-(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2009-2013 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import unittest
 import os
 import time
 import urllib2
+
+from tracrpc.util import PY24
 
 try:
     from trac.tests.functional.svntestenv import SvnFunctionalTestEnvironment
@@ -95,8 +97,9 @@ else :
             log = rpc_testenv.get_trac_environment().log
             log.info('=' * 70)
             log.info('(TEST) Starting %s.%s',
-                            self.__class__.__name__,
-                            self._testMethodName)
+                        self.__class__.__name__,
+                        PY24 and getattr(self, '_TestCase__testMethodName') \
+                            or getattr(self, '_testMethodName', ''))
             log.info('=' * 70)
 
         def failUnlessRaises(self, excClass, callableObj, *args, **kwargs):

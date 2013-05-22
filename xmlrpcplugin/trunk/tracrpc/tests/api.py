@@ -2,7 +2,7 @@
 """
 License: BSD
 
-(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2009-2013 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
 
 import os
@@ -119,13 +119,14 @@ class ProtocolProviderTestCase(TracRpcTestCase):
         rpc_testenv.restart()
         # Make the request
         try:
-            req = urllib2.Request(rpc_testenv.url_anon,
+            try:
+                req = urllib2.Request(rpc_testenv.url_anon,
                         headers={'Content-Type': 'application/x-tracrpc-test'})
-            resp = urllib2.urlopen(req)
-        except urllib2.HTTPError, e:
-            self.assertEquals(500, e.code)
-            self.assertEquals("No good.", e.fp.read())
-            self.assertTrue(e.hdrs['Content-Type'].startswith('text/plain'))
+                resp = urllib2.urlopen(req)
+            except urllib2.HTTPError, e:
+                self.assertEquals(500, e.code)
+                self.assertEquals("No good.", e.fp.read())
+                self.assertTrue(e.hdrs['Content-Type'].startswith('text/plain'))
         finally:
             # Clean up so that provider don't affect further tests
             os.unlink(provider)

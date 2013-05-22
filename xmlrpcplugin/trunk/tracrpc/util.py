@@ -3,8 +3,16 @@
 License: BSD
 
 (c) 2005-2008 ::: Alec Thomas (alec@swapoff.org)
-(c) 2009      ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
+(c) 2009-2013 ::: www.CodeResort.com - BV Network AS (simon-code@bvnetwork.no)
 """
+
+import sys
+
+# Supported Python versions:
+PY24 = sys.version_info[:2] == (2, 4)
+PY25 = sys.version_info[:2] == (2, 5)
+PY26 = sys.version_info[:2] == (2, 6)
+PY27 = sys.version_info[:2] == (2, 7)
 
 from trac.util.compat import any
 
@@ -48,10 +56,11 @@ def prepare_docs(text, indent=4):
     r"""Remove leading whitespace"""
     return text and ''.join(l[indent:] for l in text.splitlines(True)) or ''
 
+from trac.util.datefmt import to_datetime, utc
 try:
     # Micro-second support added to 0.12dev r9210
     from trac.util.datefmt import to_utimestamp, from_utimestamp
 except ImportError:
-    from trac.util.datefmt import to_timestamp, to_datetime, utc
+    from trac.util.datefmt import to_timestamp
     to_utimestamp = to_timestamp
     from_utimestamp = lambda x: to_datetime(x, utc)
