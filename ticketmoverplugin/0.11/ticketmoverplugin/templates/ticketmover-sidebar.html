@@ -7,7 +7,7 @@
   
   <form action="${req.href('/ticket/move')}" method="post">
     <div>
-      Move ticket to 
+      Move ticket to
       <span py:if="len(projects) == 1">
         ${projects.keys()[0]}
         <input type="hidden" name="project" value="${projects.keys()[0]}"/>
@@ -19,7 +19,10 @@
       </select>
     </div>
     <div>
-      <input type="checkbox" name="delete" value="delete"/> Delete this ticket from the database
+      <label>
+        <input type="checkbox" name="delete" value="delete"/>
+        Delete this ticket from the database
+      </label>
     </div>
     <div>
       <input type="hidden" name="ticket" value="${ticket.id}"/>
