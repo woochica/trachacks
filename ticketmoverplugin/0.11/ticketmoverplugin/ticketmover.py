@@ -1,16 +1,18 @@
-"""
-TicketMoverPlugin:
-a plugin for Trac to move tickets from one Trac instance to another
-See:
- * http://trac-hacks.org/wiki/DataMoverPlugin
- * http://trac.edgewall.org
-"""
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2009 Jeff Hammel <jhammel@openplans.org>
+# Copyright (C) 2013 Ryan J Ollos <ryan.j.ollos@gmail.com>
+# All rights reserved.
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 import os
 import shutil
 
 from trac.config import Option
-from trac.core import Component, implements
+from trac.core import Component
 from trac.env import open_environment
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
