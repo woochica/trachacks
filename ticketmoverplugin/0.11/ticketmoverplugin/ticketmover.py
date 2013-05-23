@@ -93,7 +93,7 @@ class TicketMover(Component):
                                                             ticket_id))
 
         # location of new ticket
-        new_location = env.abs_href('ticket', new_ticket.id)
+        new_location = env.abs_href.ticket(new_ticket.id)
 
         if delete:
             old_ticket.delete()
@@ -102,6 +102,8 @@ class TicketMover(Component):
             old_ticket['status'] = u'closed'
             old_ticket['resolution'] = u'moved'
             old_ticket.save_changes(author, u'moved to %s' % new_location)
-        
-        # return the new location
-        return new_location
+
+        if env.config['trac'].get('base_url'):
+            return new_location
+        else:
+            return None

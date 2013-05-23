@@ -2,7 +2,7 @@
 Ticket sidebar for moving tickets
 """
 
-from trac.core import Component, implements
+from trac.core import Component, TracError, implements
 from trac.util.translation import _
 from trac.web.api import IRequestHandler
 from trac.web.chrome import Chrome, ITemplateProvider
@@ -58,14 +58,19 @@ class TicketMoverHandler(Component):
                     req.path_info.rstrip('/') == '/ticket/move'
 
     def process_request(self, req):
-
         req.perm.require(self.config['ticket'].get('move_permission'))
+        project = req.args['project']
 
         tm = TicketMover(self.env)
         new_location = tm.move(req.args['ticket'], req.authname,
-                               req.args['project'], 'delete' in req.args)
+                               project, 'delete' in req.args)
 
         if 'delete' in req.args:
-            req.redirect(new_location)
-        else:
-            req.redirect(req.href('/ticket/%s' % req.args['ticket']))
+            if new_location:
+                req.redirect(new_location)
+            else:
+                raise TracError(_("Can't redirect to project %(project)s "
+                                  "after moving ticket because \"base_url\" "
+                                  "is not set for that project.",
+                                  project=project))
+        req.redirect(req.href.ticket(req.args['ticket']))
