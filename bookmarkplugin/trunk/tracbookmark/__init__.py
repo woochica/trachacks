@@ -12,7 +12,6 @@ import re
 from fnmatch import fnmatchcase
 
 from genshi.builder import tag
-from trac.attachment import Attachment
 from trac.config import ListOption
 from trac.core import Component, implements
 from trac.db import Column, DatabaseManager, Table
@@ -23,7 +22,6 @@ from trac.resource import (
     get_resource_name, get_resource_shortname, get_resource_summary,
 )
 from trac.util import get_reporter_id
-from trac.util.translation import _
 from trac.web.api import IRequestFilter, IRequestHandler
 from trac.web.chrome import (
     ITemplateProvider, add_ctxtnav, add_notice, add_script, add_stylesheet
@@ -54,6 +52,7 @@ class BookmarkSystem(Component):
 
     bookmark_path = re.compile(r'/bookmark')
     path_match = re.compile(r'/bookmark/(add|delete|delete_in_page)/(.*)')
+    nonbookmarkable_actions = ('copy', 'delete', 'edit', 'new', 'rename')
 
     ### public methods
 
@@ -274,10 +273,7 @@ class BookmarkSystem(Component):
                         if resource_exists(self.env, parent):
                             resource = Resource(realm, parent=parent)
                             linkname = get_resource_name(self.env, resource)
-                            if 'action=new' in query_string:
-                                linkname = _("Add Attachment to %(id)s"
-                                             % {'id': parent.id})
-                            elif not query_string:
+                            if not query_string:
                                 # Trailing slash needed for Trac < 1.0, t:#10280
                                 href += '/'
                         else:
@@ -315,6 +311,10 @@ class BookmarkSystem(Component):
             return ''
 
     def render_bookmarker(self, req):
+        if 'action' in req.args and \
+                req.args['action'] in self.nonbookmarkable_actions:
+            return
+
         resource = self._get_resource_uri(req)
         bookmark = self.get_bookmark(req, resource)
 

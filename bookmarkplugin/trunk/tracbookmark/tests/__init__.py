@@ -170,19 +170,6 @@ class BookmarkSystemTestCase(unittest.TestCase):
                           data['linkname'])
         self.assertEquals('', data['name'])
 
-    def test_format_name_attachment_add(self):
-        page = WikiPage(self.env, 'WikiStart')
-        page.text = ' '
-        page.save('joe', '', '::1')
-        url = '/attachment/wiki/WikiStart?action=new' + \
-              '&attachfilebutton=Attach+file'
-        data = self.bmsys._format_name(self.req, url)
-        self.assertEquals('attachment', data['class_'])
-        self.assertEquals('/trac.cgi' + url, data['href'])
-        self.assertEquals("Add Attachment to WikiStart",
-                          data['linkname'])
-        self.assertEquals('', data['name'])
-
     def test_format_name_attachment_list(self):
         pass
 
