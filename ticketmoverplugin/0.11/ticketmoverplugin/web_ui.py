@@ -3,6 +3,7 @@ Ticket sidebar for moving tickets
 """
 
 from trac.core import Component, implements
+from trac.util.translation import _
 from trac.web.api import IRequestHandler
 from trac.web.chrome import Chrome, ITemplateProvider
 
@@ -22,6 +23,8 @@ class TicketMoverSidebar(Component):
             return False
         tm = TicketMover(self.env)
         projects = tm.projects(req.authname)
+        self.log.debug(_("TicketMover SidebarProvider is %(status)s.",
+                         status=['enabled', 'disabled'][bool(projects)]))
         return bool(projects)
 
     def content(self, req, ticket):
