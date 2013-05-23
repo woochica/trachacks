@@ -42,6 +42,7 @@ class BookmarkSystemTestCase(unittest.TestCase):
         self.assertEquals('wiki', data['class_'])
         self.assertEquals('/trac.cgi', data['href'])
         self.assertEquals('WikiStart', data['linkname'])
+        self.assertEquals('', data['name'])
 
     def test_format_name_wiki(self):
         data = self.bmsys._format_name(self.req, '/wiki/WikiStart')
@@ -54,8 +55,7 @@ class BookmarkSystemTestCase(unittest.TestCase):
         data = self.bmsys._format_name(self.req, '/wiki')
         self.assertEquals('wiki', data['class_'])
         self.assertEquals('/trac.cgi/wiki', data['href'])
-        # XXX why?
-        self.assertEquals('Wiki', data['linkname'])
+        self.assertEquals('WikiStart', data['linkname'])
         self.assertEquals('', data['name'])
 
     def test_format_name_wiki_versioned(self):

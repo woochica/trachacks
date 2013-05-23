@@ -286,7 +286,7 @@ class BookmarkSystem(Component):
                 else:
                     linkname = get_resource_shortname(self.env, resource)
                     name = get_resource_summary(self.env, resource)
-        elif len(path) == 1 and path[0]:
+        elif len(path) == 1 and path[0] and path[0] != 'wiki':
             linkname = path[0].capitalize()
         else:
             class_ = 'wiki'
