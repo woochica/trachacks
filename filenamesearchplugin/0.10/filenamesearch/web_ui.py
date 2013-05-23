@@ -1,8 +1,12 @@
 # FilenameSearch plugin
 from trac.core import *
-from trac.Search import ISearchSource
 from trac.perm import IPermissionRequestor
 from trac.config import BoolOption
+
+try:
+    from trac.search import ISearchSource  # 0.11
+except ImportError:
+    from trac.Search import ISearchSource  # 0.10
 
 from fnmatch import fnmatchcase
 
