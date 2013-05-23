@@ -59,7 +59,7 @@ class TicketMoverHandler(Component):
 
     def process_request(self, req):
 
-        assert self.config['ticket'].get('move_permission') in req.perm
+        req.perm.require(self.config['ticket'].get('move_permission'))
 
         tm = TicketMover(self.env)
         new_location = tm.move(req.args['ticket'], req.authname,
