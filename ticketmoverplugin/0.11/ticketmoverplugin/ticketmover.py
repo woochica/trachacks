@@ -9,24 +9,23 @@ See:
 import os
 import shutil
 
-from trac.config import ListOption
 from trac.config import Option
-from trac.core import *
-from trac.env import open_environment
-from trac.env import IEnvironmentSetupParticipant
+from trac.core import Component, implements
+from trac.env import IEnvironmentSetupParticipant, open_environment
 from trac.perm import PermissionSystem
-from trac.web.api import ITemplateStreamFilter
 from trac.ticket import Ticket
-from trac.ticket.api import ITicketActionController
+
 from tracsqlhelper import get_all_dict
 from tracsqlhelper import insert_row_from_dict
+
 
 class TicketMover(Component):
 
     implements(IEnvironmentSetupParticipant)
 
     permission = Option('ticket', 'move_permission', 'TICKET_ADMIN',
-                        "permission needed to move tickets between Trac projects")
+                        """permission needed to move tickets between
+                           Trac projects""")
 
     ### methods for IEnvironmentSetupParticipant
 
@@ -36,7 +35,6 @@ class TicketMover(Component):
 
     def environment_created(self):
         """Called when a new Trac environment is created."""
-
 
     def environment_needs_upgrade(self, db):
         """Called when Trac checks whether the environment needs to be upgraded.
@@ -54,103 +52,12 @@ class TicketMover(Component):
         performed the upgrades they need without an error being raised.
         """
 
-    ### methods for ITemplateStreamFilter
-
-    """Filter a Genshi event stream prior to rendering."""
-
-    def filter_stream(self, req, method, filename, stream, data):
-        """Return a filtered Genshi event stream, or the original unfiltered
-        stream if no match.
-
-        `req` is the current request object, `method` is the Genshi render
-        method (xml, xhtml or text), `filename` is the filename of the template
-        to be rendered, `stream` is the event stream and `data` is the data for
-        the current template.
-
-        See the Genshi documentation for more information.
-        """
-
-    ### methods for ITicketActionController
-
-    """Extension point interface for components willing to participate
-    in the ticket workflow.
-
-    This is mainly about controlling the changes to the ticket ''status'',
-    though not restricted to it.
-    """
-
-    def apply_action_side_effects(self, req, ticket, action):
-        """Perform side effects once all changes have been made to the ticket.
-
-        Multiple controllers might be involved, so the apply side-effects
-        offers a chance to trigger a side-effect based on the given `action`
-        after the new state of the ticket has been saved.
-
-        This method will only be called if the controller claimed to handle
-        the given `action` in the call to `get_ticket_actions`.
-        """
-
-    def get_all_status(self):
-        """Returns an iterable of all the possible values for the ''status''
-        field this action controller knows about.
-
-        This will be used to populate the query options and the like.
-        It is assumed that the initial status of a ticket is 'new' and
-        the terminal status of a ticket is 'closed'.
-        """
-
-    def get_ticket_actions(self, req, ticket):
-        """Return an iterable of `(weight, action)` tuples corresponding to
-        the actions that are contributed by this component.
-        That list may vary given the current state of the ticket and the
-        actual request parameter.
-
-        `action` is a key used to identify that particular action.
-        (note that 'history' and 'diff' are reserved and should not be used
-        by plugins)
-        
-        The actions will be presented on the page in descending order of the
-        integer weight. The first action in the list is used as the default
-        action.
-
-        When in doubt, use a weight of 0."""
-
-    def get_ticket_changes(self, req, ticket, action):
-        """Return a dictionary of ticket field changes.
-
-        This method must not have any side-effects because it will also
-        be called in preview mode (`req.args['preview']` will be set, then).
-        See `apply_action_side_effects` for that. If the latter indeed triggers
-        some side-effects, it is advised to emit a warning
-        (`trac.web.chrome.add_warning(req, reason)`) when this method is called
-        in preview mode.
-
-        This method will only be called if the controller claimed to handle
-        the given `action` in the call to `get_ticket_actions`.
-        """
-
-    def render_ticket_action_control(self, req, ticket, action):
-        """Return a tuple in the form of `(label, control, hint)`
-
-        `label` is a short text that will be used when listing the action,
-        `control` is the markup for the action control and `hint` should
-        explain what will happen if this action is taken.
-        
-        This method will only be called if the controller claimed to handle
-        the given `action` in the call to `get_ticket_actions`.
-
-        Note that the radio button for the action has an `id` of
-        `"action_%s" % action`.  Any `id`s used in `control` need to be made
-        unique.  The method used in the default ITicketActionController is to
-        use `"action_%s_something" % action`.
-        """
-
     ### internal methods
 
     def projects(self, user):
         base_path, _project = os.path.split(self.env.path)
-        _projects = [ i for i in os.listdir(base_path)
-                      if i != _project ]
+        _projects = [p for p in os.listdir(base_path)
+                     if p != _project]
         projects = {}
         for project in _projects:
             path = os.path.join(base_path, project)
@@ -170,8 +77,8 @@ class TicketMover(Component):
         
         env: environment to move to
         """
-        tables = { 'attachment': 'id',
-                   'ticket_change': 'ticket', }
+        tables = {'attachment': 'id',
+                  'ticket_change': 'ticket'}
 
         # open the environment if it is a string
         if isinstance(env, basestring):
@@ -189,25 +96,31 @@ class TicketMover(Component):
 
         # copy the changelog and attachment DBs
         for table, _id in tables.items():
-            for row in get_all_dict(self.env, "SELECT * FROM %s WHERE %s=%%s" % (table, _id), str(ticket_id)):
+            for row in get_all_dict(self.env,
+                                    "SELECT * FROM %s WHERE %s=%%s"
+                                    % (table, _id), str(ticket_id)):
                 row[_id] = new_ticket.id
                 insert_row_from_dict(env, table, row)
 
         # copy the attachments
-        src_attachment_dir = os.path.join(self.env.path, 'attachments', 'ticket', str(ticket_id))
+        src_attachment_dir = os.path.join(self.env.path, 'attachments',
+                                          'ticket', str(ticket_id))
         if os.path.exists(src_attachment_dir):
-            dest_attachment_dir = os.path.join(env.path, 'attachments', 'ticket')
+            dest_attachment_dir = os.path.join(env.path, 'attachments',
+                                               'ticket')
             if not os.path.exists(dest_attachment_dir):
                 os.makedirs(dest_attachment_dir)
-            dest_attachment_dir = os.path.join(dest_attachment_dir, str(new_ticket.id))
+            dest_attachment_dir = os.path.join(dest_attachment_dir,
+                                               str(new_ticket.id))
             shutil.copytree(src_attachment_dir, dest_attachment_dir)
 
         # note the previous location on the new ticket
-        new_ticket.save_changes(author, 'moved from %s' % self.env.abs_href('ticket', ticket_id))
+        new_ticket.save_changes(author, 'moved from %s'
+                                        % self.env.abs_href('ticket',
+                                                            ticket_id))
 
         # location of new ticket
         new_location = env.abs_href('ticket', new_ticket.id)
-        
 
         if delete:
             old_ticket.delete()
