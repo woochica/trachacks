@@ -13,7 +13,7 @@ setup(name='LogViewerPlugin',
       url='http://trac-hacks.org/wiki/izzy',
       keywords='trac plugin log',
       license="GPL",
-      install_requires = [ 'Trac>=0.11', 'Trac<0.12' ],
+      install_requires = [ 'Trac>=0.11' ],
       packages=find_packages(exclude=['ez_setup', 'examples', '*tests*']),
       include_package_data=True,
       package_data={ 'logviewer': [
