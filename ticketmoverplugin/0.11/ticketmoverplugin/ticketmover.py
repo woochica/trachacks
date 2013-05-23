@@ -11,7 +11,7 @@ import shutil
 
 from trac.config import Option
 from trac.core import Component, implements
-from trac.env import IEnvironmentSetupParticipant, open_environment
+from trac.env import open_environment
 from trac.perm import PermissionSystem
 from trac.ticket import Ticket
 
@@ -21,38 +21,11 @@ from tracsqlhelper import insert_row_from_dict
 
 class TicketMover(Component):
 
-    implements(IEnvironmentSetupParticipant)
-
     permission = Option('ticket', 'move_permission', 'TICKET_ADMIN',
                         """permission needed to move tickets between
                            Trac projects""")
 
-    ### methods for IEnvironmentSetupParticipant
-
-    """Extension point interface for components that need to participate in the
-    creation and upgrading of Trac environments, for example to create
-    additional database tables."""
-
-    def environment_created(self):
-        """Called when a new Trac environment is created."""
-
-    def environment_needs_upgrade(self, db):
-        """Called when Trac checks whether the environment needs to be upgraded.
-        
-        Should return `True` if this participant needs an upgrade to be
-        performed, `False` otherwise.
-        """
-        return False
-
-    def upgrade_environment(self, db):
-        """Actually perform an environment upgrade.
-        
-        Implementations of this method should not commit any database
-        transactions. This is done implicitly after all participants have
-        performed the upgrades they need without an error being raised.
-        """
-
-    ### internal methods
+    ### Internal methods
 
     def projects(self, user):
         base_path, _project = os.path.split(self.env.path)
