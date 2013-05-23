@@ -64,7 +64,8 @@ class BookmarkSystem(Component):
         cursor.execute(
             "SELECT resource, name, username FROM bookmarks WHERE username=%s",
             (get_reporter_id(req),))
-        return cursor
+        for row in cursor:
+            yield row
 
     def get_bookmark(self, req, resource):
         """Return the current users bookmark for a resource."""
