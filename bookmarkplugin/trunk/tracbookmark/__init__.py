@@ -21,7 +21,6 @@ from trac.perm import IPermissionRequestor, PermissionError
 from trac.resource import (
     Resource, ResourceNotFound, get_resource_description,
     get_resource_name, get_resource_shortname, get_resource_summary,
-    resource_exists
 )
 from trac.util import get_reporter_id
 from trac.util.translation import _
@@ -33,6 +32,10 @@ try:
     from trac.web.api import arg_list_to_args, parse_arg_list
 except ImportError:
     from compat import arg_list_to_args, parse_arg_list
+try:
+    from trac.resource import resource_exists  # Trac > 0.11.7
+except ImportError:
+    from compat import resource_exists
 
 
 class BookmarkSystem(Component):

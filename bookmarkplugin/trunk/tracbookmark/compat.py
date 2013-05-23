@@ -14,6 +14,7 @@
 #
 # Author: Christopher Lenz <cmlenz@gmx.de>
 
+from trac.resource import ResourceSystem
 from trac.util import unquote
 
 
@@ -76,3 +77,34 @@ def arg_list_to_args(arg_list):
         else:
             args[name] = value
     return args
+
+
+def resource_exists(env, resource):
+    """Checks for resource existence without actually instantiating a model.
+
+        :return: `True` if the resource exists, `False` if it doesn't
+        and `None` in case no conclusion could be made (i.e. when
+        `IResourceManager.resource_exists` is not implemented).
+
+        >>> from trac.test import EnvironmentStub
+        >>> env = EnvironmentStub()
+
+        >>> resource_exists(env, Resource('dummy-realm', 'dummy-id')) is None
+        True
+        >>> resource_exists(env, Resource('dummy-realm'))
+        False
+    """
+    manager = ResourceSystem(env).get_resource_manager(resource.realm)
+    if manager and hasattr(manager, 'resource_exists'):
+        return manager.resource_exists(resource)
+    elif resource.id is None:
+        return False
+
+
+class Empty(unicode):
+    """A special tag object evaluating to the empty string"""
+    __slots__ = []
+
+empty = Empty()
+
+del Empty # shouldn't be used outside of Trac core
