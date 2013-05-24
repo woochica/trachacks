@@ -26,58 +26,45 @@
                 </tr>
               </thead>
               <tbody>
-                <tr py:for="fd in defaultfields">
+                <tr py:for="fd in sorted( defaultfields + customfields, key = lambda a : fieldsWeight[a.name] )">
                   <td>
                       <input style="width:20pt;" name="${fd.name}.weight" type="text" value="${fieldsWeight[fd.name]}" />
                   </td>
                   <td>${fd.name}</td>
                   <td>${fd.label}</td>
-                  <td>${fieldsFormat[fd.name]}</td>
                   <td>
                     <py:choose test="">
-                      <input py:when="fd.name in exportForced" checked="checked" disabled="disabled" name="${fd.name}.export" type="checkbox" value="True" />
+                      <py:when test="fd in defaultfields">
+                        ${fieldsFormat[fd.name]}
+                      </py:when>
+                      <py:otherwise>
+                        <select name="${fd.name}.format">
+                          <py:for each="fmt in formats">
+                            <py:choose test="">
+                              <py:when test="fieldsFormat[fd.name] == fmt">
+                                <option selected='selected' label="${fmt}" value="${fmt}" />
+                              </py:when>
+                              <py:otherwise>
+                                <option label="${fmt}" value="${fmt}" />
+                              </py:otherwise>
+                            </py:choose>
+                          </py:for>
+                        </select>
+                      </py:otherwise>
+                    </py:choose>
+                  </td>
+                  <td>
+                    <py:choose test="">
+                      <input py:when="fd in defaultfields and fd.name in exportForced" checked="checked" disabled="disabled" name="${fd.name}.export" type="checkbox" value="True" />
                       <input py:when="fieldsExport[fd.name] == True" checked="checked" name="${fd.name}.export" type="checkbox" value="True" />
                       <input py:otherwise="" name="${fd.name}.export" type="checkbox" value="True" />
                     </py:choose>
                   </td>
                   <td>
                     <py:choose test="">
-                      <input py:when="fd.name in importForbidden" disabled="disabled" name="${fd.name}.import" type="checkbox" value="True" />
+                      <input py:when="fd in defaultfields and fd.name in importForbidden" disabled="disabled" name="${fd.name}.import" type="checkbox" value="True" />
                       <input py:when="fieldsImport[fd.name] == True" checked="checked" name="${fd.name}.import" type="checkbox" value="True" />
                       <input py:otherwise="" name="${fd.name}.import" type="checkbox" value="True" />
-                    </py:choose>
-                  </td>
-                </tr>
-                <tr py:for="cf in customfields">
-                  <td>
-                      <input style="width:20pt;" name="${cf.name}.weight" type="text" value="${fieldsWeight[cf.name]}" />
-                  </td>
-                  <td>${cf.name}</td>
-                  <td>${cf.label}</td>
-                  <td>
-                    <select name="${cf.name}.format">
-                      <py:for each="fmt in formats">
-                        <py:choose test="">
-                          <py:when test="fieldsFormat[cf.name] == fmt">
-                            <option selected='selected' label="${fmt}" value="${fmt}" />
-                          </py:when>
-                          <py:otherwise>
-                            <option label="${fmt}" value="${fmt}" />
-                          </py:otherwise>
-                        </py:choose>
-                      </py:for>
-                    </select>
-                  </td>
-                  <td>
-                    <py:choose test="">
-                      <input py:when="fieldsExport[cf.name] == True" checked="checked" name="${cf.name}.export" type="checkbox" value="True" />
-                      <input py:otherwise="" name="${cf.name}.export" type="checkbox" value="True" />
-                    </py:choose>
-                  </td>
-                  <td>
-                    <py:choose test="">
-                      <input py:when="fieldsImport[cf.name] == True" checked="checked" name="${cf.name}.import" type="checkbox" value="True" />
-                      <input py:otherwise="" name="${cf.name}.import" type="checkbox" value="True" />
                     </py:choose>
                   </td>
                 </tr>
