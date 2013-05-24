@@ -16,5 +16,7 @@ setup(
     package_data = {'dynfields':['templates/*.html',
                                  'htdocs/*.js','htdocs/*.css']},
     entry_points = {'trac.plugins':['dynfields.web_ui = dynfields.web_ui',
-                                    'dynfields.rules = dynfields.rules']}
+                                    'dynfields.rules = dynfields.rules']},
+    test_suite='dynfields.tests.test_suite',
+    tests_require=[]
 )
