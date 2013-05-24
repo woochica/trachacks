@@ -1,0 +1,1 @@
+[[ProjectPlan(combine_filters=AND,filterlike_milestone=MS204,segments=20/02/2012;21/02/2012;22/02/2012;23/02/2012;24/02/2012,renderer=tableticketperuserday,owners=jon.doe;jane.doe,cssclass=blacktable, useimages=Y, summary=chart,showaggregatedstate=T,statistics=elapsed_time/estimated_time)]]

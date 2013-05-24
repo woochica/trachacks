@@ -1,0 +1,66 @@
+Single Project Installation (recommended):
+
+1. change into the directory where setup.py is located
+   "cd <path to setup.py>"
+2. run "python setup.py bdist_egg"
+3. copy the egg file into your projects plugin path
+   (unix ) "cp dist/ProjectPlan-<ver>-<pythonver>.egg <path to the project>/plugins/"
+   (windows) "copy dist\ProjectPlan-<ver>-<pythonver>.egg <path to the project>\plugins"
+4. cleanup build files
+  (unix) "rm -rf dist build ProjectPlan.egg-info"
+  (windows) "del /F /S /Q dist build ProjectPlan.egg-info"
+
+Trac Installation (for all Projects, not recommended at the moment):
+
+1. change into the directory where setup.py is located
+"cd <path to setup.py>"
+2. run "python setup.py install" with sufficent rights
+3. cleanup build files
+  (unix) "rm -rf dist build ProjectPlan.egg-info"
+  (windows) "del /F /S /Q dist build ProjectPlan.egg-info"
+
+First Configuration:
+
+1. Setup Ticket-Custom fields
+  * If you arleady have Dependency, Assign/Close Date Ticket-Custom Fields
+   * you can reuse them with
+-- start --
+[pp_options]
+custom_dependency_field = <your dependency fieldname>
+custom_due_assign_field = <your assign Date fieldname>
+custom_due_close_field = <your close Date fieldname>
+-- end --
+    * this lets projectplanplugin use these configured fields
+  * If you dont have those Fields, add the following Ticket-Custom fields
+-- start --
+[ticket-custom]
+dependencies = text
+dependencies.label = Dependencies
+due_assign = text
+due_assign.label = Due to assign
+due_assign.value = DD/MM/YYYY
+due_close = text
+due_close.label = Due to close
+due_close.value = DD/MM/YYYY
+-- end --
+
+2. Basic GraphViz Configuration (needed for Networks):
+ * with WebAdmin
+   * login with administrative Rights, navigate to Admin (WebAdmin)
+   * Select the Panel ProjectPlan -> General Settings (on the left)
+   * Verify the Settings for cachepath and dot_executable
+ * or set the following options in the projects trac.ini
+-- start --
+[pp_options]
+cachepath = <full path to the cache directory>
+dot_executable = <path to graphviz binaries>\dot.exe
+-- end --
+   * restart your webserver for configuration reload
+ * Verify access and execution rights for the webserver User
+ ! cachepath should be a separate directory for each project,
+   this reduces possible cache collisions
+
+3. Color Setup:
+  * login with administrative Rights, navigate to Admin (WebAdmin)
+  * Select the Panel ProjectPlan -> Color Settings (on the left)
+  * Set HTML Color codes and apply Settings

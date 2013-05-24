@@ -1,0 +1,16 @@
+[[ProjectPlan(renderer=burndowntickets, filter_owner=j.doe, width=800, height=400, segment=day, first=2010-11-24, last=2011-01-02, label=my burn down chart considering the field estimated_time, field=estimated_time,finishstatus=closed|in_QA)]]
+
+
+[[ProjectPlan(renderer=burndowntickets, filter_owner=j.doe, width=800, height=400, segment=day, first=2010-11-24, last=2011-01-02, label=my burn down chart considering the ticket status (by default))]]
+
+
+[[ProjectPlan(renderer=burndowntickets, filter_owner=j.doe, width=800, height=400, segment=week, first=2010-11-24, last=2011-01-02, label=my burn down chart)]]
+
+
+[[ProjectPlan(renderer=burndowntickets, filter_owner=j.doe, segment=twoweek, first=2010-11-24, last=2011-01-02, field=status)]]
+
+
+[[ProjectPlan(renderer=burndowntickets,combine_filters=AND, filter_owner=j.doe, width=800, height=400, segment=month, first=2010-10-04, last=2011-01-02, label=my burn down chart: tickets aggregated over the month, field=status)]]
+
+
+[[ProjectPlan(renderer=burndowntickets,combine_filters=AND, filter_owner=j.doe, width=500, height=300, segment=year, first=2009-09-04, last=2012-01-02, field=status)]]
