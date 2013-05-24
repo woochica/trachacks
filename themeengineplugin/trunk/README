@@ -178,7 +178,7 @@ Customizing specific views
 Since version 2.2.0 it is possible to customize specific views by implementing
 (optional) ``get_template_overrides`` method. For instance
 the following sample code will change ticket and wiki views using
-custom Genshi templates
+custom Genshi templates::
 
     class CustomTheme(...):
 
