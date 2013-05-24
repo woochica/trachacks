@@ -1,14 +1,51 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:py="http://genshi.edgewall.org/"
       py:strip="True">
-  <form method="post" action="${action}">
-    <center>
-      <b>Add hours to ticket</b>
-      <p>
-        <input type="text" name="hours" size="3" style="align-text:right"/>:<input type="text" name="minutes" size="2" style="align-text:right"/>
-      </p>
-    </center>
-    <input type="hidden" name="worker" value="${worker}"/>
-    <input type="submit" name="addhours" value="Add Hours"/>
-  </form>
+  <head>
+    <style class="text/css">
+      div.sidebar {
+        border: none;
+        padding: 1em;
+        width: 28em;
+      }
+      fieldset.outer { background: transparent; margin: 0; }
+      form#addhours div.field { display: inline-block; margin-top: 0; }
+      #time-worked { width: 100%; }
+      #time-worked input { text-align: right; width: 2em; }
+      #hours-add-comment { vertical-align:top; width: 100%; }
+      #hours-add-comment div.trac-resizable { width: 100%; }
+      #hours-add-comment textarea {
+        padding: 0; width: 100%; margin-left: 1px; margin-right: 1px; }
+    </style>
+    <script class="text/javascript">
+      jQuery(document).ready(function($) {
+        $("#hours-add-comment").toggleClass("collapsed");
+      })
+    </script>
+  </head>
+  <fieldset class="outer">
+    <form id="addhours" method="post" action="${action}">
+      <fieldset>
+        <legend>Hours</legend>
+        <div id="time-worked" class="field">
+          <label>Time worked:
+            <input type="text" name="hours" />:
+            <input type="text" name="minutes" />
+            <span class="hint">Format: hh:mm</span>
+          </label>
+        </div>
+      </fieldset>
+      <div id="hours-add-comment">
+        <h3 class="foldable">Add Comment</h3>
+        <div>
+          <fieldset>
+            <textarea class="trac-resizable wikitext" name="comments"
+                      rows="5"></textarea>
+          </fieldset>
+        </div>
+      </div>
+      <input type="hidden" name="worker" value="${worker}"/>
+      <input type="submit" name="addhours" value="Add Hours"/>
+    </form>
+  </fieldset>
 </html>
