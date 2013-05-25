@@ -258,6 +258,7 @@ class TracDragDropModule(Component):
     def _send_message_on_except(self, req, message, status):
         if not isinstance(message, unicode):
             message = to_unicode(message)
+        req.send_header('Connection', 'close')
         if self._is_xhr(req):
             req.send(message.encode('utf-8'), content_type='text/plain',
                      status=status)
