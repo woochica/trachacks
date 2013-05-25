@@ -546,11 +546,22 @@ table.pplisting tbody td.ppimagecol {
 .pp-droppableLoading, #pp-event-history-list .pp-droppableLoading {
   border-color: #FF0;
 }
+#pp-event-history-list .pp-droppableLoading {
+  color: #660;
+}
+
 .pp-droppableError, #pp-event-history-list .pp-droppableError {
   border-color: #F00;
 }
+#pp-event-history-list .pp-droppableError {
+  color: #C00;
+}
+
 .pp-droppableSuccess, #pp-event-history-list .pp-droppableSuccess {  
   border-color: #0F0;
+}
+#pp-event-history-list .pp-droppableSuccess {  
+  color: #090;
 }
 
 .pp-droppableLoading, .pp-droppableError, .pp-droppableSuccess {
