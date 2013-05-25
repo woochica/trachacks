@@ -14,11 +14,11 @@ from trac.core import Component, implements, TracError
 from trac.env import IEnvironmentSetupParticipant
 from trac.perm import PermissionError
 from trac.web.api import IRequestHandler, IRequestFilter, \
-                         ITemplateStreamFilter, RequestDone
+                         ITemplateStreamFilter, RequestDone, HTTPBadRequest
 from trac.web.chrome import Chrome, ITemplateProvider, add_stylesheet, \
                             add_script, add_script_data
 from trac.util.text import to_unicode, unicode_unquote
-from trac.util.translation import domain_functions
+from trac.util.translation import domain_functions, dgettext
 
 try:
     from trac.web.chrome import web_context
@@ -162,31 +162,29 @@ class TracDragDropModule(Component):
 
     # IRequestHandler#process_request
     def process_request(self, req):
-        if req.method == 'POST':
-            ctype = req.get_header('Content-Type')
-            ctype, options = cgi.parse_header(ctype)
-            if ctype not in ('application/x-www-form-urlencoded',
-                             'multipart/form-data'):
-                if not self._is_xhr(req):
-                    req.send(unicode(PermissionError()).encode('utf-8'),
-                             status=403)
-                req.args['attachment'] = PseudoAttachmentObject(req)
-                req.args['compact'] = req.get_header('X-TracDragDrop-Compact')
-
-        action = req.args['action']
-        if action in ('new', 'delete'):
-            return self._delegate_request(req, action)
-
-        req.send('', content_type='text/plain', status=500)
-
-    def _delegate_request(self, req, action):
-        # XXX dirty hack
-        req.redirect_listeners.insert(0, self._redirect_listener)
         try:
-            if action == 'new':
-                return self._delegate_new_request(req)
-            if action == 'delete':
-                return self._delegate_delete_request(req)
+            if req.method == 'POST':
+                ctype = req.get_header('Content-Type')
+                ctype, options = cgi.parse_header(ctype)
+                if ctype not in ('application/x-www-form-urlencoded',
+                                 'multipart/form-data'):
+                    if not self._is_xhr(req):
+                        raise PermissionError()
+                    req.args['attachment'] = PseudoAttachmentObject(self.env,
+                                                                    req)
+                    req.args['compact'] = req.get_header(
+                                                    'X-TracDragDrop-Compact')
+
+                # XXX dirty hack
+                req.redirect_listeners.insert(0, self._redirect_listener)
+                action = req.args['action']
+                if action == 'new':
+                    return self._delegate_new_request(req)
+                if action == 'delete':
+                    return self._delegate_delete_request(req)
+
+            raise TracError('Invalid request')
+
         except RequestDone:
             raise
         except TracError, e:
@@ -194,7 +192,7 @@ class TracDragDropModule(Component):
         except PermissionError, e:
             return self._send_message_on_except(req, e, 403)
         except Exception, e:
-            self.log.error('AttachmentModule.process_request failed',
+            self.log.error('Internal error in tracdragdrop',
                            exc_info=True)
             return self._send_message_on_except(req, e, 500)
 
@@ -273,27 +271,63 @@ class TracDragDropModule(Component):
 
 
 class PseudoAttachmentObject(object):
-    def __init__(self, req):
-        size = req.get_header('Content-Length')
-        if size is None:
-            size = -1
-        else:
-            size = int(size)
 
+    CHUNK_SIZE = 4096
+
+    def __init__(self, env, req):
+        max_size = AttachmentModule(env).max_size
+        size = self.__get_content_length(req)
+        self.__verify_size(size, max_size)
         tempfile = TemporaryFile()
-        input = req.environ['wsgi.input']
-        while True:
-            buf = input.read(min(4096, size))
-            if not buf:
-                break
-            tempfile.write(buf)
-            size -= len(buf)
-        tempfile.flush()
-        tempfile.seek(0)
-
+        try:
+            self.__read_content(req, tempfile, size, max_size)
+        except:
+            tempfile.close()
+            raise
         self.file = tempfile
         filename = req.get_header('X-TracDragDrop-Filename')
         self.filename = unicode_unquote(filename or '').encode('utf-8')
+
+    def __get_content_length(self, req):
+        value = req.get_header('Content-Length')
+        if value is None:
+            return None
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+
+        size = None
+        if value.isdigit():
+            try:
+                size = int(value)
+            except:
+                pass
+        if size is None or size < 0:
+            raise HTTPBadRequest('Invalid Content-Length: %r' % value)
+        return size
+
+    def __verify_size(self, size, max_size):
+        if max_size >= 0 and size > max_size:
+            message = dgettext('messages',
+                               'Maximum attachment size: %(num)s bytes',
+                               num=max_size)
+            raise TracError(message, dgettext('messages', 'Upload failed'))
+
+    def __read_content(self, req, out, size, max_size):
+        input = req.environ['wsgi.input']
+        readbytes = 0
+        while True:
+            if size is None:
+                n = self.CHUNK_SIZE
+            else:
+                n = min(self.CHUNK_SIZE, size - readbytes)
+            buf = input.read(n)
+            if not buf:
+                break
+            out.write(buf)
+            readbytes += len(buf)
+            self.__verify_size(readbytes, max_size)
+        out.flush()
+        out.seek(0)
 
 
 class RedirectListened(Exception):
