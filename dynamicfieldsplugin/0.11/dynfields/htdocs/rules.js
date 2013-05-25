@@ -230,14 +230,15 @@ hiderule.query = function(spec){
     // hide hide_always fields on /query page
     if (spec.hide_always.toLowerCase() == 'true'){
         // hide from columns section
-        jQuery('input[value="'+spec.target+'"]')
-              .attr('checked',false)
-              .parent().hide();
+        var fieldset = jQuery('fieldset#filters');
+        fieldset.find('input[value="'+spec.target+'"]')
+                .attr('checked',false)
+                .parent().hide().end();
         // hide from and/or column filters/dropdowns
-        jQuery('#add_filter option[value="'+spec.target+'"]') // trac <= 0.12.1
-              .hide();
-        jQuery('.actions option[value="'+spec.target+'"]') // trac 0.12.2
-              .hide();
+        fieldset.find('#add_filter option[value="'+spec.target+'"]') // trac <= 0.12.1
+                .hide();
+        fieldset.find('.actions option[value="'+spec.target+'"]') // trac 0.12.2
+                .hide();
     }
 };
 
