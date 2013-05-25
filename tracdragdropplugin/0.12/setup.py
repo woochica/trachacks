@@ -20,7 +20,7 @@ except ImportError:
 
 setup(
     name = 'TracDragDrop',
-    version = '0.12.0.10',
+    version = '0.12.0.11',
     description = 'Add drag-and-drop attachments feature to Trac',
     license = 'BSD', # the same as Trac
     url = 'http://trac-hacks.org/wiki/TracDragDropPlugin',
