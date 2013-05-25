@@ -1,10 +1,16 @@
 #!/usr/bin/env python
-# -*- coding: iso-8859-1 -*-
+# -*- coding: utf-8 -*-
+#
+# Copyright (C) 2010-2013 Rob Guttman <guttman@alum.mit.edu>
+#
+# This software is licensed as described in the file COPYING, which
+# you should have received as part of this distribution.
+#
 
 from setuptools import setup
 
 PACKAGE = 'TracDynamicFields'
-VERSION = '1.2.3'
+VERSION = '1.2.4'
 
 setup(
     name=PACKAGE, version=VERSION,
