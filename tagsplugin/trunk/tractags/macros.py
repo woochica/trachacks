@@ -167,7 +167,7 @@ class TagWikiMacros(TagTemplateProvider):
                                      caseless_sort=self.caseless_sort,
                                      mincount=mincount)
         elif name == 'ListTagged':
-            if _OBSOLETE_ARGS_RE.search(content):
+            if content and _OBSOLETE_ARGS_RE.search(content):
                 data = {'warning': 'obsolete_args'}
             else:
                 data = {'warning': None}
