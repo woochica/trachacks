@@ -4,6 +4,7 @@ import cgi
 import errno
 import os
 import re
+import socket
 from pkg_resources import resource_filename
 from tempfile import TemporaryFile
 
@@ -320,7 +321,16 @@ class PseudoAttachmentObject(object):
                 n = self.CHUNK_SIZE
             else:
                 n = min(self.CHUNK_SIZE, size - readbytes)
-            buf = input.read(n)
+            try:
+                buf = input.read(n)
+            except (IOError, socket.error), e:
+                if e.args[0] in (errno.EPIPE, errno.ECONNRESET,
+                                 10053,  # WSAECONNABORTED
+                                 10054,  # WSAECONNRESET
+                                 'request data read error',  # from mod_wsgi
+                                ):
+                    raise RequestDone
+                raise
             if not buf:
                 break
             out.write(buf)
