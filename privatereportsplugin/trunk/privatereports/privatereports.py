@@ -161,10 +161,10 @@ class PrivateReports(Component):
 
         from pkg_resources import parse_version
         if parse_version(trac_version) < parse_version('1.0'):
-            delimiter = '</tr>'
+            delimiter = '<tr>'
             selector = '//tbody/tr'
         else:
-            delimiter = '</div>'
+            delimiter = '<div class="collapsed">'
             selector = '//div[@class="reports"]/div'
 
         def check_report_permission():
@@ -172,7 +172,7 @@ class PrivateReports(Component):
             reports_raw = report_stream.split(delimiter)
             report_stream = ''
             for row in reports_raw:
-                if row is not None and len(row) != 0 and 'View report' in row:
+                if row and 'View report' in row:
                     # determine the report id
                     s = row.find('/report/')
                     if s == -1:
@@ -187,7 +187,7 @@ class PrivateReports(Component):
                         self.log.debug("Removing report %s from list because "
                                        "%s doesn't have permission to view" %
                                        (report_id, req.authname))
-                elif 'View report' in row:
+                else:
                     report_stream += row
             return HTML(report_stream)
         return stream | Transformer(selector) \
