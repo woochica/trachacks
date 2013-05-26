@@ -927,7 +927,7 @@ class AccountManagerAdminPanel(CommonTemplateProvider):
                     add_warning(req, _(
                         "The password store does not support deleting users."))
             elif len([action for action in req.args.iterkeys() \
-                      if action in ('cleanup' 'purge' 'unselect')]) > 0:
+                      if action in ('cleanup' 'purge')]) > 0:
                 return self._do_db_cleanup(req)
 
         # (Re-)Build data for current user list.

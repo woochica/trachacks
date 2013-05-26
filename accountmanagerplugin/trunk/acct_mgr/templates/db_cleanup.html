@@ -26,7 +26,6 @@
           var numChecked = $("table.listing tbody input:checkbox:checked").length;
           var noneChecked = numChecked === 0;
           $("#remove").attr("disabled", noneChecked);
-          $("#undo").attr("disabled", noneChecked);
         }
         setButtonsDisabled();
         // Add a "select all" checkbox to the header
@@ -176,8 +175,6 @@
                value="${','.join(accounts)}" />
         <input type="submit" id="remove" name="purge"
                value="${dgettext('acct_mgr', 'Remove selected entries')}" />
-        <input type="submit" id="undo" name="unselect"
-               value="${dgettext('acct_mgr', 'Undo selection')}" />
       </div>
     </form>
   </body>
