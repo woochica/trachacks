@@ -41,6 +41,9 @@
               });
             setButtonsDisabled();
           });
+        // Hide the 'Undo selection' button since the "select all" checked
+        // provides equivalent functionality
+        $("#undo").hide(false);
         // Set the state of the "select all" checkbox
         function setGroupToggler() {
           var checkboxes = $("table.listing tbody input:checkbox");
